@@ -1,4 +1,5 @@
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './components/AccessDenied';
@@ -11,42 +12,44 @@ import './index.css';
 function App() {
     return (
         <BrowserRouter>
-            <AuthProvider>
-                <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/access-denied" element={<AccessDenied />} />
+            <ThemeProvider>
+                <AuthProvider>
+                    <Routes>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/access-denied" element={<AccessDenied />} />
 
-                    {/* Protected Routes */}
-                    <Route
-                        path="/superadmin/dashboard"
-                        element={
-                            <ProtectedRoute allowedRoles={['superadmin']}>
-                                <SuperAdminDashboard />
-                            </ProtectedRoute>
-                        }
-                    />
+                        {/* Protected Routes */}
+                        <Route
+                            path="/superadmin/dashboard"
+                            element={
+                                <ProtectedRoute allowedRoles={['superadmin']}>
+                                    <SuperAdminDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/admin/dashboard"
-                        element={
-                            <ProtectedRoute allowedRoles={['admin']}>
-                                <AdminDashboard />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/admin/dashboard"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <AdminDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route
-                        path="/user/dashboard"
-                        element={
-                            <ProtectedRoute allowedRoles={['user']}>
-                                <UserDashboard />
-                            </ProtectedRoute>
-                        }
-                    />
+                        <Route
+                            path="/user/dashboard"
+                            element={
+                                <ProtectedRoute allowedRoles={['user']}>
+                                    <UserDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
 
-                    <Route path="/" element={<Navigate to="/login" replace />} />
-                </Routes>
-            </AuthProvider>
+                        <Route path="/" element={<Navigate to="/login" replace />} />
+                    </Routes>
+                </AuthProvider>
+            </ThemeProvider>
         </BrowserRouter>
     );
 }
