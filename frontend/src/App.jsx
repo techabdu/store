@@ -2,6 +2,9 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './components/AccessDenied';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import AdminDashboard from './pages/AdminDashboard';
+import UserDashboard from './pages/UserDashboard';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 
@@ -18,7 +21,7 @@ function App() {
                         path="/superadmin/dashboard"
                         element={
                             <ProtectedRoute allowedRoles={['superadmin']}>
-                                <div style={{ padding: '20px' }}><h1>SuperAdmin Dashboard</h1></div>
+                                <SuperAdminDashboard />
                             </ProtectedRoute>
                         }
                     />
@@ -27,7 +30,7 @@ function App() {
                         path="/admin/dashboard"
                         element={
                             <ProtectedRoute allowedRoles={['admin']}>
-                                <div style={{ padding: '20px' }}><h1>Admin Dashboard</h1></div>
+                                <AdminDashboard />
                             </ProtectedRoute>
                         }
                     />
@@ -36,7 +39,7 @@ function App() {
                         path="/user/dashboard"
                         element={
                             <ProtectedRoute allowedRoles={['user']}>
-                                <div style={{ padding: '20px' }}><h1>User Dashboard</h1></div>
+                                <UserDashboard />
                             </ProtectedRoute>
                         }
                     />
