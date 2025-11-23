@@ -1,6 +1,6 @@
 <?php
 // Database configuration
-$host = 'localhost';
+$host = '127.0.0.1';
 $username = 'root';
 $password = ''; // Default XAMPP password is empty
 $database = 'store';
