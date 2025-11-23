@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 INSERT INTO users (username, password_hash, role, status, created_at) 
 VALUES (
     'it support', 
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 
+    '$2y$12$iWogNKg6rwt2c.dOE/KgIuY3u/aFddf7i6OJqdCT9UTfMZ3K3Hkpq', 
     'superadmin', 
     'active', 
     NOW()
