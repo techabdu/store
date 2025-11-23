@@ -1,51 +1,18 @@
-import { useEffect } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import Login from './components/Login';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
-
-const TestAuth = () => {
-    const { user, isAuthenticated, isLoading, login, logout } = useAuth();
-
-    const handleLogin = async () => {
-        console.log('Attempting login...');
-        const result = await login('it support', 'superadmin123');
-        console.log('Login result:', result);
-    };
-
-    const handleLogout = async () => {
-        console.log('Attempting logout...');
-        await logout();
-        console.log('Logged out');
-    };
-
-    if (isLoading) return <div>Loading session...</div>;
-
-    return (
-        <div style={{ padding: '20px' }}>
-            <h2>Auth Context Test</h2>
-            <div style={{ marginBottom: '10px' }}>
-                <strong>Status:</strong> {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}
-            </div>
-            {user && (
-                <div style={{ marginBottom: '10px' }}>
-                    <strong>User:</strong> {user.username} ({user.role})
-                </div>
-            )}
-            <div style={{ display: 'flex', gap: '10px' }}>
-                {!isAuthenticated ? (
-                    <button onClick={handleLogin}>Test Login</button>
-                ) : (
-                    <button onClick={handleLogout}>Test Logout</button>
-                )}
-            </div>
-        </div>
-    );
-};
 
 function App() {
     return (
-        <AuthProvider>
-            <TestAuth />
-        </AuthProvider>
+        <BrowserRouter>
+            <AuthProvider>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/" element={<Navigate to="/login" replace />} />
+                </Routes>
+            </AuthProvider>
+        </BrowserRouter>
     );
 }
 
