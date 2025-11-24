@@ -119,3 +119,28 @@
     color: var(--text-secondary);
     font-size: 12px;
 }
+
+/* Logout Button Styling */
+.logout-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+}
+
+.logout-button:hover {
+    background-color: rgba(234, 67, 53, 0.1);
+    color: #EA4335;
+}
+
+.logout-button .nav-icon {
+    color: inherit;
+}
+
+.sidebar.collapsed .logout-button {
+    padding: 12px;
+    justify-content: center;
+    border-radius: 50%;
+    margin-right: 0;
+}

@@ -2,9 +2,10 @@
     max-width: 1400px;
     margin: 0 auto;
     padding-top: 88px;
+    padding-bottom: 48px;
     /* TopBar height + spacing */
 }
 
 .page-header {
-    margin-bottom: 24px;
+    margin-bottom: 32px;
 }

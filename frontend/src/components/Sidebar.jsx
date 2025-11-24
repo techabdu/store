@@ -6,11 +6,14 @@ import {
   Settings,
   BarChart2,
   FileText,
-  Activity
+  Activity,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
+  const { logout } = useAuth();
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
     { icon: Users, label: 'User Management', path: '/superadmin/users', badge: '12' },
@@ -45,6 +48,18 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
               </NavLink>
             ))}
           </nav>
+
+          {/* Logout Button */}
+          <div className="sidebar-nav" style={{ marginTop: 'auto', paddingTop: '16px' }}>
+            <button
+              onClick={logout}
+              className="nav-item logout-button"
+              title={!isOpen && !isMobile ? 'Logout' : ''}
+            >
+              <LogOut size={20} className="nav-icon" />
+              <span className="nav-label">Logout</span>
+            </button>
+          </div>
 
           <div className="sidebar-footer">
             <span className="version-text">v1.0.0</span>
