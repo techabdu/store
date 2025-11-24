@@ -59,3 +59,36 @@
 .metric-subtitle {
     color: var(--text-secondary);
 }
+
+/* Mobile Responsive Metrics */
+@media (max-width: 768px) {
+    .metric-value {
+        font-size: 24px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 10px;
+    }
+
+    .metric-header {
+        margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .metric-value {
+        font-size: 22px;
+    }
+
+    .metric-title {
+        font-size: 13px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 8px;
+    }
+
+    .metric-footer {
+        font-size: 11px;
+    }
+}
