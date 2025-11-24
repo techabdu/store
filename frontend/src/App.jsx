@@ -4,6 +4,7 @@ import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './components/AccessDenied';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import UserManagement from './pages/UserManagement';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -24,6 +25,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['superadmin']}>
                                     <SuperAdminDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/superadmin/users"
+                            element={
+                                <ProtectedRoute allowedRoles={['superadmin']}>
+                                    <UserManagement />
                                 </ProtectedRoute>
                             }
                         />

@@ -1,0 +1,288 @@
+import React, { useState, useEffect } from 'react';
+import TopBar from '../components/TopBar';
+import Sidebar from '../components/Sidebar';
+import { useAuth } from '../context/AuthContext';
+import {
+    Plus,
+    Search,
+    MoreVertical,
+    Trash2,
+    Lock,
+    Shield,
+    ShieldOff,
+    Edit2,
+    X
+} from 'lucide-react';
+import '../styles/dashboard.css';
+import './UserManagement.css';
+
+const UserManagement = () => {
+    const { user } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Mock Data for Users
+    const [users, setUsers] = useState([
+        { id: 1, username: 'admin_sarah', email: 'sarah@store.com', role: 'admin', status: 'active', lastActive: '2 mins ago' },
+        { id: 2, username: 'admin_mike', email: 'mike@store.com', role: 'admin', status: 'active', lastActive: '1 hour ago' },
+        { id: 3, username: 'admin_jess', email: 'jess@store.com', role: 'admin', status: 'inactive', lastActive: '2 days ago' },
+        { id: 4, username: 'admin_tom', email: 'tom@store.com', role: 'admin', status: 'restricted', lastActive: '1 week ago' },
+    ]);
+
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        role: 'admin'
+    });
+
+    // Responsive Sidebar Logic
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 1024;
+            setIsMobile(mobile);
+            if (mobile) {
+                setSidebarOpen(false);
+            } else {
+                setSidebarOpen(true);
+            }
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // Mock adding user
+        const newUser = {
+            id: users.length + 1,
+            username: formData.username,
+            email: formData.email,
+            role: formData.role,
+            status: 'active',
+            lastActive: 'Just now'
+        };
+        setUsers([...users, newUser]);
+        setShowModal(false);
+        setFormData({ username: '', email: '', password: '', role: 'admin' });
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            setUsers(users.filter(u => u.id !== id));
+        }
+    };
+
+    const handleToggleStatus = (id) => {
+        setUsers(users.map(u => {
+            if (u.id === id) {
+                return {
+                    ...u,
+                    status: u.status === 'active' ? 'restricted' : 'active'
+                };
+            }
+            return u;
+        }));
+    };
+
+    const filteredUsers = users.filter(u =>
+        u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="dashboard-container">
+            <TopBar toggleSidebar={toggleSidebar} user={user} />
+
+            <Sidebar
+                isOpen={sidebarOpen}
+                isMobile={isMobile}
+                closeSidebar={() => setSidebarOpen(false)}
+            />
+
+            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
+                <div className="content-wrapper">
+                    {/* Page Header */}
+                    <div className="user-management-header">
+                        <div>
+                            <h1 className="heading-1">User Management</h1>
+                            <p className="text-secondary">Manage system administrators and their access</p>
+                        </div>
+                        <button className="add-user-btn" onClick={() => setShowModal(true)}>
+                            <Plus size={20} />
+                            Add New Admin
+                        </button>
+                    </div>
+
+                    {/* Search and Filter Bar */}
+                    <div className="dashboard-card mb-24" style={{ padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div className="search-container" style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '250px' }}>
+                            <Search size={20} style={{ color: 'var(--text-secondary)' }} />
+                            <input
+                                type="text"
+                                placeholder="Search users..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px 12px',
+                                    borderRadius: '4px',
+                                    border: '1px solid var(--border-color)',
+                                    backgroundColor: 'var(--bg-background)',
+                                    color: 'var(--text-primary)'
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Users Table */}
+                    <div className="dashboard-card user-table-container">
+                        <table className="user-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredUsers.map((user) => (
+                                    <tr key={user.id}>
+                                        <td>
+                                            <div className="user-info">
+                                                <div className="user-avatar">
+                                                    {user.username.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="user-details">
+                                                    <span className="user-name">{user.username}</span>
+                                                    <span className="user-email">{user.email}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style={{ textTransform: 'capitalize' }}>{user.role}</span>
+                                        </td>
+                                        <td>
+                                            <span className={`status-badge ${user.status}`}>
+                                                {user.status}
+                                            </span>
+                                        </td>
+                                        <td>{user.lastActive}</td>
+                                        <td>
+                                            <div className="actions-cell">
+                                                <button
+                                                    className="action-btn"
+                                                    title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
+                                                    onClick={() => handleToggleStatus(user.id)}
+                                                >
+                                                    {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
+                                                </button>
+                                                <button className="action-btn" title="Reset Password">
+                                                    <Lock size={18} />
+                                                </button>
+                                                <button
+                                                    className="action-btn delete"
+                                                    title="Delete User"
+                                                    onClick={() => handleDelete(user.id)}
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+
+            {/* Add User Modal */}
+            {showModal && (
+                <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Add New Admin</h2>
+                            <button className="close-btn" onClick={() => setShowModal(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="modal-body">
+                                <div className="form-group">
+                                    <label>Username</label>
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        className="form-input"
+                                        value={formData.username}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        className="form-input"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Password</label>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        className="form-input"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Role</label>
+                                    <select
+                                        name="role"
+                                        className="form-select"
+                                        value={formData.role}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="admin">Admin</option>
+                                        <option value="superadmin">SuperAdmin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Create User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default UserManagement;
