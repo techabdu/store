@@ -9,7 +9,7 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false, // Disable for production (smaller files)
-    minify: 'terser', // Better minification
+    minify: 'esbuild', // Use default esbuild minifier (faster, no extra deps)
     rollupOptions: {
       output: {
         manualChunks: {
