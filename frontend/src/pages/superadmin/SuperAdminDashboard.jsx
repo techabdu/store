@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import MetricCard from '../components/MetricCard';
-import ChartCard from '../components/ChartCard';
-import ActivityTable from '../components/ActivityTable';
-import AlertsList from '../components/AlertsList';
-import { useAuth } from '../context/AuthContext';
+import TopBar from '../../components/TopBar';
+import Sidebar from '../../components/Sidebar';
+import MetricCard from '../../components/MetricCard';
+import ChartCard from '../../components/ChartCard';
+import ActivityTable from '../../components/ActivityTable';
+import AlertsList from '../../components/AlertsList';
+import { useAuth } from '../../context/AuthContext';
 import {
     Activity,
     Users,
@@ -25,7 +25,7 @@ import {
     Cell,
     Legend
 } from 'recharts';
-import '../styles/dashboard.css';
+import '../../styles/dashboard.css';
 import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = () => {

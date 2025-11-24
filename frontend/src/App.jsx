@@ -1,12 +1,12 @@
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import Login from './components/Login';
+import Login from './pages/shared/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import AccessDenied from './components/AccessDenied';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import UserManagement from './pages/UserManagement';
-import AdminDashboard from './pages/AdminDashboard';
-import UserDashboard from './pages/UserDashboard';
+import AccessDenied from './pages/shared/AccessDenied';
+import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
+import UserManagement from './pages/superadmin/UserManagement';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserDashboard from './pages/user/UserDashboard';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 

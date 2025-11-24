@@ -1,5 +1,5 @@
-import { useAuth } from '../context/AuthContext';
-import '../styles/dashboard.css';
+import { useAuth } from '../../context/AuthContext';
+import '../../styles/dashboard.css';
 
 const UserDashboard = () => {
     const { user, logout } = useAuth();

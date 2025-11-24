@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import { useAuth } from '../context/AuthContext';
-import api from '../utils/api';
+import TopBar from '../../components/TopBar';
+import Sidebar from '../../components/Sidebar';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 import {
     Plus,
     Search,
@@ -14,7 +14,7 @@ import {
     Edit2,
     X
 } from 'lucide-react';
-import '../styles/dashboard.css';
+import '../../styles/dashboard.css';
 import './UserManagement.css';
 
 const UserManagement = () => {

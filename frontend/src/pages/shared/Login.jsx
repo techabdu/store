@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
-import loginIllustration from '../assets/login-illustration.png';
-import '../styles/login.css';
+import loginIllustration from '../../assets/login-illustration.png';
+import '../../styles/login.css';
 
 const Login = () => {
     const [username, setUsername] = useState('');
