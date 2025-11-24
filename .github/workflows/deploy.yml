@@ -44,7 +44,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./frontend/dist/
-          server-dir: /home/u464722139/domains/salsabeelistore.shop/public_html/
+          server-dir: ./
           dangerous-clean-slate: false
 
       # 7. Deploy Backend to Hostinger
@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./backend/
-          server-dir: /home/u464722139/domains/salsabeelistore.shop/public_html/backend/
+          server-dir: ./backend/
           dangerous-clean-slate: false
           exclude: |
             **/.git*
