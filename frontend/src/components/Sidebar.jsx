@@ -13,15 +13,42 @@ import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
-  const { logout } = useAuth();
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
-    { icon: Users, label: 'User Management', path: '/superadmin/users' },
-    { icon: Settings, label: 'Shop Settings', path: '/superadmin/settings' },
-    { icon: BarChart2, label: 'System Insights', path: '/superadmin/insights' },
-    { icon: FileText, label: 'Activity Logs', path: '/superadmin/logs' },
-    { icon: Activity, label: 'System Health', path: '/superadmin/health' },
-  ];
+  const { logout, user } = useAuth();
+
+  // Define navigation items based on user role
+  const getNavItems = () => {
+    switch (user?.role) {
+      case 'superadmin':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
+          { icon: Users, label: 'User Management', path: '/superadmin/users' },
+          { icon: Settings, label: 'Shop Settings', path: '/superadmin/settings' },
+          { icon: BarChart2, label: 'System Insights', path: '/superadmin/insights' },
+          { icon: FileText, label: 'Activity Logs', path: '/superadmin/logs' },
+          { icon: Activity, label: 'System Health', path: '/superadmin/health' },
+        ];
+      case 'admin':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+          { icon: FileText, label: 'Products', path: '/admin/products' },
+          { icon: Users, label: 'Customers', path: '/admin/customers' },
+          { icon: Activity, label: 'Orders', path: '/admin/orders' },
+          { icon: BarChart2, label: 'Reports', path: '/admin/reports' },
+          { icon: Settings, label: 'Settings', path: '/admin/settings' },
+        ];
+      case 'user':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/user/dashboard' },
+          { icon: FileText, label: 'My Orders', path: '/user/orders' },
+          { icon: Activity, label: 'Order History', path: '/user/history' },
+          { icon: Settings, label: 'Profile', path: '/user/profile' },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const navItems = getNavItems();
 
   return (
     <>

@@ -6,6 +6,20 @@ import './TopBar.css';
 const TopBar = ({ toggleSidebar, user }) => {
   const { theme, toggleTheme } = useTheme();
 
+  // Get role display name
+  const getRoleDisplay = () => {
+    switch (user?.role) {
+      case 'superadmin':
+        return 'SuperAdmin';
+      case 'admin':
+        return 'Admin';
+      case 'user':
+        return 'User';
+      default:
+        return 'Dashboard';
+    }
+  };
+
   return (
     <div className="top-bar">
       <div className="top-bar-left">
@@ -16,7 +30,7 @@ const TopBar = ({ toggleSidebar, user }) => {
           <span className="logo-text">Phone Retailer</span>
         </div>
         <div className="breadcrumbs">
-          <span>Dashboard</span> / <span>SuperAdmin</span>
+          <span>Dashboard</span> / <span>{getRoleDisplay()}</span>
         </div>
       </div>
 
