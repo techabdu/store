@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import {
     Plus,
     Search,
@@ -24,12 +25,9 @@ const UserManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Mock Data for Users
-    const [users, setUsers] = useState([
-        { id: 1, username: 'admin_sarah', email: 'sarah@store.com', role: 'admin', status: 'active', lastActive: '2 mins ago' },
-        { id: 2, username: 'admin_mike', email: 'mike@store.com', role: 'admin', status: 'active', lastActive: '1 hour ago' },
-        { id: 3, username: 'admin_jess', email: 'jess@store.com', role: 'admin', status: 'inactive', lastActive: '2 days ago' },
-        { id: 4, username: 'admin_tom', email: 'tom@store.com', role: 'admin', status: 'restricted', lastActive: '1 week ago' },
-    ]);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const [formData, setFormData] = useState({
         username: '',
@@ -37,6 +35,26 @@ const UserManagement = () => {
         password: '',
         role: 'admin'
     });
+
+    // Fetch users
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/users.php');
+            if (response.data.success) {
+                setUsers(response.data.users);
+            }
+        } catch (err) {
+            console.error('Failed to fetch users:', err);
+            setError('Failed to load users');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -67,38 +85,52 @@ const UserManagement = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Mock adding user
-        const newUser = {
-            id: users.length + 1,
-            username: formData.username,
-            email: formData.email,
-            role: formData.role,
-            status: 'active',
-            lastActive: 'Just now'
-        };
-        setUsers([...users, newUser]);
-        setShowModal(false);
-        setFormData({ username: '', email: '', password: '', role: 'admin' });
-    };
-
-    const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            setUsers(users.filter(u => u.id !== id));
+        try {
+            const response = await api.post('/users.php', formData);
+            if (response.data.success) {
+                setUsers([...users, response.data.user]);
+                setShowModal(false);
+                setFormData({ username: '', email: '', password: '', role: 'admin' });
+                alert('User created successfully');
+            }
+        } catch (err) {
+            console.error('Failed to create user:', err);
+            alert(err.response?.data?.error || 'Failed to create user');
         }
     };
 
-    const handleToggleStatus = (id) => {
-        setUsers(users.map(u => {
-            if (u.id === id) {
-                return {
-                    ...u,
-                    status: u.status === 'active' ? 'restricted' : 'active'
-                };
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            try {
+                const response = await api.delete(`/users.php?id=${id}`);
+                if (response.data.success) {
+                    setUsers(users.filter(u => u.id !== id));
+                }
+            } catch (err) {
+                console.error('Failed to delete user:', err);
+                alert('Failed to delete user');
             }
-            return u;
-        }));
+        }
+    };
+
+    const handleToggleStatus = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        try {
+            const response = await api.put('/users.php', { id, status: newStatus });
+            if (response.data.success) {
+                setUsers(users.map(u => {
+                    if (u.id === id) {
+                        return { ...u, status: newStatus };
+                    }
+                    return u;
+                }));
+            }
+        } catch (err) {
+            console.error('Failed to update status:', err);
+            alert('Failed to update status');
+        }
     };
 
     const filteredUsers = users.filter(u =>
@@ -131,22 +163,15 @@ const UserManagement = () => {
                     </div>
 
                     {/* Search and Filter Bar */}
-                    <div className="dashboard-card mb-24" style={{ padding: '16px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                        <div className="search-container" style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '250px' }}>
+                    <div className="dashboard-card search-filter-bar mb-24">
+                        <div className="search-container">
                             <Search size={20} style={{ color: 'var(--text-secondary)' }} />
                             <input
                                 type="text"
                                 placeholder="Search users..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                style={{
-                                    flex: 1,
-                                    padding: '10px 12px',
-                                    borderRadius: '4px',
-                                    border: '1px solid var(--border-color)',
-                                    backgroundColor: 'var(--bg-background)',
-                                    color: 'var(--text-primary)'
-                                }}
+                                className="search-input"
                             />
                         </div>
                     </div>
@@ -191,7 +216,7 @@ const UserManagement = () => {
                                                 <button
                                                     className="action-btn"
                                                     title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
-                                                    onClick={() => handleToggleStatus(user.id)}
+                                                    onClick={() => handleToggleStatus(user.id, user.status)}
                                                 >
                                                     {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
                                                 </button>

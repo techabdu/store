@@ -31,6 +31,10 @@
 }
 
 /* Global Reset & Typography */
+* {
+    box-sizing: border-box;
+}
+
 body {
     background-color: var(--bg-background);
     color: var(--text-primary);

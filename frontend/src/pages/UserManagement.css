@@ -25,6 +25,37 @@
     background-color: var(--primary-hover);
 }
 
+/* Search Bar Styles */
+.search-filter-bar {
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-background);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
 /* User Table Styles */
 .user-table-container {
     overflow-x: auto;
@@ -217,7 +248,7 @@
 
 .form-input,
 .form-select {
-    width: 100%;
+    width: 90%;
     padding: 10px 12px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -281,10 +312,10 @@
         justify-content: center;
     }
 
-    .user-table th:nth-child(3),
-    .user-table td:nth-child(3) {
+    .user-table th:nth-child(2),
+    .user-table td:nth-child(2) {
         display: none;
-        /* Hide Role on mobile if needed */
+        /* Hide Role on mobile */
     }
 
     .user-table th:nth-child(4),
@@ -300,6 +331,10 @@
 
     .modal-body {
         padding: 16px;
+    }
+
+    .search-container {
+        min-width: 100%;
     }
 }
 
