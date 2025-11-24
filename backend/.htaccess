@@ -7,9 +7,14 @@
 # Deny access to .git folder
 RedirectMatch 404 /\.git
 
-# Enable CORS for your production domain
+# Enable CORS for both local development and production
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "https://salsabeelistore.shop"
+    # Allow localhost for development
+    SetEnvIf Origin "^http://localhost:5173$" ORIGIN_ALLOWED=$0
+    # Allow production domain
+    SetEnvIf Origin "^https://salsabeelistore\.shop$" ORIGIN_ALLOWED=$0
+    
+    Header set Access-Control-Allow-Origin "%{ORIGIN_ALLOWED}e" env=ORIGIN_ALLOWED
     Header set Access-Control-Allow-Credentials "true"
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header set Access-Control-Allow-Headers "Content-Type, Authorization"

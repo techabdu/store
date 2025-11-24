@@ -144,7 +144,7 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    margin-bottom: 80px;
+    margin-bottom: 15px;
     align-items: stretch;
 }
 
@@ -152,7 +152,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
-    margin-bottom: 80px;
+    margin-bottom: 15px;
     align-items: stretch;
 }
 
@@ -160,7 +160,7 @@ body {
     display: grid;
     grid-template-columns: 1fr;
     gap: 24px;
-    margin-bottom: 80px;
+    margin-bottom: 15px;
     align-items: stretch;
 }
 
@@ -181,16 +181,16 @@ body {
     }
 
     .grid-4 {
-        grid-template-columns: 1fr;
-        gap: 70px;
-        margin-bottom: 70px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
     .grid-2,
     .grid-1 {
         grid-template-columns: 1fr;
-        gap: 70px;
-        margin-bottom: 70px;
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
     .dashboard-card {
@@ -205,16 +205,16 @@ body {
     }
 
     .grid-4 {
-        grid-template-columns: 1fr;
-        gap: 50px;
-        margin-bottom: 50px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
     .grid-2,
     .grid-1 {
         grid-template-columns: 1fr;
-        gap: 50px;
-        margin-bottom: 50px;
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
     .dashboard-card {
@@ -229,11 +229,22 @@ body {
         padding: 8px;
     }
 
-    .grid-4,
-    .grid-2,
+    .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
     .grid-1 {
-        gap: 40px;
-        margin-bottom: 40px;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
     .dashboard-card {
