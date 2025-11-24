@@ -1,0 +1,16 @@
+# Deny access to sensitive configuration files
+<FilesMatch "^(database\.php|\.env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Deny access to .git folder
+RedirectMatch 404 /\.git
+
+# Enable CORS for your production domain
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "https://salsabeelistore.shop"
+    Header set Access-Control-Allow-Credentials "true"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>

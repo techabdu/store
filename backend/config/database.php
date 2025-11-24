@@ -1,9 +1,20 @@
 <?php
-// Database configuration
-$host = '127.0.0.1';
-$username = 'root';
-$password = ''; // Default XAMPP password is empty
-$database = 'store';
+// Detect environment based on server hostname
+$isProduction = $_SERVER['HTTP_HOST'] !== 'localhost';
+
+if ($isProduction) {
+    // Production credentials (Hostinger)
+    $host = 'localhost';
+    $username = 'u464722139_salsabeel';
+    $password = 'Aa@store123';
+    $database = 'u464722139_store';
+} else {
+    // Local XAMPP credentials
+    $host = '127.0.0.1';
+    $username = 'root';
+    $password = '';
+    $database = 'store';
+}
 
 // Create connection
 $conn = new mysqli($host, $username, $password, $database);

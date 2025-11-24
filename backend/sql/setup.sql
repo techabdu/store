@@ -1,6 +1,4 @@
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS store CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE store;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

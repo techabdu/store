@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+// Detect environment based on hostname
+const isProduction = window.location.hostname !== 'localhost';
+
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: 'http://localhost/store/backend/api', // Adjust if your XAMPP path is different
+    baseURL: isProduction
+        ? 'https://salsabeelistore.shop/backend/api'  // Production URL
+        : 'http://localhost/store/backend/api',        // Local XAMPP
     withCredentials: true, // Important for cookies/sessions
     headers: {
         'Content-Type': 'application/json',

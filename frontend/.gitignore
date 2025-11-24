@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment files (DO NOT COMMIT PRODUCTION CREDENTIALS)
+.env
+.env.local
+.env.production

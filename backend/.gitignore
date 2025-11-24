@@ -1,0 +1,8 @@
+# Environment files (DO NOT COMMIT PRODUCTION CREDENTIALS)
+.env
+.env.local
+.env.production
+
+# OS files
+.DS_Store
+Thumbs.db
