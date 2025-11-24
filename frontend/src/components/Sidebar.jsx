@@ -16,7 +16,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
   const { logout } = useAuth();
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
-    { icon: Users, label: 'User Management', path: '/superadmin/users', badge: '12' },
+    { icon: Users, label: 'User Management', path: '/superadmin/users' },
     { icon: Settings, label: 'Shop Settings', path: '/superadmin/settings' },
     { icon: BarChart2, label: 'System Insights', path: '/superadmin/insights' },
     { icon: FileText, label: 'Activity Logs', path: '/superadmin/logs' },
@@ -44,7 +44,6 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
               >
                 <item.icon size={20} className="nav-icon" />
                 <span className="nav-label">{item.label}</span>
-                {item.badge && <span className="nav-badge">{item.badge}</span>}
               </NavLink>
             ))}
           </nav>

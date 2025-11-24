@@ -22,6 +22,9 @@ const UserManagement = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [resetPassword, setResetPassword] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
     // Mock Data for Users
@@ -133,6 +136,34 @@ const UserManagement = () => {
         }
     };
 
+    const openResetModal = (user) => {
+        setSelectedUser(user);
+        setResetPassword('');
+        setShowResetModal(true);
+    };
+
+    const handleResetPasswordSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedUser || !resetPassword) return;
+
+        try {
+            const response = await api.put('/users.php', {
+                id: selectedUser.id,
+                password: resetPassword
+            });
+
+            if (response.data.success) {
+                alert('Password reset successfully');
+                setShowResetModal(false);
+                setSelectedUser(null);
+                setResetPassword('');
+            }
+        } catch (err) {
+            console.error('Failed to reset password:', err);
+            alert(err.response?.data?.error || 'Failed to reset password');
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -220,7 +251,11 @@ const UserManagement = () => {
                                                 >
                                                     {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
                                                 </button>
-                                                <button className="action-btn" title="Reset Password">
+                                                <button
+                                                    className="action-btn"
+                                                    title="Reset Password"
+                                                    onClick={() => openResetModal(user)}
+                                                >
                                                     <Lock size={18} />
                                                 </button>
                                                 <button
@@ -301,6 +336,41 @@ const UserManagement = () => {
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary">Create User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Reset Password Modal */}
+            {showResetModal && (
+                <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Reset Password</h2>
+                            <button className="close-btn" onClick={() => setShowResetModal(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleResetPasswordSubmit}>
+                            <div className="modal-body">
+                                <p className="mb-4">Resetting password for <strong>{selectedUser?.username}</strong></p>
+                                <div className="form-group">
+                                    <label>New Password</label>
+                                    <input
+                                        type="password"
+                                        className="form-input"
+                                        value={resetPassword}
+                                        onChange={(e) => setResetPassword(e.target.value)}
+                                        required
+                                        placeholder="Enter new password"
+                                        minLength={6}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-secondary" onClick={() => setShowResetModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary">Reset Password</button>
                             </div>
                         </form>
                     </div>

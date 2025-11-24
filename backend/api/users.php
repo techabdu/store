@@ -167,6 +167,14 @@ function handlePut($conn, $currentUser) {
     }
     
     // If password update is needed, handle it separately or here
+    if (isset($data->password) && !empty($data->password)) {
+        $updates[] = "password_hash = ?";
+        $types .= "s";
+        $params[] = password_hash($data->password, PASSWORD_BCRYPT);
+        
+        // Log specific activity for password reset
+        logActivity($currentUser['id'], 'reset_password', "Reset password for user ID: $id");
+    }
     
     if (empty($updates)) {
         http_response_code(400);

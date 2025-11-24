@@ -161,6 +161,10 @@ body {
     margin-bottom: 24px;
 }
 
+.mb-4 {
+    margin-bottom: 16px;
+}
+
 /* Responsive Grid Layouts */
 @media (max-width: 1024px) {
     .main-content {

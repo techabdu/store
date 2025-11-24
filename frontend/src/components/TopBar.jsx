@@ -31,13 +31,6 @@ const TopBar = ({ toggleSidebar, user }) => {
         <button className="icon-btn" onClick={toggleTheme} title="Toggle Theme">
           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
         </button>
-        <button className="icon-btn topbar-relative">
-          <Bell size={20} />
-          <span className="topbar-badge">3</span>
-        </button>
-        <button className="icon-btn">
-          <Settings size={20} />
-        </button>
         <div className="user-profile">
           <div className="avatar">
             <User size={20} />
