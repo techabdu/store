@@ -351,3 +351,119 @@
         font-size: 14px;
     }
 }
+
+@media (max-width: 420px) {
+    .user-management-header {
+        gap: 12px;
+    }
+
+    .heading-1 {
+        font-size: 20px;
+    }
+
+    .add-user-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .search-filter-bar {
+        padding: 12px;
+    }
+
+    .search-container {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+
+    .user-info {
+        gap: 8px;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .status-badge {
+        padding: 2px 8px;
+        font-size: 10px;
+    }
+
+    .action-btn {
+        padding: 4px;
+    }
+}
+
+@media (max-width: 365px) {
+    .user-management-header {
+        margin-bottom: 16px;
+    }
+
+    .heading-1 {
+        font-size: 18px;
+    }
+
+    .text-secondary {
+        font-size: 12px;
+    }
+
+    .add-user-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 8px;
+    }
+
+    /* Hide email on very small screens to save space */
+    .user-email {
+        display: none;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 6px 2px;
+        font-size: 11px;
+    }
+
+    .user-avatar {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+        min-width: 24px;
+        /* Prevent shrinking */
+    }
+
+    .status-badge {
+        padding: 2px 6px;
+        font-size: 9px;
+    }
+
+    .actions-cell {
+        gap: 4px;
+    }
+
+    .action-btn {
+        padding: 2px;
+    }
+
+    /* Ensure modal fits */
+    .modal-content {
+        margin: 0;
+        width: 100%;
+        border-radius: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-body {
+        flex: 1;
+        overflow-y: auto;
+    }
+}
