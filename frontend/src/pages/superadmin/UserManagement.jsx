@@ -189,7 +189,7 @@ const UserManagement = () => {
                         </div>
                         <button className="add-user-btn" onClick={() => setShowModal(true)}>
                             <Plus size={20} />
-                            Add New Admin
+                            Add Admin
                         </button>
                     </div>
 
