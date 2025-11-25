@@ -30,6 +30,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
       case 'admin':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+          { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: FileText, label: 'Products', path: '/admin/products' },
           { icon: Users, label: 'Customers', path: '/admin/customers' },
           { icon: Activity, label: 'Orders', path: '/admin/orders' },
