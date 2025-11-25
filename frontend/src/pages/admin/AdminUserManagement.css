@@ -83,14 +83,22 @@
     color: var(--text-secondary);
     font-weight: 500;
     font-size: 14px;
+    vertical-align: top;
 }
 
 .user-table td {
     padding: 16px;
-    border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
     font-size: 14px;
-    vertical-align: middle;
+    vertical-align: top;
+}
+
+.user-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-table tbody tr:last-child {
+    border-bottom: none;
 }
 
 .user-info {

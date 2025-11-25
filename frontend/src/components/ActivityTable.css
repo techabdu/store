@@ -38,15 +38,20 @@
     color: var(--text-secondary);
     font-weight: 500;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: top;
 }
 
 .activity-table td {
     padding: 12px 16px;
     color: var(--text-primary);
+    vertical-align: top;
+}
+
+.activity-table tbody tr {
     border-bottom: 1px solid var(--border-color);
 }
 
-.activity-table tr:last-child td {
+.activity-table tbody tr:last-child {
     border-bottom: none;
 }
 
