@@ -56,6 +56,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateUser = (userData) => {
+        setUser(prevUser => ({
+            ...prevUser,
+            ...userData
+        }));
+    };
+
     const getDashboardRoute = () => {
         if (!user) return '/login';
         switch (user.role) {
@@ -78,6 +85,7 @@ export const AuthProvider = ({ children }) => {
                 isLoading,
                 login,
                 logout,
+                updateUser,
                 getDashboardRoute,
             }}
         >

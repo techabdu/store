@@ -114,7 +114,7 @@ const TopBar = ({ toggleSidebar, user }) => {
 
         <div className="user-profile-container" ref={dropdownRef}>
           <div className="user-profile" onClick={toggleDropdown}>
-            <div className="avatar">
+            <div className="avatar" style={{ backgroundColor: user?.avatar_color || 'var(--primary)' }}>
               <span className="avatar-text">{getUserInitials()}</span>
             </div>
             <span className="username">{user?.username || 'Admin'}</span>
@@ -124,7 +124,7 @@ const TopBar = ({ toggleSidebar, user }) => {
           {isDropdownOpen && (
             <div className="profile-dropdown">
               <div className="dropdown-header">
-                <div className="avatar-large">
+                <div className="avatar-large" style={{ backgroundColor: user?.avatar_color || 'var(--primary)' }}>
                   <span className="avatar-text-large">{getUserInitials()}</span>
                 </div>
                 <div className="user-info">
