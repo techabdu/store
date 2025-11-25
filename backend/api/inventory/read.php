@@ -1,0 +1,149 @@
+<?php
+/**
+ * Inventory Read API
+ * GET endpoint to retrieve inventory items with filtering
+ * Accessible by: User, Admin, SuperAdmin
+ */
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: http://localhost:5173');
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Only allow GET requests
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
+
+require_once '../../config/database.php';
+require_once '../../middleware/auth.php';
+require_once '../../middleware/role.php';
+
+// Check authentication
+checkAuth();
+
+// Check role - allow user, admin, and superadmin
+checkRole(['user', 'admin', 'superadmin']);
+
+// Get filter parameters
+$status = isset($_GET['status']) ? $_GET['status'] : 'in_stock';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
+$offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
+
+try {
+    // Build query with filters
+    $query = "SELECT 
+                i.id,
+                i.brand,
+                i.model,
+                i.imei,
+                i.color,
+                i.storage,
+                i.condition_status,
+                i.price,
+                i.cost_price,
+                i.status,
+                i.created_by,
+                i.created_at,
+                i.updated_at,
+                u.username as created_by_username
+              FROM inventory i
+              LEFT JOIN users u ON i.created_by = u.id
+              WHERE 1=1";
+    
+    $params = [];
+    $types = '';
+    
+    // Filter by status
+    if ($status !== 'all') {
+        $query .= " AND i.status = ?";
+        $params[] = $status;
+        $types .= 's';
+    }
+    
+    // Search filter (brand, model, or IMEI)
+    if (!empty($search)) {
+        $query .= " AND (i.brand LIKE ? OR i.model LIKE ? OR i.imei LIKE ?)";
+        $searchParam = "%$search%";
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $types .= 'sss';
+    }
+    
+    // Order by most recent first
+    $query .= " ORDER BY i.created_at DESC LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
+    
+    // Prepare and execute
+    $stmt = $conn->prepare($query);
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $inventory = [];
+    while ($row = $result->fetch_assoc()) {
+        $inventory[] = $row;
+    }
+    
+    // Get total count for pagination
+    $countQuery = "SELECT COUNT(*) as total FROM inventory i WHERE 1=1";
+    $countParams = [];
+    $countTypes = '';
+    
+    if ($status !== 'all') {
+        $countQuery .= " AND i.status = ?";
+        $countParams[] = $status;
+        $countTypes .= 's';
+    }
+    
+    if (!empty($search)) {
+        $countQuery .= " AND (i.brand LIKE ? OR i.model LIKE ? OR i.imei LIKE ?)";
+        $searchParam = "%$search%";
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countTypes .= 'sss';
+    }
+    
+    $countStmt = $conn->prepare($countQuery);
+    if (!empty($countParams)) {
+        $countStmt->bind_param($countTypes, ...$countParams);
+    }
+    $countStmt->execute();
+    $countResult = $countStmt->get_result();
+    $totalCount = $countResult->fetch_assoc()['total'];
+    
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'inventory' => $inventory,
+        'total' => $totalCount,
+        'limit' => $limit,
+        'offset' => $offset
+    ]);
+    
+    $stmt->close();
+    $countStmt->close();
+    
+} catch (Exception $e) {
+    error_log("Inventory read error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to retrieve inventory']);
+}
+
+$conn->close();

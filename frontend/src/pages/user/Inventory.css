@@ -1,0 +1,487 @@
+/* Content Wrapper - matches UserDashboard pattern */
+.content-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-top: 88px;
+    padding-bottom: 48px;
+    /* No horizontal padding - let main-content handle it */
+}
+
+.inventory-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.inventory-header h1 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+.inventory-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.status-filter {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 150px;
+    box-sizing: border-box;
+}
+
+.inventory-table-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+.inventory-table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+}
+
+.inventory-table thead {
+    background: var(--table-header-bg);
+}
+
+.inventory-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.inventory-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.inventory-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+.no-data {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 3rem !important;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.badge-new {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-used {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-in_stock {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-sold {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge-returned {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+    white-space: nowrap;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-edit {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-edit:hover {
+    background: #0056b3;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #f5c6cb;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.modal-content h2 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-primary);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.disabled-input {
+    background: var(--disabled-bg);
+    cursor: not-allowed;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .main-content {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .inventory-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .inventory-table-container {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding-top: 72px;
+        padding-bottom: 32px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .main-content {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .inventory-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .inventory-table-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .inventory-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .inventory-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .inventory-filters {
+        flex-direction: column;
+    }
+
+    .status-filter {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .inventory-table {
+        font-size: 0.875rem;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        width: 100%;
+        padding: 0.5rem;
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        margin: 0.5rem;
+    }
+
+    .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .modal-actions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .content-wrapper {
+        padding-top: 68px;
+        padding-bottom: 24px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .main-content {
+        padding: 4px !important;
+    }
+
+    .inventory-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .inventory-table-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .inventory-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 0.75rem 1rem;
+    }
+
+    .inventory-table {
+        font-size: 0.8rem;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+    }
+}
+
+@media (max-width: 425px) {
+    .inventory-header h1 {
+        font-size: 1.125rem;
+    }
+
+    .inventory-table {
+        font-size: 0.75rem;
+    }
+
+    .inventory-table th,
+    .inventory-table td {
+        padding: 0.4rem 0.2rem;
+    }
+}
+
+@media (max-width: 375px) {
+    .main-content {
+        padding: 2px !important;
+    }
+
+    .inventory-header h1 {
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        font-size: 0.875rem;
+        padding: 0.65rem 0.875rem;
+    }
+}

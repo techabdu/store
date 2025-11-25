@@ -7,7 +7,9 @@ import {
   BarChart2,
   FileText,
   Activity,
-  LogOut
+  LogOut,
+  Package,
+  ShoppingCart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -31,6 +33,8 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
           { icon: Users, label: 'User Management', path: '/admin/users' },
+          { icon: Package, label: 'Inventory', path: '/admin/inventory' },
+          { icon: ShoppingCart, label: 'POS', path: '/admin/pos' },
           { icon: FileText, label: 'Products', path: '/admin/products' },
           { icon: Users, label: 'Customers', path: '/admin/customers' },
           { icon: Activity, label: 'Orders', path: '/admin/orders' },
@@ -40,6 +44,8 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
       case 'user':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/user/dashboard' },
+          { icon: Package, label: 'Inventory', path: '/user/inventory' },
+          { icon: ShoppingCart, label: 'POS', path: '/user/pos' },
           { icon: FileText, label: 'My Orders', path: '/user/orders' },
           { icon: Activity, label: 'Order History', path: '/user/history' },
           { icon: Settings, label: 'Profile', path: '/user/profile' },

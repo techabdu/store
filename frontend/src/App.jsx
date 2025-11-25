@@ -9,6 +9,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUserManagement from './pages/admin/AdminUserManagement';
 import UserDashboard from './pages/user/UserDashboard';
 import UserProfile from './pages/user/UserProfile';
+import Inventory from './pages/user/Inventory';
+import POS from './pages/user/POS';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 
@@ -55,6 +57,22 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route
+                            path="/admin/inventory"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <Inventory />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/pos"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <POS />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         <Route
                             path="/user/dashboard"
@@ -69,6 +87,22 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['user']}>
                                     <UserProfile />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/user/inventory"
+                            element={
+                                <ProtectedRoute allowedRoles={['user']}>
+                                    <Inventory />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/user/pos"
+                            element={
+                                <ProtectedRoute allowedRoles={['user']}>
+                                    <POS />
                                 </ProtectedRoute>
                             }
                         />
