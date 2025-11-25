@@ -16,6 +16,13 @@
     --border-color: #DADCE0;
     --card-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
     --hover-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+
+    /* Component Variables */
+    --card-bg: #FFFFFF;
+    --input-bg: #FFFFFF;
+    --hover-bg: #F1F3F4;
+    --disabled-bg: #E8EAED;
+    --table-header-bg: #F8F9FA;
 }
 
 [data-theme='dark'] {
@@ -28,6 +35,13 @@
     --border-color: #3C4043;
     --card-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
     --hover-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.15);
+
+    /* Component Variables */
+    --card-bg: #2D2D2D;
+    --input-bg: #3C4043;
+    --hover-bg: #3C4043;
+    --disabled-bg: #202124;
+    --table-header-bg: #252525;
 }
 
 /* Global Reset & Typography */

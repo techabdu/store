@@ -186,7 +186,7 @@ const POS = () => {
             });
 
             if (response.data.success) {
-                setSuccess(`Transaction completed successfully! Total: $${response.data.total_amount.toFixed(2)}`);
+                setSuccess(`Transaction completed successfully! Total: ₦${response.data.total_amount.toFixed(2)}`);
 
                 // Reset form
                 setCart([]);
@@ -250,7 +250,7 @@ const POS = () => {
                                                     <span className="item-imei">IMEI: {item.imei}</span>
                                                 </div>
                                                 <div className="item-price-action">
-                                                    <span className="item-price">${parseFloat(item.price).toFixed(2)}</span>
+                                                    <span className="item-price">₦{parseFloat(item.price).toFixed(2)}</span>
                                                     <button
                                                         className="btn-add"
                                                         onClick={() => addToCart(item)}
@@ -290,7 +290,7 @@ const POS = () => {
                                                 </div>
                                                 <div className="cart-item-price-action">
                                                     <span className={`cart-item-price ${item.type === 'trade_in' ? 'credit' : ''}`}>
-                                                        {item.type === 'trade_in' ? '-' : ''}${Math.abs(item.price).toFixed(2)}
+                                                        {item.type === 'trade_in' ? '-' : ''}₦{Math.abs(item.price).toFixed(2)}
                                                     </span>
                                                     <button
                                                         className="btn-remove"
@@ -306,7 +306,7 @@ const POS = () => {
 
                                 <div className="cart-total">
                                     <span>Total:</span>
-                                    <span className="total-amount">${calculateTotal().toFixed(2)}</span>
+                                    <span className="total-amount">₦{calculateTotal().toFixed(2)}</span>
                                 </div>
 
                                 <div className="checkout-section">

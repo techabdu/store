@@ -197,7 +197,10 @@ const Inventory = () => {
                 <div className="content-wrapper">
                     <div className="inventory-container">
                         <div className="inventory-header">
-                            <h1>Inventory Management</h1>
+                            <div className="header-content">
+                                <h1>Inventory Management</h1>
+                                <p className="text-secondary">View and Manage Inventory</p>
+                            </div>
                             <button className="btn-primary" onClick={() => setShowAddModal(true)}>
                                 + Add Phone
                             </button>
@@ -263,8 +266,8 @@ const Inventory = () => {
                                                             {item.condition_status}
                                                         </span>
                                                     </td>
-                                                    <td>${parseFloat(item.price).toFixed(2)}</td>
-                                                    <td>${parseFloat(item.cost_price).toFixed(2)}</td>
+                                                    <td>₦{parseFloat(item.price).toFixed(2)}</td>
+                                                    <td>₦{parseFloat(item.cost_price).toFixed(2)}</td>
                                                     <td>
                                                         <span className={`badge badge-${item.status}`}>
                                                             {item.status}

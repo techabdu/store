@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     imei VARCHAR(20) NOT NULL UNIQUE,
     color VARCHAR(50) NULL,
     storage VARCHAR(20) NULL,
-    phone_condition ENUM('new', 'used') NOT NULL DEFAULT 'new',
+    condition_status ENUM('new', 'used') NOT NULL DEFAULT 'new',
     price DECIMAL(10, 2) NOT NULL,
     cost_price DECIMAL(10, 2) NOT NULL,
     status ENUM('in_stock', 'sold', 'returned') NOT NULL DEFAULT 'in_stock',
