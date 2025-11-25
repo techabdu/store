@@ -47,7 +47,8 @@
     align-items: center;
     gap: 12px;
     flex: 1;
-    min-width: 250px;
+    min-width: 0;
+    width: 100%;
 }
 
 .search-input {
@@ -312,9 +313,11 @@
 /* Content Wrapper Styles */
 .content-wrapper {
     max-width: 1400px;
+    width: 100%;
     margin: 0 auto;
     padding-top: 88px;
     padding-bottom: 48px;
+    box-sizing: border-box;
 }
 
 /* Main Content Responsive Padding */
@@ -377,20 +380,27 @@
     .content-wrapper {
         padding-top: 68px;
         padding-bottom: 24px;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .dashboard-card {
+        padding: 8px;
     }
 
     .dashboard-card.search-filter-bar {
         margin-bottom: 16px !important;
+        padding: 8px;
     }
 
     .user-table th,
     .user-table td {
-        padding: 12px 8px;
+        padding: 12px 4px;
     }
 
     .add-user-btn {
-        padding: 8px 8px;
-        font-size: 13px;
+        padding: 6px 6px;
+        font-size: 12px;
     }
 
     .user-avatar {
@@ -401,8 +411,17 @@
 }
 
 @media (max-width: 420px) {
+    .main-content {
+        padding: 8px;
+    }
+
+    .content-wrapper {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
     .user-management-header {
-        gap: 12px;
+        gap: 8px;
     }
 
     .heading-1 {
@@ -420,8 +439,9 @@
     }
 
     .search-container {
-        min-width: auto;
+        min-width: 0;
         width: 100%;
+        max-width: 100%;
     }
 
     .user-table th,
@@ -447,6 +467,30 @@
 
     .action-btn {
         padding: 4px;
+    }
+}
+
+@media (max-width: 375px) {
+    .main-content {
+        padding: 10px;
+    }
+
+    .content-wrapper {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .dashboard-card {
+        padding: 6px;
+    }
+
+    .dashboard-card.search-filter-bar {
+        padding: 6px;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 8px 2px;
     }
 }
 
