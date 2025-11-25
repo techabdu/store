@@ -7,8 +7,8 @@ import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import UserManagement from './pages/superadmin/UserManagement';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUserManagement from './pages/admin/AdminUserManagement';
-import UserDashboard from './pages/User/UserDashboard';
-import UserProfile from './pages/User/UserProfile';
+import UserDashboard from './pages/user/UserDashboard';
+import UserProfile from './pages/user/UserProfile';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 
