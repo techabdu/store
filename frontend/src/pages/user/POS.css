@@ -2,9 +2,18 @@
     width: 100%;
 }
 
-.pos-container h1 {
+.pos-header {
+    margin-bottom: 2rem;
+}
+
+.pos-header h1 {
     font-size: 2rem;
-    margin-bottom: 1.5rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.pos-header p {
+    margin: 0;
+    font-size: 1rem;
 }
 
 .pos-layout {
@@ -409,9 +418,7 @@
         grid-template-columns: 1fr;
     }
 
-    .pos-cart-section {
-        order: -1;
-    }
+
 }
 
 @media (max-width: 768px) {

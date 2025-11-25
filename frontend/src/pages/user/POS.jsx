@@ -220,7 +220,10 @@ const POS = () => {
             <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
                 <div className="content-wrapper">
                     <div className="pos-container">
-                        <h1>Point of Sale</h1>
+                        <div className="pos-header">
+                            <h1>Point of Sale</h1>
+                            <p className="text-secondary">Process sales and manage trade-ins</p>
+                        </div>
 
                         {error && <div className="error-message">{error}</div>}
                         {success && <div className="success-message">{success}</div>}
