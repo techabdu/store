@@ -5,7 +5,10 @@ import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import './POS.css';
 
+import { useNavigate } from 'react-router-dom';
+
 const POS = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [inventory, setInventory] = useState([]);
     const [cart, setCart] = useState([]);
@@ -186,16 +189,8 @@ const POS = () => {
             });
 
             if (response.data.success) {
-                setSuccess(`Transaction completed successfully! Total: ₦${response.data.total_amount.toFixed(2)}`);
-
-                // Reset form
-                setCart([]);
-                setCustomerName('');
-                setCustomerPhone('');
-                setPaymentMethod('cash');
-
-                // Clear success message after 5 seconds
-                setTimeout(() => setSuccess(''), 5000);
+                // Redirect to receipt page
+                navigate(`/receipt/${response.data.transaction_id}`);
             } else {
                 setError(response.data.error || 'Transaction failed');
             }

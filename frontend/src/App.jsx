@@ -14,6 +14,9 @@ import POS from './pages/user/POS';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 
+import Receipt from './pages/user/Receipt';
+import SalesHistory from './pages/user/SalesHistory';
+
 function App() {
     return (
         <BrowserRouter>
@@ -103,6 +106,23 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['user']}>
                                     <POS />
+                                </ProtectedRoute>
+                            }
+                        />
+
+                        <Route
+                            path="/receipt/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+                                    <Receipt />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/sales-history"
+                            element={
+                                <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+                                    <SalesHistory />
                                 </ProtectedRoute>
                             }
                         />

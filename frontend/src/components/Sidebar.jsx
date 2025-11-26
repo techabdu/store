@@ -46,8 +46,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
           { icon: LayoutDashboard, label: 'Dashboard', path: '/user/dashboard' },
           { icon: Package, label: 'Inventory', path: '/user/inventory' },
           { icon: ShoppingCart, label: 'POS', path: '/user/pos' },
-          { icon: FileText, label: 'My Orders', path: '/user/orders' },
-          { icon: Activity, label: 'Order History', path: '/user/history' },
+          { icon: FileText, label: 'Sales History', path: '/sales-history' },
           { icon: Settings, label: 'Profile', path: '/user/profile' },
         ];
       default:
