@@ -1,0 +1,186 @@
+/* Content Wrapper - matches UserDashboard pattern */
+.content-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-top: 88px;
+    padding-bottom: 48px;
+}
+
+/* Header Section */
+.header-section {
+    margin-bottom: 2rem;
+}
+
+.header-section h1 {
+    font-size: 2rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Table Container */
+.table-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+}
+
+.data-table thead {
+    background: var(--table-header-bg);
+}
+
+.data-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border-color);
+    white-space: nowrap;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.data-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+/* Badge Styles */
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-primary {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Button Icon */
+.btn-icon {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.btn-icon:hover {
+    background: var(--hover-bg);
+}
+
+/* Error Message */
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #f5c6cb;
+}
+
+/* Loading State */
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+    font-size: 1.125rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .main-content {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding-top: 72px;
+        padding-bottom: 32px;
+    }
+
+    .main-content {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    .header-section h1 {
+        font-size: 1.5rem;
+    }
+
+    .data-table {
+        font-size: 0.875rem;
+        min-width: 900px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .content-wrapper {
+        padding-top: 68px;
+        padding-bottom: 24px;
+    }
+
+    .main-content {
+        padding: 4px !important;
+    }
+
+    .header-section h1 {
+        font-size: 1.25rem;
+    }
+
+    .data-table {
+        font-size: 0.8rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+    }
+}

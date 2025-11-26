@@ -1,0 +1,179 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
+import TopBar from '../../components/TopBar';
+import Sidebar from '../../components/Sidebar';
+import './Receipt.css';
+
+const Receipt = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [transaction, setTransaction] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Responsive Sidebar Logic
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 1024;
+            setIsMobile(mobile);
+            if (mobile) {
+                setSidebarOpen(false);
+            } else {
+                setSidebarOpen(true);
+            }
+        };
+
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
+
+    useEffect(() => {
+        const fetchTransaction = async () => {
+            try {
+                const response = await api.get(`/transactions/read.php?id=${id}`);
+                if (response.data.success) {
+                    setTransaction(response.data.transaction);
+                } else {
+                    setError('Transaction not found');
+                }
+            } catch (err) {
+                setError('Failed to load transaction details');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchTransaction();
+        }
+    }, [id]);
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    if (loading) return <div className="loading">Loading receipt...</div>;
+    if (error) return <div className="error-message">{error}</div>;
+    if (!transaction) return <div className="error-message">Transaction not found</div>;
+
+    return (
+        <div className="dashboard-container">
+            <TopBar toggleSidebar={toggleSidebar} user={user} />
+
+            <Sidebar
+                isOpen={sidebarOpen}
+                isMobile={isMobile}
+                closeSidebar={() => setSidebarOpen(false)}
+            />
+
+            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
+                <div className="content-wrapper">
+                    <div className="receipt-container">
+                        <div className="receipt-actions">
+                            <button className="btn-secondary" onClick={() => navigate('/admin/pos')}>
+                                ← Back to POS
+                            </button>
+                            <button className="btn-primary" onClick={handlePrint}>
+                                🖨️ Print Receipt
+                            </button>
+                        </div>
+
+                        <div className="receipt-paper">
+                            <div className="store-header">
+                                <h1>Phone Retailer Store</h1>
+                                <div className="store-info">
+                                    <p>123 Tech Street, Digital City</p>
+                                    <p>Phone: +234 800 123 4567</p>
+                                    <p>Email: support@store.com</p>
+                                </div>
+                            </div>
+
+                            <div className="receipt-details">
+                                <div className="detail-group">
+                                    <h3>Transaction Info</h3>
+                                    <p>Receipt #: {String(transaction.id).padStart(6, '0')}</p>
+                                    <p>Date: {new Date(transaction.created_at).toLocaleString()}</p>
+                                    <p>Cashier: {transaction.processed_by}</p>
+                                </div>
+                                <div className="detail-group" style={{ textAlign: 'right' }}>
+                                    <h3>Customer Info</h3>
+                                    <p>{transaction.customer_name}</p>
+                                    <p>{transaction.customer_phone || 'N/A'}</p>
+                                    <p>Method: {transaction.payment_method.toUpperCase()}</p>
+                                </div>
+                            </div>
+
+                            <div className="receipt-items">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Item Description</th>
+                                            <th style={{ textAlign: 'right' }}>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {transaction.items.map((item, index) => (
+                                            <tr key={index}>
+                                                <td>
+                                                    <span className="item-main">
+                                                        {item.brand} {item.model}
+                                                        {item.type === 'trade_in' && <span className="badge badge-warning" style={{ marginLeft: '8px', fontSize: '0.7em' }}>TRADE-IN</span>}
+                                                    </span>
+                                                    <div className="item-specs">
+                                                        <span>IMEI: {item.imei}</span>
+                                                        {item.storage && <span>{item.storage}</span>}
+                                                        {item.color && <span>{item.color}</span>}
+                                                        {item.condition_status && <span>{item.condition_status}</span>}
+                                                    </div>
+                                                </td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    {item.type === 'trade_in' ? '-' : ''}₦{parseFloat(item.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="receipt-summary">
+                                <div className="summary-rows">
+                                    <div className="summary-row">
+                                        <span>Subtotal</span>
+                                        <span>₦{parseFloat(transaction.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <div className="summary-row">
+                                        <span>Tax (0%)</span>
+                                        <span>₦0.00</span>
+                                    </div>
+                                    <div className="summary-row total">
+                                        <span>Total</span>
+                                        <span>₦{parseFloat(transaction.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="receipt-footer">
+                                <p>Thank you for your business!</p>
+                                <p>Please keep this receipt for warranty purposes.</p>
+                                <p>Warranty valid for 30 days on used devices.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+};
+
+export default Receipt;

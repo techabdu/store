@@ -16,6 +16,8 @@ import './index.css';
 
 import Receipt from './pages/user/Receipt';
 import SalesHistory from './pages/user/SalesHistory';
+import AdminReceipt from './pages/admin/Receipt';
+import AdminSalesHistory from './pages/admin/SalesHistory';
 
 function App() {
     return (
@@ -73,6 +75,22 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin']}>
                                     <POS />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/receipt/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <AdminReceipt />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/sales-history"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <AdminSalesHistory />
                                 </ProtectedRoute>
                             }
                         />

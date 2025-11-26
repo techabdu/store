@@ -189,8 +189,11 @@ const POS = () => {
             });
 
             if (response.data.success) {
-                // Redirect to receipt page
-                navigate(`/receipt/${response.data.transaction_id}`);
+                // Redirect to receipt page based on user role
+                const receiptPath = user.role === 'admin'
+                    ? `/admin/receipt/${response.data.transaction_id}`
+                    : `/receipt/${response.data.transaction_id}`;
+                navigate(receiptPath);
             } else {
                 setError(response.data.error || 'Transaction failed');
             }

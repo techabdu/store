@@ -35,9 +35,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
           { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: Package, label: 'Inventory', path: '/admin/inventory' },
           { icon: ShoppingCart, label: 'POS', path: '/admin/pos' },
-          { icon: FileText, label: 'Products', path: '/admin/products' },
-          { icon: Users, label: 'Customers', path: '/admin/customers' },
-          { icon: Activity, label: 'Orders', path: '/admin/orders' },
+          { icon: FileText, label: 'Sales History', path: '/admin/sales-history' },
           { icon: BarChart2, label: 'Reports', path: '/admin/reports' },
           { icon: Settings, label: 'Settings', path: '/admin/settings' },
         ];
