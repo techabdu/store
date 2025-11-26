@@ -189,6 +189,112 @@
     }
 }
 
+/* Samsung Galaxy S20, Pixel 5 */
+@media (max-width: 390px) {
+    .table-title {
+        font-size: 14.5px;
+    }
+
+    .table-subtitle {
+        font-size: 11px;
+    }
+
+    .activity-table {
+        font-size: 11px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 7px 8px;
+    }
+
+    .user-avatar-small {
+        width: 18px;
+        height: 18px;
+        font-size: 9px;
+    }
+
+    .time-cell {
+        font-size: 10px;
+    }
+}
+
+/* Samsung Galaxy S8/S9, Pixel 3/4 */
+@media (max-width: 360px) {
+    .table-title {
+        font-size: 14px;
+    }
+
+    .table-subtitle {
+        font-size: 10.5px;
+    }
+
+    .activity-table {
+        font-size: 10.5px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 7px 7px;
+    }
+
+    .user-cell {
+        gap: 6px;
+    }
+
+    .user-avatar-small {
+        width: 17px;
+        height: 17px;
+        font-size: 9px;
+    }
+
+    .time-cell {
+        font-size: 9.5px;
+    }
+
+    .footer-link {
+        font-size: 12px;
+    }
+}
+
+/* Smaller Android devices */
+@media (max-width: 344px) {
+    .table-title {
+        font-size: 13.5px;
+    }
+
+    .table-subtitle {
+        font-size: 10px;
+    }
+
+    .activity-table {
+        font-size: 10px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 6px 6px;
+    }
+
+    .user-cell {
+        gap: 6px;
+    }
+
+    .user-avatar-small {
+        width: 16px;
+        height: 16px;
+        font-size: 8px;
+    }
+
+    .time-cell {
+        font-size: 9px;
+    }
+
+    .footer-link {
+        font-size: 11.5px;
+    }
+}
+
 @media (max-width: 320px) {
     .table-title {
         font-size: 15px;

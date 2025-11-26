@@ -115,6 +115,78 @@
     }
 }
 
+/* Samsung Galaxy S20, Pixel 5 */
+@media (max-width: 390px) {
+    .metric-value {
+        font-size: 19px;
+    }
+
+    .metric-title {
+        font-size: 11.5px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 6px;
+    }
+
+    .metric-icon-wrapper svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .metric-footer {
+        font-size: 10px;
+    }
+}
+
+/* Samsung Galaxy S8/S9, Pixel 3/4 */
+@media (max-width: 360px) {
+    .metric-value {
+        font-size: 18px;
+    }
+
+    .metric-title {
+        font-size: 11px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 5px;
+    }
+
+    .metric-icon-wrapper svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    .metric-footer {
+        font-size: 9.5px;
+    }
+}
+
+/* Smaller Android devices */
+@media (max-width: 344px) {
+    .metric-value {
+        font-size: 17px;
+    }
+
+    .metric-title {
+        font-size: 11px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 5px;
+    }
+
+    .metric-icon-wrapper svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .metric-footer {
+        font-size: 9px;
+    }
+}
+
 @media (max-width: 320px) {
     .metric-value {
         font-size: 16px;

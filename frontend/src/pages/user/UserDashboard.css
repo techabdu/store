@@ -5,6 +5,8 @@
     margin: 0 auto;
     padding-top: 88px;
     padding-bottom: 48px;
+    width: 100%;
+    max-width: 100%;
     /* TopBar height + spacing */
 }
 
@@ -13,24 +15,185 @@
 }
 
 /* Mobile Responsive Adjustments */
+@media (max-width: 1024px) {
+    .main-content {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    .content-wrapper {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
 @media (max-width: 768px) {
+    .main-content {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
     .content-wrapper {
         padding-top: 72px;
         padding-bottom: 32px;
+        width: 100%;
+        max-width: 100%;
     }
 
     .page-header {
         margin-bottom: 20px;
     }
+
+    .page-header .heading-1 {
+        font-size: 1.5rem;
+    }
 }
 
 @media (max-width: 480px) {
+    .main-content {
+        padding: 6px !important;
+    }
+
     .content-wrapper {
         padding-top: 68px;
         padding-bottom: 24px;
+        width: 100%;
+        max-width: 100%;
     }
 
     .page-header {
         margin-bottom: 16px;
+    }
+
+    .page-header .heading-1 {
+        font-size: 1.25rem;
+    }
+
+    .page-header .text-secondary {
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 425px) {
+    .main-content {
+        padding: 5px !important;
+    }
+
+    .page-header .heading-1 {
+        font-size: 1.125rem;
+    }
+}
+
+/* Samsung Galaxy S20, Pixel 5, etc. */
+@media (max-width: 390px) {
+    .main-content {
+        padding: 4px !important;
+    }
+
+    .content-wrapper {
+        padding-top: 66px;
+        padding-bottom: 24px;
+    }
+
+    .page-header {
+        margin-bottom: 14px;
+    }
+
+    .page-header .heading-1 {
+        font-size: 1.05rem;
+    }
+
+    .page-header .text-secondary {
+        font-size: 0.825rem;
+    }
+}
+
+@media (max-width: 375px) {
+    .main-content {
+        padding: 3px !important;
+    }
+
+    .content-wrapper {
+        padding-top: 64px;
+        padding-bottom: 24px;
+    }
+
+    .page-header {
+        margin-bottom: 12px;
+    }
+
+    .page-header .heading-1 {
+        font-size: 1rem;
+    }
+
+    .page-header .text-secondary {
+        font-size: 0.8rem;
+    }
+}
+
+/* Samsung Galaxy S8/S9, Pixel 3/4 */
+@media (max-width: 360px) {
+    .main-content {
+        padding: 2px !important;
+    }
+
+    .content-wrapper {
+        padding-top: 62px;
+        padding-bottom: 22px;
+    }
+
+    .page-header {
+        margin-bottom: 11px;
+    }
+
+    .page-header .heading-1 {
+        font-size: 0.975rem;
+    }
+
+    .page-header .text-secondary {
+        font-size: 0.775rem;
+    }
+}
+
+/* Smaller Android devices */
+@media (max-width: 344px) {
+    .main-content {
+        padding: 2px !important;
+    }
+
+    .content-wrapper {
+        padding-top: 60px;
+        padding-bottom: 20px;
+    }
+
+    .page-header {
+        margin-bottom: 10px;
+    }
+
+    .page-header .heading-1 {
+        font-size: 0.95rem;
+    }
+
+    .page-header .text-secondary {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 320px) {
+    .content-wrapper {
+        padding-top: 58px;
+        padding-bottom: 20px;
+    }
+
+    .page-header {
+        margin-bottom: 10px;
+    }
+
+    .page-header .heading-1 {
+        font-size: 0.9rem;
+    }
+
+    .page-header .text-secondary {
+        font-size: 0.7rem;
     }
 }
