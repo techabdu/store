@@ -90,12 +90,7 @@ try {
         logActivity(
             $_SESSION['user_id'],
             'inventory_delete',
-            json_encode([
-                'inventory_id' => $inventoryId,
-                'brand' => $item['brand'],
-                'model' => $item['model'],
-                'imei' => $item['imei']
-            ])
+            "Deleted inventory: " . $item['brand'] . " " . $item['model'] . " (IMEI: " . $item['imei'] . ")"
         );
         
         http_response_code(200);

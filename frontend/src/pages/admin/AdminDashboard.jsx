@@ -6,6 +6,7 @@ import ChartCard from '../../components/ChartCard';
 import ActivityTable from '../../components/ActivityTable';
 import AlertsList from '../../components/AlertsList';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 import {
     ShoppingBag,
     Users,
@@ -102,12 +103,34 @@ const AdminDashboard = () => {
         { id: '#ORD-005', customer: 'Charlie Wilson', status: 'Cancelled', total: '$15.00', date: '5 hours ago' }
     ];
 
+    // Fetch Dashboard Data
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch stats and logs in parallel
+                // Note: You might need to create a dashboard_stats endpoint for admin too if you want real metrics there
+                // For now, we focus on the activity logs as requested
+                const logsResponse = await api.get('/activity_logs.php?limit=10');
+
+                if (logsResponse.data.success) {
+                    const formattedLogs = logsResponse.data.logs.map(log => ({
+                        username: log.username || 'Unknown',
+                        action: log.action,
+                        timestamp: new Date(log.created_at).toLocaleString(),
+                        role: log.user_role // Optional: display role if needed
+                    }));
+                    setActivityData(formattedLogs);
+                }
+            } catch (error) {
+                console.error('Failed to fetch admin dashboard data:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
     // Transform orders for ActivityTable
-    const activityData = recentOrders.map(order => ({
-        username: order.id,
-        action: `Order by ${order.customer} (${order.status})`,
-        timestamp: order.date
-    }));
+    const [activityData, setActivityData] = useState([]);
 
     const alerts = [
         {
@@ -177,13 +200,13 @@ const AdminDashboard = () => {
                         />
                     </div>
 
-                    {/* Recent Orders Table */}
+                    {/* Recent Activity Table */}
                     <div className="grid-1">
                         <ActivityTable
-                            title="Recent Orders"
-                            subtitle="Latest transactions"
+                            title="Recent Activity"
+                            subtitle="Latest system actions"
                             data={activityData}
-                            footer={{ text: 'View all orders', link: '/admin/orders' }}
+                            footer={{ text: 'View all activity', link: '/admin/activity' }}
                         />
                     </div>
                 </div>

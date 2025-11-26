@@ -1,0 +1,60 @@
+<?php
+/**
+ * Activity Logs API
+ * GET endpoint to retrieve activity logs based on user role
+ * Accessible by: User, Admin, SuperAdmin
+ */
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: http://localhost:5173');
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Only allow GET requests
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
+
+require_once '../config/database.php';
+require_once '../middleware/auth.php';
+require_once '../middleware/role.php';
+require_once '../helpers/activity_log.php';
+
+// Check authentication
+$currentUser = checkAuth();
+
+// Check role - allow user, admin, and superadmin
+checkRole(['user', 'admin', 'superadmin']);
+
+try {
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
+    $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
+
+    // getActivityLogs helper handles role-based filtering:
+    // - User: sees own logs
+    // - Admin: sees admin and user logs
+    // - SuperAdmin: sees own logs (as per current implementation in helper)
+    $logs = getActivityLogs($currentUser['id'], $currentUser['role'], $limit, $offset);
+
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'logs' => $logs
+    ]);
+
+} catch (Exception $e) {
+    error_log("Activity logs error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to retrieve activity logs']);
+}
+
+$conn->close();

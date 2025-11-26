@@ -4,9 +4,10 @@ import Sidebar from '../../components/Sidebar';
 import MetricCard from '../../components/MetricCard';
 import ActivityTable from '../../components/ActivityTable';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 import {
-    CheckSquare,
-    FileText,
+    Package,
+    TrendingUp,
     Receipt,
     Activity
 } from 'lucide-react';
@@ -17,6 +18,13 @@ const UserDashboard = () => {
     const { user } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [stats, setStats] = useState({
+        inventory_count: 0,
+        monthly_sales: 0,
+        monthly_expenses: 0,
+        weekly_sales_count: 0
+    });
+    const [loading, setLoading] = useState(true);
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -35,51 +43,83 @@ const UserDashboard = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Fetch Dashboard Stats and Activity Logs
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [statsResponse, logsResponse] = await Promise.all([
+                    api.get('/user/dashboard_stats.php'),
+                    api.get('/activity_logs.php?limit=5')
+                ]);
+
+                if (statsResponse.data.success) {
+                    setStats(statsResponse.data.stats);
+                }
+
+                if (logsResponse.data.success) {
+                    // Transform logs to match ActivityTable format
+                    const formattedLogs = logsResponse.data.logs.map(log => ({
+                        username: 'You', // Since it's user dashboard, it's always 'You'
+                        action: log.action, // You might want to format this better based on action type
+                        timestamp: new Date(log.created_at).toLocaleString() // Simple formatting
+                    }));
+                    setRecentActivity(formattedLogs);
+                }
+            } catch (error) {
+                console.error('Failed to fetch dashboard data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
 
-    // Mock Data for User Dashboard
+    // Format currency to Naira
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-NG', {
+            style: 'currency',
+            currency: 'NGN'
+        }).format(amount);
+    };
+
+    // Dashboard Metrics
     const metrics = [
         {
-            title: 'My Tasks',
-            value: '8',
-            icon: CheckSquare,
-            subtitle: '3 pending completion',
+            title: 'Total Inventory',
+            value: loading ? '...' : stats.inventory_count,
+            icon: Package,
+            subtitle: 'Items in stock',
             color: 'info'
         },
         {
-            title: 'Invoices Created',
-            value: '24',
-            icon: FileText,
-            trend: '+6 this month',
-            trendDirection: 'up',
+            title: 'Total Monthly Sales',
+            value: loading ? '...' : formatCurrency(stats.monthly_sales),
+            icon: TrendingUp,
+            subtitle: 'This month',
             color: 'success'
         },
         {
-            title: 'Expenses Logged',
-            value: '$1,245',
+            title: 'Monthly Expenses',
+            value: loading ? '...' : formatCurrency(stats.monthly_expenses),
             icon: Receipt,
-            subtitle: 'This month',
+            subtitle: 'Logged this month',
             color: 'warning'
         },
         {
-            title: 'Activity This Week',
-            value: '42',
+            title: 'Weekly Sales Count',
+            value: loading ? '...' : stats.weekly_sales_count,
             icon: Activity,
-            trend: '+12%',
-            trendDirection: 'up',
+            subtitle: 'Sales this week',
             color: 'info'
         }
     ];
 
-    const recentActivity = [
-        { username: 'You', action: 'Created invoice #INV-045', timestamp: '10 mins ago' },
-        { username: 'You', action: 'Updated inventory item', timestamp: '1 hour ago' },
-        { username: 'You', action: 'Logged expense: Office supplies', timestamp: '3 hours ago' },
-        { username: 'You', action: 'Completed task: Stock check', timestamp: '5 hours ago' },
-        { username: 'You', action: 'Created invoice #INV-044', timestamp: '1 day ago' }
-    ];
+    const [recentActivity, setRecentActivity] = useState([]);
 
     return (
         <div className="dashboard-container">

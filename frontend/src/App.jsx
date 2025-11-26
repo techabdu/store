@@ -19,6 +19,8 @@ import SalesHistory from './pages/user/SalesHistory';
 import AdminReceipt from './pages/admin/Receipt';
 import AdminSalesHistory from './pages/admin/SalesHistory';
 import Expenses from './pages/shared/Expenses';
+import UserActivity from './pages/user/UserActivity';
+import AdminActivity from './pages/admin/AdminActivity';
 
 function App() {
     return (
@@ -95,6 +97,14 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route
+                            path="/admin/activity"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <AdminActivity />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         <Route
                             path="/user/dashboard"
@@ -125,6 +135,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['user']}>
                                     <POS />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/user/activity"
+                            element={
+                                <ProtectedRoute allowedRoles={['user']}>
+                                    <UserActivity />
                                 </ProtectedRoute>
                             }
                         />

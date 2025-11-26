@@ -133,14 +133,28 @@ try {
     $stmt->bind_param($types, ...$params);
     
     if ($stmt->execute()) {
+        // Calculate changes for activity log
+        $changes = [];
+        foreach ($input as $field => $newValue) {
+            if (array_key_exists($field, $existingItem) && $existingItem[$field] != $newValue) {
+                // Skip sensitive or internal fields if any (none here really)
+                $oldValue = $existingItem[$field];
+                $changes[] = "$field from '$oldValue' to '$newValue'";
+            }
+        }
+        
+        $logDetails = "Updated inventory " . $existingItem['brand'] . " " . $existingItem['model'];
+        if (!empty($changes)) {
+            $logDetails .= ": " . implode(", ", $changes);
+        } else {
+            $logDetails .= " (no changes detected)";
+        }
+
         // Log activity
         logActivity(
             $_SESSION['user_id'],
             'inventory_update',
-            json_encode([
-                'inventory_id' => $inventoryId,
-                'updated_fields' => array_keys($input)
-            ])
+            $logDetails
         );
         
         http_response_code(200);

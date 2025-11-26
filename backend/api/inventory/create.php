@@ -130,12 +130,7 @@ try {
         logActivity(
             $_SESSION['user_id'],
             'inventory_create',
-            json_encode([
-                'inventory_id' => $inventoryId,
-                'brand' => $brand,
-                'model' => $model,
-                'imei' => $imei
-            ])
+            "Added new inventory: $brand $model (IMEI: $imei)"
         );
         
         http_response_code(201);
