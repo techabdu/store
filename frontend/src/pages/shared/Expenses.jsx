@@ -319,7 +319,7 @@ const Expenses = () => {
                                         <button type="button" className="cancel-btn" onClick={closeModal}>
                                             Cancel
                                         </button>
-                                        <button type="submit" className="save-btn">
+                                        <button type="submit" className="cancel-btn">
                                             {currentExpense ? 'Update Expense' : 'Add Expense'}
                                         </button>
                                     </div>

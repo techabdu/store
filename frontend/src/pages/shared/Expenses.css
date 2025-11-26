@@ -23,23 +23,6 @@
     font-weight: 600;
 }
 
-.add-expense-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.add-expense-btn:hover {
-    background-color: var(--primary-hover);
-}
 
 /* Table Container */
 .table-container {
@@ -237,15 +220,16 @@
 
 .save-btn {
     padding: 10px 16px;
-    border: none;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--primary);
-    color: white;
+    color: var(--text-primary);
     cursor: pointer;
 }
 
 .save-btn:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
 }
 
 .save-btn:disabled {
@@ -277,8 +261,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background-color: var(--primary-color);
-    color: white;
+    background-color: transparent;
+    color: var(--text-secondary);
     border: none;
     padding: 10px 16px;
     border-radius: 8px;
@@ -288,7 +272,8 @@
 }
 
 .add-expense-btn:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--hover-bg);
+    color: var(--text-primary);
 }
 
 .expenses-table-container {

@@ -92,3 +92,48 @@
         font-size: 11px;
     }
 }
+
+@media (max-width: 375px) {
+    .metric-value {
+        font-size: 20px;
+    }
+
+    .metric-title {
+        font-size: 12px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 6px;
+    }
+
+    .metric-footer {
+        font-size: 10px;
+    }
+
+    .metric-header {
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 320px) {
+    .metric-value {
+        font-size: 16px;
+    }
+
+    .metric-title {
+        font-size: 11px;
+    }
+
+    .metric-icon-wrapper {
+        padding: 5px;
+    }
+
+    .metric-icon-wrapper svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .metric-footer {
+        font-size: 9px;
+    }
+}

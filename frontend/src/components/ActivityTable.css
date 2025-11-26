@@ -98,3 +98,130 @@
 .footer-link:hover {
     text-decoration: underline;
 }
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .table-title {
+        font-size: 16px;
+    }
+
+    .table-subtitle {
+        font-size: 13px;
+    }
+
+    .activity-table {
+        font-size: 13px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-header {
+        margin-bottom: 12px;
+    }
+
+    .table-title {
+        font-size: 15px;
+    }
+
+    .table-subtitle {
+        font-size: 12px;
+    }
+
+    .activity-table {
+        font-size: 12px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 8px 10px;
+    }
+
+    .user-cell {
+        gap: 8px;
+    }
+
+    .user-avatar-small {
+        width: 20px;
+        height: 20px;
+        font-size: 10px;
+    }
+
+    .time-cell {
+        font-size: 11px;
+    }
+
+    .footer-link {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 375px) {
+    .table-title {
+        font-size: 14px;
+    }
+
+    .table-subtitle {
+        font-size: 11px;
+    }
+
+    .activity-table {
+        font-size: 11px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 6px 8px;
+    }
+
+    .user-avatar-small {
+        width: 18px;
+        height: 18px;
+        font-size: 9px;
+    }
+
+    .time-cell {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 320px) {
+    .table-title {
+        font-size: 15px;
+    }
+
+    .table-subtitle {
+        font-size: 10px;
+    }
+
+    .activity-table {
+        font-size: 10px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 10px 10px;
+    }
+
+    .user-cell {
+        gap: 6px;
+    }
+
+    .user-avatar-small {
+        width: 16px;
+        height: 16px;
+        font-size: 8px;
+    }
+
+    .time-cell {
+        font-size: 8px;
+    }
+
+    .footer-link {
+        font-size: 12px;
+    }
+}
