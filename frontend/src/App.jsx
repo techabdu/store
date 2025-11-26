@@ -18,6 +18,7 @@ import Receipt from './pages/user/Receipt';
 import SalesHistory from './pages/user/SalesHistory';
 import AdminReceipt from './pages/admin/Receipt';
 import AdminSalesHistory from './pages/admin/SalesHistory';
+import Expenses from './pages/shared/Expenses';
 
 function App() {
     return (
@@ -141,6 +142,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
                                     <SalesHistory />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/expenses"
+                            element={
+                                <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+                                    <Expenses />
                                 </ProtectedRoute>
                             }
                         />

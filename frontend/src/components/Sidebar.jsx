@@ -9,7 +9,8 @@ import {
   Activity,
   LogOut,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  DollarSign
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -35,7 +36,11 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
           { icon: Users, label: 'User Management', path: '/admin/users' },
           { icon: Package, label: 'Inventory', path: '/admin/inventory' },
           { icon: ShoppingCart, label: 'POS', path: '/admin/pos' },
+          { icon: FileText, label: 'Products', path: '/admin/products' },
           { icon: FileText, label: 'Sales History', path: '/admin/sales-history' },
+          { icon: DollarSign, label: 'Expenses', path: '/expenses' },
+          { icon: Users, label: 'Customers', path: '/admin/customers' },
+          { icon: Activity, label: 'Orders', path: '/admin/orders' },
           { icon: BarChart2, label: 'Reports', path: '/admin/reports' },
           { icon: Settings, label: 'Settings', path: '/admin/settings' },
         ];
@@ -45,6 +50,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
           { icon: Package, label: 'Inventory', path: '/user/inventory' },
           { icon: ShoppingCart, label: 'POS', path: '/user/pos' },
           { icon: FileText, label: 'Sales History', path: '/sales-history' },
+          { icon: DollarSign, label: 'Expenses', path: '/expenses' },
           { icon: Settings, label: 'Profile', path: '/user/profile' },
         ];
       default:
