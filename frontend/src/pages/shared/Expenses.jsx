@@ -165,9 +165,8 @@ const Expenses = () => {
                             <h1>Expenses</h1>
                             <p className="text-secondary" style={{ color: 'var(--text-secondary)', margin: 0 }}>Manage your daily expenses</p>
                         </div>
-                        <button className="add-expense-btn" onClick={openAddModal}>
-                            <Plus size={20} />
-                            Add Expense
+                        <button className="btn-primary" onClick={openAddModal}>
+                            + Add Expense
                         </button>
                     </div>
 

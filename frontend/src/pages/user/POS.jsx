@@ -22,6 +22,7 @@ const POS = () => {
     // Customer details
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
+    const [customerAddress, setCustomerAddress] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
 
     // Trade-in modal
@@ -184,6 +185,7 @@ const POS = () => {
             const response = await api.post('/transactions/create.php', {
                 customer_name: customerName,
                 customer_phone: customerPhone,
+                customer_address: customerAddress,
                 payment_method: paymentMethod,
                 items: cart
             });
@@ -330,6 +332,16 @@ const POS = () => {
                                             value={customerPhone}
                                             onChange={(e) => setCustomerPhone(e.target.value)}
                                             placeholder="Enter phone number"
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label>Address</label>
+                                        <input
+                                            type="text"
+                                            value={customerAddress}
+                                            onChange={(e) => setCustomerAddress(e.target.value)}
+                                            placeholder="Enter address"
                                         />
                                     </div>
 

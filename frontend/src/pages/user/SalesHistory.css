@@ -171,16 +171,16 @@
     }
 
     .data-table {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
 
     .data-table th,
     .data-table td {
-        padding: 0.5rem 0.25rem;
+        padding: 0.4rem 0.2rem;
     }
 
     .badge {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.4rem;
     }
 }

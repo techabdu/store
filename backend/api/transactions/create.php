@@ -60,6 +60,7 @@ if (!isset($input['payment_method']) || !in_array($input['payment_method'], ['ca
 // Extract input
 $customerName = trim($input['customer_name']);
 $customerPhone = isset($input['customer_phone']) ? trim($input['customer_phone']) : null;
+$customerAddress = isset($input['customer_address']) ? trim($input['customer_address']) : null;
 $paymentMethod = $input['payment_method'];
 $items = $input['items'];
 $userId = $_SESSION['user_id'];
@@ -175,15 +176,16 @@ try {
     
     // Insert transaction
     $transactionStmt = $conn->prepare(
-        "INSERT INTO transactions (user_id, customer_name, customer_phone, total_amount, payment_method) 
-         VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, payment_method) 
+         VALUES (?, ?, ?, ?, ?, ?)"
     );
     
     $transactionStmt->bind_param(
-        "issds",
+        "isssds",
         $userId,
         $customerName,
         $customerPhone,
+        $customerAddress,
         $totalAmount,
         $paymentMethod
     );
