@@ -22,6 +22,7 @@ import Expenses from './pages/shared/Expenses';
 import UserActivity from './pages/user/UserActivity';
 import AdminActivity from './pages/admin/AdminActivity';
 import Customers from './pages/admin/Customers';
+import AdminSettings from './pages/admin/AdminSettings';
 
 function App() {
     return (
@@ -111,6 +112,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin']}>
                                     <Customers />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/settings"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <AdminSettings />
                                 </ProtectedRoute>
                             }
                         />

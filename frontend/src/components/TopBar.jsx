@@ -102,7 +102,6 @@ const TopBar = ({ toggleSidebar, user }) => {
 
       <div className="top-bar-center">
         <div className="search-bar">
-          <Search size={20} className="search-icon" />
           <input type="text" placeholder="Search..." />
         </div>
       </div>
