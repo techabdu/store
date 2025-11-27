@@ -55,7 +55,7 @@ const AdminDashboard = () => {
     const metrics = [
         {
             title: 'Total Sales',
-            value: '$12,450',
+            value: '₦12,450',
             icon: DollarSign,
             trend: '+15% vs last month',
             trendDirection: 'up',
@@ -96,11 +96,11 @@ const AdminDashboard = () => {
     ];
 
     const recentOrders = [
-        { id: '#ORD-001', customer: 'John Doe', status: 'Completed', total: '$120.00', date: '2 mins ago' },
-        { id: '#ORD-002', customer: 'Jane Smith', status: 'Processing', total: '$85.50', date: '15 mins ago' },
-        { id: '#ORD-003', customer: 'Bob Johnson', status: 'Pending', total: '$245.00', date: '1 hour ago' },
-        { id: '#ORD-004', customer: 'Alice Brown', status: 'Completed', total: '$65.00', date: '3 hours ago' },
-        { id: '#ORD-005', customer: 'Charlie Wilson', status: 'Cancelled', total: '$15.00', date: '5 hours ago' }
+        { id: '#ORD-001', customer: 'John Doe', status: 'Completed', total: '₦120.00', date: '2 mins ago' },
+        { id: '#ORD-002', customer: 'Jane Smith', status: 'Processing', total: '₦85.50', date: '15 mins ago' },
+        { id: '#ORD-003', customer: 'Bob Johnson', status: 'Pending', total: '₦245.00', date: '1 hour ago' },
+        { id: '#ORD-004', customer: 'Alice Brown', status: 'Completed', total: '₦65.00', date: '3 hours ago' },
+        { id: '#ORD-005', customer: 'Charlie Wilson', status: 'Cancelled', total: '₦15.00', date: '5 hours ago' }
     ];
 
     // Fetch Dashboard Data

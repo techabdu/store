@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import { Plus, Edit2, Trash2, X, Calendar, Tag } from 'lucide-react';
+import { FaSearch } from 'react-icons/fa';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import '../../styles/dashboard.css';
@@ -10,6 +11,8 @@ import './Expenses.css';
 const Expenses = () => {
     const { user } = useAuth();
     const [expenses, setExpenses] = useState([]);
+    const [filteredExpenses, setFilteredExpenses] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentExpense, setCurrentExpense] = useState(null);
@@ -46,6 +49,23 @@ const Expenses = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Filter expenses when search term changes
+    useEffect(() => {
+        if (searchTerm.trim() === '') {
+            setFilteredExpenses(expenses);
+        } else {
+            const lowerTerm = searchTerm.toLowerCase();
+            const filtered = expenses.filter(expense =>
+                expense.description.toLowerCase().includes(lowerTerm) ||
+                expense.category.toLowerCase().includes(lowerTerm) ||
+                expense.amount.toString().includes(lowerTerm) ||
+                expense.date.includes(lowerTerm) ||
+                (expense.created_by_name && expense.created_by_name.toLowerCase().includes(lowerTerm))
+            );
+            setFilteredExpenses(filtered);
+        }
+    }, [searchTerm, expenses]);
+
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
@@ -56,6 +76,7 @@ const Expenses = () => {
             const response = await api.get('/expenses.php');
             if (response.data.success) {
                 setExpenses(response.data.expenses);
+                setFilteredExpenses(response.data.expenses);
             }
         } catch (err) {
             console.error('Failed to fetch expenses:', err);
@@ -172,6 +193,18 @@ const Expenses = () => {
 
                     {error && <div className="error-message" style={{ color: 'var(--error)', marginBottom: '16px' }}>{error}</div>}
 
+                    <div className="search-bar-container">
+                        <div className="search-input-wrapper">
+                            <FaSearch className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search expenses by description, category, amount, date, or creator..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
                     <div className="table-container">
                         <table className="data-table">
                             <thead>
@@ -185,12 +218,14 @@ const Expenses = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {expenses.length === 0 ? (
+                                {filteredExpenses.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>No expenses found</td>
+                                        <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>
+                                            {searchTerm ? 'No expenses match your search' : 'No expenses found'}
+                                        </td>
                                     </tr>
                                 ) : (
-                                    expenses.map(expense => (
+                                    filteredExpenses.map(expense => (
                                         <tr key={expense.id}>
                                             <td>{expense.date}</td>
                                             <td>{expense.description}</td>

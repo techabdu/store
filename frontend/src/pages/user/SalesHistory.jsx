@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { FaSearch } from 'react-icons/fa';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import './SalesHistory.css';
@@ -10,6 +11,8 @@ const SalesHistory = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
+    const [filteredTransactions, setFilteredTransactions] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -34,6 +37,27 @@ const SalesHistory = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Filter transactions when search term changes
+    useEffect(() => {
+        if (searchTerm.trim() === '') {
+            setFilteredTransactions(transactions);
+        } else {
+            const lowerTerm = searchTerm.toLowerCase();
+            const filtered = transactions.filter(tx => {
+                const receiptNum = String(tx.id).padStart(6, '0');
+                return (
+                    tx.customer_name.toLowerCase().includes(lowerTerm) ||
+                    (tx.customer_phone && tx.customer_phone.includes(lowerTerm)) ||
+                    receiptNum.includes(lowerTerm) ||
+                    lowerTerm.replace('#', '').includes(receiptNum) ||
+                    tx.payment_method.toLowerCase().includes(lowerTerm) ||
+                    (tx.processed_by && tx.processed_by.toLowerCase().includes(lowerTerm))
+                );
+            });
+            setFilteredTransactions(filtered);
+        }
+    }, [searchTerm, transactions]);
+
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
@@ -50,8 +74,10 @@ const SalesHistory = () => {
             if (response.data.success) {
                 if (page === 0) {
                     setTransactions(response.data.transactions);
+                    setFilteredTransactions(response.data.transactions);
                 } else {
                     setTransactions(prev => [...prev, ...response.data.transactions]);
+                    setFilteredTransactions(prev => [...prev, ...response.data.transactions]);
                 }
 
                 if (response.data.transactions.length < 20) {
@@ -91,6 +117,18 @@ const SalesHistory = () => {
 
                     {error && <div className="error-message">{error}</div>}
 
+                    <div className="search-bar-container">
+                        <div className="search-input-wrapper">
+                            <FaSearch className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search by customer, phone, receipt #, payment method, or processor..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
                     <div className="table-container">
                         <table className="data-table">
                             <thead>
@@ -106,14 +144,14 @@ const SalesHistory = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {transactions.length === 0 && !loading ? (
+                                {filteredTransactions.length === 0 && !loading ? (
                                     <tr>
                                         <td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>
-                                            No sales found
+                                            {searchTerm ? 'No sales match your search' : 'No sales found'}
                                         </td>
                                     </tr>
                                 ) : (
-                                    transactions.map((tx) => (
+                                    filteredTransactions.map((tx) => (
                                         <tr key={tx.id}>
                                             <td>{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                                             <td>#{String(tx.id).padStart(6, '0')}</td>

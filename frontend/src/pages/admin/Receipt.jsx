@@ -81,11 +81,11 @@ const Receipt = () => {
                 <div className="content-wrapper">
                     <div className="receipt-container">
                         <div className="receipt-actions">
-                            <button className="btn-secondary" onClick={() => navigate('/admin/pos')}>
-                                ← Back to POS
+                            <button className="btn-secondary" onClick={() => navigate('/admin/sales-history')}>
+                                ← Back
                             </button>
                             <button className="btn-primary" onClick={handlePrint}>
-                                🖨️ Print Receipt
+                                Print Receipt
                             </button>
                         </div>
 
