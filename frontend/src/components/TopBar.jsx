@@ -3,6 +3,7 @@ import { Menu, Search, Bell, Settings, User, Moon, Sun, LogOut, ChevronDown } fr
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import './TopBar.css';
 
 const TopBar = ({ toggleSidebar, user }) => {
@@ -10,6 +11,7 @@ const TopBar = ({ toggleSidebar, user }) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [shopSettings, setShopSettings] = useState(null);
   const dropdownRef = useRef(null);
 
   // Get role display name
@@ -50,6 +52,22 @@ const TopBar = ({ toggleSidebar, user }) => {
     return user.username.substring(0, 2).toUpperCase();
   };
 
+  // Fetch shop settings
+  useEffect(() => {
+    const fetchShopSettings = async () => {
+      try {
+        const response = await api.get('/shop_settings.php');
+        if (response.data.success) {
+          setShopSettings(response.data.settings);
+        }
+      } catch (err) {
+        console.error('Failed to load shop settings:', err);
+      }
+    };
+
+    fetchShopSettings();
+  }, []);
+
   // Toggle dropdown
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -83,7 +101,8 @@ const TopBar = ({ toggleSidebar, user }) => {
     setIsDropdownOpen(false);
     // Navigate to profile settings page based on role
     const basePath = user?.role === 'superadmin' ? '/superadmin' : user?.role === 'admin' ? '/admin' : '/user';
-    navigate(`${basePath}/profile`);
+    const settingsPath = user?.role === 'admin' ? 'settings' : 'profile';
+    navigate(`${basePath}/${settingsPath}`);
   };
 
   return (
@@ -93,7 +112,7 @@ const TopBar = ({ toggleSidebar, user }) => {
           <Menu size={24} />
         </button>
         <div className="logo">
-          <span className="logo-text">Phone Retailer</span>
+          <span className="logo-text">{shopSettings?.shop_name || 'Phone Retailer'}</span>
         </div>
         <div className="breadcrumbs">
           <span>Dashboard</span> / <span>{getRoleDisplay()}</span>

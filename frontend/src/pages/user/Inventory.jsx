@@ -18,6 +18,7 @@ const Inventory = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1); // Step 1 or 2 for multi-step modal
 
     // Form state for add/edit
     const [formData, setFormData] = useState({
@@ -182,6 +183,30 @@ const Inventory = () => {
             cost_price: '',
             status: 'in_stock'
         });
+        setCurrentStep(1); // Reset to step 1
+    };
+
+    // Validate Step 1 fields
+    const validateStep1 = () => {
+        return formData.brand.trim() !== '' &&
+            formData.model.trim() !== '' &&
+            formData.imei.trim() !== '' &&
+            formData.imei.length === 15;
+    };
+
+    // Handle Next button
+    const handleNext = () => {
+        if (validateStep1()) {
+            setCurrentStep(2);
+        } else {
+            setError('Please fill in all required fields in Step 1 (Brand, Model, and valid 15-digit IMEI)');
+        }
+    };
+
+    // Handle Previous button
+    const handlePrevious = () => {
+        setCurrentStep(1);
+        setError(''); // Clear any errors when going back
     };
 
     return (
@@ -300,125 +325,165 @@ const Inventory = () => {
                             </div>
                         )}
 
-                        {/* Add Modal */}
+                        {/* Add Modal - Multi-Step */}
                         {showAddModal && (
-                            <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                            <div className="modal-overlay" onClick={() => {
+                                setShowAddModal(false);
+                                resetForm();
+                            }}>
                                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                                    <h2>Add New Phone</h2>
+                                    <div className="modal-header">
+                                        <h2>Add New Phone</h2>
+                                        <div className="step-indicator">
+                                            Step {currentStep} of 2
+                                        </div>
+                                    </div>
+
                                     <form onSubmit={handleAddItem}>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label>Brand *</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.brand}
-                                                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Model *</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.model}
-                                                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* Step 1: Basic Information */}
+                                        {currentStep === 1 && (
+                                            <div className="form-step">
+                                                <h3 className="step-title">Basic Information</h3>
 
-                                        <div className="form-group">
-                                            <label>IMEI (15 digits) *</label>
-                                            <input
-                                                type="text"
-                                                value={formData.imei}
-                                                onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
-                                                pattern="[0-9]{15}"
-                                                maxLength="15"
-                                                required
-                                            />
-                                        </div>
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Brand *</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.brand}
+                                                            onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                                            placeholder="e.g., iPhone, Samsung"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Model *</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.model}
+                                                            onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                                                            placeholder="e.g., 14 Pro Max"
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label>Color</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.color}
-                                                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Storage</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.storage}
-                                                    onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                                                    placeholder="e.g., 128GB"
-                                                />
-                                            </div>
-                                        </div>
+                                                <div className="form-group">
+                                                    <label>IMEI (15 digits) *</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.imei}
+                                                        onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
+                                                        pattern="[0-9]{15}"
+                                                        maxLength="15"
+                                                        placeholder="Enter 15-digit IMEI"
+                                                    />
+                                                </div>
 
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label>Condition *</label>
-                                                <select
-                                                    value={formData.condition_status}
-                                                    onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
-                                                    required
-                                                >
-                                                    <option value="new">New</option>
-                                                    <option value="used">Used</option>
-                                                </select>
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Color</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.color}
+                                                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                                            placeholder="e.g., Black, White"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Storage</label>
+                                                        <input
+                                                            type="text"
+                                                            value={formData.storage}
+                                                            onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
+                                                            placeholder="e.g., 128GB, 256GB"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="form-group">
-                                                <label>Status *</label>
-                                                <select
-                                                    value={formData.status}
-                                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                                    required
-                                                >
-                                                    <option value="in_stock">In Stock</option>
-                                                    <option value="returned">Returned</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                        )}
 
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label>Selling Price *</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    value={formData.price}
-                                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Cost Price *</label>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    value={formData.cost_price}
-                                                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
+                                        {/* Step 2: Pricing & Status */}
+                                        {currentStep === 2 && (
+                                            <div className="form-step">
+                                                <h3 className="step-title">Pricing & Status</h3>
 
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Condition *</label>
+                                                        <select
+                                                            value={formData.condition_status}
+                                                            onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
+                                                            required
+                                                        >
+                                                            <option value="new">New</option>
+                                                            <option value="used">Used</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Status *</label>
+                                                        <select
+                                                            value={formData.status}
+                                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                                            required
+                                                        >
+                                                            <option value="in_stock">In Stock</option>
+                                                            <option value="returned">Returned</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-row">
+                                                    <div className="form-group">
+                                                        <label>Selling Price (₦) *</label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={formData.price}
+                                                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                            placeholder="0.00"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Cost Price (₦) *</label>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={formData.cost_price}
+                                                            onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                                                            placeholder="0.00"
+                                                            required
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Navigation Buttons */}
                                         <div className="modal-actions">
-                                            <button type="button" className="btn-secondary" onClick={() => {
-                                                setShowAddModal(false);
-                                                resetForm();
-                                            }}>
-                                                Cancel
-                                            </button>
-                                            <button type="submit" className="btn-primary">
-                                                Add Phone
-                                            </button>
+                                            {currentStep === 1 ? (
+                                                <>
+                                                    <button type="button" className="btn-secondary" onClick={() => {
+                                                        setShowAddModal(false);
+                                                        resetForm();
+                                                    }}>
+                                                        Cancel
+                                                    </button>
+                                                    <button type="button" className="btn-primary" onClick={handleNext}>
+                                                        Next →
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button type="button" className="btn-secondary" onClick={handlePrevious}>
+                                                        ← Previous
+                                                    </button>
+                                                    <button type="submit" className="btn-primary">
+                                                        Add Phone
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </form>
                                 </div>

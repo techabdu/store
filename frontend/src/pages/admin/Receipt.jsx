@@ -11,6 +11,7 @@ const Receipt = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [transaction, setTransaction] = useState(null);
+    const [shopSettings, setShopSettings] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -36,6 +37,22 @@ const Receipt = () => {
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
+
+    // Fetch shop settings
+    useEffect(() => {
+        const fetchShopSettings = async () => {
+            try {
+                const response = await api.get('/shop_settings.php');
+                if (response.data.success) {
+                    setShopSettings(response.data.settings);
+                }
+            } catch (err) {
+                console.error('Failed to load shop settings:', err);
+            }
+        };
+
+        fetchShopSettings();
+    }, []);
 
     useEffect(() => {
         const fetchTransaction = async () => {
@@ -91,11 +108,11 @@ const Receipt = () => {
 
                         <div className="receipt-paper">
                             <div className="store-header">
-                                <h1>Phone Retailer Store</h1>
+                                <h1>{shopSettings?.shop_name || 'Phone Retailer Store'}</h1>
                                 <div className="store-info">
-                                    <p>123 Tech Street, Digital City</p>
-                                    <p>Phone: +234 800 123 4567</p>
-                                    <p>Email: support@store.com</p>
+                                    <p>{shopSettings?.shop_address || '123 Tech Street, Digital City'}</p>
+                                    <p>Phone: {shopSettings?.shop_phone || '+234 800 123 4567'}</p>
+                                    <p>Email: {shopSettings?.shop_email || 'support@store.com'}</p>
                                 </div>
                             </div>
 

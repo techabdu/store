@@ -23,9 +23,15 @@
 
 .logo-text {
     font-size: 20px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-primary);
     margin-left: 8px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    transition: all 0.2s ease;
 }
 
 .breadcrumbs {
@@ -304,6 +310,14 @@
         padding: 0 16px;
     }
 
+    .logo-text {
+        font-size: 16px;
+        font-weight: 700;
+        margin-left: 4px;
+        max-width: 150px;
+        letter-spacing: -0.01em;
+    }
+
     .profile-dropdown {
         right: -8px;
         min-width: 260px;
@@ -311,5 +325,23 @@
 
     .dropdown-arrow {
         display: none;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .logo-text {
+        font-size: 14px;
+        font-weight: 700;
+        max-width: 120px;
+        letter-spacing: 0;
+    }
+
+    .top-bar {
+        padding: 0 12px;
+    }
+
+    .top-bar-left {
+        gap: 8px;
     }
 }

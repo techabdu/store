@@ -318,7 +318,9 @@ const AdminSettings = () => {
                                         value={shopSettings.shop_name || ''}
                                         onChange={handleShopSettingChange}
                                         placeholder="Enter shop name"
+                                        maxLength={23}
                                     />
+                                    <small className="text-secondary">Maximum 23 characters for optimal display</small>
                                 </div>
 
                                 <div className="form-group">
