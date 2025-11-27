@@ -34,35 +34,43 @@
 }
 
 /* Search Bar Styles */
-.dashboard-card.search-filter-bar {
-    padding: 16px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 24px !important;
+.search-bar-container {
+    margin-bottom: 1.5rem;
 }
 
-.search-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 250px;
+.search-input-wrapper {
+    position: relative;
+    max-width: 600px;
 }
 
-.search-input {
-    flex: 1;
-    padding: 10px 12px;
-    border-radius: 4px;
+.search-input-wrapper input {
+    width: 100%;
+    padding: 12px 16px 12px 44px;
     border: 1px solid var(--border-color);
-    background-color: var(--bg-background);
+    border-radius: 8px;
+    background-color: var(--input-bg);
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
 }
 
-.search-input:focus {
+.search-input-wrapper input:focus {
     outline: none;
     border-color: var(--primary);
+}
+
+.search-input-wrapper input::placeholder {
+    color: var(--text-secondary);
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 16px;
+    pointer-events: none;
 }
 
 /* User Table Styles */
@@ -318,9 +326,7 @@
 }
 
 @media (max-width: 768px) {
-    .dashboard-card.search-filter-bar {
-        margin-bottom: 20px !important;
-    }
+    /* Removed .dashboard-card.search-filter-bar from here as per instruction */
 
     .user-table th:nth-child(2),
     .user-table td:nth-child(2) {
@@ -342,16 +348,9 @@
     .modal-body {
         padding: 16px;
     }
-
-    .search-container {
-        min-width: 100%;
-    }
 }
 
 @media (max-width: 480px) {
-    .dashboard-card.search-filter-bar {
-        margin-bottom: 16px !important;
-    }
 
     .user-table th,
     .user-table td {
@@ -384,14 +383,9 @@
         font-size: 13px;
     }
 
-    .dashboard-card.search-filter-bar {
-        padding: 12px;
-        margin-bottom: 16px !important;
-    }
-
-    .search-container {
-        min-width: auto;
-        width: 100%;
+    .add-user-btn {
+        padding: 8px 8px;
+        font-size: 13px;
     }
 
     .user-table th,
@@ -438,9 +432,9 @@
         font-size: 12px;
     }
 
-    .dashboard-card.search-filter-bar {
-        padding: 10px;
-        margin-bottom: 12px !important;
+    .add-user-btn {
+        padding: 8px 8px;
+        font-size: 12px;
     }
 
     /* Hide email on very small screens to save space */

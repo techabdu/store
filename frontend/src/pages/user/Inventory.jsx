@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { FaSearch } from 'react-icons/fa';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import './Inventory.css';
@@ -208,14 +209,16 @@ const Inventory = () => {
 
                         {error && <div className="error-message">{error}</div>}
 
-                        <div className="inventory-filters">
-                            <input
-                                type="text"
-                                placeholder="Search by brand, model, or IMEI..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
-                            />
+                        <div className="search-bar-container">
+                            <div className="search-input-wrapper">
+                                <FaSearch className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by brand, model, IMEI, color, or storage..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
 
                             <select
                                 value={statusFilter}

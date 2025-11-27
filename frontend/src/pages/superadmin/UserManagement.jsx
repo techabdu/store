@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import {
     Plus,
-    Search,
     MoreVertical,
     Trash2,
     Lock,
@@ -14,6 +13,7 @@ import {
     Edit2,
     X
 } from 'lucide-react';
+import { FaSearch } from 'react-icons/fa';
 import '../../styles/dashboard.css';
 import './UserManagement.css';
 
@@ -193,16 +193,15 @@ const UserManagement = () => {
                         </button>
                     </div>
 
-                    {/* Search and Filter Bar */}
-                    <div className="dashboard-card search-filter-bar mb-24">
-                        <div className="search-container">
-                            <Search size={20} style={{ color: 'var(--text-secondary)' }} />
+                    {/* Search Bar */}
+                    <div className="search-bar-container">
+                        <div className="search-input-wrapper">
+                            <FaSearch className="search-icon" />
                             <input
                                 type="text"
                                 placeholder="Search users..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
                             />
                         </div>
                     </div>
