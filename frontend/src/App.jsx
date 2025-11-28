@@ -23,6 +23,7 @@ import UserActivity from './pages/user/UserActivity';
 import AdminActivity from './pages/admin/AdminActivity';
 import Customers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/AdminSettings';
+import Report from './pages/admin/Report';
 
 function App() {
     return (
@@ -120,6 +121,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin']}>
                                     <AdminSettings />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/report"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <Report />
                                 </ProtectedRoute>
                             }
                         />
