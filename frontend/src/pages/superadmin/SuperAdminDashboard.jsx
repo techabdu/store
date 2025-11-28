@@ -6,11 +6,13 @@ import ChartCard from '../../components/ChartCard';
 import ActivityTable from '../../components/ActivityTable';
 import AlertsList from '../../components/AlertsList';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../utils/api';
 import {
     Activity,
     Users,
     Clock,
-    Database
+    Database,
+    AlertTriangle
 } from 'lucide-react';
 import {
     LineChart,
@@ -32,6 +34,9 @@ const SuperAdminDashboard = () => {
     const { user } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dashboardData, setDashboardData] = useState(null);
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -50,86 +55,116 @@ const SuperAdminDashboard = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                setLoading(true);
+                const response = await api.get('/superadmin/system_insights.php?tab=overview');
+                if (response.data.success) {
+                    setDashboardData(response.data.data);
+                } else {
+                    setError('Failed to load dashboard data');
+                }
+            } catch (err) {
+                console.error('Error fetching dashboard data:', err);
+                setError('Failed to connect to server');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
     };
 
-    // Mock Data
-    const metrics = [
+    if (loading) {
+        return (
+            <div className="dashboard-container">
+                <TopBar toggleSidebar={toggleSidebar} user={user} />
+                <Sidebar isOpen={sidebarOpen} isMobile={isMobile} closeSidebar={() => setSidebarOpen(false)} />
+                <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
+                    <div className="content-wrapper flex items-center justify-center h-screen">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    // Process Data for UI
+    const metrics = dashboardData ? [
         {
             title: 'System Health',
-            value: 'Healthy',
+            value: dashboardData.system?.health || 'Unknown',
             icon: Activity,
-            subtitle: 'All systems operational',
-            color: 'success'
+            subtitle: 'Overall Status',
+            color: dashboardData.system?.health === 'Healthy' ? 'success' : 'warning'
         },
         {
             title: 'Active Users',
-            value: '12',
+            value: dashboardData.performance?.active_users?.active_count || 0,
             icon: Users,
-            trend: '+2 this week',
+            trend: 'Live',
             trendDirection: 'up',
-            subtitle: '5 Admins, 7 Users',
+            subtitle: 'Currently online',
             color: 'info'
         },
         {
             title: 'System Uptime',
-            value: '99.8%',
+            value: dashboardData.system?.uptime?.days !== undefined
+                ? `${dashboardData.system.uptime.days}d ${dashboardData.system.uptime.hours}h`
+                : 'N/A',
             icon: Clock,
-            trend: '+0.2%',
-            trendDirection: 'up',
-            subtitle: 'Last 30 days',
+            subtitle: 'Since last restart',
             color: 'success'
         },
         {
-            title: 'Last Backup',
-            value: '2h ago',
+            title: 'Database Size',
+            value: dashboardData.database?.size?.size_mb + ' MB',
             icon: Database,
-            subtitle: 'Auto backup enabled',
+            subtitle: 'Allocated: ' + dashboardData.database?.size?.allocated_mb + ' MB',
             color: 'info'
         }
-    ];
+    ] : [];
 
-    const chartData = [
-        { day: 'Mon', admins: 8, users: 15 },
-        { day: 'Tue', admins: 12, users: 18 },
-        { day: 'Wed', admins: 10, users: 20 },
-        { day: 'Thu', admins: 15, users: 22 },
-        { day: 'Fri', admins: 11, users: 19 },
-        { day: 'Sat', admins: 5, users: 8 },
-        { day: 'Sun', admins: 6, users: 10 }
-    ];
+    // Map chart data
+    const chartData = dashboardData?.activity?.chart_data?.map(item => ({
+        day: item.day_name.substring(0, 3), // Mon, Tue...
+        activity: item.activity_count
+    })) || [];
 
-    const pieData = [
-        { name: 'SuperAdmin', value: 1, color: '#EA4335' },
-        { name: 'Admins', value: 5, color: '#4285F4' },
-        { name: 'Users', value: 6, color: '#34A853' }
-    ];
+    // Map pie data
+    const roleColors = {
+        'superadmin': '#EA4335',
+        'admin': '#4285F4',
+        'user': '#34A853'
+    };
 
-    const recentActivity = [
-        { username: 'it support', action: 'Changed shop name', timestamp: '2 hours ago' },
-        { username: 'it support', action: 'Reset admin password', timestamp: '5 hours ago' },
-        { username: 'it support', action: 'Updated system settings', timestamp: '1 day ago' },
-        { username: 'it support', action: 'Logged in', timestamp: '2 days ago' },
-        { username: 'admin1', action: 'Created new user', timestamp: '3 days ago' }
-    ];
+    const pieData = dashboardData?.business?.user_stats?.by_role ?
+        Object.entries(dashboardData.business.user_stats.by_role).map(([role, count]) => ({
+            name: role.charAt(0).toUpperCase() + role.slice(1),
+            value: count,
+            color: roleColors[role] || '#888888'
+        })) : [];
 
-    const alerts = [
-        {
-            title: 'Disk Space Low',
-            description: 'Database backup storage at 85%',
-            timestamp: '1 hour ago',
-            color: 'warning',
-            action: 'View Details'
-        },
-        {
-            title: 'Update Available',
-            description: 'System version 1.1.0 is ready',
-            timestamp: '3 hours ago',
-            color: 'info',
-            action: 'Update Now'
-        }
-    ];
+    // Map recent activity
+    const recentActivity = dashboardData?.activity?.recent_logs?.map(log => ({
+        username: log.username,
+        action: log.action,
+        timestamp: new Date(log.created_at).toLocaleString()
+    })) || [];
+
+    // Map alerts
+    const alerts = dashboardData?.alerts?.recent_critical?.map(alert => ({
+        title: alert.type.replace('_', ' ').toUpperCase(),
+        description: alert.message,
+        timestamp: new Date(alert.created_at).toLocaleTimeString(),
+        color: alert.severity === 'critical' ? 'danger' : 'warning',
+        action: 'View'
+    })) || [];
 
     return (
         <div className="dashboard-container">
@@ -149,6 +184,13 @@ const SuperAdminDashboard = () => {
                         <p className="text-secondary">Welcome back, {user?.username || 'SuperAdmin'}</p>
                     </div>
 
+                    {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                            <strong className="font-bold">Error!</strong>
+                            <span className="block sm:inline"> {error}</span>
+                        </div>
+                    )}
+
                     {/* Metrics Grid */}
                     <div className="grid-4">
                         {metrics.map((metric, index) => (
@@ -158,7 +200,7 @@ const SuperAdminDashboard = () => {
 
                     {/* Charts Grid */}
                     <div className="grid-2">
-                        <ChartCard title="User Activity" subtitle="Login activity over the last 7 days">
+                        <ChartCard title="System Activity" subtitle="Activity volume over the last 7 days">
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
@@ -168,8 +210,7 @@ const SuperAdminDashboard = () => {
                                         contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                                     />
                                     <Legend />
-                                    <Line type="monotone" dataKey="admins" stroke="#4285F4" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                    <Line type="monotone" dataKey="users" stroke="#34A853" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="activity" stroke="#4285F4" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Total Activity" />
                                 </LineChart>
                             </ResponsiveContainer>
                         </ChartCard>

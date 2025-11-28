@@ -16,6 +16,7 @@ require_once __DIR__ . '/../../classes/SystemResources.php';
 require_once __DIR__ . '/../../classes/PerformanceMonitor.php';
 require_once __DIR__ . '/../../classes/AuditCompliance.php';
 require_once __DIR__ . '/../../classes/VulnerabilityScanner.php';
+require_once __DIR__ . '/../../classes/BusinessMetrics.php';
 
 // CORS Headers
 header("Access-Control-Allow-Origin: http://localhost:5173");
@@ -239,6 +240,8 @@ function getOverviewData() {
     $performanceMonitor = new PerformanceMonitor();
     $businessMetrics = new BusinessMetrics();
     $vulnerabilityScanner = new VulnerabilityScanner();
+    $systemResources = new SystemResources();
+    $auditCompliance = new AuditCompliance();
     
     // Check cache first
     $cached = $dbHealth->getCachedMetric('overview_dashboard');
@@ -246,6 +249,9 @@ function getOverviewData() {
         $GLOBALS['response']['cached'] = true;
         return $cached;
     }
+    
+    // Get peak usage for chart
+    $peakUsage = $performanceMonitor->getPeakUsageTimes(7);
     
     // Generate fresh data
     $data = [
@@ -258,7 +264,7 @@ function getOverviewData() {
             'integrity_status' => $dbHealth->checkDatabaseIntegrity()['status']
         ],
         'performance' => [
-            'active_users' => $performanceMonitor->getActiveUsers()['active_count'],
+            'active_users' => $performanceMonitor->getActiveUsers(),
             'error_rate' => $performanceMonitor->getErrorRate(24)['error_rate_percentage']
         ],
         'business' => [
@@ -268,6 +274,14 @@ function getOverviewData() {
         'security' => [
             'overall_score' => $vulnerabilityScanner->generateSecurityScore()['overall_score'],
             'status' => $vulnerabilityScanner->generateSecurityScore()['status']
+        ],
+        'system' => [
+            'uptime' => $systemResources->getServerUptime(),
+            'health' => 'Healthy' // You might want to derive this from alerts
+        ],
+        'activity' => [
+            'recent_logs' => $auditCompliance->getRecentActivities(5),
+            'chart_data' => $peakUsage['daily_activity']
         ]
     ];
     
