@@ -9,7 +9,11 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_maxlifetime', 172800); // 48 hours
     ini_set('session.cookie_lifetime', 172800);
     ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
+    
+    // Secure cookie only if HTTPS is enabled
+    $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+    ini_set('session.cookie_secure', $isHttps ? 1 : 0);
+    
     ini_set('session.use_strict_mode', 1);
     
     session_start();

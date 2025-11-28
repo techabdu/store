@@ -54,10 +54,11 @@ if ($action === 'get_customers') {
             "data" => $customers
         ]);
     } catch (Exception $e) {
+        error_log("Error fetching customers: " . $e->getMessage());
         http_response_code(500);
         echo json_encode([
             "success" => false,
-            "message" => "Error fetching customers: " . $e->getMessage()
+            "message" => "An internal error occurred while fetching customers."
         ]);
     }
 } elseif ($action === 'get_customer_details') {
@@ -133,10 +134,11 @@ if ($action === 'get_customers') {
         ]);
 
     } catch (Exception $e) {
+        error_log("Error fetching customer details: " . $e->getMessage());
         http_response_code(500);
         echo json_encode([
             "success" => false,
-            "message" => "Error fetching customer details: " . $e->getMessage()
+            "message" => "An internal error occurred while fetching customer details."
         ]);
     }
 } else {

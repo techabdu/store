@@ -49,6 +49,38 @@ class SecurityMonitor {
             return false;
         }
     }
+
+    /**
+     * Check if IP or Username is rate limited
+     * 
+     * @param string $ip IP address
+     * @param string $username Username
+     * @return bool True if rate limited
+     */
+    public function isRateLimited($ip, $username) {
+        try {
+            // Check failed logins in last 10 minutes
+            $stmt = $this->conn->prepare(
+                "SELECT COUNT(*) as attempt_count 
+                 FROM security_logs 
+                 WHERE event_type = 'failed_login' 
+                 AND (ip_address = ? OR username = ?)
+                 AND created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)"
+            );
+            
+            $stmt->bind_param("ss", $ip, $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $stmt->close();
+            
+            // Block if more than 5 failed attempts
+            return $row['attempt_count'] > 5;
+        } catch (Exception $e) {
+            error_log("Rate limit check failed: " . $e->getMessage());
+            return false;
+        }
+    }
     
     /**
      * Check if failed login threshold is exceeded and create alert

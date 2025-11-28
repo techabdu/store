@@ -47,7 +47,17 @@ jobs:
           server-dir: ./
           dangerous-clean-slate: false
 
-      # 7. Deploy Backend to Hostinger
+      # 7. Create Production .env File
+      - name: Create Production .env
+        run: |
+          cat > backend/.env << EOF
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASS=${{ secrets.DB_PASS }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          EOF
+
+      # 8. Deploy Backend to Hostinger
       - name: Deploy Backend via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:

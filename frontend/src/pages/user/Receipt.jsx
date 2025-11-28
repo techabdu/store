@@ -99,10 +99,10 @@ const Receipt = () => {
                     <div className="receipt-container">
                         <div className="receipt-actions">
                             <button className="btn-secondary" onClick={() => navigate('/user/pos')}>
-                                ← Back to POS
+                                ← Back
                             </button>
                             <button className="btn-primary" onClick={handlePrint}>
-                                🖨️ Print Receipt
+                                Print Receipt
                             </button>
                         </div>
 
