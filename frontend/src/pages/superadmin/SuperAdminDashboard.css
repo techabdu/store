@@ -1,33 +1,15 @@
-.content-wrapper {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding-top: 88px;
-    padding-bottom: 48px;
-    /* TopBar height + spacing */
-}
-
 .page-header {
     margin-bottom: 32px;
 }
 
 /* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
-    .content-wrapper {
-        padding-top: 72px;
-        padding-bottom: 32px;
-    }
-
     .page-header {
         margin-bottom: 20px;
     }
 }
 
 @media (max-width: 480px) {
-    .content-wrapper {
-        padding-top: 68px;
-        padding-bottom: 24px;
-    }
-
     .page-header {
         margin-bottom: 16px;
     }

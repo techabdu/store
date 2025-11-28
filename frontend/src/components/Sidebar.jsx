@@ -25,10 +25,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
           { icon: Users, label: 'User Management', path: '/superadmin/users' },
-          { icon: Settings, label: 'Shop Settings', path: '/superadmin/settings' },
-          { icon: BarChart2, label: 'System Insights', path: '/superadmin/insights' },
-          { icon: FileText, label: 'Activity Logs', path: '/superadmin/logs' },
-          { icon: Activity, label: 'System Health', path: '/superadmin/health' },
+          { icon: BarChart2, label: 'System Insights', path: '/superadmin/system-insights' }
         ];
       case 'admin':
         return [

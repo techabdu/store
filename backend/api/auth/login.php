@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
+require_once __DIR__ . '/../../classes/SecurityMonitor.php';
 
 // CORS Headers
 header("Access-Control-Allow-Origin: http://localhost:5173");
@@ -41,6 +42,12 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
+    // Log failed login attempt
+    $securityMonitor = new SecurityMonitor();
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $securityMonitor->logFailedLogin($username, $ip, $userAgent);
+    
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Invalid credentials']);
     exit;
@@ -50,6 +57,12 @@ $user = $result->fetch_assoc();
 
 // Verify password
 if (!password_verify($password, $user['password_hash'])) {
+    // Log failed login attempt
+    $securityMonitor = new SecurityMonitor();
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $securityMonitor->logFailedLogin($username, $ip, $userAgent);
+    
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Invalid credentials']);
     exit;
@@ -57,6 +70,12 @@ if (!password_verify($password, $user['password_hash'])) {
 
 // Check status
 if ($user['status'] !== 'active') {
+    // Log failed login attempt (inactive account)
+    $securityMonitor = new SecurityMonitor();
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $securityMonitor->logFailedLogin($username, $ip, $userAgent);
+    
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Account is inactive. Please contact support.']);
     exit;

@@ -80,9 +80,31 @@ body {
     transition: margin-left 0.3s ease, padding 0.3s ease;
 }
 
+.content-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-top: 88px;
+    padding-bottom: 48px;
+    /* TopBar height + spacing */
+}
+
 @media (max-width: 1024px) {
     .main-content {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding-top: 72px;
+        padding-bottom: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .content-wrapper {
+        padding-top: 68px;
+        padding-bottom: 24px;
     }
 }
 

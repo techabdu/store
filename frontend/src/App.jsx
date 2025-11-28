@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './pages/shared/AccessDenied';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import UserManagement from './pages/superadmin/UserManagement';
+import SystemInsights from './pages/superadmin/SystemInsights';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUserManagement from './pages/admin/AdminUserManagement';
 import UserDashboard from './pages/user/UserDashboard';
@@ -48,6 +49,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['superadmin']}>
                                     <UserManagement />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/superadmin/system-insights"
+                            element={
+                                <ProtectedRoute allowedRoles={['superadmin']}>
+                                    <SystemInsights />
                                 </ProtectedRoute>
                             }
                         />

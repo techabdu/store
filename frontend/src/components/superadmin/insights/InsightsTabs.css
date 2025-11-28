@@ -1,0 +1,827 @@
+/* Shared Styles for All Insights Tabs */
+
+.insights-tab {
+    width: 100%;
+}
+
+.tab-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Insight Cards */
+.insight-card {
+    background-color: var(--card-background);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.insight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.insight-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.insight-card.featured {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}
+
+.insight-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.card-icon {
+    font-size: 1.3rem;
+}
+
+.card-icon.success {
+    color: #10b981;
+}
+
+.card-icon.info {
+    color: #3b82f6;
+}
+
+.card-icon.warning {
+    color: #f59e0b;
+}
+
+.card-icon.critical {
+    color: #ef4444;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.metric-item {
+    text-align: center;
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: 8px;
+}
+
+.metric-item.large {
+    grid-column: 1 / -1;
+}
+
+.metric-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.metric-value.large {
+    font-size: 2.5rem;
+}
+
+.metric-value.success {
+    color: #10b981;
+}
+
+.metric-value.info {
+    color: #3b82f6;
+}
+
+.metric-value.warning {
+    color: #f59e0b;
+}
+
+.metric-value.critical {
+    color: #ef4444;
+}
+
+/* Tables */
+.table-container {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.table-container.scrollable {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.insights-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.insights-table thead {
+    background-color: var(--background);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.insights-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.insights-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text);
+}
+
+.insights-table tr:hover {
+    background-color: var(--hover-background);
+}
+
+.table-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.action-cell {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Role Badges */
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role-badge.superadmin {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.role-badge.admin {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.role-badge.user {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.excellent,
+.status-badge.healthy,
+.status-badge.secure,
+.status-badge.good {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.status-badge.warning,
+.status-badge.needs_attention,
+.status-badge.issues_found {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.status-badge.critical {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.status-badge-large {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.status-badge-large .status {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status.healthy,
+.status.secure {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.status.issues_found {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+/* Alerts */
+.alerts-list {
+    margin-top: 1rem;
+}
+
+.alert-item {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.alert-item.critical {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+.alert-item.warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+}
+
+.alert-item.info {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.alert-type {
+    font-weight: 600;
+    color: var(--text);
+    text-transform: capitalize;
+}
+
+.alert-time {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.alert-message {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.no-alerts,
+.no-issues,
+.no-data {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-secondary);
+}
+
+.success-icon {
+    font-size: 2rem;
+    color: #10b981;
+    margin-bottom: 0.5rem;
+}
+
+/* Issues List */
+.issues-list {
+    margin-top: 1rem;
+}
+
+.issue-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    background-color: var(--background);
+    border-left: 3px solid;
+}
+
+.issue-item.critical {
+    border-color: #ef4444;
+}
+
+.issue-item.warning {
+    border-color: #f59e0b;
+}
+
+.issue-item.info {
+    border-color: #3b82f6;
+}
+
+.issue-table,
+.issue-path,
+.issue-file,
+.issue-setting {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.issue-desc,
+.issue-type {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.issue-count,
+.issue-perms {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.issue-values {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.issue-values .current,
+.issue-values .recommended,
+.issue-values .expected {
+    color: var(--text-secondary);
+}
+
+/* Progress Bars */
+.progress-bar-container {
+    margin-top: 1rem;
+}
+
+.progress-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background-color: var(--background);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.progress-fill.success {
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.progress-fill.critical {
+    background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Charts */
+.simple-bar-chart,
+.hourly-chart,
+.daily-chart,
+.transaction-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.bar-item,
+.hour-bar,
+.day-bar,
+.transaction-bar {
+    flex: 1;
+    min-width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bar-label,
+.hour-label,
+.day-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.bar-container {
+    width: 100%;
+    height: 120px;
+    background-color: var(--card-background);
+    border-radius: 4px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+}
+
+.bar-fill {
+    width: 100%;
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+    min-height: 4px;
+}
+
+.bar-value,
+.hour-count,
+.day-count {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.bar-revenue {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Security Score Display */
+.security-score-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+}
+
+.score-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 8px solid;
+    margin-bottom: 1.5rem;
+}
+
+.score-circle.success {
+    border-color: #10b981;
+    background-color: rgba(16, 185, 129, 0.1);
+}
+
+.score-circle.info {
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.score-circle.warning {
+    border-color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.score-circle.critical {
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.score-value {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.score-max {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.score-status {
+    margin-bottom: 1rem;
+}
+
+.score-issues {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.score-mini {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.mini-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.mini-score.success {
+    color: #10b981;
+}
+
+.mini-score.info {
+    color: #3b82f6;
+}
+
+.mini-score.warning {
+    color: #f59e0b;
+}
+
+.mini-score.critical {
+    color: #ef4444;
+}
+
+.mini-status {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+/* Recommendations */
+.recommendations {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.1) 100%);
+    border-left: 4px solid #f59e0b;
+}
+
+.recommendations-list {
+    margin-top: 1rem;
+}
+
+.recommendation-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--card-background);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.recommendation-item strong {
+    color: #f59e0b;
+}
+
+/* Config List */
+.config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background-color: var(--background);
+    border-radius: 6px;
+}
+
+.config-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.config-value {
+    color: var(--text-secondary);
+}
+
+/* Extensions Grid */
+.extensions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.extension-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--background);
+    border-radius: 6px;
+}
+
+.extension-name {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.extension-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.extension-status.success {
+    color: #10b981;
+}
+
+.extension-status.error {
+    color: #ef4444;
+}
+
+/* Uptime Display */
+.uptime-display {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.uptime-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.uptime-since {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Role Breakdown */
+.role-breakdown {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: 8px;
+}
+
+.breakdown-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.role-stat,
+.role-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--card-background);
+    border-radius: 6px;
+}
+
+.role-count {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+/* Stock Levels */
+.stock-levels {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: 8px;
+}
+
+.stock-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.stock-label {
+    color: var(--text);
+}
+
+.stock-value {
+    font-weight: 700;
+}
+
+/* Summary Stats */
+.summary-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: 8px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .tab-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .insight-card {
+        padding: 1rem;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .simple-bar-chart,
+    .hourly-chart,
+    .daily-chart,
+    .transaction-chart {
+        padding: 0.5rem;
+    }
+
+    .bar-container {
+        height: 80px;
+    }
+
+    .score-circle {
+        width: 120px;
+        height: 120px;
+    }
+
+    .score-value {
+        font-size: 2.5rem;
+    }
+
+    .summary-stats {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .insight-card h3 {
+        font-size: 1rem;
+    }
+
+    .metric-value {
+        font-size: 1.2rem;
+    }
+
+    .metric-value.large {
+        font-size: 2rem;
+    }
+
+    .insights-table {
+        font-size: 0.8rem;
+    }
+
+    .insights-table th,
+    .insights-table td {
+        padding: 0.5rem;
+    }
+}
