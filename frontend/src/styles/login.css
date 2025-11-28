@@ -1,12 +1,44 @@
+/* CSS Variables for Light and Dark Themes */
+:root {
+    /* Light Theme Variables */
+    --login-bg: #ffffff;
+    --login-form-bg: #ffffff;
+    --login-text-primary: #111827;
+    --login-text-secondary: #6B7280;
+    --login-text-tertiary: #4B5563;
+    --login-border: #E5E7EB;
+    --login-input-bg: #ffffff;
+    --login-placeholder: #9CA3AF;
+    --login-error-bg: #FEE2E2;
+    --login-error-text: #DC2626;
+    --login-brand-text: #1F2937;
+}
+
+[data-theme='dark'] {
+    /* Dark Theme Variables */
+    --login-bg: #1A1A1A;
+    --login-form-bg: #2D2D2D;
+    --login-text-primary: #E8EAED;
+    --login-text-secondary: #9AA0A6;
+    --login-text-tertiary: #BDC1C6;
+    --login-border: #3C4043;
+    --login-input-bg: #3C4043;
+    --login-placeholder: #9AA0A6;
+    --login-error-bg: #5F2120;
+    --login-error-text: #F28B82;
+    --login-brand-text: #E8EAED;
+}
+
 /* Global Reset for Login Page */
 .login-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #ffffff;
+    background-color: var(--login-bg);
     font-family: 'Inter', sans-serif;
     width: 100%;
+    transition: background-color 0.3s ease;
 }
 
 .login-container {
@@ -25,7 +57,8 @@
     align-items: center;
     /* Center content horizontally */
     padding: 40px;
-    background-color: #ffffff;
+    background-color: var(--login-form-bg);
+    transition: background-color 0.3s ease;
     /* max-width removed to fill remaining space */
 }
 
@@ -42,7 +75,8 @@
     margin-bottom: 60px;
     font-weight: 700;
     font-size: 1.2rem;
-    color: #1F2937;
+    color: var(--login-brand-text);
+    transition: color 0.3s ease;
 }
 
 .logo-icon {
@@ -61,24 +95,27 @@
 .login-header h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--login-text-primary);
     line-height: 1.2;
     margin-bottom: 12px;
+    transition: color 0.3s ease;
 }
 
 .login-header p {
-    color: #6B7280;
+    color: var(--login-text-secondary);
     font-size: 1rem;
+    transition: color 0.3s ease;
 }
 
 .error-message {
-    background-color: #FEE2E2;
-    color: #DC2626;
+    background-color: var(--login-error-bg);
+    color: var(--login-error-text);
     padding: 12px;
     border-radius: 8px;
     margin-bottom: 24px;
     font-size: 0.9rem;
     text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .login-form {
@@ -101,10 +138,11 @@
 .input-wrapper input {
     width: 100%;
     padding: 16px 20px;
-    border: 1px solid #E5E7EB;
+    border: 1px solid var(--login-border);
     border-radius: 12px;
     font-size: 1rem;
-    color: #1F2937;
+    color: var(--login-text-primary);
+    background-color: var(--login-input-bg);
     transition: all 0.2s ease;
     outline: none;
 }
@@ -115,7 +153,7 @@
 }
 
 .input-wrapper input::placeholder {
-    color: #9CA3AF;
+    color: var(--login-placeholder);
 }
 
 .password-toggle {
@@ -131,7 +169,7 @@
 }
 
 .password-toggle:hover {
-    color: #4B5563;
+    color: var(--login-text-tertiary);
 }
 
 .form-actions {
@@ -147,9 +185,10 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    color: #4B5563;
+    color: var(--login-text-tertiary);
     font-size: 0.9rem;
     user-select: none;
+    transition: color 0.3s ease;
 }
 
 .remember-me input {
@@ -168,13 +207,14 @@
 }
 
 .forgot-password {
-    color: #6B7280;
+    color: var(--login-text-secondary);
     font-size: 0.9rem;
     text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 .forgot-password:hover {
-    color: #4B5563;
+    color: var(--login-text-tertiary);
 }
 
 .login-button {
@@ -204,8 +244,9 @@
     text-align: center;
     /* Centered as per typical design, though image shows left aligned, let's stick to left if needed, but center is safer for this layout */
     text-align: left;
-    color: #6B7280;
+    color: var(--login-text-secondary);
     font-size: 0.9rem;
+    transition: color 0.3s ease;
 }
 
 .signup-link a {
@@ -223,7 +264,7 @@
 .login-visual-section {
     flex: 1;
     /* Slightly larger than form */
-    background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%);
+    background: #171810;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -235,8 +276,8 @@
 .login-visual-section::before {
     content: '';
     position: absolute;
-    top: -10%;
-    right: -10%;
+    top: -25%;
+    right: -25%;
     width: 300px;
     height: 300px;
     background: rgba(255, 255, 255, 0.1);
@@ -246,8 +287,8 @@
 .login-visual-section::after {
     content: '';
     position: absolute;
-    bottom: -5%;
-    left: -5%;
+    bottom: -10%;
+    left: -10%;
     width: 200px;
     height: 200px;
     background: rgba(255, 255, 255, 0.1);
