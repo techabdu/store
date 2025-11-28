@@ -15,7 +15,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
+const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
   const { logout, user } = useAuth();
 
   // Define navigation items based on user role
@@ -79,6 +79,9 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar }) => {
               >
                 <item.icon size={20} className="nav-icon" />
                 <span className="nav-label">{item.label}</span>
+                {item.label === 'Dashboard' && alertCount > 0 && (
+                  <span className="nav-badge">{alertCount}</span>
+                )}
               </NavLink>
             ))}
           </nav>
