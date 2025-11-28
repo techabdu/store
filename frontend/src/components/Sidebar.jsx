@@ -96,7 +96,8 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
           </div>
 
           <div className="sidebar-footer">
-            <span className="version-text">v1.0.0</span>
+            <span className="version-text">v1.0.0</span> <br />
+            <span className="version-text">© techabdu 2025</span>
           </div>
         </div>
       </aside>

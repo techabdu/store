@@ -1,54 +1,94 @@
 # Phone Retailer Management System
 
-A full-stack web application for managing a phone retail business, featuring role-based authentication, inventory management, and sales tracking.
+A complete web-based management system for phone retail businesses with role-based access control, inventory tracking, point-of-sale, and financial reporting.
+
+## What It Does
+
+This application helps phone retailers manage their entire business operations:
+
+- **User Management**: Three-tier role system (SuperAdmin, Admin, User) with secure authentication
+- **Inventory Management**: Track phones with IMEI, brand, model, storage, color, condition, and pricing
+- **Point of Sale (POS)**: Process sales transactions with customer details and multiple payment methods
+- **Sales Tracking**: View sales history, generate receipts, and track customer purchases
+- **Financial Management**: Track expenses, monitor profits, and generate financial reports
+- **Activity Logging**: Audit trail of all user actions and system events
+- **System Insights**: Monitor security, database health, performance, and business metrics (SuperAdmin)
+- **Shop Settings**: Configure shop information (name, address, phone, email, business capital)
 
 ## Tech Stack
-- **Frontend**: React (Vite), React Router, Axios, CSS Modules
-- **Backend**: PHP (Vanilla), MySQL
-- **Database**: MySQL (XAMPP)
 
-## Features
-- **Authentication**: Secure login/logout with PHP sessions (48h timeout).
-- **RBAC**: Three-tier role system (SuperAdmin, Admin, User).
-- **Protected Routes**: Frontend route guards based on authentication and roles.
-- **Dashboards**: Dedicated dashboards for each user role.
+- **Frontend**: React (Vite), React Router, Axios
+- **Backend**: PHP (OOP), RESTful APIs
+- **Database**: MySQL
 
-## Setup Instructions
+## Quick Start
 
 ### 1. Database Setup
-1. Start Apache and MySQL in XAMPP.
-2. Open phpMyAdmin (`http://localhost/phpmyadmin`).
-3. Create a new database named `store`.
-4. Import `backend/sql/setup.sql` to create tables and seed the SuperAdmin user.
+```bash
+# Start XAMPP (Apache + MySQL)
+# Open phpMyAdmin at http://localhost/phpmyadmin
+# Create database named 'store'
+# Import all SQL files from backend/sql/ directory
+```
 
-### 2. Backend Setup
-1. Ensure the project is located in `htdocs/store`.
-2. Verify `backend/config/database.php` matches your MySQL credentials (default: root/empty).
+### 2. Backend
+```bash
+# Ensure project is in htdocs/store
+# Verify backend/config/database.php credentials (default: root/no password)
+```
 
-### 3. Frontend Setup
-1. Navigate to `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### 3. Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## Usage
-### Default Credentials
+### 4. Login
+- **URL**: http://localhost:5173
 - **Username**: `it support`
 - **Password**: `superadmin123`
 - **Role**: SuperAdmin
 
-## API Structure
-- `POST /api/auth/login.php`: Authenticate user.
-- `POST /api/auth/logout.php`: Destroy session.
-- `GET /api/auth/check-session.php`: Validate current session.
+## Features by Role
 
-## Testing
-Refer to `tests/auth_test_suite.md` for manual testing scenarios.
+### SuperAdmin
+- Full system access and control
+- User management (create/edit/delete admins and users)
+- System insights and monitoring
+- All admin and user features
+
+### Admin
+- User management (create/edit/delete users only)
+- Inventory management
+- Sales and POS access
+- Financial reports and expense tracking
+- Customer management
+- Shop settings configuration
+
+### User
+- Inventory management
+- Point of Sale (POS)
+- Sales history
+- Personal profile settings
+
+## Project Structure
+
+```
+store/
+├── backend/
+│   ├── api/          # RESTful API endpoints
+│   ├── classes/      # PHP OOP classes
+│   ├── config/       # Database configuration
+│   ├── middleware/   # Authentication & authorization
+│   └── sql/          # Database schemas
+└── frontend/
+    └── src/
+        ├── pages/    # React components (admin, user, superadmin)
+        ├── context/  # Auth context
+        └── utils/    # API configuration
+```
+
+## License
+
+All rights reserved

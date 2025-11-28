@@ -13,13 +13,13 @@ Add these secrets:
    - Value: `localhost`
 
 2. **`DB_USER`**
-   - Value: `u464722139_salsabeel`
+   - Value: `your_production_db_user`
 
 3. **`DB_PASS`**
-   - Value: `Aa@store123`
+   - Value: `your_production_db_password`
 
 4. **`DB_NAME`**
-   - Value: `u464722139_store`
+   - Value: `your_production_db_name`
 
 ### FTP Credentials (Already Set)
 These should already be configured:
