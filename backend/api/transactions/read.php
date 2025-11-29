@@ -54,13 +54,13 @@ try {
                 u.username as processed_by
              FROM transactions t
              LEFT JOIN users u ON t.user_id = u.id
-             WHERE t.id = ?"
+             WHERE t.id = ? AND t.tenant_id = ?"
         );
-        
-        $stmt->bind_param("i", $transactionId);
+
+        $stmt->bind_param("ii", $transactionId, $tenantId);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result->num_rows === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Transaction not found']);

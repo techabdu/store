@@ -34,18 +34,14 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 if ($action === 'get_customers') {
     try {
         // Aggregate customers from transactions
-        // Group by name and phone to identify unique customers
-        $query = "SELECT 
-                    customer_name, 
-                    customer_phone, 
-                    MAX(created_at) as last_purchase_date,
-                    COUNT(id) as total_purchases,
-                    SUM(total_amount) as total_spent
-                  FROM transactions 
-                  GROUP BY customer_name, customer_phone
-                  ORDER BY last_purchase_date DESC";
+        // Fetch distinct customers for the current tenant
+        $query = "SELECT DISTINCT customer_name, customer_phone, customer_address
+                  FROM transactions
+                  WHERE tenant_id = ? AND customer_name IS NOT NULL AND customer_name != ''
+                  ORDER BY created_at DESC";
         
         $stmt = $db->prepare($query);
+        $stmt->bind_param("i", $tenant_id);
         $stmt->execute();
         $customers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         

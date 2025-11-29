@@ -45,12 +45,16 @@ switch ($method) {
 
 function handleGet($conn) {
     // Get all expenses, ordered by date desc
-    $sql = "SELECT e.*, u.username as created_by_name 
-            FROM expenses e 
-            LEFT JOIN users u ON e.created_by = u.id 
-            ORDER BY e.date DESC, e.created_at DESC";
+    $query = "SELECT e.*, u.username as created_by_name 
+              FROM expenses e 
+              LEFT JOIN users u ON e.created_by = u.id 
+              WHERE e.tenant_id = ?
+              ORDER BY e.date DESC, e.created_at DESC";
     
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $_SESSION['tenant_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
     $expenses = [];
     if ($result) {
@@ -76,8 +80,8 @@ function handlePost($conn, $currentUser) {
     $category = trim($data->category);
     $date = $data->date;
     
-    $stmt = $conn->prepare("INSERT INTO expenses (description, amount, category, date, created_by) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sdssi", $description, $amount, $category, $date, $currentUser['id']);
+    $stmt = $conn->prepare("INSERT INTO expenses (description, amount, category, date, tenant_id, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sdssii", $description, $amount, $category, $date, $_SESSION['tenant_id'], $_SESSION['user_id']);
     
     if ($stmt->execute()) {
         $newId = $conn->insert_id;

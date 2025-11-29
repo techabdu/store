@@ -48,20 +48,26 @@ if (!isset($input['id']) || !is_numeric($input['id'])) {
 $inventoryId = intval($input['id']);
 
 try {
-    // Check if inventory item exists
-    $checkStmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
+    // Verify inventory item exists and belongs to current tenant
+    $checkStmt = $conn->prepare("SELECT id, brand, model, imei, tenant_id FROM inventory WHERE id = ?");
     $checkStmt->bind_param("i", $inventoryId);
     $checkStmt->execute();
-    $result = $checkStmt->get_result();
+    $checkResult = $checkStmt->get_result();
     
-    if ($result->num_rows === 0) {
+    if ($checkResult->num_rows === 0) {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'Inventory item not found']);
         $checkStmt->close();
         exit;
     }
     
-    $item = $result->fetch_assoc();
+    $item = $checkResult->fetch_assoc();
+    if ($item['tenant_id'] != $_SESSION['tenant_id']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Cannot delete items from other tenants']);
+        $checkStmt->close();
+        exit;
+    }
     $checkStmt->close();
     
     // Check if item is part of any transaction

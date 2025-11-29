@@ -53,16 +53,15 @@ try {
                 i.price,
                 i.cost_price,
                 i.status,
-                i.created_by,
                 i.created_at,
                 i.updated_at,
                 u.username as created_by_username
               FROM inventory i
               LEFT JOIN users u ON i.created_by = u.id
-              WHERE 1=1";
+              WHERE i.tenant_id = ?"; // Filter by tenant_id
     
-    $params = [];
-    $types = '';
+    $params = [$_SESSION['tenant_id']]; // Add tenant_id to parameters
+    $types = 'i'; // Type for tenant_id
     
     // Filter by status
     if ($status !== 'all') {

@@ -176,18 +176,19 @@ try {
     
     // Insert transaction
     $transactionStmt = $conn->prepare(
-        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, payment_method) 
-         VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, payment_method, tenant_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
     
     $transactionStmt->bind_param(
-        "isssds",
+        "isssdsi",
         $userId,
         $customerName,
         $customerPhone,
         $customerAddress,
         $totalAmount,
-        $paymentMethod
+        $paymentMethod,
+        $_SESSION['tenant_id']
     );
     
     if (!$transactionStmt->execute()) {
@@ -199,7 +200,7 @@ try {
     
     // Insert transaction items and update inventory status for sales
     $itemStmt = $conn->prepare(
-        "INSERT INTO transaction_items (transaction_id, inventory_id, price, type) VALUES (?, ?, ?, ?)"
+            "INSERT INTO transaction_items (transaction_id, inventory_id, price, type, tenant_id) VALUES (?, ?, ?, ?, ?)"
     );
     
     // Process sale items
