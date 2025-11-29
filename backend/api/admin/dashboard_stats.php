@@ -17,13 +17,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Check authentication and admin role
-$user_data = checkAuth(['admin', 'super_admin']);
+$user_data = checkAuth();
+if (!$user_data || !in_array($user_data['role'], ['admin', 'superadmin'])) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "error" => "Access denied"]);
+    exit;
+}
 
 // Use connection from database.php
 $db = $conn;
 
 try {
-    // 1. Calculate Monthly Total Sales (current month)
+    // 1. Calculate Monthly Total Sales (current month) for current tenant
     $currentMonthStart = date('Y-m-01 00:00:00');
     $lastMonthStart = date('Y-m-01 00:00:00', strtotime('-1 month'));
     $lastMonthEnd = date('Y-m-t 23:59:59', strtotime('-1 month'));
@@ -31,9 +36,9 @@ try {
     // Current month sales
     $queryCurrentSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales 
                           FROM transactions 
-                          WHERE created_at >= ?";
+                          WHERE created_at >= ? AND tenant_id = ?";
     $stmtCurrentSales = $db->prepare($queryCurrentSales);
-    $stmtCurrentSales->bind_param("s", $currentMonthStart);
+    $stmtCurrentSales->bind_param("si", $currentMonthStart, $_SESSION['tenant_id']);
     $stmtCurrentSales->execute();
     $currentSalesResult = $stmtCurrentSales->get_result()->fetch_assoc();
     $currentMonthSales = (float)$currentSalesResult['total_sales'];
@@ -41,9 +46,9 @@ try {
     // Last month sales for comparison
     $queryLastSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales 
                        FROM transactions 
-                       WHERE created_at >= ? AND created_at <= ?";
+                       WHERE created_at >= ? AND created_at <= ? AND tenant_id = ?";
     $stmtLastSales = $db->prepare($queryLastSales);
-    $stmtLastSales->bind_param("ss", $lastMonthStart, $lastMonthEnd);
+    $stmtLastSales->bind_param("ssi", $lastMonthStart, $lastMonthEnd, $_SESSION['tenant_id']);
     $stmtLastSales->execute();
     $lastSalesResult = $stmtLastSales->get_result()->fetch_assoc();
     $lastMonthSales = (float)$lastSalesResult['total_sales'];
@@ -56,21 +61,22 @@ try {
         $salesPercentageChange = 100; // If no sales last month but sales this month
     }
     
-    // 2. Count Total Inventory (in_stock items)
+    // 2. Count Total Inventory (in_stock items) for current tenant
     $queryInventory = "SELECT COUNT(*) as total_inventory 
                        FROM inventory 
-                       WHERE status = 'in_stock'";
+                       WHERE status = 'in_stock' AND tenant_id = ?";
     $stmtInventory = $db->prepare($queryInventory);
+    $stmtInventory->bind_param("i", $_SESSION['tenant_id']);
     $stmtInventory->execute();
     $inventoryResult = $stmtInventory->get_result()->fetch_assoc();
     $totalInventory = (int)$inventoryResult['total_inventory'];
     
-    // 3. Count Monthly New Customers (unique customer_phone this month)
+    // 3. Count Monthly New Customers (unique customer_phone this month) for current tenant
     $queryCurrentCustomers = "SELECT COUNT(DISTINCT customer_phone) as new_customers 
                               FROM transactions 
-                              WHERE created_at >= ? AND customer_phone IS NOT NULL AND customer_phone != ''";
+                              WHERE created_at >= ? AND customer_phone IS NOT NULL AND customer_phone != '' AND tenant_id = ?";
     $stmtCurrentCustomers = $db->prepare($queryCurrentCustomers);
-    $stmtCurrentCustomers->bind_param("s", $currentMonthStart);
+    $stmtCurrentCustomers->bind_param("si", $currentMonthStart, $_SESSION['tenant_id']);
     $stmtCurrentCustomers->execute();
     $currentCustomersResult = $stmtCurrentCustomers->get_result()->fetch_assoc();
     $currentMonthCustomers = (int)$currentCustomersResult['new_customers'];
@@ -78,9 +84,9 @@ try {
     // Last month customers for comparison
     $queryLastCustomers = "SELECT COUNT(DISTINCT customer_phone) as new_customers 
                            FROM transactions 
-                           WHERE created_at >= ? AND created_at <= ? AND customer_phone IS NOT NULL AND customer_phone != ''";
+                           WHERE created_at >= ? AND created_at <= ? AND customer_phone IS NOT NULL AND customer_phone != '' AND tenant_id = ?";
     $stmtLastCustomers = $db->prepare($queryLastCustomers);
-    $stmtLastCustomers->bind_param("ss", $lastMonthStart, $lastMonthEnd);
+    $stmtLastCustomers->bind_param("ssi", $lastMonthStart, $lastMonthEnd, $_SESSION['tenant_id']);
     $stmtLastCustomers->execute();
     $lastCustomersResult = $stmtLastCustomers->get_result()->fetch_assoc();
     $lastMonthCustomers = (int)$lastCustomersResult['new_customers'];
@@ -93,7 +99,7 @@ try {
         $customersPercentageChange = 100;
     }
     
-    // 4. Get Sales Overview Data (last 7 months)
+    // 4. Get Sales Overview Data (last 7 months) for current tenant
     $salesOverview = [];
     for ($i = 6; $i >= 0; $i--) {
         $monthStart = date('Y-m-01 00:00:00', strtotime("-$i months"));
@@ -102,9 +108,9 @@ try {
         
         $querySalesMonth = "SELECT COALESCE(SUM(total_amount), 0) as sales 
                             FROM transactions 
-                            WHERE created_at >= ? AND created_at <= ?";
+                            WHERE created_at >= ? AND created_at <= ? AND tenant_id = ?";
         $stmtSalesMonth = $db->prepare($querySalesMonth);
-        $stmtSalesMonth->bind_param("ss", $monthStart, $monthEnd);
+        $stmtSalesMonth->bind_param("ssi", $monthStart, $monthEnd, $_SESSION['tenant_id']);
         $stmtSalesMonth->execute();
         $salesMonthResult = $stmtSalesMonth->get_result()->fetch_assoc();
         
@@ -114,15 +120,16 @@ try {
         ];
     }
     
-    // 5. Get Low Stock Alerts (items with 5 or fewer units)
+    // 5. Get Low Stock Alerts (items with 5 or fewer units) for current tenant
     $queryLowStock = "SELECT brand, model, COUNT(*) as count 
                       FROM inventory 
-                      WHERE status = 'in_stock' 
+                      WHERE status = 'in_stock' AND tenant_id = ?
                       GROUP BY brand, model 
                       HAVING count <= 5 
                       ORDER BY count ASC 
                       LIMIT 10";
     $stmtLowStock = $db->prepare($queryLowStock);
+    $stmtLowStock->bind_param("i", $_SESSION['tenant_id']);
     $stmtLowStock->execute();
     $lowStockResult = $stmtLowStock->get_result();
     

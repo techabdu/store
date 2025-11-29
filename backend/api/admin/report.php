@@ -1,6 +1,5 @@
 <?php
 require_once '../../config/database.php';
-require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 
 // Set headers
@@ -9,6 +8,7 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Credentials: true");
 
 // Handle preflight request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -17,7 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Check authentication and admin role
-$user_data = checkAuth(['admin', 'super_admin']);
+$user_data = checkAuth();
+if (!$user_data || !in_array($user_data['role'], ['admin', 'superadmin'])) {
+    http_response_code(403);
+    echo json_encode(["success" => false, "error" => "Access denied"]);
+    exit;
+}
+
 $user_id = $user_data['id'];
 
 // Use connection from database.php
@@ -43,26 +49,29 @@ switch ($action) {
 
 function getStats($conn) {
     try {
-        // 1. Total Inventory Cost (in_stock)
-        $queryInventory = "SELECT SUM(cost_price) as total_inventory_cost FROM inventory WHERE status = 'in_stock'";
+        // 1. Total Inventory Cost (in_stock) for current tenant
+        $queryInventory = "SELECT SUM(cost_price) as total_inventory_cost FROM inventory WHERE status = 'in_stock' AND tenant_id = ?";
         $stmtInventory = $conn->prepare($queryInventory);
+        $stmtInventory->bind_param("i", $_SESSION['tenant_id']);
         $stmtInventory->execute();
         $inventoryResult = $stmtInventory->get_result()->fetch_assoc();
         $totalInventoryCost = $inventoryResult['total_inventory_cost'] ?? 0;
 
-        // 2. Total Expenses
-        $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses";
+        // 2. Total Expenses for current tenant
+        $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses WHERE tenant_id = ?";
         $stmtExpenses = $conn->prepare($queryExpenses);
+        $stmtExpenses->bind_param("i", $_SESSION['tenant_id']);
         $stmtExpenses->execute();
         $expensesResult = $stmtExpenses->get_result()->fetch_assoc();
         $totalExpenses = $expensesResult['total_expenses'] ?? 0;
 
-        // 3. Business Capital
-        $queryCapital = "SELECT setting_value FROM shop_settings WHERE setting_key = 'business_capital'";
+        // 3. Business Capital from tenants table
+        $queryCapital = "SELECT business_capital FROM tenants WHERE id = ?";
         $stmtCapital = $conn->prepare($queryCapital);
+        $stmtCapital->bind_param("i", $_SESSION['tenant_id']);
         $stmtCapital->execute();
         $capitalResult = $stmtCapital->get_result()->fetch_assoc();
-        $businessCapital = $capitalResult['setting_value'] ?? 0;
+        $businessCapital = $capitalResult['business_capital'] ?? 0;
 
         echo json_encode([
             "success" => true,
@@ -97,40 +106,38 @@ function createReport($conn, $user_id) {
     $cashInHand = $data->cash_in_hand;
     $totalDebt = $data->total_debt;
 
-    // Re-fetch current stats to ensure accuracy at time of saving
-    // (Alternatively, we could trust the frontend, but backend calculation is safer)
-    // However, for consistency with what the user saw, we might want to accept frontend values?
-    // No, better to re-calculate to ensure data integrity.
-
     try {
-        // 1. Total Inventory Cost (in_stock)
-        $queryInventory = "SELECT SUM(cost_price) as total_inventory_cost FROM inventory WHERE status = 'in_stock'";
+        // 1. Total Inventory Cost (in_stock) for current tenant
+        $queryInventory = "SELECT SUM(cost_price) as total_inventory_cost FROM inventory WHERE status = 'in_stock' AND tenant_id = ?";
         $stmtInventory = $conn->prepare($queryInventory);
+        $stmtInventory->bind_param("i", $_SESSION['tenant_id']);
         $stmtInventory->execute();
         $inventoryResult = $stmtInventory->get_result()->fetch_assoc();
         $inventoryValue = $inventoryResult['total_inventory_cost'] ?? 0;
 
-        // 2. Total Expenses
-        $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses";
+        // 2. Total Expenses for current tenant
+        $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses WHERE tenant_id = ?";
         $stmtExpenses = $conn->prepare($queryExpenses);
+        $stmtExpenses->bind_param("i", $_SESSION['tenant_id']);
         $stmtExpenses->execute();
         $expensesResult = $stmtExpenses->get_result()->fetch_assoc();
         $totalExpenses = $expensesResult['total_expenses'] ?? 0;
 
-        // 3. Business Capital
-        $queryCapital = "SELECT setting_value FROM shop_settings WHERE setting_key = 'business_capital'";
+        // 3. Business Capital from tenants table
+        $queryCapital = "SELECT business_capital FROM tenants WHERE id = ?";
         $stmtCapital = $conn->prepare($queryCapital);
+        $stmtCapital->bind_param("i", $_SESSION['tenant_id']);
         $stmtCapital->execute();
         $capitalResult = $stmtCapital->get_result()->fetch_assoc();
-        $businessCapital = $capitalResult['setting_value'] ?? 0;
+        $businessCapital = $capitalResult['business_capital'] ?? 0;
 
         // Calculate Net Profit
         // Formula: (Inventory + Cash + Debt) - Expenses - Capital
         $netProfit = ($inventoryValue + $cashInHand + $totalDebt) - $totalExpenses - $businessCapital;
 
-        $query = "INSERT INTO reports (generated_by, inventory_value, total_expenses, business_capital, cash_in_hand, total_debt, net_profit) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO reports (generated_by, inventory_value, total_expenses, business_capital, cash_in_hand, total_debt, net_profit, tenant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("idddddd", $user_id, $inventoryValue, $totalExpenses, $businessCapital, $cashInHand, $totalDebt, $netProfit);
+        $stmt->bind_param("iddddddi", $user_id, $inventoryValue, $totalExpenses, $businessCapital, $cashInHand, $totalDebt, $netProfit, $_SESSION['tenant_id']);
 
         if ($stmt->execute()) {
             http_response_code(201);
@@ -150,9 +157,11 @@ function getHistory($conn) {
         $query = "SELECT r.*, u.username as generated_by_name 
                   FROM reports r 
                   JOIN users u ON r.generated_by = u.id 
+                  WHERE r.tenant_id = ?
                   ORDER BY r.created_at DESC 
                   LIMIT 50";
         $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $_SESSION['tenant_id']);
         $stmt->execute();
         $result = $stmt->get_result();
         

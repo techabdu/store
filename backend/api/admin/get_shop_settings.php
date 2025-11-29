@@ -7,6 +7,7 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Credentials: true");
 
 // Handle preflight request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -23,18 +24,31 @@ if (!$user_data || !in_array($user_data['role'], ['admin', 'superadmin'])) {
 }
 
 try {
-    // Use global $conn from database.php (included via auth.php)
     global $conn;
 
-    $query = "SELECT setting_key, setting_value FROM shop_settings";
+    // Get shop settings from tenants table for current tenant
+    $query = "SELECT shop_name, shop_address, shop_phone, shop_email, business_capital FROM tenants WHERE id = ?";
     $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $_SESSION['tenant_id']);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    $settings = [];
-    while ($row = $result->fetch_assoc()) {
-        $settings[$row['setting_key']] = $row['setting_value'];
+    if ($result->num_rows === 0) {
+        http_response_code(404);
+        echo json_encode(["success" => false, "error" => "Shop not found"]);
+        exit;
     }
+
+    $tenant = $result->fetch_assoc();
+
+    // Format as settings object for backward compatibility
+    $settings = [
+        'shop_name' => $tenant['shop_name'],
+        'shop_address' => $tenant['shop_address'],
+        'shop_phone' => $tenant['shop_phone'],
+        'shop_email' => $tenant['shop_email'],
+        'business_capital' => $tenant['business_capital']
+    ];
 
     http_response_code(200);
     echo json_encode([
