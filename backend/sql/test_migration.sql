@@ -29,15 +29,41 @@ SELECT 'users' AS table_name,
        SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) AS null_tenant_id
 FROM users
 UNION ALL
-SELECT 'inventory', COUNT(*), SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) FROM inventory
+SELECT 'inventory', 
+       COUNT(*), 
+       SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) 
+FROM inventory
 UNION ALL
-SELECT 'transactions', COUNT(*), SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) FROM transactions
+SELECT 'transactions', 
+       COUNT(*), 
+       SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) 
+FROM transactions
 UNION ALL
-SELECT 'expenses', COUNT(*), SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) FROM expenses
+SELECT 'transaction_items', 
+       COUNT(*), 
+       SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) 
+FROM transaction_items
 UNION ALL
-SELECT 'activity_logs', COUNT(*), SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) FROM activity_logs
+SELECT 'expenses', 
+       COUNT(*), 
+       SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) 
+FROM expenses
 UNION ALL
-SELECT 'sessions', COUNT(*), SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) FROM sessions;
+SELECT 'activity_logs', 
+       COUNT(*), 
+       SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) 
+FROM activity_logs
+UNION ALL
+SELECT 'sessions', 
+       COUNT(*), 
+       SUM(CASE WHEN tenant_id = 1 THEN 1 ELSE 0 END), 
+       SUM(CASE WHEN tenant_id IS NULL THEN 1 ELSE 0 END) 
+FROM sessions;
 
 -- Check foreign key constraints
 SELECT 'Checking foreign key constraints...' AS Test;
@@ -62,6 +88,26 @@ FROM information_schema.STATISTICS
 WHERE TABLE_SCHEMA = DATABASE()
 AND COLUMN_NAME = 'tenant_id'
 ORDER BY TABLE_NAME;
+
+-- Check if shop_settings table was dropped
+SELECT 'Checking if shop_settings was dropped...' AS Test;
+SELECT 
+    CASE 
+        WHEN COUNT(*) = 0 THEN 'shop_settings table successfully dropped'
+        ELSE 'WARNING: shop_settings table still exists'
+    END AS status
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE()
+AND TABLE_NAME = 'shop_settings';
+
+-- Check if business_capital was migrated to tenants
+SELECT 'Checking business_capital migration...' AS Test;
+SELECT 
+    id,
+    shop_name,
+    business_capital
+FROM tenants
+WHERE id = 1;
 
 SELECT 'Migration verification complete!' AS Status;
 SELECT 'Review the results above. All records should be assigned to tenant_id = 1' AS Note;

@@ -43,7 +43,20 @@ ADD CONSTRAINT fk_transactions_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
     ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Step 6: Add tenant_id to expenses table
+-- Step 6: Add tenant_id to transaction_items table
+ALTER TABLE transaction_items 
+ADD COLUMN tenant_id INT NULL AFTER id,
+ADD INDEX idx_tenant_id (tenant_id);
+
+UPDATE transaction_items SET tenant_id = 1 WHERE tenant_id IS NULL;
+
+ALTER TABLE transaction_items 
+MODIFY COLUMN tenant_id INT NOT NULL,
+ADD CONSTRAINT fk_transaction_items_tenant 
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
+    ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Step 7: Add tenant_id to expenses table
 ALTER TABLE expenses 
 ADD COLUMN tenant_id INT NULL AFTER id,
 ADD INDEX idx_tenant_id (tenant_id);
@@ -56,7 +69,7 @@ ADD CONSTRAINT fk_expenses_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
     ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- Step 7: Add tenant_id to activity_logs table
+-- Step 8: Add tenant_id to activity_logs table
 ALTER TABLE activity_logs 
 ADD COLUMN tenant_id INT NULL AFTER id,
 ADD INDEX idx_tenant_id (tenant_id);
@@ -69,7 +82,7 @@ ADD CONSTRAINT fk_activity_logs_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
     ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Step 8: Add tenant_id to sessions table
+-- Step 9: Add tenant_id to sessions table
 ALTER TABLE sessions 
 ADD COLUMN tenant_id INT NULL AFTER id,
 ADD INDEX idx_tenant_id (tenant_id);
@@ -82,7 +95,7 @@ ADD CONSTRAINT fk_sessions_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
     ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Step 9: Add tenant_id to system_alerts table (NULL allowed for global alerts)
+-- Step 10: Add tenant_id to system_alerts table (NULL allowed for global alerts)
 ALTER TABLE system_alerts 
 ADD COLUMN tenant_id INT NULL AFTER id,
 ADD INDEX idx_tenant_id (tenant_id);
@@ -94,7 +107,7 @@ ADD CONSTRAINT fk_system_alerts_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
     ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Step 10: Add tenant_id to security_logs table
+-- Step 11: Add tenant_id to security_logs table
 ALTER TABLE security_logs 
 ADD COLUMN tenant_id INT NULL AFTER id,
 ADD INDEX idx_tenant_id (tenant_id);
@@ -107,7 +120,19 @@ ADD CONSTRAINT fk_security_logs_tenant
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) 
     ON DELETE CASCADE ON UPDATE CASCADE;
 
--- Step 11: Add tenant_id to reports table (if exists)
+-- Step 12: Migrate shop_settings to tenants table and drop shop_settings
+-- Save existing business_capital value first
+SET @business_capital = (SELECT setting_value FROM shop_settings WHERE setting_key = 'business_capital' LIMIT 1);
+
+-- Update default tenant with business capital from shop_settings
+UPDATE tenants 
+SET business_capital = COALESCE(@business_capital, 0.00)
+WHERE id = 1;
+
+-- Now we can drop shop_settings table as tenants table replaces it
+DROP TABLE IF EXISTS shop_settings;
+
+-- Step 13: Add tenant_id to reports table (if exists)
 -- Check if reports table exists first
 SET @table_exists = (
     SELECT COUNT(*) 
