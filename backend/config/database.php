@@ -7,7 +7,20 @@ class Database {
     public $conn;
 
     public function __construct() {
-        $this->loadEnv();
+        // Load Composer autoloader if available
+        if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+            require_once __DIR__ . '/../vendor/autoload.php';
+            
+            // Use Dotenv if available
+            if (class_exists('Dotenv\Dotenv')) {
+                $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+                $dotenv->safeLoad();
+            } else {
+                $this->loadEnv();
+            }
+        } else {
+            $this->loadEnv();
+        }
 
         // Use environment variables or default to empty/null
         $this->host = getenv('DB_HOST') ?: '127.0.0.1';
