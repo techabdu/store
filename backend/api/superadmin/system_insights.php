@@ -107,15 +107,29 @@ try {
  * Get security monitoring data
  */
 function getSecurityData() {
+    global $conn;
     $securityMonitor = new SecurityMonitor();
     $alertManager = new AlertManager();
+    
+    // Get tenant statistics
+    $tenantStats = $conn->query("
+        SELECT 
+            COUNT(*) as total_tenants,
+            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_tenants,
+            SUM(CASE WHEN status = 'trial' THEN 1 ELSE 0 END) as trial_tenants,
+            SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_tenants,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_tenants,
+            SUM(CASE WHEN email_verified = 0 THEN 1 ELSE 0 END) as unverified_tenants
+        FROM tenants
+    ")->fetch_assoc();
     
     return [
         'failed_logins' => $securityMonitor->getFailedLoginAttempts(10, 50),
         'suspicious_activity' => $securityMonitor->detectSuspiciousActivity(),
         'active_sessions' => $securityMonitor->getActiveSessions(),
         'password_health' => $securityMonitor->checkPasswordHealth(),
-        'security_alerts' => $alertManager->getActiveAlerts('critical', 20)
+        'security_alerts' => $alertManager->getActiveAlerts('critical', 20),
+        'tenant_stats' => $tenantStats
     ];
 }
 
@@ -235,6 +249,7 @@ function getVulnerabilitiesData() {
  * Get overview data (summary of all tabs)
  */
 function getOverviewData() {
+    global $conn;
     $alertManager = new AlertManager();
     $dbHealth = new DatabaseHealth();
     $performanceMonitor = new PerformanceMonitor();
@@ -252,6 +267,25 @@ function getOverviewData() {
     
     // Get peak usage for chart
     $peakUsage = $performanceMonitor->getPeakUsageTimes(7);
+    
+    // Get tenant statistics
+    $tenantStats = $conn->query("
+        SELECT 
+            COUNT(*) as total_tenants,
+            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_tenants,
+            SUM(CASE WHEN status = 'trial' THEN 1 ELSE 0 END) as trial_tenants,
+            SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_tenants
+        FROM tenants
+    ")->fetch_assoc();
+    
+    // Get tenant growth (new registrations in last 7 days)
+    $tenantGrowth = $conn->query("
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM tenants
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+    ")->fetch_all(MYSQLI_ASSOC);
     
     // Generate fresh data
     $data = [
@@ -278,6 +312,13 @@ function getOverviewData() {
         'system' => [
             'uptime' => $systemResources->getServerUptime(),
             'health' => 'Healthy' // You might want to derive this from alerts
+        ],
+        'tenants' => [
+            'total' => (int)$tenantStats['total_tenants'],
+            'active' => (int)$tenantStats['active_tenants'],
+            'trial' => (int)$tenantStats['trial_tenants'],
+            'suspended' => (int)$tenantStats['suspended_tenants'],
+            'growth_chart' => $tenantGrowth
         ],
         'activity' => [
             'recent_logs' => $auditCompliance->getRecentActivities(5),
