@@ -57,7 +57,7 @@ try {
              WHERE t.id = ? AND t.tenant_id = ?"
         );
 
-        $stmt->bind_param("ii", $transactionId, $tenantId);
+        $stmt->bind_param("ii", $transactionId, $_SESSION['tenant_id']);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -107,7 +107,7 @@ try {
         ]);
         
     } else {
-        // Get list of transactions
+        // Get list of transactions for current tenant
         $query = "SELECT 
                     t.id,
                     t.user_id,
@@ -121,12 +121,13 @@ try {
                   FROM transactions t
                   LEFT JOIN users u ON t.user_id = u.id
                   LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
+                  WHERE t.tenant_id = ?
                   GROUP BY t.id
                   ORDER BY t.created_at DESC
                   LIMIT ? OFFSET ?";
         
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("ii", $limit, $offset);
+        $stmt->bind_param("iii", $_SESSION['tenant_id'], $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -135,8 +136,9 @@ try {
             $transactions[] = $row;
         }
         
-        // Get total count
-        $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM transactions");
+        // Get total count for current tenant
+        $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM transactions WHERE tenant_id = ?");
+        $countStmt->bind_param("i", $_SESSION['tenant_id']);
         $countStmt->execute();
         $countResult = $countStmt->get_result();
         $totalCount = $countResult->fetch_assoc()['total'];
@@ -161,3 +163,4 @@ try {
 }
 
 $conn->close();
+?>
