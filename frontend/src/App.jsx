@@ -1,10 +1,12 @@
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/shared/Login';
+import Register from './pages/shared/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './pages/shared/AccessDenied';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import UserManagement from './pages/superadmin/UserManagement';
+import TenantManagement from './pages/superadmin/TenantManagement';
 import SystemInsights from './pages/superadmin/SystemInsights';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUserManagement from './pages/admin/AdminUserManagement';
@@ -33,6 +35,7 @@ function App() {
                 <AuthProvider>
                     <Routes>
                         <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
                         <Route path="/access-denied" element={<AccessDenied />} />
 
                         {/* Protected Routes */}
@@ -49,6 +52,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['superadmin']}>
                                     <UserManagement />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/superadmin/tenants"
+                            element={
+                                <ProtectedRoute allowedRoles={['superadmin']}>
+                                    <TenantManagement />
                                 </ProtectedRoute>
                             }
                         />

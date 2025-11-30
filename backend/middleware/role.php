@@ -21,4 +21,25 @@ function checkRole($allowedRoles) {
         exit;
     }
 }
+
+/**
+ * Check if user has access to a specific tenant's data
+ * SuperAdmin can access all tenants, others can only access their own
+ * 
+ * @param int $targetTenantId The tenant ID being accessed
+ * @return void Exits with 403 if forbidden
+ */
+function checkTenantAccess($targetTenantId) {
+    // SuperAdmin can access all tenants
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin') {
+        return;
+    }
+    
+    // Other users can only access their own tenant
+    if (!isset($_SESSION['tenant_id']) || $_SESSION['tenant_id'] != $targetTenantId) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Forbidden: Cannot access other tenant data']);
+        exit;
+    }
+}
 ?>

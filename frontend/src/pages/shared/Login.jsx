@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
@@ -125,6 +125,10 @@ const Login = () => {
                         <button type="submit" disabled={isSubmitting} className="login-button">
                             {isSubmitting ? 'Signing in...' : 'Sign In'}
                         </button>
+
+                        <div className="register-link">
+                            Don't have a shop? <Link to="/register">Create Shop Account</Link>
+                        </div>
                     </form>
                 </div>
             </div>

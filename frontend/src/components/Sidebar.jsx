@@ -10,7 +10,8 @@ import {
   LogOut,
   Package,
   ShoppingCart,
-  DollarSign
+  DollarSign,
+  Store
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -25,6 +26,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
           { icon: Users, label: 'User Management', path: '/superadmin/users' },
+          { icon: Store, label: 'Tenant Management', path: '/superadmin/tenants' }, // Added Tenants menu item
           { icon: BarChart2, label: 'System Insights', path: '/superadmin/system-insights' }
         ];
       case 'admin':

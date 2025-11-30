@@ -41,9 +41,9 @@ try {
 
     // getActivityLogs helper handles role-based filtering:
     // - User: sees own logs
-    // - Admin: sees admin and user logs
-    // - SuperAdmin: sees own logs (as per current implementation in helper)
-    $logs = getActivityLogs($currentUser['id'], $currentUser['role'], $limit, $offset);
+    // - Admin: sees logs for their tenant
+    // - SuperAdmin: sees own logs
+    $logs = getActivityLogs($currentUser['id'], $currentUser['role'], $_SESSION['tenant_id'], $limit, $offset);
 
     http_response_code(200);
     echo json_encode([
@@ -58,3 +58,4 @@ try {
 }
 
 $conn->close();
+?>

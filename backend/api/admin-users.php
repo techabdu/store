@@ -45,19 +45,33 @@ switch ($method) {
 }
 
 function handleGet($conn) {
-    // Get all users with role 'user' or 'admin' (exclude superadmins)
+    // Check for username availability
+    if (isset($_GET['check_username'])) {
+        $username = trim($_GET['check_username']);
+        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND tenant_id = ?");
+        $stmt->bind_param("si", $username, $_SESSION['tenant_id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        echo json_encode(['success' => true, 'available' => $result->num_rows === 0]);
+        return;
+    }
+
+    // Get all users with role 'user' or 'admin' for current tenant (exclude superadmins)
     $sql = "SELECT id, username, email, role, status, updated_at as lastActive 
             FROM users 
             WHERE role IN ('user', 'admin') 
+            AND tenant_id = ?
             ORDER BY created_at DESC";
     
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $_SESSION['tenant_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
     $users = [];
-    if ($result) {
-        while ($row = $result->fetch_assoc()) {
-            $users[] = $row;
-        }
+    while ($row = $result->fetch_assoc()) {
+        $users[] = $row;
     }
     
     echo json_encode(['success' => true, 'users' => $users]);
@@ -85,22 +99,22 @@ function handlePost($conn, $currentUser) {
         exit;
     }
     
-    // Check if username or email exists
-    $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-    $stmt->bind_param("ss", $username, $email);
+    // Check if username or email exists within the current tenant
+    $stmt = $conn->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND tenant_id = ?");
+    $stmt->bind_param("ssi", $username, $email, $_SESSION['tenant_id']);
     $stmt->execute();
     if ($stmt->get_result()->num_rows > 0) {
         http_response_code(409);
-        echo json_encode(['success' => false, 'error' => 'Username or email already exists']);
+        echo json_encode(['success' => false, 'error' => 'Username or email already exists in this shop']);
         exit;
     }
     
     // Hash password
     $password_hash = password_hash($password, PASSWORD_BCRYPT);
     
-    // Insert user
-    $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash, role, created_by) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssi", $username, $email, $password_hash, $role, $currentUser['id']);
+    // Insert user with tenant_id
+    $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash, role, tenant_id, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssii", $username, $email, $password_hash, $role, $_SESSION['tenant_id'], $currentUser['id']);
     
     if ($stmt->execute()) {
         $newUserId = $conn->insert_id;
@@ -138,8 +152,8 @@ function handlePut($conn, $currentUser) {
         exit;
     }
     
-    // Check that the target user is not a superadmin
-    $checkStmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
+    // Check that the target user belongs to same tenant and is not a superadmin
+    $checkStmt = $conn->prepare("SELECT role, tenant_id FROM users WHERE id = ?");
     $checkStmt->bind_param("i", $id);
     $checkStmt->execute();
     $result = $checkStmt->get_result();
@@ -151,6 +165,14 @@ function handlePut($conn, $currentUser) {
     }
     
     $targetUser = $result->fetch_assoc();
+    
+    // Verify user belongs to same tenant
+    if ($targetUser['tenant_id'] != $_SESSION['tenant_id']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Cannot modify users from other tenants']);
+        exit;
+    }
+    
     if ($targetUser['role'] === 'superadmin') {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Cannot modify superadmin accounts']);
@@ -232,8 +254,8 @@ function handleDelete($conn, $currentUser) {
         exit;
     }
     
-    // Check that the target user is not a superadmin
-    $checkStmt = $conn->prepare("SELECT role FROM users WHERE id = ?");
+    // Check that the target user belongs to same tenant and is not a superadmin
+    $checkStmt = $conn->prepare("SELECT role, tenant_id FROM users WHERE id = ?");
     $checkStmt->bind_param("i", $id);
     $checkStmt->execute();
     $result = $checkStmt->get_result();
@@ -245,6 +267,14 @@ function handleDelete($conn, $currentUser) {
     }
     
     $targetUser = $result->fetch_assoc();
+    
+    // Verify user belongs to same tenant
+    if ($targetUser['tenant_id'] != $_SESSION['tenant_id']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Cannot delete users from other tenants']);
+        exit;
+    }
+    
     if ($targetUser['role'] === 'superadmin') {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Cannot delete superadmin accounts']);

@@ -1,25 +1,27 @@
-# Phone Retailer Management System
+# Phone Retailer Management System (Multi-Tenant)
 
-A complete web-based management system for phone retail businesses with role-based access control, inventory tracking, point-of-sale, and financial reporting.
+A complete SaaS-ready management system for phone retail businesses. Supports multiple independent shops (tenants) with isolated data, role-based access control, inventory tracking, point-of-sale, and financial reporting.
 
-## What It Does
+## Key Features
 
-This application helps phone retailers manage their entire business operations:
+### Multi-Tenancy
+- **Data Isolation**: Each shop has its own completely isolated database of users, inventory, and sales.
+- **Self-Registration**: New shops can register, select a plan, and verify email to get started instantly.
+- **Subscription Plans**: Supports Free Trial, Basic, Premium, and Enterprise plans.
+- **Tenant Management**: SuperAdmin tools to monitor, suspend, or activate shop accounts.
 
-- **User Management**: Three-tier role system (SuperAdmin, Admin, User) with secure authentication
-- **Inventory Management**: Track phones with IMEI, brand, model, storage, color, condition, and pricing
-- **Point of Sale (POS)**: Process sales transactions with customer details and multiple payment methods
-- **Sales Tracking**: View sales history, generate receipts, and track customer purchases
-- **Financial Management**: Track expenses, monitor profits, and generate financial reports
-- **Activity Logging**: Audit trail of all user actions and system events
-- **System Insights**: Monitor security, database health, performance, and business metrics (SuperAdmin)
-- **Shop Settings**: Configure shop information (name, address, phone, email, business capital)
+### Core Functionality
+- **User Management**: Role-based access (Admin, User) within each shop.
+- **Inventory Management**: Track phones with IMEI, brand, model, storage, color, condition, and pricing.
+- **Point of Sale (POS)**: Process sales and trade-ins with automatic inventory updates.
+- **Financials**: Track expenses, sales history, and generate profit/loss reports.
+- **Security**: Email verification, secure authentication, and activity logging.
 
 ## Tech Stack
 
-- **Frontend**: React (Vite), React Router, Axios
-- **Backend**: PHP (OOP), RESTful APIs
-- **Database**: MySQL
+- **Frontend**: React (Vite), React Router, Axios, Tailwind-like CSS
+- **Backend**: PHP (OOP), RESTful APIs, MySQL
+- **Security**: JWT-like session management, BCrypt password hashing, CSRF protection
 
 ## Quick Start
 
@@ -28,67 +30,76 @@ This application helps phone retailers manage their entire business operations:
 # Start XAMPP (Apache + MySQL)
 # Open phpMyAdmin at http://localhost/phpmyadmin
 # Create database named 'store'
-# Import all SQL files from backend/sql/ directory
+# Import SQL files from backend/sql/ in order:
+# 1. 00_init.sql (if exists)
+# 2. 01_multi_tenancy.sql
 ```
 
-### 2. Backend
+### 2. Backend Configuration
 ```bash
-# Ensure project is in htdocs/store
-# Verify backend/config/database.php credentials (default: root/no password)
+# Rename backend/.env.example to backend/.env
+# Update SMTP settings for email verification:
+SMTP_HOST=smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USERNAME=your_username
+SMTP_PASSWORD=your_password
 ```
 
-### 3. Frontend
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### 4. Login
-- **URL**: http://localhost:5173
-- **Username**: `it support`
-- **Password**: `superadmin123`
-- **Role**: SuperAdmin
+### 4. Accessing the System
+
+**Register a New Shop:**
+- **URL**: http://localhost:5173/register
+- Follow the steps to create your own isolated shop environment.
+
+**SuperAdmin Access:**
+- **URL**: http://localhost:5173/login
+- **Username**: `superadmin` (or as configured in database)
+- **Password**: `SuperAdmin123!@#`
 
 ## Features by Role
 
 ### SuperAdmin
-- Full system access and control
-- User management (create/edit/delete admins and users)
-- System insights and monitoring
-- All admin and user features
+- **Tenant Management**: View all shops, suspend/activate accounts, monitor trial status.
+- **System Insights**: Global metrics on system usage, active tenants, and revenue.
+- **User Management**: View all system users across tenants.
 
-### Admin
-- User management (create/edit/delete users only)
-- Inventory management
-- Sales and POS access
-- Financial reports and expense tracking
-- Customer management
-- Shop settings configuration
+### Shop Admin (Tenant Owner)
+- **Full Shop Control**: Manage inventory, users, and settings for YOUR shop only.
+- **Financial Reports**: View profits, expenses, and sales data.
+- **User Management**: Create staff accounts (User role) for your shop.
 
-### User
-- Inventory management
-- Point of Sale (POS)
-- Sales history
-- Personal profile settings
+### Shop User (Staff)
+- **POS**: Process sales and trade-ins.
+- **Inventory**: View and search stock.
+- **Sales History**: View past transactions.
 
 ## Project Structure
 
 ```
 store/
 ├── backend/
-│   ├── api/          # RESTful API endpoints
-│   ├── classes/      # PHP OOP classes
-│   ├── config/       # Database configuration
-│   ├── middleware/   # Authentication & authorization
-│   └── sql/          # Database schemas
+│   ├── api/          # Tenant-aware RESTful endpoints
+│   ├── classes/      # Core logic (Auth, Tenant, Inventory)
+│   ├── config/       # Database & Env config
+│   ├── helpers/      # Email & Utility helpers
+│   └── sql/          # Migration scripts
 └── frontend/
     └── src/
-        ├── pages/    # React components (admin, user, superadmin)
-        ├── context/  # Auth context
-        └── utils/    # API configuration
+        ├── pages/
+        │   ├── superadmin/  # Global management views
+        │   ├── admin/       # Shop owner views
+        │   ├── user/        # Staff views
+        │   └── shared/      # Common views (Login, Register)
+        └── components/      # Reusable UI components
 ```
 
 ## License
 
-All rights reserved
+All rights reserved.

@@ -7,6 +7,12 @@ class Database {
     public $conn;
 
     public function __construct() {
+        // Load Composer autoloader if available
+        if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+            require_once __DIR__ . '/../vendor/autoload.php';
+        }
+
+        // Load environment variables
         $this->loadEnv();
 
         // Use environment variables or default to empty/null

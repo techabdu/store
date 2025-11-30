@@ -26,6 +26,9 @@ if ($user_data['role'] !== 'admin' && $user_data['role'] !== 'superadmin') {
     exit();
 }
 
+// Get tenant_id from session (set by checkAuth)
+$tenant_id = $_SESSION['tenant_id'];
+
 // Use the $conn variable from database.php
 $db = $conn;
 
@@ -33,19 +36,23 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 if ($action === 'get_customers') {
     try {
-        // Aggregate customers from transactions
-        // Group by name and phone to identify unique customers
+        // Aggregate customers from transactions with statistics
+        // Group by customer_name and customer_phone to get unique customers
+        // Calculate total purchases and total spent for each customer
         $query = "SELECT 
                     customer_name, 
                     customer_phone, 
-                    MAX(created_at) as last_purchase_date,
-                    COUNT(id) as total_purchases,
-                    SUM(total_amount) as total_spent
-                  FROM transactions 
-                  GROUP BY customer_name, customer_phone
+                    customer_address,
+                    COUNT(DISTINCT id) as total_purchases,
+                    SUM(total_amount) as total_spent,
+                    MAX(created_at) as last_purchase_date
+                  FROM transactions
+                  WHERE tenant_id = ? AND customer_name IS NOT NULL AND customer_name != ''
+                  GROUP BY customer_name, customer_phone, customer_address
                   ORDER BY last_purchase_date DESC";
         
         $stmt = $db->prepare($query);
+        $stmt->bind_param("i", $tenant_id);
         $stmt->execute();
         $customers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         

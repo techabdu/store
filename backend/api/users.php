@@ -45,32 +45,42 @@ switch ($method) {
 }
 
 function handleGet($conn) {
-    // Get all users except current user (optional, but usually good practice not to delete yourself easily)
-    // Or just get all users
-    $sql = "SELECT id, username, email, role, status, updated_at as lastActive FROM users ORDER BY created_at DESC";
-    
-    // Note: last_activity is in sessions table or we can use updated_at or a specific column if added.
-    // The plan said `username_last_changed` but didn't specify `last_login`.
-    // However, `auth.php` updates `last_activity` in SESSION, not in DB users table (unless we add it).
-    // Let's check `setup.sql` again. `users` table has `username_last_changed`, `created_at`, `updated_at`.
-    // `sessions` table has `last_activity`.
-    // For simplicity, we'll just return what we have. If we want last active time, we might need to join with sessions or add a column.
-    // For now, let's just return `updated_at` as a proxy or just ignore lastActive for now if not in DB.
-    // Actually, `UserManagement.jsx` expects `lastActive`.
-    // Let's try to join with sessions or just return null.
-    
-    // Wait, `auth.php` updates `$_SESSION['last_activity']`. It doesn't update DB `users` table.
-    // So we can't easily get last active time for ALL users unless we store it in DB.
-    // I will assume for now we just return `updated_at` or similar.
+    // Get all users from all tenants with tenant information
+    $sql = "
+        SELECT 
+            u.id, 
+            u.username, 
+            u.email, 
+            u.role, 
+            u.status, 
+            u.updated_at as lastActive,
+            u.tenant_id,
+            t.shop_name as tenant_name,
+            t.status as tenant_status,
+            t.plan_type as tenant_plan
+        FROM users u
+        LEFT JOIN tenants t ON u.tenant_id = t.id
+        WHERE u.role != 'superadmin'
+        ORDER BY t.shop_name ASC, u.role DESC, u.created_at DESC
+    ";
     
     $result = $conn->query($sql);
     
     $users = [];
     if ($result) {
         while ($row = $result->fetch_assoc()) {
-            // Calculate relative time for lastActive if possible, or just send timestamp
-            // For now, sending raw data
-            $users[] = $row;
+            $users[] = [
+                'id' => (int)$row['id'],
+                'username' => $row['username'],
+                'email' => $row['email'],
+                'role' => $row['role'],
+                'status' => $row['status'],
+                'lastActive' => $row['lastActive'],
+                'tenant_id' => (int)$row['tenant_id'],
+                'tenant_name' => $row['tenant_name'],
+                'tenant_status' => $row['tenant_status'],
+                'tenant_plan' => $row['tenant_plan']
+            ];
         }
     }
     

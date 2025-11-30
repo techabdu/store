@@ -85,6 +85,48 @@ try {
         exit;
     }
 
+    // Get tenant information (if user is not superadmin)
+    $tenant_id = null;
+    $tenant_status = null;
+    $email_verified = null;
+    
+    if ($user['role'] !== 'superadmin') {
+        $tenantStmt = $conn->prepare("SELECT u.tenant_id, t.status, t.email_verified FROM users u LEFT JOIN tenants t ON u.tenant_id = t.id WHERE u.id = ?");
+        $tenantStmt->bind_param("i", $user['id']);
+        $tenantStmt->execute();
+        $tenantResult = $tenantStmt->get_result();
+        
+        if ($tenantResult->num_rows > 0) {
+            $tenantData = $tenantResult->fetch_assoc();
+            $tenant_id = $tenantData['tenant_id'];
+            $tenant_status = $tenantData['status'];
+            $email_verified = $tenantData['email_verified'];
+            
+            // Check if email is verified
+            if (!$email_verified) {
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false, 
+                    'error' => 'Please verify your email address before logging in. Check your inbox for the verification link.'
+                ]);
+                exit;
+            }
+            
+            // Check tenant status
+            if ($tenant_status === 'suspended') {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Your shop account has been suspended. Please contact support.']);
+                exit;
+            }
+            
+            if ($tenant_status === 'pending') {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Your shop account is pending activation. Please verify your email.']);
+                exit;
+            }
+        }
+    }
+
     // Start session
     if (session_status() === PHP_SESSION_NONE) {
         ini_set('session.gc_maxlifetime', 172800);
@@ -104,6 +146,7 @@ try {
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
+    $_SESSION['tenant_id'] = $tenant_id;
     $_SESSION['last_activity'] = time();
 
     // Log activity

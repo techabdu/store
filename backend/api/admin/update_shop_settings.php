@@ -7,6 +7,7 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Access-Control-Allow-Credentials: true");
 
 // Handle preflight request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -34,32 +35,60 @@ if (!$data) {
 try {
     global $conn;
 
-    $conn->begin_transaction();
+    // Map old keys to tenants table columns
+    $updates = [];
+    $types = "";
+    $params = [];
 
-    $query = "INSERT INTO shop_settings (setting_key, setting_value) VALUES (?, ?) 
-              ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
-    
-    $stmt = $conn->prepare($query);
+    // Map frontend keys to database columns
+    $keyMap = [
+        'shop_name' => 'shop_name',
+        'shop_address' => 'shop_address',
+        'shop_phone' => 'shop_phone',
+        'shop_email' => 'shop_email',
+        'business_capital' => 'business_capital'
+    ];
 
     foreach ($data as $key => $value) {
-        // Ensure value is a string
-        $strValue = (string)$value;
-        $stmt->bind_param("ss", $key, $strValue);
-        $stmt->execute();
+        if (array_key_exists($key, $keyMap)) {
+            $column = $keyMap[$key];
+            $updates[] = "$column = ?";
+            
+            // Handle business_capital as decimal/float
+            if ($column === 'business_capital') {
+                $types .= "d";
+                $params[] = floatval($value);
+            } else {
+                $types .= "s";
+                $params[] = (string)$value;
+            }
+        }
     }
 
-    $conn->commit();
+    if (empty($updates)) {
+        http_response_code(200); // Nothing to update is technically success
+        echo json_encode(["success" => true, "message" => "No changes made"]);
+        exit;
+    }
 
-    http_response_code(200);
-    echo json_encode([
-        "success" => true,
-        "message" => "Settings updated successfully"
-    ]);
+    $sql = "UPDATE tenants SET " . implode(", ", $updates) . " WHERE id = ?";
+    $types .= "i";
+    $params[] = $_SESSION['tenant_id'];
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+
+    if ($stmt->execute()) {
+        http_response_code(200);
+        echo json_encode([
+            "success" => true,
+            "message" => "Settings updated successfully"
+        ]);
+    } else {
+        throw new Exception("Failed to update settings");
+    }
 
 } catch (Exception $e) {
-    if ($conn) {
-        $conn->rollback();
-    }
     http_response_code(500);
     echo json_encode([
         "success" => false,

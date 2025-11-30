@@ -103,14 +103,14 @@ try {
     }
     $checkStmt->close();
     
-    // Insert new inventory item
+    // Insert new inventory item with tenant_id
     $stmt = $conn->prepare(
-        "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, tenant_id, created_by) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     
     $stmt->bind_param(
-        "ssssssddsi",
+        "ssssssddsii",
         $brand,
         $model,
         $imei,
@@ -120,6 +120,7 @@ try {
         $price,
         $costPrice,
         $status,
+        $_SESSION['tenant_id'],
         $createdBy
     );
     
