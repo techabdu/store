@@ -138,19 +138,20 @@ try {
             
             // Insert trade-in item into inventory
             $insertInventoryStmt = $conn->prepare(
-                "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, created_by) 
-                 VALUES (?, ?, ?, ?, ?, 'used', ?, 0, 'in_stock', ?)"
+                "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, created_by, tenant_id) 
+                 VALUES (?, ?, ?, ?, ?, 'used', ?, 0, 'in_stock', ?, ?)"
             );
             
             $insertInventoryStmt->bind_param(
-                "sssssdi",
+                "sssssdii",
                 $brand,
                 $model,
                 $imei,
                 $color,
                 $storage,
                 $tradeInValue,
-                $userId
+                $userId,
+                $_SESSION['tenant_id']
             );
             
             if (!$insertInventoryStmt->execute()) {
@@ -207,11 +208,12 @@ try {
     foreach ($saleItems as $saleItem) {
         $type = 'sale';
         $itemStmt->bind_param(
-            "iids",
+            "iidsi",
             $transactionId,
             $saleItem['inventory_id'],
             $saleItem['price'],
-            $type
+            $type,
+            $_SESSION['tenant_id']
         );
         
         if (!$itemStmt->execute()) {
@@ -229,11 +231,12 @@ try {
     foreach ($tradeInItems as $tradeInItem) {
         $type = 'trade_in';
         $itemStmt->bind_param(
-            "iids",
+            "iidsi",
             $transactionId,
             $tradeInItem['inventory_id'],
             $tradeInItem['price'],
-            $type
+            $type,
+            $_SESSION['tenant_id']
         );
         
         if (!$itemStmt->execute()) {

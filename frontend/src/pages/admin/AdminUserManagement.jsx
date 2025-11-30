@@ -12,7 +12,9 @@ import {
     ShieldOff,
     ArrowUp,
     ArrowDown,
-    X
+    X,
+    Check,
+    AlertCircle
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
 import '../../styles/dashboard.css';
@@ -38,6 +40,38 @@ const AdminUserManagement = () => {
         password: '',
         role: 'user'
     });
+
+    const [usernameAvailable, setUsernameAvailable] = useState(null);
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+
+    // Check username availability with debounce
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (!formData.username || formData.username.length < 3) {
+                setUsernameAvailable(null);
+                return;
+            }
+
+            setIsCheckingUsername(true);
+            try {
+                const response = await api.get(`/admin-users.php?check_username=${encodeURIComponent(formData.username)}`);
+                if (response.data.success) {
+                    setUsernameAvailable(response.data.available);
+                }
+            } catch (error) {
+                console.error('Error checking username:', error);
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        };
+
+        if (showModal) {
+            const timeoutId = setTimeout(checkAvailability, 500);
+            return () => clearTimeout(timeoutId);
+        } else {
+            setUsernameAvailable(null);
+        }
+    }, [formData.username, showModal]);
 
     // Fetch users
     const fetchUsers = async () => {
@@ -321,11 +355,29 @@ const AdminUserManagement = () => {
                                     <input
                                         type="text"
                                         name="username"
-                                        className="form-input"
+                                        className={`form-input ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
                                         value={formData.username}
                                         onChange={handleInputChange}
                                         required
                                     />
+                                    {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
+                                        <div className={`flex items-center gap-1 mt-1 text-sm ${usernameAvailable ? 'text-green-600' : 'text-red-600'}`} style={{ fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: usernameAvailable ? '#10b981' : '#ef4444' }}>
+                                            {usernameAvailable ? (
+                                                <>
+                                                    <Check size={14} />
+                                                    <span>Username available</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <AlertCircle size={14} />
+                                                    <span>Username not available</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                    {isCheckingUsername && (
+                                        <div style={{ fontSize: '12px', marginTop: '4px', color: '#6b7280' }}>Checking availability...</div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>Email</label>
@@ -364,7 +416,7 @@ const AdminUserManagement = () => {
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Create User</button>
+                                <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>Create User</button>
                             </div>
                         </form>
                     </div>

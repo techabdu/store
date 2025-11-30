@@ -43,41 +43,60 @@ try {
     ];
 
     // 1. Total Inventory in Stock
-    $inventoryQuery = "SELECT COUNT(*) as count FROM inventory WHERE status = 'in_stock'";
-    $inventoryResult = $conn->query($inventoryQuery);
+    $inventoryQuery = "SELECT COUNT(*) as count FROM inventory WHERE status = 'in_stock' AND tenant_id = ?";
+    $inventoryStmt = $conn->prepare($inventoryQuery);
+    $inventoryStmt->bind_param("i", $_SESSION['tenant_id']);
+    $inventoryStmt->execute();
+    $inventoryResult = $inventoryStmt->get_result();
     if ($inventoryResult) {
         $stats['inventory_count'] = $inventoryResult->fetch_assoc()['count'];
     }
+    $inventoryStmt->close();
 
     // 2. Total Monthly Sales
     // Using current month and year
     $salesQuery = "SELECT SUM(total_amount) as total FROM transactions 
                    WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) 
-                   AND YEAR(created_at) = YEAR(CURRENT_DATE())";
-    $salesResult = $conn->query($salesQuery);
+                   AND YEAR(created_at) = YEAR(CURRENT_DATE())
+                   AND tenant_id = ?";
+    $salesStmt = $conn->prepare($salesQuery);
+    $salesStmt->bind_param("i", $_SESSION['tenant_id']);
+    $salesStmt->execute();
+    $salesResult = $salesStmt->get_result();
     if ($salesResult) {
         $row = $salesResult->fetch_assoc();
         $stats['monthly_sales'] = $row['total'] ?? 0;
     }
+    $salesStmt->close();
 
     // 3. Monthly Expenses Logged
     $expensesQuery = "SELECT SUM(amount) as total FROM expenses 
                       WHERE MONTH(date) = MONTH(CURRENT_DATE()) 
-                      AND YEAR(date) = YEAR(CURRENT_DATE())";
-    $expensesResult = $conn->query($expensesQuery);
+                      AND YEAR(date) = YEAR(CURRENT_DATE())
+                      AND tenant_id = ?";
+    $expensesStmt = $conn->prepare($expensesQuery);
+    $expensesStmt->bind_param("i", $_SESSION['tenant_id']);
+    $expensesStmt->execute();
+    $expensesResult = $expensesStmt->get_result();
     if ($expensesResult) {
         $row = $expensesResult->fetch_assoc();
         $stats['monthly_expenses'] = $row['total'] ?? 0;
     }
+    $expensesStmt->close();
 
     // 4. Activity This Week (Number of sales)
     // YEARWEEK(date, 1) uses Monday as the first day of the week
     $weeklyActivityQuery = "SELECT COUNT(*) as count FROM transactions 
-                            WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURRENT_DATE(), 1)";
-    $weeklyActivityResult = $conn->query($weeklyActivityQuery);
+                            WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURRENT_DATE(), 1)
+                            AND tenant_id = ?";
+    $weeklyActivityStmt = $conn->prepare($weeklyActivityQuery);
+    $weeklyActivityStmt->bind_param("i", $_SESSION['tenant_id']);
+    $weeklyActivityStmt->execute();
+    $weeklyActivityResult = $weeklyActivityStmt->get_result();
     if ($weeklyActivityResult) {
         $stats['weekly_sales_count'] = $weeklyActivityResult->fetch_assoc()['count'];
     }
+    $weeklyActivityStmt->close();
 
     http_response_code(200);
     echo json_encode([

@@ -45,6 +45,18 @@ switch ($method) {
 }
 
 function handleGet($conn) {
+    // Check for username availability
+    if (isset($_GET['check_username'])) {
+        $username = trim($_GET['check_username']);
+        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? AND tenant_id = ?");
+        $stmt->bind_param("si", $username, $_SESSION['tenant_id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        echo json_encode(['success' => true, 'available' => $result->num_rows === 0]);
+        return;
+    }
+
     // Get all users with role 'user' or 'admin' for current tenant (exclude superadmins)
     $sql = "SELECT id, username, email, role, status, updated_at as lastActive 
             FROM users 
@@ -87,13 +99,13 @@ function handlePost($conn, $currentUser) {
         exit;
     }
     
-    // Check if username or email exists
-    $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-    $stmt->bind_param("ss", $username, $email);
+    // Check if username or email exists within the current tenant
+    $stmt = $conn->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND tenant_id = ?");
+    $stmt->bind_param("ssi", $username, $email, $_SESSION['tenant_id']);
     $stmt->execute();
     if ($stmt->get_result()->num_rows > 0) {
         http_response_code(409);
-        echo json_encode(['success' => false, 'error' => 'Username or email already exists']);
+        echo json_encode(['success' => false, 'error' => 'Username or email already exists in this shop']);
         exit;
     }
     
@@ -102,7 +114,7 @@ function handlePost($conn, $currentUser) {
     
     // Insert user with tenant_id
     $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash, role, tenant_id, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssiii", $username, $email, $password_hash, $role, $_SESSION['tenant_id'], $currentUser['id']);
+    $stmt->bind_param("ssssii", $username, $email, $password_hash, $role, $_SESSION['tenant_id'], $currentUser['id']);
     
     if ($stmt->execute()) {
         $newUserId = $conn->insert_id;

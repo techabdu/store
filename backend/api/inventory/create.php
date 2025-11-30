@@ -110,7 +110,7 @@ try {
     );
     
     $stmt->bind_param(
-        "sssssddsii",
+        "ssssssddsii",
         $brand,
         $model,
         $imei,
