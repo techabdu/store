@@ -5,6 +5,8 @@ import api from '../../utils/api';
 import '../../styles/register.css';
 
 const Register = () => {
+    const [step, setStep] = useState(1); // 1: Plan Selection, 2: Registration Form
+    const [selectedPlan, setSelectedPlan] = useState('free_trial');
     const [formData, setFormData] = useState({
         shop_name: '',
         owner_username: '',
@@ -21,6 +23,51 @@ const Register = () => {
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
     const navigate = useNavigate();
+
+    // Available plans
+    const plans = [
+        {
+            id: 'free_trial',
+            name: 'Free Trial',
+            price: 0,
+            duration: '25 days',
+            features: [
+                'Full access to all features',
+                'Up to 5 users',
+                'Unlimited inventory items',
+                'Basic support',
+                'No credit card required'
+            ],
+            recommended: true
+        },
+        {
+            id: 'basic',
+            name: 'Basic Plan',
+            price: 29.99,
+            duration: 'per month',
+            features: [
+                'All trial features',
+                'Up to 10 users',
+                'Priority support',
+                'Advanced reporting',
+                'Email notifications'
+            ]
+        },
+        {
+            id: 'premium',
+            name: 'Premium Plan',
+            price: 79.99,
+            duration: 'per month',
+            features: [
+                'All basic features',
+                'Unlimited users',
+                '24/7 support',
+                'Custom integrations',
+                'API access',
+                'Advanced analytics'
+            ]
+        }
+    ];
 
     // Password strength calculation
     const calculatePasswordStrength = (password) => {
@@ -143,12 +190,75 @@ const Register = () => {
         );
     }
 
+    // Step 1: Plan Selection
+    if (step === 1) {
+        return (
+            <div className="register-page">
+                <div className="register-container plan-selection">
+                    <div className="register-header">
+                        <h1>Choose Your Plan</h1>
+                        <p>Select the plan that best fits your business needs</p>
+                    </div>
+
+                    <div className="plans-grid">
+                        {plans.map((plan) => (
+                            <div
+                                key={plan.id}
+                                className={`plan-card ${selectedPlan === plan.id ? 'selected' : ''} ${plan.recommended ? 'recommended' : ''}`}
+                                onClick={() => setSelectedPlan(plan.id)}
+                            >
+                                {plan.recommended && <div className="recommended-badge">Recommended</div>}
+                                <h3>{plan.name}</h3>
+                                <div className="plan-price">
+                                    {plan.price === 0 ? (
+                                        <>
+                                            <span className="price">Free</span>
+                                            <span className="duration">{plan.duration}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="currency">$</span>
+                                            <span className="price">{plan.price}</span>
+                                            <span className="duration">/{plan.duration.split(' ')[1]}</span>
+                                        </>
+                                    )}
+                                </div>
+                                <ul className="plan-features">
+                                    {plan.features.map((feature, index) => (
+                                        <li key={index}>
+                                            <FaCheckCircle className="feature-icon" />
+                                            {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="plan-actions">
+                        <button
+                            onClick={() => setStep(2)}
+                            className="continue-button"
+                        >
+                            Continue with {plans.find(p => p.id === selectedPlan)?.name}
+                        </button>
+                        <div className="login-link">
+                            Already have an account? <Link to="/login">Sign in here</Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Step 2: Registration Form
     return (
         <div className="register-page">
             <div className="register-container">
                 <div className="register-header">
                     <h1>Create Your Shop Account</h1>
-                    <p>Start your 25-day free trial today</p>
+                    <p>Selected Plan: <strong>{plans.find(p => p.id === selectedPlan)?.name}</strong></p>
+                    <button onClick={() => setStep(1)} className="change-plan-btn">Change Plan</button>
                 </div>
 
                 {error && <div className="error-message">{error}</div>}
