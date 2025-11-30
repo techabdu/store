@@ -260,6 +260,25 @@
     text-decoration: underline;
 }
 
+.register-link {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--login-text-secondary);
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.register-link a {
+    color: #7C3AED;
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 5px;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
 /* Right Side - Visual Section */
 .login-visual-section {
     flex: 1;
