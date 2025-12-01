@@ -18,13 +18,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Get posted data
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->email)) {
+if (!isset($data->email) && !isset($data->username)) {
     http_response_code(400);
-    echo json_encode(["success" => false, "error" => "Email is required"]);
+    echo json_encode(["success" => false, "error" => "Email or Username is required"]);
     exit;
 }
 
-$email = $data->email;
+$email = null;
+
+if (isset($data->username)) {
+    // Find email by username
+    $stmt = $conn->prepare("
+        SELECT t.shop_email 
+        FROM users u 
+        JOIN tenants t ON u.tenant_id = t.id 
+        WHERE u.username = ?
+    ");
+    $stmt->bind_param("s", $data->username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $email = $row['shop_email'];
+    } else {
+        // Username not found or not linked to tenant
+        // Return success to avoid enumeration, or error? 
+        // For resend flow initiated by user who knows their username, it's safer to say "sent if exists"
+        http_response_code(200);
+        echo json_encode(["success" => true, "message" => "If an account exists, a verification link has been sent."]);
+        exit;
+    }
+} else {
+    $email = $data->email;
+}
 
 try {
     // Find tenant by email
@@ -34,8 +61,6 @@ try {
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        // Don't reveal if email exists or not for security, or maybe do?
-        // For now, let's say "If an account exists, email sent."
         http_response_code(200);
         echo json_encode(["success" => true, "message" => "If an account exists with this email, a verification link has been sent."]);
         exit;
@@ -56,8 +81,14 @@ try {
     $updateStmt->bind_param("si", $verification_token, $tenant['id']);
     $updateStmt->execute();
 
-    // Send email
-    $verificationLink = "http://localhost/store/backend/api/auth/verify-email.php?token=" . $verification_token;
+    // Determine protocol and host
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+    $host = $_SERVER['HTTP_HOST'];
+    $scriptPath = dirname($_SERVER['PHP_SELF']); // /store/backend/api/auth
+    
+    // Construct dynamic link
+    // Assuming verify-email.php is in the same directory
+    $verificationLink = "$protocol://$host$scriptPath/verify-email.php?token=" . $verification_token;
     
     $subject = "Verify your Email - Store Management System";
     $body = "
@@ -67,13 +98,18 @@ try {
         <p>Or copy and paste this link: $verificationLink</p>
     ";
 
-    sendEmail($email, $subject, $body);
+    $sendResult = sendEmail($email, $subject, $body);
 
-    http_response_code(200);
-    echo json_encode(["success" => true, "message" => "Verification email sent."]);
+    if ($sendResult['success']) {
+        http_response_code(200);
+        echo json_encode(["success" => true, "message" => "Verification email sent."]);
+    } else {
+        throw new Exception($sendResult['message']);
+    }
 
 } catch (Exception $e) {
+    error_log("Resend verification error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["success" => false, "error" => "Database error: " . $e->getMessage()]);
+    echo json_encode(["success" => false, "error" => "Failed to send email. Please try again later."]);
 }
 ?>

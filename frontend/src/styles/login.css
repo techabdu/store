@@ -345,3 +345,61 @@
         margin: 1rem;
     }
 }
+
+/* Resend Verification Link */
+.resend-verification-section {
+    margin-top: 12px;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 10px;
+}
+
+.resend-link-button {
+    background: none;
+    border: none;
+    color: var(--login-error-text);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    font-weight: 600;
+    font-family: inherit;
+}
+
+.resend-link-button:hover {
+    opacity: 0.8;
+}
+
+.resend-link-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    text-decoration: none;
+}
+
+.resend-message {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.resend-message.success {
+    color: #059669;
+    /* Green */
+}
+
+.resend-message.error {
+    color: var(--login-error-text);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
