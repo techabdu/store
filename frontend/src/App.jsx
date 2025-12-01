@@ -2,6 +2,8 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/shared/Login';
 import Register from './pages/shared/Register';
+import ForgotPassword from './pages/shared/ForgotPassword';
+import ResetPassword from './pages/shared/ResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './pages/shared/AccessDenied';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
@@ -36,6 +38,8 @@ function App() {
                     <Routes>
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/access-denied" element={<AccessDenied />} />
 
                         {/* Protected Routes */}

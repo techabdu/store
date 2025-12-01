@@ -168,6 +168,9 @@ const Login = () => {
                                 </span>
                                 <span>Remember me</span>
                             </label>
+                            <Link to="/forgot-password" className="forgot-password">
+                                Forgot Password?
+                            </Link>
                         </div>
 
                         <button type="submit" disabled={isSubmitting} className="login-button">

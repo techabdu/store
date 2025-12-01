@@ -403,3 +403,27 @@
         transform: translateY(0);
     }
 }
+
+/* Success Message */
+.success-message {
+    background-color: #D1FAE5;
+    color: #065F46;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme='dark'] .success-message {
+    background-color: #064E3B;
+    color: #6EE7B7;
+}
+
+.success-message p {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
