@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
@@ -13,6 +14,9 @@ const Login = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showResendLink, setShowResendLink] = useState(false);
+    const [resendStatus, setResendStatus] = useState('idle');
+    const [resendMessage, setResendMessage] = useState('');
 
     const { login, isAuthenticated, getDashboardRoute } = useAuth();
     const navigate = useNavigate();
@@ -31,17 +35,40 @@ const Login = () => {
         }
 
         setError('');
+        setShowResendLink(false);
+        setResendMessage('');
         setIsSubmitting(true);
 
         try {
             const result = await login(username, password);
             if (!result.success) {
                 setError(result.error || 'Login failed');
+                if (result.error && result.error.includes('verify your email address')) {
+                    setShowResendLink(true);
+                }
             }
         } catch (err) {
             setError('An unexpected error occurred');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleResendVerification = async () => {
+        setResendStatus('sending');
+        setResendMessage('');
+        try {
+            const response = await api.post('/auth/resend-verification.php', { username });
+            if (response.data.success) {
+                setResendStatus('success');
+                setResendMessage('Verification email sent! Please check your inbox.');
+            } else {
+                setResendStatus('error');
+                setResendMessage(response.data.error || 'Failed to send email.');
+            }
+        } catch (err) {
+            setResendStatus('error');
+            setResendMessage(err.response?.data?.error || 'An error occurred.');
         }
     };
 
@@ -63,7 +90,28 @@ const Login = () => {
                         <p>please enter your credentials to login</p>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
+                    {error && (
+                        <div className="error-message">
+                            {error}
+                            {showResendLink && (
+                                <div className="resend-verification-section">
+                                    <button
+                                        type="button"
+                                        className="resend-link-button"
+                                        onClick={handleResendVerification}
+                                        disabled={resendStatus === 'sending' || resendStatus === 'success'}
+                                    >
+                                        {resendStatus === 'sending' ? 'Sending...' : 'Click here to resend verification email'}
+                                    </button>
+                                    {resendMessage && (
+                                        <div className={`resend-message ${resendStatus}`}>
+                                            {resendMessage}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="login-form">
                         <div className="form-group">
