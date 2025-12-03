@@ -1,3 +1,6 @@
+/* Import Elyptix Font */
+@import url('../assets/fonts/elyptix.css');
+
 /* CSS Variables for Light and Dark Themes */
 :root {
     /* Light Theme Variables */
@@ -283,50 +286,46 @@
 .login-visual-section {
     flex: 1;
     /* Slightly larger than form */
-    background: #171810;
+    background: #f8f9fa;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
+    flex-direction: column;
 }
 
-/* Add some cloud-like shapes or gradient overlays if needed */
-.login-visual-section::before {
-    content: '';
+/* PRHub Logo */
+.prhub-logo {
     position: absolute;
-    top: -25%;
-    right: -25%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+    top: 2rem;
+    left: 2rem;
+    font-family: 'Elyptix', 'Google Sans', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--login-text-primary);
+    z-index: 2;
+    letter-spacing: -0.5px;
 }
 
-.login-visual-section::after {
-    content: '';
-    position: absolute;
-    bottom: -10%;
-    left: -10%;
-    width: 200px;
-    height: 200px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+/* Login Tagline */
+.login-tagline {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    margin-top: 2rem;
 }
 
-.illustration-container {
-    width: 80%;
-    max-width: 600px;
-    z-index: 10;
+.login-tagline h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--login-text-primary);
+    line-height: 1.2;
+    margin: 0;
+    letter-spacing: -0.5px;
 }
 
-.illustration-container img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    /* drop-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); */
-    /* Optional shadow for depth */
-}
+
 
 /* Responsive Design */
 @media (max-width: 900px) {

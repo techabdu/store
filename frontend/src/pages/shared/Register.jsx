@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaStore, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaEye, FaEyeSlash, FaCheckCircle, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import api from '../../utils/api';
@@ -23,8 +23,45 @@ const Register = () => {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
+    const [resendTimer, setResendTimer] = useState(60);
+    const [resendStatus, setResendStatus] = useState('idle'); // idle, sending, success, error
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        let interval;
+        if (registrationSuccess && resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [registrationSuccess, resendTimer]);
+
+    const handleResendEmail = async () => {
+        if (resendTimer > 0 || resendStatus === 'sending') return;
+
+        setResendStatus('sending');
+        try {
+            const response = await api.post('/auth/resend-verification.php', { email: formData.owner_email });
+            if (response.data.success) {
+                setResendStatus('success');
+                setResendTimer(60);
+                // Reset status after a few seconds or keep it success until timer runs out?
+                // Let's keep it simple, timer indicates success/wait.
+                setTimeout(() => setResendStatus('idle'), 3000);
+            } else {
+                setResendStatus('error');
+                // Show error in a toast or alert? For now, maybe just log or simple alert, 
+                // but the UI doesn't have a dedicated error slot for this action in the design.
+                // We'll revert to idle so they can try again or see the button.
+                setTimeout(() => setResendStatus('idle'), 3000);
+            }
+        } catch (err) {
+            setResendStatus('error');
+            setTimeout(() => setResendStatus('idle'), 3000);
+        }
+    };
 
     // Available plans
     const plans = [
@@ -188,27 +225,47 @@ const Register = () => {
 
     if (registrationSuccess) {
         return (
-            <div className="register-page">
-                <ParticlesBackground />
+            <div className="register-page split-layout success-mode">
                 <div className="register-container">
-                    <div className="success-message-container">
-                        <div className="success-icon">
-                            <FaCheckCircle />
+                    {/* Left Side - Visual Section */}
+                    <div className="register-visual-section">
+                        <ParticlesBackground style={{ position: 'absolute' }} />
+                        <div className="prhub-logo">PRHub</div>
+                        <div className="success-message-visual">
+                            <div className="success-icon">
+                                <FaCheckCircle />
+                            </div>
+                            <h1>Registration Successful!</h1>
+                            <p>Thank you for registering your shop with us.</p>
                         </div>
-                        <h1>Registration Successful!</h1>
-                        <p>Thank you for registering your shop with us.</p>
-                        <p className="email-instruction">
-                            We've sent a verification email to <strong>{formData.owner_email}</strong>.
-                            Please check your inbox and click the verification link to activate your account.
-                        </p>
-                        <div className="success-actions">
-                            <button onClick={() => navigate('/login')} className="btn-primary">
-                                Go to Login
-                            </button>
+                    </div>
+
+                    {/* Right Side - Action Section */}
+                    <div className="register-form-section">
+                        <div className="success-action-content">
+                            <p className="email-instruction">
+                                We've sent a verification email to <strong>{formData.owner_email}</strong>.
+                                Please check your inbox and click the verification link to activate your account.
+                            </p>
+                            <div className="success-actions">
+                                <button onClick={() => navigate('/login')} className="btn-primary">
+                                    Go to Login
+                                </button>
+                                <button
+                                    onClick={handleResendEmail}
+                                    className={`btn-resend ${resendTimer > 0 || resendStatus === 'sending' ? 'disabled' : ''} ${resendStatus === 'success' ? 'text-success' : ''} ${resendStatus === 'error' ? 'text-error' : ''}`}
+                                    disabled={resendTimer > 0 || resendStatus === 'sending'}
+                                >
+                                    {resendStatus === 'sending' ? 'Sending...' :
+                                        resendStatus === 'success' ? 'Sent!' :
+                                            resendStatus === 'error' ? 'Failed, try again' :
+                                                resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend Email'}
+                                </button>
+                            </div>
+                            <p className="resend-note">
+                                Didn't receive the email? Check your spam folder or contact support.
+                            </p>
                         </div>
-                        <p className="resend-note">
-                            Didn't receive the email? Check your spam folder or contact support.
-                        </p>
                     </div>
                 </div>
             </div>
@@ -284,6 +341,7 @@ const Register = () => {
                 {/* Left Side - Visual Section */}
                 <div className="register-visual-section">
                     <ParticlesBackground style={{ position: 'absolute' }} />
+                    <div className="prhub-logo">PRHub</div>
                     <div className="register-header">
                         <h1>Create Your Shop Account</h1>
                         <p>Selected Plan: <strong>{plans.find(p => p.id === selectedPlan)?.name}</strong></p>

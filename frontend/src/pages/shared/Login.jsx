@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
 import loginIllustration from '../../assets/login-illustration.png';
+import ParticlesBackground from '../../components/landing/ParticlesBackground';
 import '../../styles/login.css';
 
 const Login = () => {
@@ -77,8 +78,11 @@ const Login = () => {
             <div className="login-container">
                 {/* Left Side - Illustration */}
                 <div className="login-visual-section">
-                    <div className="illustration-container">
-                        <img src={loginIllustration} alt="Login Illustration" />
+                    <ParticlesBackground style={{ position: 'absolute' }} />
+                    <div className="prhub-logo">PRHub</div>
+                    <div className="login-tagline">
+                        <h2>Management Software</h2>
+                        <h2>for Phone Retailers</h2>
                     </div>
                 </div>
 

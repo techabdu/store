@@ -1,3 +1,6 @@
+/* Import Elyptix Font */
+@import url('../assets/fonts/elyptix.css');
+
 /* Register Page Styles */
 :root {
     /* Color Palette - Matching Landing Page */
@@ -953,6 +956,19 @@
     padding: 40px;
 }
 
+/* PRHub Logo */
+.prhub-logo {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    font-family: 'Elyptix', 'Google Sans', 'Inter', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--lp-text-primary);
+    z-index: 2;
+    letter-spacing: -0.5px;
+}
+
 /* Right Side - Form Section */
 .register-form-section {
     flex: 1;
@@ -1002,17 +1018,196 @@
 
 /* Responsive Design for Split Layout */
 @media (max-width: 900px) {
+    .register-page.split-layout .register-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .register-page.split-layout .register-visual-section {
+        display: flex;
+        /* Show visual section on mobile */
+        min-height: 300px;
+        /* Give it some height */
+        padding: 2rem;
+    }
+
+    .register-page.split-layout .register-form-section {
+        flex: 1;
+        padding: 2rem;
+        justify-content: flex-start;
+        /* Align content to top */
+    }
+
+    /* Hide visual section ONLY for the registration form (not success view) if needed, 
+       but the request specifically asked for success view. 
+       The structure is shared, so we need to be careful. 
+       Actually, the user said "on mobile view display the success icon... at the top".
+       The visual section contains the success icon in the new layout.
+       So we MUST show it.
+       
+       However, for the normal registration form (step 1/2), we might still want to hide it 
+       if that was the original behavior.
+       The original CSS hid .register-visual-section entirely.
+       
+       Let's check if we can distinguish. 
+       The JSX structure is the same: .register-page.split-layout > .register-container > .register-visual-section
+       
+       If we want to keep the form-only view hidden, we might need a specific class for success view?
+       But the user request implies this IS the success view.
+       
+       Wait, the `Register.jsx` uses `split-layout` for BOTH the form (Step 2) AND the success view.
+       If I unhide `.register-visual-section` globally for `split-layout` on mobile, 
+       it will also show up for the registration form (Step 2).
+       
+       Is that desired? 
+       The user request specifically mentioned "the register page on sucessfull registration section".
+       "leave desktop screen as it is."
+       
+       If I show it for the form too, it might clutter the mobile view.
+       I should probably add a specific class for the success state to the wrapper.
+       
+       Let's modify Register.jsx first to add a class `success-view` or similar if `registrationSuccess` is true.
+       
+       Actually, I can just target the content.
+       But the visual section has the logo and "Create Your Shop Account" for the form too.
+       
+       Let's assume for now we only want this for the success view.
+       I will modify Register.jsx to add `success-mode` class to the wrapper.
+    */
+
+    /* Default behavior: Hide visual section on mobile (for form) */
     .register-visual-section {
         display: none;
     }
 
-    .register-form-section {
-        flex: 1;
-        padding: 20px;
+    /* Override for Success View: Show visual section */
+    .register-page.split-layout.success-mode .register-visual-section {
+        display: flex;
+        flex: 0 0 30%;
+        /* Take exactly 50% of the height */
+        min-height: 40vh;
+        /* Ensure it takes half the viewport */
+        padding: 2rem 1.5rem;
+        justify-content: center;
+        align-items: center;
     }
 
-    .register-page.split-layout .register-container {
-        height: auto;
-        min-height: 100vh;
+    .register-page.split-layout.success-mode .register-container {
+        flex-direction: column;
+        height: 100vh;
+        /* Full viewport height */
     }
+
+    /* Hide success icon on mobile */
+    .register-page.split-layout.success-mode .success-icon {
+        display: none;
+    }
+
+    .register-page.split-layout.success-mode .register-form-section {
+        flex: 0 0 50%;
+        /* Take exactly 50% of the height */
+        padding: 2rem 1.5rem;
+        justify-content: center;
+        overflow-y: auto;
+        /* Allow scrolling if content is too tall */
+    }
+
+    /* Reduce font sizes on mobile */
+    .register-page.split-layout.success-mode .prhub-logo {
+        font-size: 1.8rem;
+        top: 1.5rem;
+        left: 1.5rem;
+    }
+
+    .register-page.split-layout.success-mode .success-message-visual h1 {
+        font-size: 1.8rem;
+    }
+
+    .register-page.split-layout.success-mode .success-message-visual p {
+        font-size: 1rem;
+    }
+}
+
+/* Success View Specific Styles */
+.success-message-visual {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: var(--lp-text-primary);
+}
+
+.success-message-visual h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+.success-message-visual p {
+    font-size: 1.2rem;
+    color: var(--lp-text-secondary);
+}
+
+.success-action-content {
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+}
+
+.success-action-content .email-instruction {
+    margin-bottom: 2rem;
+    text-align: left;
+    color: var(--lp-text-primary);
+    /* Darker text */
+    font-weight: 500;
+    /* Slightly bolder */
+    background: rgba(26, 115, 232, 0.05);
+    /* Lighter background for better contrast */
+    border-left: 4px solid var(--lp-primary);
+}
+
+.success-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.success-action-content .btn-primary {
+    flex: 0 0 auto;
+    /* Don't stretch */
+    min-width: 140px;
+    /* Ensure decent width */
+}
+
+.btn-resend {
+    background: none;
+    border: none;
+    color: var(--lp-primary);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-resend:hover:not(:disabled) {
+    color: var(--lp-primary-hover);
+    text-decoration: underline;
+}
+
+.btn-resend.disabled {
+    color: var(--lp-text-secondary);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.text-success {
+    color: var(--lp-secondary) !important;
+}
+
+.text-error {
+    color: #ef4444 !important;
 }
