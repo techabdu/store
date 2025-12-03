@@ -36,16 +36,19 @@ jobs:
       - name: Copy .htaccess to Build
         run: cp frontend/.htaccess frontend/dist/.htaccess
 
-      # 6. Deploy Frontend to Hostinger
+      # 6. Deploy Frontend to Hostinger via FTP
       - name: Deploy Frontend via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
           local-dir: ./frontend/dist/
           server-dir: ./
-          dangerous-clean-slate: false
+          timeout: 300000
+          log-level: verbose
 
       # 7. Create Production .env File
       - name: Create Production .env
@@ -63,16 +66,19 @@ jobs:
           SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}
           EOF
 
-      # 8. Deploy Backend to Hostinger
+      # 8. Deploy Backend to Hostinger via FTP
       - name: Deploy Backend via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
           local-dir: ./backend/
           server-dir: ./backend/
-          dangerous-clean-slate: false
+          timeout: 300000
+          log-level: verbose
           exclude: |
             **/.git*
             **/.git*/**
