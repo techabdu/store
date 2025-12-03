@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const ParticlesBackground = () => {
+const ParticlesBackground = (props) => {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -18,13 +18,20 @@ const ParticlesBackground = () => {
         let mouse = { x: null, y: null };
 
         const handleResize = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const parent = canvas.parentElement;
+            if (parent) {
+                canvas.width = parent.clientWidth;
+                canvas.height = parent.clientHeight;
+            } else {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
         };
 
         const handleMouseMove = (event) => {
-            mouse.x = event.x;
-            mouse.y = event.y;
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = event.clientX - rect.left;
+            mouse.y = event.clientY - rect.top;
         };
 
         const handleMouseLeave = () => {
@@ -146,7 +153,9 @@ const ParticlesBackground = () => {
                 height: '100%',
                 zIndex: 0, // Behind content but in front of body background
                 pointerEvents: 'none', // Allow clicks to pass through
+                ...props.style
             }}
+            {...props}
         />
     );
 };

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaStore, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
+import { FaStore, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaEye, FaEyeSlash, FaCheckCircle, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import api from '../../utils/api';
+import ParticlesBackground from '../../components/landing/ParticlesBackground';
 import '../../styles/register.css';
 
 const Register = () => {
     const [step, setStep] = useState(1); // 1: Plan Selection, 2: Registration Form
+    const [formStep, setFormStep] = useState(1); // 1: Owner Info, 2: Shop Info
     const [selectedPlan, setSelectedPlan] = useState('free_trial');
     const [formData, setFormData] = useState({
         shop_name: '',
@@ -94,11 +96,8 @@ const Register = () => {
         setError('');
     };
 
-    const validateForm = () => {
-        if (!formData.shop_name.trim()) {
-            setError('Shop name is required');
-            return false;
-        }
+    // Step 1 is now Owner Info
+    const validateStep1 = () => {
         if (!formData.owner_username.trim()) {
             setError('Username is required');
             return false;
@@ -123,6 +122,15 @@ const Register = () => {
             setError('Passwords do not match');
             return false;
         }
+        return true;
+    };
+
+    // Step 2 is now Shop Info
+    const validateStep2 = () => {
+        if (!formData.shop_name.trim()) {
+            setError('Shop name is required');
+            return false;
+        }
         if (!formData.shop_phone.trim()) {
             setError('Shop phone number is required');
             return false;
@@ -130,10 +138,26 @@ const Register = () => {
         return true;
     };
 
+    const handleNextStep = () => {
+        if (formStep === 1) {
+            if (validateStep1()) {
+                setFormStep(2);
+                setError('');
+            }
+        }
+    };
+
+    const handlePrevStep = () => {
+        if (formStep === 2) {
+            setFormStep(1);
+            setError('');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
+        if (!validateStep2()) { // Validate the final step (Shop Info) before submission
             return;
         }
 
@@ -165,6 +189,7 @@ const Register = () => {
     if (registrationSuccess) {
         return (
             <div className="register-page">
+                <ParticlesBackground />
                 <div className="register-container">
                     <div className="success-message-container">
                         <div className="success-icon">
@@ -194,6 +219,7 @@ const Register = () => {
     if (step === 1) {
         return (
             <div className="register-page">
+                <ParticlesBackground />
                 <div className="register-container plan-selection">
                     <div className="register-header">
                         <h1>Choose Your Plan</h1>
@@ -251,189 +277,220 @@ const Register = () => {
         );
     }
 
-    // Step 2: Registration Form
+    // Step 2: Registration Form (Multi-step)
     return (
-        <div className="register-page">
+        <div className="register-page split-layout">
             <div className="register-container">
-                <div className="register-header">
-                    <h1>Create Your Shop Account</h1>
-                    <p>Selected Plan: <strong>{plans.find(p => p.id === selectedPlan)?.name}</strong></p>
-                    <button onClick={() => setStep(1)} className="change-plan-btn">Change Plan</button>
+                {/* Left Side - Visual Section */}
+                <div className="register-visual-section">
+                    <ParticlesBackground style={{ position: 'absolute' }} />
+                    <div className="register-header">
+                        <h1>Create Your Shop Account</h1>
+                        <p>Selected Plan: <strong>{plans.find(p => p.id === selectedPlan)?.name}</strong></p>
+                    </div>
                 </div>
 
-                {error && <div className="error-message">{error}</div>}
+                {/* Right Side - Form Section */}
+                <div className="register-form-section">
+                    {error && <div className="error-message">{error}</div>}
 
-                <form onSubmit={handleSubmit} className="register-form">
-                    {/* Shop Information */}
-                    <div className="form-section">
-                        <h3>Shop Information</h3>
+                    <form onSubmit={handleSubmit} className="register-form">
 
-                        <div className="form-group">
-                            <label htmlFor="shop_name">Shop Name *</label>
-                            <div className="input-wrapper">
-                                <FaStore className="input-icon" />
-                                <input
-                                    type="text"
-                                    id="shop_name"
-                                    name="shop_name"
-                                    placeholder="Enter your shop name"
-                                    value={formData.shop_name}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    required
-                                />
-                            </div>
-                        </div>
+                        {/* Step 1: Owner Information */}
+                        {formStep === 1 && (
+                            <div className="form-section form-section-animated">
+                                <h3>Owner Information</h3>
 
-                        <div className="form-group">
-                            <label htmlFor="shop_phone">Shop Phone *</label>
-                            <div className="input-wrapper">
-                                <FaPhone className="input-icon" />
-                                <input
-                                    type="tel"
-                                    id="shop_phone"
-                                    name="shop_phone"
-                                    placeholder="e.g., +1234567890"
-                                    value={formData.shop_phone}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="shop_address">Shop Address</label>
-                            <div className="input-wrapper">
-                                <FaMapMarkerAlt className="input-icon" />
-                                <input
-                                    type="text"
-                                    id="shop_address"
-                                    name="shop_address"
-                                    placeholder="Enter your shop address"
-                                    value={formData.shop_address}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Owner Information */}
-                    <div className="form-section">
-                        <h3>Owner Information</h3>
-
-                        <div className="form-group">
-                            <label htmlFor="owner_username">Username *</label>
-                            <div className="input-wrapper">
-                                <FaUser className="input-icon" />
-                                <input
-                                    type="text"
-                                    id="owner_username"
-                                    name="owner_username"
-                                    placeholder="Choose a username"
-                                    value={formData.owner_username}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    autoComplete="username"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="owner_email">Email Address *</label>
-                            <div className="input-wrapper">
-                                <FaEnvelope className="input-icon" />
-                                <input
-                                    type="email"
-                                    id="owner_email"
-                                    name="owner_email"
-                                    placeholder="your@email.com"
-                                    value={formData.owner_email}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    autoComplete="email"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="password">Password *</label>
-                            <div className="input-wrapper">
-                                <FaLock className="input-icon" />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    id="password"
-                                    name="password"
-                                    placeholder="Create a strong password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    autoComplete="new-password"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    className="password-toggle"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                </button>
-                            </div>
-                            {formData.password && (
-                                <div className="password-strength">
-                                    <div className="strength-bar">
-                                        <div
-                                            className="strength-fill"
-                                            style={{
-                                                width: `${(passwordStrength.strength / 3) * 100}%`,
-                                                backgroundColor: passwordStrength.color
-                                            }}
-                                        ></div>
+                                <div className="form-group">
+                                    <label htmlFor="owner_username">Username *</label>
+                                    <div className="input-wrapper">
+                                        <FaUser className="input-icon" />
+                                        <input
+                                            type="text"
+                                            id="owner_username"
+                                            name="owner_username"
+                                            placeholder="Choose a username"
+                                            value={formData.owner_username}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            autoComplete="username"
+                                            required
+                                            autoFocus
+                                        />
                                     </div>
-                                    <span style={{ color: passwordStrength.color }}>
-                                        {passwordStrength.label}
-                                    </span>
                                 </div>
-                            )}
-                        </div>
 
-                        <div className="form-group">
-                            <label htmlFor="confirmPassword">Confirm Password *</label>
-                            <div className="input-wrapper">
-                                <FaLock className="input-icon" />
-                                <input
-                                    type={showConfirmPassword ? "text" : "password"}
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    placeholder="Re-enter your password"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    disabled={isSubmitting}
-                                    autoComplete="new-password"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    className="password-toggle"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                >
-                                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                                </button>
+                                <div className="form-group">
+                                    <label htmlFor="owner_email">Email Address *</label>
+                                    <div className="input-wrapper">
+                                        <FaEnvelope className="input-icon" />
+                                        <input
+                                            type="email"
+                                            id="owner_email"
+                                            name="owner_email"
+                                            placeholder="your@email.com"
+                                            value={formData.owner_email}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            autoComplete="email"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="password">Password *</label>
+                                    <div className="input-wrapper">
+                                        <FaLock className="input-icon" />
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            id="password"
+                                            name="password"
+                                            placeholder="Create a strong password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            autoComplete="new-password"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </button>
+                                    </div>
+                                    {formData.password && (
+                                        <div className="password-strength">
+                                            <div className="strength-bar">
+                                                <div
+                                                    className="strength-fill"
+                                                    style={{
+                                                        width: `${(passwordStrength.strength / 3) * 100}%`,
+                                                        backgroundColor: passwordStrength.color
+                                                    }}
+                                                ></div>
+                                            </div>
+                                            <span style={{ color: passwordStrength.color }}>
+                                                {passwordStrength.label}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="confirmPassword">Confirm Password *</label>
+                                    <div className="input-wrapper">
+                                        <FaLock className="input-icon" />
+                                        <input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            id="confirmPassword"
+                                            name="confirmPassword"
+                                            placeholder="Re-enter your password"
+                                            value={formData.confirmPassword}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            autoComplete="new-password"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="form-navigation">
+                                    <button type="button" onClick={handleNextStep} className="btn-next">
+                                        Next Step <FaArrowRight style={{ marginLeft: '8px', verticalAlign: 'middle' }} />
+                                    </button>
+                                </div>
+
+                                <div className="change-plan-link">
+                                    <button onClick={() => setStep(1)} className="change-plan-btn">Change Plan</button>
+                                </div>
+
+                                <div className="login-link">
+                                    Already have an account? <Link to="/login">Sign in here</Link>
+                                </div>
                             </div>
-                        </div>
-                    </div>
+                        )}
 
-                    <button type="submit" disabled={isSubmitting} className="register-button">
-                        {isSubmitting ? 'Creating Account...' : 'Create Account'}
-                    </button>
+                        {/* Step 2: Shop Information */}
+                        {formStep === 2 && (
+                            <div className="form-section form-section-animated">
+                                <h3>Shop Information</h3>
 
-                    <div className="login-link">
-                        Already have an account? <Link to="/login">Sign in here</Link>
-                    </div>
-                </form>
+                                <div className="form-group">
+                                    <label htmlFor="shop_name">Shop Name *</label>
+                                    <div className="input-wrapper">
+                                        <FaStore className="input-icon" />
+                                        <input
+                                            type="text"
+                                            id="shop_name"
+                                            name="shop_name"
+                                            placeholder="Enter your shop name"
+                                            value={formData.shop_name}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="shop_phone">Shop Phone *</label>
+                                    <div className="input-wrapper">
+                                        <FaPhone className="input-icon" />
+                                        <input
+                                            type="tel"
+                                            id="shop_phone"
+                                            name="shop_phone"
+                                            placeholder="e.g., +1234567890"
+                                            value={formData.shop_phone}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="shop_address">Shop Address</label>
+                                    <div className="input-wrapper">
+                                        <FaMapMarkerAlt className="input-icon" />
+                                        <input
+                                            type="text"
+                                            id="shop_address"
+                                            name="shop_address"
+                                            placeholder="Enter your shop address"
+                                            value={formData.shop_address}
+                                            onChange={handleChange}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-navigation">
+                                    <button type="button" onClick={handlePrevStep} className="btn-back">
+                                        <FaArrowLeft style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Back
+                                    </button>
+                                    <button type="submit" disabled={isSubmitting} className="btn-next">
+                                        {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                                    </button>
+                                </div>
+
+                                <div className="change-plan-link">
+                                    <button onClick={() => setStep(1)} className="change-plan-btn">Change Plan</button>
+                                </div>
+                            </div>
+                        )}
+                    </form>
+                </div>
             </div>
         </div>
     );
