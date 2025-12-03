@@ -10,6 +10,7 @@ import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import UserManagement from './pages/superadmin/UserManagement';
 import TenantManagement from './pages/superadmin/TenantManagement';
 import SystemInsights from './pages/superadmin/SystemInsights';
+import LandingPage from './pages/public/LandingPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUserManagement from './pages/admin/AdminUserManagement';
 import UserDashboard from './pages/user/UserDashboard';
@@ -223,7 +224,7 @@ function App() {
                             }
                         />
 
-                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="/" element={<LandingPage />} />
                     </Routes>
                 </AuthProvider>
             </ThemeProvider>
