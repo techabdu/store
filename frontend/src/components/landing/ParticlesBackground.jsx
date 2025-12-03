@@ -10,7 +10,7 @@ const ParticlesBackground = () => {
         let particles = [];
 
         // Configuration
-        const particleCount = 100;
+        const particleCount = window.innerWidth < 768 ? 30 : 100;
         const connectionDistance = 150;
         const mouseDistance = 200;
 
