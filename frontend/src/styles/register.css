@@ -1039,6 +1039,21 @@
         /* Align content to top */
     }
 
+    /* Reduce font sizes for PRHub logo and header on mobile */
+    .register-page.split-layout .prhub-logo {
+        font-size: 1.8rem;
+        top: 1.5rem;
+        left: 1.5rem;
+    }
+
+    .register-page.split-layout .register-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .register-page.split-layout .register-header p {
+        font-size: 1rem;
+    }
+
     /* Hide visual section ONLY for the registration form (not success view) if needed, 
        but the request specifically asked for success view. 
        The structure is shared, so we need to be careful. 

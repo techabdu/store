@@ -63,48 +63,49 @@ const Register = () => {
         }
     };
 
-    // Available plans
+    // Available plans - matching landing page pricing
     const plans = [
         {
-            id: 'free_trial',
-            name: 'Free Trial',
+            id: 'starter',
+            name: 'Starter',
             price: 0,
             duration: '25 days',
             features: [
-                'Full access to all features',
-                'Up to 5 users',
-                'Unlimited inventory items',
-                'Basic support',
-                'No credit card required'
+                'Up to 50 inventory',
+                'Basic sales tracking',
+                '1 User account'
+            ],
+            recommended: false
+        },
+        {
+            id: 'pro',
+            name: 'Pro',
+            price: 49999,
+            duration: 'per month',
+            currency: '₦',
+            features: [
+                'Up to 150 inventory',
+                'Advanced analytics',
+                'Up to 5 User accounts',
+                'Priority support',
+                'Receipt printing',
+                'Finance Calculation',
+                'Customer Management'
             ],
             recommended: true
         },
         {
-            id: 'basic',
-            name: 'Basic Plan',
-            price: 29.99,
-            duration: 'per month',
+            id: 'enterprise',
+            name: 'Enterprise',
+            price: 'Custom',
+            duration: '',
             features: [
-                'All trial features',
-                'Up to 10 users',
-                'Priority support',
-                'Advanced reporting',
-                'Email notifications'
-            ]
-        },
-        {
-            id: 'premium',
-            name: 'Premium Plan',
-            price: 79.99,
-            duration: 'per month',
-            features: [
-                'All basic features',
-                'Unlimited users',
-                '24/7 support',
+                'Unlimited everything',
                 'Custom integrations',
-                'API access',
-                'Advanced analytics'
-            ]
+                'Multi-user support',
+                'Multi-store management'
+            ],
+            recommended: false
         }
     ];
 
@@ -298,10 +299,14 @@ const Register = () => {
                                             <span className="price">Free</span>
                                             <span className="duration">{plan.duration}</span>
                                         </>
+                                    ) : plan.price === 'Custom' ? (
+                                        <>
+                                            <span className="price">Custom</span>
+                                        </>
                                     ) : (
                                         <>
-                                            <span className="currency">$</span>
-                                            <span className="price">{plan.price}</span>
+                                            <span className="currency">{plan.currency || '$'}</span>
+                                            <span className="price">{typeof plan.price === 'number' ? plan.price.toLocaleString() : plan.price}</span>
                                             <span className="duration">/{plan.duration.split(' ')[1]}</span>
                                         </>
                                     )}

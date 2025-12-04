@@ -25,8 +25,8 @@ const Navbar = () => {
         <nav className={`lp-navbar ${isScrolled ? 'scrolled' : ''}`}>
             <div className="lp-container lp-navbar-container">
                 <div className="lp-logo">
-                    <span className="lp-logo-icon">PR</span>
-                    <span className="lp-logo-text" style={{ color: 'black' }}>Hub</span>
+                    <span className="lp-logo-icon"></span>
+                    <span className="lp-logo-text" style={{ color: 'black' }}>PRHub</span>
                 </div>
 
                 {/* Desktop Navigation */}
