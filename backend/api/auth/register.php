@@ -1,19 +1,11 @@
 <?php
 require_once '../../config/database.php';
+require_once '../../config/config.php';
 require_once '../../helpers/email_sender.php';
 
-// Set headers
-header("Access-Control-Allow-Origin: http://localhost:5173");
+// Set CORS headers using centralized config
+setCorsHeaders();
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Max-Age: 3600");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-// Handle preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 // Get posted data
 $data = json_decode(file_get_contents("php://input"));
@@ -93,7 +85,7 @@ try {
     }
 
     // 4. Send Welcome/Verification Email
-    $verificationLink = "http://localhost/store/backend/api/auth/verify-email.php?token=" . $verification_token;
+    $verificationLink = API_URL . "/auth/verify-email.php?token=" . $verification_token;
     
     $subject = "Welcome to Store Management System - Verify your Email";
     $body = "

@@ -1,19 +1,11 @@
 <?php
 require_once '../../config/database.php';
+require_once '../../config/config.php';
 require_once '../../helpers/email_sender.php';
 
-// Set headers
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Credentials: true");
+// Set CORS headers using centralized config
+setCorsHeaders();
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
-
-// Handle preflight request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -78,19 +70,8 @@ try {
     $updateStmt->bind_param("ssi", $reset_token, $expires, $user['id']);
     $updateStmt->execute();
 
-    // Determine protocol and host for reset link
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-    $host = $_SERVER['HTTP_HOST'];
-    
-    // Frontend URL - adjust based on environment
-    // In production, this should be your actual frontend domain
-    $frontendUrl = "http://localhost:5173"; // Development
-    if ($host !== 'localhost' && strpos($host, '127.0.0.1') === false) {
-        // Production - use the actual domain
-        $frontendUrl = "$protocol://$host";
-    }
-    
-    $resetLink = "$frontendUrl/reset-password?token=" . $reset_token;
+    // Use environment-based frontend URL from config
+    $resetLink = FRONTEND_URL . "/reset-password?token=" . $reset_token;
 
     // Send email
     $subject = "Password Reset Request - Store Management System";

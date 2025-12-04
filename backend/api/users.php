@@ -1,21 +1,15 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+
+// Set CORS headers using centralized config
+setCorsHeaders();
+require_once '../config/config.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
 
 // CORS Headers
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json; charset=UTF-8");
-
-// Handle preflight OPTIONS request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 // Check authentication
 $currentUser = checkAuth();

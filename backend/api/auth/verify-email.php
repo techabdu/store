@@ -1,10 +1,10 @@
 <?php
 require_once '../../config/database.php';
+require_once '../../config/config.php';
 require_once '../../helpers/email_sender.php';
 
-// Set headers (this is a GET request usually accessed via browser link, but could be API)
-// If accessed via browser, we might want to redirect to frontend
-header("Access-Control-Allow-Origin: http://localhost:5173");
+// Set CORS headers using centralized config
+setCorsHeaders();
 header("Content-Type: application/json; charset=UTF-8"); // Default to JSON, but might redirect
 
 $token = $_GET['token'] ?? null;
@@ -42,8 +42,7 @@ try {
         // Send confirmation email? Optional.
         
         // Redirect to frontend login page with success message
-        // Assuming frontend is at http://localhost:5173/login
-        header("Location: http://localhost:5173/login?verified=true");
+        header("Location: " . FRONTEND_URL . "/login?verified=true");
         exit;
     } else {
         throw new Exception("Failed to update tenant status");

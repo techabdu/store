@@ -1,20 +1,12 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../classes/SecurityMonitor.php';
 
-// CORS Headers
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+// Set CORS headers using centralized config
+setCorsHeaders();
 header("Content-Type: application/json; charset=UTF-8");
-
-// Handle preflight OPTIONS request
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
 
 // Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
