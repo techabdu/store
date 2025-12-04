@@ -7,7 +7,7 @@ const Hero = () => {
         <section className="lp-hero">
             <div className="lp-container lp-hero-container">
                 <div className="lp-hero-content">
-                    <div className="lp-eyebrow">Phone Retail Hub: Management Software for Phone Retailers</div>
+                    <div className="lp-eyebrow">Phone Retail Hub</div>
                     <h1 className="lp-h1">
                         Manage your phone retail business with ease
                     </h1>
