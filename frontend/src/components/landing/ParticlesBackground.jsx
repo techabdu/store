@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const ParticlesBackground = (props) => {
+const ParticlesBackground = ({ desktopParticleCount = 100, ...props }) => {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -9,8 +9,8 @@ const ParticlesBackground = (props) => {
         let animationFrameId;
         let particles = [];
 
-        // Configuration
-        const particleCount = window.innerWidth < 768 ? 30 : 100;
+        // Configuration - use custom count for desktop, keep mobile at 30
+        const particleCount = window.innerWidth < 768 ? 30 : desktopParticleCount;
         const connectionDistance = 150;
         const mouseDistance = 200;
 

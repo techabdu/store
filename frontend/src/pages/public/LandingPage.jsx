@@ -11,7 +11,7 @@ import './LandingPage.css';
 const LandingPage = () => {
     return (
         <div className="landing-page">
-            <ParticlesBackground />
+            <ParticlesBackground desktopParticleCount={150} style={{ position: 'fixed' }} />
             <Navbar />
             <Hero />
             <Features />

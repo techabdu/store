@@ -1,3 +1,6 @@
+/* Import Google Font - Orbitron */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
 :root {
     /* Color Palette */
     --lp-primary: #1a73e8;
@@ -40,7 +43,8 @@
     font-family: var(--lp-font-family);
     color: var(--lp-text-primary);
     line-height: 1.5;
-    background-color: var(--lp-white);
+    background-color: #f8f9fa;
+    /* Match register/login page background */
     width: 100%;
     overflow-x: hidden;
 }
@@ -194,6 +198,11 @@
 
 .lp-logo-icon {
     font-size: 28px;
+}
+
+.lp-logo-text {
+    font-family: 'Orbitron', 'Google Sans', 'Inter', sans-serif;
+    font-weight: 700;
 }
 
 .lp-nav-links {

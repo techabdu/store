@@ -1,5 +1,5 @@
-/* Import Elyptix Font */
-@import url('../assets/fonts/elyptix.css');
+/* Import Google Font - Orbitron */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 /* CSS Variables for Light and Dark Themes */
 :root {
@@ -300,7 +300,7 @@
     position: absolute;
     top: 2rem;
     left: 2rem;
-    font-family: 'Elyptix', 'Google Sans', 'Inter', sans-serif;
+    font-family: 'Orbitron', 'Google Sans', 'Inter', sans-serif;
     font-size: 2.5rem;
     font-weight: 700;
     color: var(--login-text-primary);
