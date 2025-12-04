@@ -9,11 +9,11 @@ const Footer = () => {
                 <div className="lp-footer-grid">
                     <div className="lp-footer-brand">
                         <div className="lp-logo">
-                            <span className="lp-logo-icon">⚡</span>
-                            <span className="lp-logo-text" style={{ color: 'white' }}>PhoneSys</span>
+                            <span className="lp-logo-icon">PR</span>
+                            <span className="lp-logo-text" style={{ color: 'white' }}>Hub</span>
                         </div>
                         <p className="lp-footer-desc">
-                            The complete solution for modern phone retailers. Manage inventory, sales, and customers in one place.
+                            The complete solution for modern phone retailers. Manage inventory, Finance, Expenses, Sales, and Customers in one place.
                         </p>
                     </div>
 
@@ -22,7 +22,6 @@ const Footer = () => {
                         <ul>
                             <li><a href="#features">Features</a></li>
                             <li><a href="#pricing">Pricing</a></li>
-                            <li><a href="#">Changelog</a></li>
                             <li><a href="#">Docs</a></li>
                         </ul>
                     </div>
@@ -31,8 +30,6 @@ const Footer = () => {
                         <h4>Company</h4>
                         <ul>
                             <li><a href="#">About</a></li>
-                            <li><a href="#">Careers</a></li>
-                            <li><a href="#">Blog</a></li>
                             <li><a href="#">Contact</a></li>
                         </ul>
                     </div>
@@ -48,7 +45,7 @@ const Footer = () => {
                 </div>
 
                 <div className="lp-footer-bottom">
-                    <p>&copy; {new Date().getFullYear()} PhoneSys. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} PRHub. All rights reserved.</p>
                     <div className="lp-social-links">
                         <a href="#"><Twitter size={20} /></a>
                         <a href="#"><Linkedin size={20} /></a>

@@ -6,27 +6,27 @@ const plans = [
     {
         name: "Starter",
         price: "Free",
-        period: "forever",
+        period: "25 days",
         features: [
-            "Up to 50 items",
+            "Up to 50 inventory",
             "Basic sales tracking",
             "1 User account",
-            "Email support"
         ],
         cta: "Start for Free",
         highlighted: false
     },
     {
         name: "Pro",
-        price: "$29",
+        price: "₦49,999",
         period: "/month",
         features: [
-            "Unlimited items",
+            "Up to 150 inventory",
             "Advanced analytics",
             "Up to 5 User accounts",
             "Priority support",
-            "Barcode scanning",
-            "Receipt printing"
+            "Receipt printing",
+            "Finance Calculation",
+            "Customer Management"
         ],
         cta: "Get Started",
         highlighted: true
@@ -38,8 +38,7 @@ const plans = [
         features: [
             "Unlimited everything",
             "Custom integrations",
-            "Dedicated account manager",
-            "SLA support",
+            "Multi-user support",
             "Multi-store management"
         ],
         cta: "Contact Sales",

@@ -7,12 +7,12 @@ const Hero = () => {
         <section className="lp-hero">
             <div className="lp-container lp-hero-container">
                 <div className="lp-hero-content">
-                    <div className="lp-eyebrow">Inventory Management System</div>
+                    <div className="lp-eyebrow">Phone Retail Hub: Management Software for Phone Retailers</div>
                     <h1 className="lp-h1">
                         Manage your phone retail business with ease
                     </h1>
                     <p className="lp-body">
-                        Streamline inventory, track sales, and generate reports in one powerful platform.
+                        Streamline inventory, track sales, expenses, finance, customers, generate reports and more in one powerful platform.
                         Designed for modern retailers who want to grow faster.
                     </p>
                     <div className="lp-hero-actions">
@@ -26,7 +26,7 @@ const Hero = () => {
                 </div>
                 <div className="lp-hero-visual">
                     <div className="lp-hero-image-placeholder">
-                        {/* In a real app, this would be a screenshot or illustration */}
+                        {/* a screenshot or illustration */}
                         <div className="lp-dashboard-mockup">
                             <div className="mockup-header">
                                 <div className="mockup-dot red"></div>

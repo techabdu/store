@@ -23,7 +23,7 @@ const features = [
     {
         icon: <Smartphone size={32} />,
         title: "Device Management",
-        description: "Keep detailed records of every device, including IMEI, specs, and condition.",
+        description: "Keep detailed records of every device, including IMEI, specs, condition etc.",
         color: "#ea4335"
     },
     {
@@ -47,7 +47,7 @@ const Features = () => {
                 <div className="lp-section-header">
                     <h2 className="lp-h2">Everything you need to run your shop</h2>
                     <p className="lp-section-subtitle">
-                        Powerful features designed specifically for phone retailers and repair shops.
+                        Powerful features designed specifically for phone retailers.
                     </p>
                 </div>
 
