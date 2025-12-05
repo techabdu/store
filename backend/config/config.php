@@ -11,10 +11,18 @@
 $isProduction = !in_array($_SERVER['HTTP_HOST'] ?? 'localhost', ['localhost', '127.0.0.1']);
 
 // Set frontend URL based on environment
-define('FRONTEND_URL', $isProduction 
-    ? 'https://prhub.shop' 
-    : 'http://localhost:5173'
-);
+if ($isProduction) {
+    $httpOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    $allowedOrigins = ['https://prhub.shop', 'https://www.prhub.shop'];
+    
+    if (in_array($httpOrigin, $allowedOrigins)) {
+        define('FRONTEND_URL', $httpOrigin);
+    } else {
+        define('FRONTEND_URL', 'https://prhub.shop');
+    }
+} else {
+    define('FRONTEND_URL', 'http://localhost:5173');
+}
 
 // Set backend URL based on environment
 define('BACKEND_URL', $isProduction 

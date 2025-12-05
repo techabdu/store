@@ -99,6 +99,7 @@
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--lp-text-primary);
+    margin-top: 2rem !important;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: none;
