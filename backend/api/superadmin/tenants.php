@@ -4,12 +4,12 @@
  * Manages all tenants in the system
  */
 
+require_once '../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../middleware/auth.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../../config/config.php';
-require_once __DIR__ . '/../../middleware/auth.php';
 require_once __DIR__ . '/../../middleware/role.php';
 
 header("Content-Type: application/json; charset=UTF-8");

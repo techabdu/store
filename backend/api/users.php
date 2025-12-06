@@ -1,12 +1,12 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
-
-// Set CORS headers using centralized config
-setCorsHeaders();
 require_once '../config/config.php';
+require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
+
+// Set CORS headers using centralized config
+setCorsHeaders();
 
 // CORS Headers
 header("Content-Type: application/json; charset=UTF-8");

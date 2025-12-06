@@ -20,11 +20,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+require_once '../../config/config.php';
 require_once '../../config/database.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../../config/config.php';
 
 try {
     // Fetch user profile data

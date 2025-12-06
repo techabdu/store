@@ -6,12 +6,12 @@
  * Supports tabbed interface with caching for performance
  */
 
+require_once '../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../middleware/auth.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../../config/config.php';
-require_once __DIR__ . '/../../middleware/auth.php';
 require_once __DIR__ . '/../../middleware/role.php';
 require_once __DIR__ . '/../../classes/SecurityMonitor.php';
 require_once __DIR__ . '/../../classes/AlertManager.php';

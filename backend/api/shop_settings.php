@@ -3,12 +3,12 @@
  * Shop Settings API - Now uses tenants table instead of shop_settings
  * Returns shop information for the current tenant
  */
+require_once '../config/config.php';
+require_once '../config/database.php';
 require_once '../middleware/auth.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../config/config.php';
-require_once '../config/database.php';
 
 // Set headers
 header("Content-Type: application/json; charset=UTF-8");

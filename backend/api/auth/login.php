@@ -129,6 +129,13 @@ try {
         $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         ini_set('session.cookie_secure', $isHttps ? 1 : 0);
         
+        // Set SameSite=None for HTTPS to allow cross-origin cookies
+        if ($isHttps) {
+            ini_set('session.cookie_samesite', 'None');
+        } else {
+            ini_set('session.cookie_samesite', 'Lax');
+        }
+        
         ini_set('session.use_strict_mode', 1);
         session_start();
     }

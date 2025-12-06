@@ -1,9 +1,9 @@
 <?php
+require_once '../../config/config.php';
 require_once '../../middleware/auth.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../../config/config.php';
 
 // Set headers
 header("Content-Type: application/json; charset=UTF-8");

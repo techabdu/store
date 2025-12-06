@@ -13,13 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+require_once '../../config/config.php';
 require_once '../../config/database.php';
+require_once '../../middleware/auth.php';
+require_once '../../middleware/role.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../../config/config.php';
-require_once '../../middleware/auth.php';
-require_once '../../middleware/role.php';
 
 // Check authentication
 checkAuth();
