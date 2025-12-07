@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { FaLock, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
-import loginIllustration from '../../assets/login-illustration.png';
 import '../../styles/login.css';
 
 const ResetPassword = () => {

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { FaEnvelope, FaCheckCircle } from 'react-icons/fa';
-import loginIllustration from '../../assets/login-illustration.png';
 import '../../styles/login.css';
 
 const ForgotPassword = () => {
