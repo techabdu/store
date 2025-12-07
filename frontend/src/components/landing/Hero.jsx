@@ -24,26 +24,6 @@ const Hero = () => {
                         </Link>
                     </div>
                 </div>
-                <div className="lp-hero-visual">
-                    <div className="lp-hero-image-placeholder">
-                        {/* a screenshot or illustration */}
-                        <div className="lp-dashboard-mockup">
-                            <div className="mockup-header">
-                                <div className="mockup-dot red"></div>
-                                <div className="mockup-dot yellow"></div>
-                                <div className="mockup-dot green"></div>
-                            </div>
-                            <div className="mockup-body">
-                                <div className="mockup-sidebar"></div>
-                                <div className="mockup-content">
-                                    <div className="mockup-row"></div>
-                                    <div className="mockup-row"></div>
-                                    <div className="mockup-graph"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
     );
