@@ -63,7 +63,8 @@ class Database {
             $this->conn = @new mysqli($this->host, $this->username, $this->password, $this->db_name);
             
             if ($this->conn->connect_error) {
-                throw new Exception("Connection failed: " . $this->conn->connect_error);
+                error_log("Connection failed: " . $this->conn->connect_error);
+                throw new Exception("Database connection failed");
             }
             
             $this->conn->set_charset("utf8mb4");

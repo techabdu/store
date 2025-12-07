@@ -93,9 +93,9 @@ try {
     }
     
     // Get total count for pagination
-    $countQuery = "SELECT COUNT(*) as total FROM inventory i WHERE 1=1";
-    $countParams = [];
-    $countTypes = '';
+    $countQuery = "SELECT COUNT(*) as total FROM inventory i WHERE i.tenant_id = ?";
+    $countParams = [$_SESSION['tenant_id']];
+    $countTypes = 'i';
     
     if ($status !== 'all') {
         $countQuery .= " AND i.status = ?";

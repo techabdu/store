@@ -3,6 +3,8 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../classes/SecurityMonitor.php';
+require_once __DIR__ . '/../../helpers/sanitize.php';
+require_once __DIR__ . '/../../helpers/csrf.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -15,6 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Verify CSRF
+requireCsrf();
+
 // Get JSON input
 $data = json_decode(file_get_contents("php://input"));
 
@@ -24,7 +29,7 @@ if (!isset($data->username) || !isset($data->password) || empty(trim($data->user
     exit;
 }
 
-$username = trim($data->username);
+$username = sanitizeInput($data->username);
 $password = trim($data->password);
 
 // Check rate limit
@@ -129,12 +134,8 @@ try {
         $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
         ini_set('session.cookie_secure', $isHttps ? 1 : 0);
         
-        // Set SameSite=None for HTTPS to allow cross-origin cookies
-        if ($isHttps) {
-            ini_set('session.cookie_samesite', 'None');
-        } else {
-            ini_set('session.cookie_samesite', 'Lax');
-        }
+        // Match middleware settings
+        ini_set('session.cookie_samesite', 'Strict');
         
         ini_set('session.use_strict_mode', 1);
         session_start();
@@ -147,6 +148,7 @@ try {
     $_SESSION['role'] = $user['role'];
     $_SESSION['tenant_id'] = $tenant_id;
     $_SESSION['last_activity'] = time();
+    $_SESSION['created_at'] = time(); // For absolute timeout
 
     // Log activity
     logActivity($user['id'], 'login', 'User logged in');

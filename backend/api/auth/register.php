@@ -2,10 +2,33 @@
 require_once '../../config/database.php';
 require_once '../../config/config.php';
 require_once '../../helpers/email_sender.php';
+require_once '../../helpers/sanitize.php';
+require_once '../../helpers/csrf.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
 header("Content-Type: application/json; charset=UTF-8");
+
+// Verify CSRF
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrf();
+}
+
+require_once '../../classes/SecurityMonitor.php';
+$securityMonitor = new SecurityMonitor();
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+// Check rate limit: 5 registration attempts per hour per IP
+if ($securityMonitor->isActionRateLimited('registration_attempt', $ip, null, 5, 60)) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'error' => 'Too many registration attempts. Please try again later.']);
+    exit;
+}
+
+// Log attempt start (optional, or just fail count? Let's log 'registration_attempt' on failure or sensitive step. 
+// Actually to rate limit "attempts", we need to log them.
+// Let's log it now.
+$securityMonitor->logSecurityEvent('registration_attempt', null, $ip, ['status' => 'initiated']);
 
 // Get posted data
 $data = json_decode(file_get_contents("php://input"));
@@ -24,12 +47,12 @@ if (
 }
 
 // Sanitize input
-$shop_name = htmlspecialchars(strip_tags($data->shop_name));
-$owner_username = htmlspecialchars(strip_tags($data->owner_username));
-$owner_email = htmlspecialchars(strip_tags($data->owner_email));
+$shop_name = sanitizeInput($data->shop_name);
+$owner_username = sanitizeInput($data->owner_username);
+$owner_email = sanitizeEmail($data->owner_email);
 $password = $data->password; // Password will be hashed, no need to sanitize special chars
-$shop_phone = htmlspecialchars(strip_tags($data->shop_phone));
-$shop_address = htmlspecialchars(strip_tags($data->shop_address));
+$shop_phone = sanitizeInput($data->shop_phone);
+$shop_address = sanitizeInput($data->shop_address);
 
 // Validate password strength (basic)
 if (strlen($password) < 8) {

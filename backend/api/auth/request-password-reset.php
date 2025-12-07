@@ -14,16 +14,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get posted data
+// Get JSON input
 $data = json_decode(file_get_contents("php://input"));
 
 if (!isset($data->identifier) || empty(trim($data->identifier))) {
     http_response_code(400);
-    echo json_encode(["success" => false, "error" => "Username or email is required"]);
+    echo json_encode(['success' => false, 'error' => 'Username or email is required']);
     exit;
 }
 
-$identifier = trim($data->identifier);
+require_once '../../helpers/sanitize.php';
+$identifier = sanitizeInput($data->identifier);
+
+// Rate Limiting
+require_once '../../classes/SecurityMonitor.php';
+$securityMonitor = new SecurityMonitor();
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+// Limit: 3 requests per 15 minutes per IP or Identifier
+if ($securityMonitor->isActionRateLimited('password_reset_request', $ip, $identifier, 3, 15)) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'error' => 'Too many password reset requests. Please try again later.']);
+    exit;
+}
+
+// Log the request attempt
+$securityMonitor->logSecurityEvent('password_reset_request', $identifier, $ip, ['status' => 'initiated']);
 
 try {
     // Find user by username or email (via tenant)
@@ -37,6 +53,7 @@ try {
     $stmt->bind_param("ss", $identifier, $identifier);
     $stmt->execute();
     $result = $stmt->get_result();
+
 
     // Always return success to prevent user enumeration
     if ($result->num_rows === 0) {

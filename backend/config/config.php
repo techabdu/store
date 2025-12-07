@@ -52,7 +52,7 @@ function setCorsHeaders() {
     header("Access-Control-Allow-Origin: " . FRONTEND_URL);
     header("Access-Control-Allow-Credentials: true");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token");
     
     // Handle preflight OPTIONS request
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -60,3 +60,9 @@ function setCorsHeaders() {
         exit;
     }
 }
+
+// Generate unique Request-ID for tracing
+if (!isset($_SERVER['HTTP_X_REQUEST_ID'])) {
+    $_SERVER['HTTP_X_REQUEST_ID'] = bin2hex(random_bytes(16));
+}
+header("X-Request-ID: " . $_SERVER['HTTP_X_REQUEST_ID']);

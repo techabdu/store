@@ -14,13 +14,10 @@ if (session_status() === PHP_SESSION_NONE) {
     $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
     ini_set('session.cookie_secure', $isHttps ? 1 : 0);
     
-    // Set SameSite=None for HTTPS to allow cross-origin cookies
-    // This is required for production where frontend and backend may be on different subdomains
-    if ($isHttps) {
-        ini_set('session.cookie_samesite', 'None');
-    } else {
-        ini_set('session.cookie_samesite', 'Lax');
-    }
+    // Set SameSite policy
+    // Use 'Lax' for HTTP/Localhost to ensure cookies are sent during development
+    // Use 'Strict' or 'None' (with Secure) for Production HTTPS
+    ini_set('session.cookie_samesite', $isHttps ? 'Strict' : 'Lax');
     
     ini_set('session.use_strict_mode', 1);
     
@@ -43,7 +40,20 @@ function checkAuth() {
         exit;
     }
     
-    // Check session timeout (48 hours)
+    // Check session absolute timeout (7 days = 604800 seconds)
+    // Prevent session fixation/indefinite sessions
+    $absolute_timeout = 604800;
+    if (!isset($_SESSION['created_at'])) {
+        $_SESSION['created_at'] = time(); // Set if missing
+    } else if (time() - $_SESSION['created_at'] > $absolute_timeout) {
+        session_unset();
+        session_destroy();
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Session expired (absolute limit)']);
+        exit;
+    }
+
+    // Check inactivity timeout (48 hours)
     $timeout_duration = 172800;
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
         session_unset();
@@ -57,75 +67,89 @@ function checkAuth() {
     $_SESSION['last_activity'] = time();
     
     // Verify user exists and is active, and get tenant_id
-    $stmt = $conn->prepare("SELECT id, username, role, status, tenant_id FROM users WHERE id = ?");
-    $stmt->bind_param("i", $_SESSION['user_id']);
-    $stmt->execute();
-    $result = $stmt->get_result();
     
-    if ($result->num_rows === 0) {
-        session_unset();
-        session_destroy();
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'User not found']);
-        exit;
-    }
-    
-    $user = $result->fetch_assoc();
-    
-    if ($user['status'] !== 'active') {
-        session_unset();
-        session_destroy();
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Account inactive']);
-        exit;
-    }
-    
-    // Store tenant_id in session if not already set
-    if (!isset($_SESSION['tenant_id']) || $_SESSION['tenant_id'] !== $user['tenant_id']) {
-        $_SESSION['tenant_id'] = $user['tenant_id'];
-    }
-    
-    // Verify tenant status (skip for superadmin)
-    if ($user['role'] !== 'superadmin') {
-        $tenantStmt = $conn->prepare("SELECT status, plan_type, trial_ends_at FROM tenants WHERE id = ?");
-        $tenantStmt->bind_param("i", $user['tenant_id']);
-        $tenantStmt->execute();
-        $tenantResult = $tenantStmt->get_result();
-        
-        if ($tenantResult->num_rows === 0) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Tenant not found']);
-            exit;
+    try {
+        $stmt = $conn->prepare("SELECT id, username, role, status, tenant_id FROM users WHERE id = ?");
+        if (!$stmt) {
+             throw new Exception("Prepare failed: " . $conn->error);
         }
+        $stmt->bind_param("i", $_SESSION['user_id']);
+        $stmt->execute();
+        $result = $stmt->get_result();
         
-        $tenant = $tenantResult->fetch_assoc();
-        
-        // Check tenant status
-        if ($tenant['status'] === 'suspended') {
+        if ($result->num_rows === 0) {
             session_unset();
             session_destroy();
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Your shop has been suspended. Please contact support.']);
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'User not found']);
             exit;
         }
         
-        if ($tenant['status'] === 'pending') {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Please verify your email to activate your account.']);
+        $user = $result->fetch_assoc();
+        
+        if ($user['status'] !== 'active') {
+            session_unset();
+            session_destroy();
+            http_response_code(401);
+            echo json_encode(['success' => false, 'error' => 'Account inactive']);
             exit;
         }
         
-        // Check trial expiration
-        if ($tenant['status'] === 'trial' && $tenant['trial_ends_at']) {
-            $trialEnds = strtotime($tenant['trial_ends_at']);
-            if (time() > $trialEnds) {
+        // Store tenant_id in session if not already set
+        if (!isset($_SESSION['tenant_id']) || $_SESSION['tenant_id'] !== $user['tenant_id']) {
+            $_SESSION['tenant_id'] = $user['tenant_id'];
+        }
+        
+
+        // Verify tenant status (skip for superadmin)
+        if ($user['role'] !== 'superadmin') {
+            $tenantStmt = $conn->prepare("SELECT status, plan_type, trial_ends_at FROM tenants WHERE id = ?");
+            if (!$tenantStmt) {
+                throw new Exception("Tenant prepare failed: " . $conn->error);
+            }
+            $tenantStmt->bind_param("i", $user['tenant_id']);
+            $tenantStmt->execute();
+            $tenantResult = $tenantStmt->get_result();
+            
+            if ($tenantResult->num_rows === 0) {
                 http_response_code(403);
-                echo json_encode(['success' => false, 'error' => 'Your free trial has expired. Please subscribe to continue.']);
+                echo json_encode(['success' => false, 'error' => 'Tenant not found']);
                 exit;
             }
+            
+            $tenant = $tenantResult->fetch_assoc();
+            
+            // Check tenant status
+            if ($tenant['status'] === 'suspended') {
+                session_unset();
+                session_destroy();
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Your shop has been suspended. Please contact support.']);
+                exit;
+            }
+            
+            if ($tenant['status'] === 'pending') {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => 'Please verify your email to activate your account.']);
+                exit;
+            }
+            
+            // Check trial expiration
+            if ($tenant['status'] === 'trial' && $tenant['trial_ends_at']) {
+                $trialEnds = strtotime($tenant['trial_ends_at']);
+                if (time() > $trialEnds) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'error' => 'Your free trial has expired. Please subscribe to continue.']);
+                    exit;
+                }
+            }
         }
+        
+        return $user;
+    } catch (Exception $e) {
+        header("HTTP/1.1 500 Internal Server Error");
+        echo json_encode(['success' => false, 'error' => 'Auth error: ' . $e->getMessage()]);
+        exit;
     }
-    
-    return $user;
 }
 ?>

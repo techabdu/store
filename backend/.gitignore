@@ -6,3 +6,6 @@
 # OS files
 .DS_Store
 Thumbs.db
+
+# Debug logs
+debug_trace.log

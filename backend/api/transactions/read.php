@@ -78,10 +78,10 @@ try {
                 i.condition_status
              FROM transaction_items ti
              LEFT JOIN inventory i ON ti.inventory_id = i.id
-             WHERE ti.transaction_id = ?"
+             WHERE ti.transaction_id = ? AND ti.tenant_id = ?"
         );
         
-        $itemsStmt->bind_param("i", $transactionId);
+        $itemsStmt->bind_param("ii", $transactionId, $_SESSION['tenant_id']);
         $itemsStmt->execute();
         $itemsResult = $itemsStmt->get_result();
         

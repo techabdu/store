@@ -3,6 +3,7 @@ require_once '../config/config.php';
 require_once '../config/database.php';
 require_once '../middleware/auth.php';
 require_once '../middleware/role.php';
+require_once '../helpers/sanitize.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -62,8 +63,8 @@ if ($action === 'get_customers') {
         ]);
     }
 } elseif ($action === 'get_customer_details') {
-    $name = isset($_GET['name']) ? $_GET['name'] : '';
-    $phone = isset($_GET['phone']) ? $_GET['phone'] : '';
+    $name = isset($_GET['name']) ? sanitizeInput($_GET['name']) : '';
+    $phone = isset($_GET['phone']) ? sanitizeInput($_GET['phone']) : '';
 
     if (empty($name)) {
         http_response_code(400);
@@ -77,6 +78,8 @@ if ($action === 'get_customers') {
         // If phone is empty in DB, we match where phone is null or empty? 
         // For simplicity and best effort matching:
         
+        // query to handle optional phone number safely in SQL
+        // If phone is provided, match it. If not, match where phone is empty/null.
         $query = "SELECT 
                     t.id as transaction_id,
                     t.created_at as purchase_date,
@@ -91,39 +94,18 @@ if ($action === 'get_customers') {
                   FROM transactions t
                   JOIN transaction_items ti ON t.id = ti.transaction_id
                   JOIN inventory i ON ti.inventory_id = i.id
-                  WHERE t.customer_name = ?";
+                  WHERE t.tenant_id = ? AND t.customer_name = ?
+                  AND (
+                      (? <> '' AND t.customer_phone = ?) 
+                      OR 
+                      (? = '' AND (t.customer_phone IS NULL OR t.customer_phone = ''))
+                  )
+                  ORDER BY t.created_at DESC";
         
-        $params = ["s", $name];
-        
-        if (!empty($phone)) {
-            $query .= " AND t.customer_phone = ?";
-            $params[0] .= "s";
-            $params[] = $phone;
-        } else {
-             // If phone is not provided in request, we might want to fetch transactions where phone is strictly empty 
-             // OR just rely on name. Let's rely on name AND phone if phone exists in the specific transaction record we clicked on.
-             // But wait, the list view groups by name AND phone. So we should filter by both if possible.
-             // If the list view item has a phone, we pass it. If it has NULL phone, we pass empty string?
-             
-             // Let's assume strict matching to what was clicked in the list.
-             // If the grouped item had a NULL phone, we should probably match NULL or empty phone.
-             $query .= " AND (t.customer_phone IS NULL OR t.customer_phone = '')";
-        }
-
-        $query .= " ORDER BY t.created_at DESC";
-
         $stmt = $db->prepare($query);
-        
-        // Dynamic binding
-        $bind_names = array();
-        if (count($params) > 1) {
-            $type = array_shift($params);
-            $bind_names[] = & $type;
-            for ($i = 0; $i < count($params); $i++) {
-                $bind_names[] = & $params[$i];
-            }
-            call_user_func_array(array($stmt, 'bind_param'), $bind_names);
-        }
+        // Bind parameters: tenant_id (i), name (s), phone (s), phone (s), phone (s)
+        // We pass phone 3 times to handle the logic logic inside SQL
+        $stmt->bind_param("issss", $tenant_id, $name, $phone, $phone, $phone);
         
         $stmt->execute();
         $history = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

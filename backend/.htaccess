@@ -11,11 +11,31 @@ RedirectMatch 404 /\.git
 <IfModule mod_headers.c>
     # Allow localhost for development
     SetEnvIf Origin "^http://localhost:5173$" ORIGIN_ALLOWED=$0
-    # Allow production domain
-    SetEnvIf Origin "^https://salsabeelistore\.shop$" ORIGIN_ALLOWED=$0
+    # Allow production domain (updated AND www subdomain)
+    SetEnvIf Origin "^https://(www\.)?prhub\.shop$" ORIGIN_ALLOWED=$0
     
     Header set Access-Control-Allow-Origin "%{ORIGIN_ALLOWED}e" env=ORIGIN_ALLOWED
     Header set Access-Control-Allow-Credentials "true"
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token"
+</IfModule>
+
+# Force HTTPS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !=localhost
+    RewriteCond %{HTTP_HOST} !=127.0.0.1
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Error Handling
+ErrorDocument 404 /store/backend/api/404.php
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

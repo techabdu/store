@@ -24,19 +24,32 @@ class SecurityMonitor {
      * @param string $userAgent Browser/client information
      * @return bool Success status
      */
+    /**
+     * Log a failed login attempt
+     * 
+     * @param string $username Username that failed to authenticate
+     * @param string $ip IP address of the attempt
+     * @param string $userAgent Browser/client information
+     * @return bool Success status
+     */
     public function logFailedLogin($username, $ip, $userAgent = '') {
         try {
+            // Attempt to resolve tenant_id from username
+            $tenantId = $this->getTenantIdByUsername($username);
+            
             $stmt = $this->conn->prepare(
-                "INSERT INTO security_logs (event_type, username, ip_address, user_agent, details) 
-                 VALUES ('failed_login', ?, ?, ?, ?)"
+                "INSERT INTO security_logs (tenant_id, event_type, username, ip_address, user_agent, details) 
+                 VALUES (?, 'failed_login', ?, ?, ?, ?)"
             );
             
             $details = json_encode([
                 'timestamp' => date('Y-m-d H:i:s'),
-                'attempted_username' => $username
+                'attempted_username' => $username,
+                'tenant_resolved' => ($tenantId !== null)
             ]);
             
-            $stmt->bind_param("ssss", $username, $ip, $userAgent, $details);
+            // tenantId is nullable now (requires schema update)
+            $stmt->bind_param("issss", $tenantId, $username, $ip, $userAgent, $details);
             $result = $stmt->execute();
             $stmt->close();
             
@@ -51,35 +64,89 @@ class SecurityMonitor {
     }
 
     /**
-     * Check if IP or Username is rate limited
+     * Helper to get tenant ID by username
+     */
+    private function getTenantIdByUsername($username) {
+        try {
+            $stmt = $this->conn->prepare("SELECT tenant_id FROM users WHERE username = ? LIMIT 1");
+            $stmt->bind_param("s", $username);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                return $row['tenant_id'];
+            }
+            return null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Log a generic security event
+     */
+    public function logSecurityEvent($eventType, $username = null, $ip = null, $details = []) {
+        try {
+            if (!$ip) $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            $tenantId = $username ? $this->getTenantIdByUsername($username) : null;
+            
+            $stmt = $this->conn->prepare(
+                "INSERT INTO security_logs (tenant_id, event_type, username, ip_address, details) 
+                 VALUES (?, ?, ?, ?, ?)"
+            );
+            
+            // Handle nullable tenant_id
+            // If tenant_id is null, we need to handle that. 
+            // The schema update made tenant_id nullable so this is fine.
+            
+            $detailsJson = json_encode($details);
+            $stmt->bind_param("issss", $tenantId, $eventType, $username, $ip, $detailsJson);
+            $stmt->execute();
+            $stmt->close();
+            return true;
+        } catch (Exception $e) {
+            error_log("Failed to log security event: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Check if a specific action is rate limited
      * 
+     * @param string $actionType Event type to check (e.g., 'failed_login', 'password_reset_request')
      * @param string $ip IP address
-     * @param string $username Username
+     * @param string $username Target username/identifier
+     * @param int $limit Max attempts
+     * @param int $minutes Time window in minutes
      * @return bool True if rate limited
      */
-    public function isRateLimited($ip, $username) {
+    public function isActionRateLimited($actionType, $ip, $username, $limit = 5, $minutes = 10) {
         try {
-            // Check failed logins in last 10 minutes
             $stmt = $this->conn->prepare(
                 "SELECT COUNT(*) as attempt_count 
                  FROM security_logs 
-                 WHERE event_type = 'failed_login' 
-                 AND (ip_address = ? OR username = ?)
-                 AND created_at >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)"
+                 WHERE event_type = ? 
+                 AND (ip_address = ? OR (? IS NOT NULL AND username = ?))
+                 AND created_at >= DATE_SUB(NOW(), INTERVAL ? MINUTE)"
             );
             
-            $stmt->bind_param("ss", $ip, $username);
+            $stmt->bind_param("ssssi", $actionType, $ip, $username, $username, $minutes);
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
             $stmt->close();
             
-            // Block if more than 5 failed attempts
-            return $row['attempt_count'] > 5;
+            return $row['attempt_count'] >= $limit;
         } catch (Exception $e) {
             error_log("Rate limit check failed: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Check if default failed login rate limit is exceeded
+     */
+    public function isRateLimited($ip, $username) {
+        return $this->isActionRateLimited('failed_login', $ip, $username, 5, 10);
     }
     
     /**

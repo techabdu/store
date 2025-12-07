@@ -4,6 +4,9 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
+require_once __DIR__ . '/../helpers/validate.php';
+require_once __DIR__ . '/../helpers/sanitize.php';
+require_once __DIR__ . '/../helpers/csrf.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -13,6 +16,16 @@ header("Content-Type: application/json; charset=UTF-8");
 
 // Check authentication
 $currentUser = checkAuth();
+
+// Check role (SuperAdmin only)
+checkRole(['superadmin']);
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Verify CSRF for state-changing requests
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
+    requireCsrf();
+}
 
 // Check role (SuperAdmin only)
 checkRole(['superadmin']);
@@ -90,10 +103,26 @@ function handlePost($conn, $currentUser) {
         exit;
     }
     
-    $username = trim($data->username);
-    $email = trim($data->email);
-    $password = trim($data->password);
-    $role = trim($data->role);
+    // Sanitize inputs
+    $username = sanitizeInput($data->username);
+    $email = sanitizeEmail($data->email);
+    // Password shouldn't be sanitized with htmlspecialchars as it might contain special chars allowed in passwords
+    // But we should trim it.
+    $password = trim($data->password); 
+    $role = sanitizeInput($data->role);
+
+    // Validate inputs
+    if (!validateUsername($username)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid username format (3-20 alphanum chars)']);
+        exit;
+    }
+
+    if (!validatePasswordStrength($password)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Password too weak (min 8 chars)']);
+        exit;
+    }
     
     // Validate role
     if (!in_array($role, ['admin', 'superadmin'])) { // Only creating admins/superadmins here? Or users too?
@@ -115,12 +144,21 @@ function handlePost($conn, $currentUser) {
     $password_hash = password_hash($password, PASSWORD_BCRYPT);
     
     // Insert user
-    $stmt = $conn->prepare("INSERT INTO users (username, email, password_hash, role, created_by) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssi", $username, $email, $password_hash, $role, $currentUser['id']);
+    // Insert user
+    $tenantId = $currentUser['tenant_id'];
+    
+    // Check if SuperAdmin is trying to create user for another tenant (feature for future, but handling basic logic now)
+    if (isset($data->tenant_id) && $currentUser['role'] === 'superadmin') {
+        // Validate that tenant exists
+        // $tenantId = $data->tenant_id;
+    }
+
+    $stmt = $conn->prepare("INSERT INTO users (tenant_id, username, email, password_hash, role, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssi", $tenantId, $username, $email, $password_hash, $role, $currentUser['id']);
     
     if ($stmt->execute()) {
         $newUserId = $conn->insert_id;
-        logActivity($currentUser['id'], 'create_user', "Created user: $username ($role)");
+        logActivity($currentUser['id'], 'create_user', "Created user: $username ($role)", $tenantId);
         
         echo json_encode(['success' => true, 'user' => [
             'id' => $newUserId,

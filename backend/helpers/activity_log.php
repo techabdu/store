@@ -9,17 +9,44 @@ require_once __DIR__ . '/../config/database.php';
  * @param mixed $details Optional details (array or string)
  * @return bool Success status
  */
-function logActivity($userId, $action, $details = null) {
+/**
+ * Log user activity to database
+ * 
+ * @param int $userId ID of the user performing action
+ * @param string $action Short description of action (e.g., 'login', 'create_user')
+ * @param mixed $details Optional details (array or string)
+ * @param int|null $tenantId Optional tenant ID (will try session or user lookup if null)
+ * @return bool Success status
+ */
+function logActivity($userId, $action, $details = null, $tenantId = null) {
     global $conn;
     
     $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
     $detailsJson = is_array($details) ? json_encode($details) : $details;
     
-    // We should probably log tenant_id too if we want to filter logs by tenant easily later
-    // But for now, we can join with users table to get tenant_id
+    // Try to get tenant_id if not provided
+    if ($tenantId === null) {
+        if (isset($_SESSION['tenant_id'])) {
+            $tenantId = $_SESSION['tenant_id'];
+        } else {
+            // Last resort: fetch from users table (expensive but necessary for integrity)
+            $userStmt = $conn->prepare("SELECT tenant_id FROM users WHERE id = ?");
+            $userStmt->bind_param("i", $userId);
+            $userStmt->execute();
+            $res = $userStmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $tenantId = $row['tenant_id'];
+            }
+        }
+    }
     
-    $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("isss", $userId, $action, $detailsJson, $ipAddress);
+    if ($tenantId === null) {
+        error_log("Failed to log activity: tenant_id missing for user $userId");
+        return false;
+    }
+    
+    $stmt = $conn->prepare("INSERT INTO activity_logs (tenant_id, user_id, action, details, ip_address) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("iisss", $tenantId, $userId, $action, $detailsJson, $ipAddress);
     
     if ($stmt->execute()) {
         return true;

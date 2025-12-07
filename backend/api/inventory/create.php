@@ -5,7 +5,20 @@
  * Accessible by: User, Admin, SuperAdmin
  */
 
+require_once '../../config/database.php';
+require_once '../../config/config.php';
+require_once '../../middleware/auth.php';
+require_once '../../middleware/role.php';
+require_once '../../helpers/activity_log.php';
+require_once '../../helpers/validate.php';
+require_once '../../helpers/sanitize.php';
+require_once '../../helpers/csrf.php';
+
+// Set CORS headers using centralized config (Handles OPTIONS preflight)
+setCorsHeaders();
+
 header('Content-Type: application/json');
+
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -13,17 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require_once '../../config/database.php';
-require_once '../../config/config.php';
-require_once '../../middleware/auth.php';
-require_once '../../middleware/role.php';
-require_once '../../helpers/activity_log.php';
-
-// Set CORS headers using centralized config
-setCorsHeaders();
-
 // Check authentication
 checkAuth();
+
+// Verify CSRF
+requireCsrf();
 
 // Check role - allow user, admin, and superadmin
 checkRole(['user', 'admin', 'superadmin']);
@@ -42,28 +49,28 @@ foreach ($requiredFields as $field) {
 }
 
 // Extract and sanitize input
-$brand = trim($input['brand']);
-$model = trim($input['model']);
-$imei = trim($input['imei']);
-$color = isset($input['color']) ? trim($input['color']) : '';
-$storage = isset($input['storage']) ? trim($input['storage']) : '';
+$brand = sanitizeInput($input['brand']);
+$model = sanitizeInput($input['model']);
+$imei = sanitizeInput($input['imei']);
+$color = isset($input['color']) ? sanitizeInput($input['color']) : '';
+$storage = isset($input['storage']) ? sanitizeInput($input['storage']) : '';
 $condition = isset($input['condition_status']) ? $input['condition_status'] : 'new';
 $price = floatval($input['price']);
 $costPrice = floatval($input['cost_price']);
 $status = isset($input['status']) ? $input['status'] : 'in_stock';
 $createdBy = $_SESSION['user_id'];
 
-// Validate IMEI format (basic validation - 15 digits)
-if (!preg_match('/^[0-9]{15}$/', $imei)) {
+// Validate IMEI format
+if (!validateIMEI($imei)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Invalid IMEI format. Must be 15 digits.']);
     exit;
 }
 
 // Validate price values
-if ($price <= 0 || $costPrice <= 0) {
+if (!validatePositiveNumber($price) || !validatePositiveNumber($costPrice)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Price and cost price must be greater than 0']);
+    echo json_encode(['success' => false, 'error' => 'Price and cost price must be positive numbers']);
     exit;
 }
 
@@ -82,9 +89,9 @@ if (!in_array($status, ['in_stock', 'sold', 'returned'])) {
 }
 
 try {
-    // Check if IMEI already exists
-    $checkStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ?");
-    $checkStmt->bind_param("s", $imei);
+    // Check if IMEI already exists within current tenant
+    $checkStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND tenant_id = ?");
+    $checkStmt->bind_param("si", $imei, $_SESSION['tenant_id']);
     $checkStmt->execute();
     $checkResult = $checkStmt->get_result();
     
@@ -140,9 +147,10 @@ try {
     $stmt->close();
     
 } catch (Exception $e) {
+    debugLog("EXCEPTION: " . $e->getMessage());
     error_log("Inventory create error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to add inventory item']);
+    echo json_encode(['success' => false, 'error' => 'Failed to add inventory item: ' . $e->getMessage()]);
 }
 
 $conn->close();

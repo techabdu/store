@@ -80,9 +80,9 @@ try {
             
             $inventoryId = intval($item['inventory_id']);
             
-            // Check if item exists and is in stock
-            $checkStmt = $conn->prepare("SELECT * FROM inventory WHERE id = ? AND status = 'in_stock'");
-            $checkStmt->bind_param("i", $inventoryId);
+            // Check if item exists, is in stock, and belongs to current tenant
+            $checkStmt = $conn->prepare("SELECT * FROM inventory WHERE id = ? AND status = 'in_stock' AND tenant_id = ?");
+            $checkStmt->bind_param("ii", $inventoryId, $_SESSION['tenant_id']);
             $checkStmt->execute();
             $result = $checkStmt->get_result();
             
@@ -118,9 +118,9 @@ try {
                 throw new Exception("Invalid IMEI format for trade-in: $imei");
             }
             
-            // Check if IMEI already exists
-            $checkImeiStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ?");
-            $checkImeiStmt->bind_param("s", $imei);
+            // Check if IMEI already exists within current tenant
+            $checkImeiStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND tenant_id = ?");
+            $checkImeiStmt->bind_param("si", $imei, $_SESSION['tenant_id']);
             $checkImeiStmt->execute();
             $imeiResult = $checkImeiStmt->get_result();
             
