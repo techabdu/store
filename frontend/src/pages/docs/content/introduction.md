@@ -1,6 +1,6 @@
 # Welcome to PRHub Documentation
 
-PRHub is a comprehensive retail management solution designed specifically for phone retailers. It streamlines your daily operations, from point-of-sale transactions and inventory tracking to detailed sales reporting and employee management.
+PRHub is a comprehensive retail management solution designed specifically for phone retailers. It streamlines your daily operations, from point-of-sale transactions, inventory tracking, expense tracking, financial reporting, to detailed sales reporting and employee management.
 
 ## What is PRHub?
 
@@ -8,11 +8,12 @@ PRHub provides a unified platform to manage your entire retail business. Whether
 
 ### Key Features
 
-*   **Smart Point of Sale (POS)**: Fast and efficient checkout process tailored for mobile devices and accessories.
+*   **Smart Point of Sale (POS)**: Fast and efficient checkout process tailored for mobile devices.
 *   **Real-time Inventory**: Track stock levels, manage variants (colors, storage), and get low-stock alerts.
 *   **Sales & Financial Reporting**: Gain insights into your business performance with detailed daily, weekly, and monthly reports.
 *   **Staff Management**: Control access with role-based permissions (User/Staff, Admin).
 *   **Expense Tracking**: Monitor shop expenses to calculate net profit accurately.
+*   **Customer Management**: Manage customer details and purchase history.
 
 ## How to Use This Documentation
 

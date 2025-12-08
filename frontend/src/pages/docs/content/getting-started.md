@@ -18,7 +18,7 @@ To start using PRHub, you need to create a shop account.
 Once registered, you can log in to your dashboard:
 
 1.  Go to the **Login** page.
-2.  Enter your registered email and password.
+2.  Enter your registered username and password.
 3.  Click **Sign In**.
 
 If you forget your password, use the "Forgot Password" link to initiate a reset via email.
