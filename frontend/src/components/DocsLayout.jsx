@@ -94,9 +94,9 @@ const DocsLayout = () => {
                 {/* Sidebar */}
                 <aside className={`docs-sidebar ${isSidebarOpen ? 'open' : ''}`}>
                     <div className="docs-sidebar-header">
-                        <a href="/" className="docs-brand">
+                        <Link to="/login" className="docs-brand">
                             <span>← Back to App</span>
-                        </a>
+                        </Link>
                     </div>
                     <nav>
                         {renderNavItems(docsNavigation)}
