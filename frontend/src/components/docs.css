@@ -1,0 +1,370 @@
+/* Documentation Layout Styles - Google Antigravity Inspired */
+
+/* Import Google Sans / Inter Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --docs-bg: #ffffff;
+    --docs-sidebar-bg: #ffffff;
+    --docs-text-primary: #202124;
+    --docs-text-secondary: #5f6368;
+    --docs-border: #e8eaed;
+    --docs-hover-bg: #f1f3f4;
+    --docs-active-bg: #e8f0fe;
+    --docs-active-text: #1967d2;
+    --docs-button-bg: #1a73e8;
+    --docs-button-hover: #1765cc;
+    --docs-highlight: #e8f0fe;
+}
+
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Sticky Navbar Wrapper for Documentation Pages */
+.docs-navbar-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 999;
+    background: white;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.1);
+}
+
+.docs-navbar-wrapper .lp-navbar {
+    background: white !important;
+}
+
+.docs-container {
+    display: flex;
+    min-height: 100vh;
+    background: var(--docs-bg);
+    position: relative;
+    padding-top: 70px;
+    /* Account for fixed navbar */
+}
+
+/* Sidebar Styles */
+.docs-sidebar {
+    width: 256px;
+    background: var(--docs-sidebar-bg);
+    border-right: 1px solid var(--docs-border);
+    position: fixed;
+    top: 70px;
+    /* Start below fixed navbar */
+    left: 0;
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    padding: 16px 0;
+}
+
+.docs-sidebar-header {
+    padding: 8px 24px 16px;
+    margin-bottom: 8px;
+}
+
+.docs-brand {
+    text-decoration: none;
+    color: var(--docs-text-secondary);
+    font-weight: 400;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s ease;
+    letter-spacing: 0.2px;
+}
+
+.docs-brand:hover {
+    color: var(--docs-text-primary);
+}
+
+.docs-sidebar nav {
+    padding: 0 12px;
+}
+
+/* Navigation Group */
+.docs-nav-group {
+    margin-bottom: 4px;
+}
+
+.docs-nav-group-title {
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--docs-text-secondary);
+    margin-bottom: 4px;
+    padding: 8px 12px 4px;
+}
+
+/* Navigation Items */
+.docs-nav-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    color: var(--docs-text-primary);
+    text-decoration: none;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+    position: relative;
+}
+
+.docs-nav-item:hover {
+    background: var(--docs-hover-bg);
+}
+
+.docs-nav-item.active {
+    background: var(--docs-active-bg);
+    color: var(--docs-active-text);
+    font-weight: 500;
+}
+
+.docs-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--docs-active-text);
+    border-radius: 0 2px 2px 0;
+}
+
+/* Main Content Area */
+.docs-main {
+    margin-left: 256px;
+    flex: 1;
+    padding: 24px 48px 48px;
+    max-width: 1440px;
+}
+
+/* Breadcrumbs */
+.docs-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--docs-border);
+    font-size: 12px;
+    color: var(--docs-text-secondary);
+}
+
+.breadcrumb-link {
+    color: var(--docs-active-text);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: var(--docs-button-hover);
+    text-decoration: underline;
+}
+
+.breadcrumb-text {
+    color: var(--docs-text-primary);
+    font-weight: 500;
+}
+
+.breadcrumb-separator {
+    color: var(--docs-text-secondary);
+    margin: 0 4px;
+}
+
+/* Buttons - Google Antigravity Style */
+.docs-button,
+button.primary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--docs-button-bg);
+    color: white;
+    border: none;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.25px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    text-decoration: none;
+}
+
+.docs-button:hover,
+button.primary-button:hover {
+    background: var(--docs-button-hover);
+    box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+}
+
+.docs-button:active,
+button.primary-button:active {
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+.docs-button::after {
+    content: '→';
+    font-size: 16px;
+}
+
+/* Typography */
+.docs-main h1 {
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 40px;
+    color: var(--docs-text-primary);
+    margin: 0 0 24px;
+    letter-spacing: -0.5px;
+}
+
+.docs-main h2 {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 32px;
+    color: var(--docs-text-primary);
+    margin: 32px 0 16px;
+    letter-spacing: -0.25px;
+}
+
+.docs-main h3 {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+    color: var(--docs-text-primary);
+    margin: 24px 0 12px;
+}
+
+.docs-main p {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+    color: var(--docs-text-primary);
+    margin: 0 0 16px;
+}
+
+.docs-main ul,
+.docs-main ol {
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--docs-text-primary);
+    margin: 0 0 16px;
+    padding-left: 24px;
+}
+
+.docs-main li {
+    margin-bottom: 8px;
+}
+
+.docs-main code {
+    background: var(--docs-highlight);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* Mobile Overlay */
+.docs-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.32);
+    z-index: 90;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.docs-overlay.open {
+    opacity: 1;
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--docs-button-bg);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 110;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--docs-button-hover);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.mobile-menu-toggle:active {
+    transform: scale(0.96);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .docs-sidebar {
+        transform: translateX(-100%);
+        top: 70px;
+        /* Keep below fixed navbar on mobile */
+        height: calc(100vh - 70px);
+    }
+
+    .docs-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .docs-main {
+        margin-left: 0;
+        padding: 16px 24px;
+    }
+
+    .docs-overlay {
+        display: block;
+    }
+
+    .docs-overlay.open {
+        display: block;
+    }
+
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Scrollbar Styling for Sidebar */
+.docs-sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.docs-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb {
+    background: #dadce0;
+    border-radius: 4px;
+}
+
+.docs-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #bdc1c6;
+}

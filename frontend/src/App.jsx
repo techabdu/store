@@ -30,6 +30,8 @@ import AdminActivity from './pages/admin/AdminActivity';
 import Customers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/AdminSettings';
 import Report from './pages/admin/Report';
+import DocsLayout from './components/DocsLayout';
+import Docs from './pages/public/Docs';
 
 function App() {
     return (
@@ -42,6 +44,11 @@ function App() {
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/access-denied" element={<AccessDenied />} />
+
+                        {/* Documentation Routes */}
+                        <Route path="/docs" element={<DocsLayout />}>
+                            <Route path="*" element={<Docs />} />
+                        </Route>
 
                         {/* Protected Routes */}
                         <Route
