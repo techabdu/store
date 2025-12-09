@@ -1,7 +1,7 @@
 /* Import Google Font - Orbitron */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
-/* CSS Variables for Light and Dark Themes */
+/* CSS Variables for Light Theme Only */
 :root {
     /* Light Theme Variables */
     --login-bg: #ffffff;
@@ -15,21 +15,6 @@
     --login-error-bg: #FEE2E2;
     --login-error-text: #DC2626;
     --login-brand-text: #1F2937;
-}
-
-[data-theme='dark'] {
-    /* Dark Theme Variables */
-    --login-bg: #1A1A1A;
-    --login-form-bg: #2D2D2D;
-    --login-text-primary: #E8EAED;
-    --login-text-secondary: #9AA0A6;
-    --login-text-tertiary: #BDC1C6;
-    --login-border: #3C4043;
-    --login-input-bg: #3C4043;
-    --login-placeholder: #9AA0A6;
-    --login-error-bg: #5F2120;
-    --login-error-text: #F28B82;
-    --login-brand-text: #E8EAED;
 }
 
 /* Global Reset for Login Page */
@@ -415,11 +400,6 @@
     flex-direction: column;
     align-items: center;
     transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-[data-theme='dark'] .success-message {
-    background-color: #064E3B;
-    color: #6EE7B7;
 }
 
 .success-message p {

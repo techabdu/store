@@ -6,12 +6,6 @@
  */
 
 header('Content-Type: application/json');
-// Only allow PUT requests
-if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
-}
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
@@ -21,6 +15,19 @@ require_once '../../helpers/activity_log.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Handle OPTIONS request for CORS preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Only allow PUT requests
+if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
 
 // Check authentication
 checkAuth();

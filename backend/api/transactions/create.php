@@ -6,12 +6,6 @@
  */
 
 header('Content-Type: application/json');
-// Only allow POST requests
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
-}
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
@@ -21,6 +15,19 @@ require_once '../../helpers/activity_log.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Handle OPTIONS request for CORS preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Only allow POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
 
 // Check authentication
 checkAuth();
@@ -93,12 +100,22 @@ try {
             $inventoryItem = $result->fetch_assoc();
             $checkStmt->close();
             
+            // Use custom price if provided, otherwise use inventory price
+            $salePrice = isset($item['customPrice']) && is_numeric($item['customPrice']) 
+                ? floatval($item['customPrice']) 
+                : floatval($inventoryItem['price']);
+            
+            // Validate that custom price is positive
+            if ($salePrice <= 0) {
+                throw new Exception("Sale price must be greater than zero");
+            }
+            
             $saleItems[] = [
                 'inventory_id' => $inventoryId,
-                'price' => $inventoryItem['price']
+                'price' => $salePrice
             ];
             
-            $totalAmount += $inventoryItem['price'];
+            $totalAmount += $salePrice;
             
         } else if ($item['type'] === 'trade_in') {
             // For trade-ins, we need to create a new inventory item first
@@ -161,11 +178,6 @@ try {
             
             $totalAmount -= $tradeInValue;
         }
-    }
-    
-    // Ensure total amount is not negative
-    if ($totalAmount < 0) {
-        throw new Exception("Total amount cannot be negative");
     }
     
     // Insert transaction

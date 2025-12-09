@@ -9,7 +9,8 @@ import {
     Package,
     TrendingUp,
     Receipt,
-    Activity
+    Activity,
+    DollarSign
 } from 'lucide-react';
 import '../../styles/dashboard.css';
 import './UserDashboard.css';
@@ -47,13 +48,33 @@ const UserDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [statsResponse, logsResponse] = await Promise.all([
+                const [statsResponse, profitResponse, expenseResponse, logsResponse] = await Promise.all([
                     api.get('/user/dashboard_stats.php'),
+                    api.get('/user/profit_stats.php'),
+                    api.get('/user/expense_stats.php'),
                     api.get('/activity_logs.php?limit=5')
                 ]);
 
                 if (statsResponse.data.success) {
                     setStats(statsResponse.data.stats);
+                }
+
+                // Store profit data separately
+                if (profitResponse.data.success) {
+                    setStats(prevStats => ({
+                        ...prevStats,
+                        daily_profit: profitResponse.data.data.daily_profit,
+                        monthly_profit: profitResponse.data.data.monthly_profit
+                    }));
+                }
+
+                // Store expense data separately
+                if (expenseResponse.data.success) {
+                    setStats(prevStats => ({
+                        ...prevStats,
+                        daily_expenses: expenseResponse.data.data.daily_expenses,
+                        monthly_expenses: expenseResponse.data.data.monthly_expenses
+                    }));
                 }
 
                 if (logsResponse.data.success) {
@@ -90,6 +111,20 @@ const UserDashboard = () => {
     // Dashboard Metrics
     const metrics = [
         {
+            title: 'Daily Profit',
+            value: loading ? '...' : formatCurrency(stats.daily_profit || 0),
+            icon: TrendingUp,
+            subtitle: 'Profit earned today',
+            color: 'success'
+        },
+        {
+            title: 'Monthly Profit',
+            value: loading ? '...' : formatCurrency(stats.monthly_profit || 0),
+            icon: DollarSign,
+            subtitle: 'Profit this month',
+            color: 'success'
+        },
+        {
             title: 'Total Inventory',
             value: loading ? '...' : stats.inventory_count,
             icon: Package,
@@ -97,25 +132,11 @@ const UserDashboard = () => {
             color: 'info'
         },
         {
-            title: 'Total Monthly Sales',
-            value: loading ? '...' : formatCurrency(stats.monthly_sales),
-            icon: TrendingUp,
-            subtitle: 'This month',
-            color: 'success'
-        },
-        {
             title: 'Monthly Expenses',
-            value: loading ? '...' : formatCurrency(stats.monthly_expenses),
+            value: loading ? '...' : formatCurrency(stats.monthly_expenses || 0),
             icon: Receipt,
-            subtitle: 'Logged this month',
-            color: 'warning'
-        },
-        {
-            title: 'Weekly Sales Count',
-            value: loading ? '...' : stats.weekly_sales_count,
-            icon: Activity,
-            subtitle: 'Sales this week',
-            color: 'info'
+            subtitle: 'Expenses this month',
+            color: 'danger'
         }
     ];
 

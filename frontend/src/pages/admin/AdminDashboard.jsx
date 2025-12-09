@@ -11,7 +11,8 @@ import {
     ShoppingBag,
     Users,
     DollarSign,
-    TrendingUp
+    TrendingUp,
+    Receipt
 } from 'lucide-react';
 import {
     BarChart,
@@ -56,6 +57,8 @@ const AdminDashboard = () => {
     const [salesData, setSalesData] = useState([]);
     const [alerts, setAlerts] = useState([]);
     const [activityData, setActivityData] = useState([]);
+    const [profitData, setProfitData] = useState({ daily_profit: 0, monthly_profit: 0 });
+    const [expenseData, setExpenseData] = useState({ daily_expenses: 0, monthly_expenses: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -65,27 +68,52 @@ const AdminDashboard = () => {
             try {
                 setLoading(true);
 
-                // Fetch dashboard stats and activity logs in parallel
-                const [statsResponse, logsResponse] = await Promise.all([
+                // Fetch dashboard stats, profit stats, expense stats, and activity logs in parallel
+                const [statsResponse, profitResponse, expenseResponse, logsResponse] = await Promise.all([
                     api.get('/admin/dashboard_stats.php'),
+                    api.get('/admin/profit_stats.php'),
+                    api.get('/admin/expense_stats.php'),
                     api.get('/activity_logs.php?limit=10')
                 ]);
 
                 if (statsResponse.data.success) {
                     const data = statsResponse.data.data;
 
-                    // Format metrics cards
+                    // Set profit data if available
+                    if (profitResponse.data.success) {
+                        setProfitData(profitResponse.data.data);
+                    }
+
+                    // Set expense data if available
+                    if (expenseResponse.data.success) {
+                        setExpenseData(expenseResponse.data.data);
+                    }
+
+                    // Format metrics cards (including profit cards)
                     const formattedMetrics = [
                         {
-                            title: 'Total Sales',
-                            value: `₦${data.monthly_sales.total.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                            icon: DollarSign,
-                            trend: `${data.monthly_sales.percentage_change >= 0 ? '+' : ''}${data.monthly_sales.percentage_change}% vs last month`,
-                            trendDirection: data.monthly_sales.percentage_change >= 0 ? 'up' : 'down',
+                            title: 'Daily Profit',
+                            value: `₦${profitResponse.data.success ? profitResponse.data.data.daily_profit.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}`,
+                            icon: TrendingUp,
+                            subtitle: 'Profit earned today',
                             color: 'success'
                         },
                         {
-                            title: 'Active Orders',
+                            title: 'Monthly Profit',
+                            value: `₦${profitResponse.data.success ? profitResponse.data.data.monthly_profit.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}`,
+                            icon: DollarSign,
+                            subtitle: 'Profit this month',
+                            color: 'success'
+                        },
+                        {
+                            title: 'Monthly Expenses',
+                            value: `₦${expenseResponse.data.success ? expenseResponse.data.data.monthly_expenses.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}`,
+                            icon: Receipt,
+                            subtitle: 'Expenses this month',
+                            color: 'danger'
+                        },
+                        {
+                            title: 'Items in Stock',
                             value: data.total_inventory.toString(),
                             icon: ShoppingBag,
                             subtitle: `${data.total_inventory} items in stock`,

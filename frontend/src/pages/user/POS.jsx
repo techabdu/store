@@ -18,6 +18,8 @@ const POS = () => {
     const [success, setSuccess] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [editingItemIndex, setEditingItemIndex] = useState(null);
+    const [tempPrice, setTempPrice] = useState('');
 
     // Customer details
     const [customerName, setCustomerName] = useState('');
@@ -96,13 +98,16 @@ const POS = () => {
             return;
         }
 
+        const originalPrice = parseFloat(item.price);
         setCart([...cart, {
             type: 'sale',
             inventory_id: item.id,
             brand: item.brand,
             model: item.model,
             imei: item.imei,
-            price: parseFloat(item.price)
+            price: originalPrice,
+            originalPrice: originalPrice, // Store original price for reference
+            customPrice: originalPrice // Current selling price (editable)
         }]);
 
         setSearchTerm('');
@@ -112,6 +117,46 @@ const POS = () => {
     // Remove item from cart
     const removeFromCart = (index) => {
         setCart(cart.filter((_, i) => i !== index));
+        if (editingItemIndex === index) {
+            setEditingItemIndex(null);
+            setTempPrice('');
+        }
+    };
+
+    // Start editing price
+    const startEditingPrice = (index, currentPrice) => {
+        setEditingItemIndex(index);
+        setTempPrice(currentPrice.toString());
+        setError('');
+    };
+
+    // Cancel editing price
+    const cancelEditingPrice = () => {
+        setEditingItemIndex(null);
+        setTempPrice('');
+    };
+
+    // Update cart item price
+    const updateCartItemPrice = (index) => {
+        const newPrice = parseFloat(tempPrice);
+
+        // Validation
+        if (isNaN(newPrice) || newPrice <= 0) {
+            setError('Price must be a positive number');
+            return;
+        }
+
+        const updatedCart = [...cart];
+        updatedCart[index] = {
+            ...updatedCart[index],
+            customPrice: newPrice,
+            price: newPrice // Update price for total calculation
+        };
+
+        setCart(updatedCart);
+        setEditingItemIndex(null);
+        setTempPrice('');
+        setError('');
     };
 
     // Add trade-in to cart
@@ -153,9 +198,12 @@ const POS = () => {
         setError('');
     };
 
-    // Calculate total
+    // Calculate total (uses customPrice for sale items, price for trade-ins)
     const calculateTotal = () => {
-        return cart.reduce((sum, item) => sum + item.price, 0);
+        return cart.reduce((sum, item) => {
+            const itemPrice = item.type === 'sale' ? (item.customPrice || item.price) : item.price;
+            return sum + itemPrice;
+        }, 0);
     };
 
     // Process checkout
@@ -168,12 +216,6 @@ const POS = () => {
 
         if (!customerName.trim()) {
             setError('Customer name is required');
-            return;
-        }
-
-        const total = calculateTotal();
-        if (total < 0) {
-            setError('Total amount cannot be negative');
             return;
         }
 
@@ -292,9 +334,71 @@ const POS = () => {
                                                     <span className="cart-item-imei">IMEI: {item.imei}</span>
                                                 </div>
                                                 <div className="cart-item-price-action">
-                                                    <span className={`cart-item-price ${item.type === 'trade_in' ? 'credit' : ''}`}>
-                                                        {item.type === 'trade_in' ? '-' : ''}₦{Math.abs(item.price).toFixed(2)}
-                                                    </span>
+                                                    {item.type === 'sale' ? (
+                                                        <div className="price-edit-wrapper">
+                                                            {editingItemIndex === index ? (
+                                                                // Edit mode
+                                                                <div className="price-edit-mode">
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        min="0"
+                                                                        className="price-input"
+                                                                        value={tempPrice}
+                                                                        onChange={(e) => setTempPrice(e.target.value)}
+                                                                        onKeyPress={(e) => {
+                                                                            if (e.key === 'Enter') {
+                                                                                updateCartItemPrice(index);
+                                                                            } else if (e.key === 'Escape') {
+                                                                                cancelEditingPrice();
+                                                                            }
+                                                                        }}
+                                                                        autoFocus
+                                                                    />
+                                                                    <button
+                                                                        className="btn-save-price"
+                                                                        onClick={() => updateCartItemPrice(index)}
+                                                                        title="Save price"
+                                                                    >
+                                                                        ✓
+                                                                    </button>
+                                                                    <button
+                                                                        className="btn-cancel-price"
+                                                                        onClick={cancelEditingPrice}
+                                                                        title="Cancel"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                // Display mode
+                                                                <div className="price-display-mode">
+                                                                    <div className="price-info">
+                                                                        <span className="cart-item-price">
+                                                                            ₦{(item.customPrice || item.price).toFixed(2)}
+                                                                        </span>
+                                                                        {item.customPrice && item.customPrice !== item.originalPrice && (
+                                                                            <span className="original-price">
+                                                                                ₦{item.originalPrice.toFixed(2)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <button
+                                                                        className="btn-edit-price"
+                                                                        onClick={() => startEditingPrice(index, item.customPrice || item.price)}
+                                                                        title="Edit price"
+                                                                    >
+                                                                        ✎
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        // Trade-in items (non-editable)
+                                                        <span className={`cart-item-price credit`}>
+                                                            -₦{Math.abs(item.price).toFixed(2)}
+                                                        </span>
+                                                    )}
                                                     <button
                                                         className="btn-remove"
                                                         onClick={() => removeFromCart(index)}
@@ -308,8 +412,18 @@ const POS = () => {
                                 </div>
 
                                 <div className="cart-total">
-                                    <span>Total:</span>
-                                    <span className="total-amount">₦{calculateTotal().toFixed(2)}</span>
+                                    {(() => {
+                                        const total = calculateTotal();
+                                        const isNegative = total < 0;
+                                        return (
+                                            <>
+                                                <span>{isNegative ? 'Change Due to Customer:' : 'Total:'}</span>
+                                                <span className={`total-amount ${isNegative ? 'negative' : ''}`}>
+                                                    ₦{Math.abs(total).toFixed(2)}
+                                                </span>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div className="checkout-section">
