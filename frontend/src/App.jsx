@@ -31,6 +31,7 @@ import AdminActivity from './pages/admin/AdminActivity';
 import Customers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/AdminSettings';
 import Report from './pages/admin/Report';
+import StockLevels from './pages/admin/StockLevels';
 import DocsLayout from './components/DocsLayout';
 import Docs from './pages/public/Docs';
 
@@ -114,6 +115,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin']}>
                                     <Inventory />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/stock-levels"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <StockLevels />
                                 </ProtectedRoute>
                             }
                         />

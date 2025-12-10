@@ -12,7 +12,8 @@ import {
   ShoppingCart,
   DollarSign,
   Store,
-  GitBranch
+  GitBranch,
+  ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -38,6 +39,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
           { icon: GitBranch, label: 'Branches', path: '/admin/branches' },
           { icon: FileText, label: 'Sales History', path: '/admin/sales-history' },
           { icon: Package, label: 'Inventory', path: '/admin/inventory' },
+          { icon: ClipboardList, label: 'Stock Levels', path: '/admin/stock-levels' },
           { icon: ShoppingCart, label: 'POS', path: '/admin/pos' },
           { icon: DollarSign, label: 'Expenses', path: '/expenses' },
           { icon: Users, label: 'Customers', path: '/admin/customers' },

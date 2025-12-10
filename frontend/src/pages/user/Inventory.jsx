@@ -15,6 +15,7 @@ const Inventory = () => {
     const [statusFilter, setStatusFilter] = useState('in_stock');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+
     const [selectedItem, setSelectedItem] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
@@ -664,6 +665,8 @@ const Inventory = () => {
                             </div>
                         )}
                     </div>
+
+
                 </div>
             </main>
         </div>
