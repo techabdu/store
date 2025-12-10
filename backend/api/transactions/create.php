@@ -12,6 +12,7 @@ require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/activity_log.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -69,6 +70,14 @@ $userId = $_SESSION['user_id'];
 $conn->begin_transaction();
 
 try {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     $totalAmount = 0;
     $saleItems = [];
     $tradeInItems = [];
@@ -87,14 +96,14 @@ try {
             
             $inventoryId = intval($item['inventory_id']);
             
-            // Check if item exists, is in stock, and belongs to current tenant
-            $checkStmt = $conn->prepare("SELECT * FROM inventory WHERE id = ? AND status = 'in_stock' AND tenant_id = ?");
-            $checkStmt->bind_param("ii", $inventoryId, $_SESSION['tenant_id']);
+            // Check if item exists, is in stock, and belongs to current shop
+            $checkStmt = $conn->prepare("SELECT * FROM inventory WHERE id = ? AND status = 'in_stock' AND shop_id = ?");
+            $checkStmt->bind_param("ii", $inventoryId, $shopId);
             $checkStmt->execute();
             $result = $checkStmt->get_result();
             
             if ($result->num_rows === 0) {
-                throw new Exception("Inventory item $inventoryId not found or not in stock");
+                throw new Exception("Inventory item $inventoryId not found or not in stock in this branch");
             }
             
             $inventoryItem = $result->fetch_assoc();
@@ -135,25 +144,25 @@ try {
                 throw new Exception("Invalid IMEI format for trade-in: $imei");
             }
             
-            // Check if IMEI already exists within current tenant
-            $checkImeiStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND tenant_id = ?");
-            $checkImeiStmt->bind_param("si", $imei, $_SESSION['tenant_id']);
+            // Check if IMEI already exists within current shop
+            $checkImeiStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND shop_id = ?");
+            $checkImeiStmt->bind_param("si", $imei, $shopId);
             $checkImeiStmt->execute();
             $imeiResult = $checkImeiStmt->get_result();
             
             if ($imeiResult->num_rows > 0) {
-                throw new Exception("Trade-in IMEI already exists: $imei");
+                throw new Exception("Trade-in IMEI already exists in this branch: $imei");
             }
             $checkImeiStmt->close();
             
-            // Insert trade-in item into inventory
+            // Insert trade-in item into inventory with shop_id
             $insertInventoryStmt = $conn->prepare(
-                "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, created_by, tenant_id) 
-                 VALUES (?, ?, ?, ?, ?, 'used', ?, 0, 'in_stock', ?, ?)"
+                "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, created_by, tenant_id, shop_id) 
+                 VALUES (?, ?, ?, ?, ?, 'used', ?, 0, 'in_stock', ?, ?, ?)"
             );
             
             $insertInventoryStmt->bind_param(
-                "sssssdii",
+                "sssssdiiii",
                 $brand,
                 $model,
                 $imei,
@@ -161,7 +170,8 @@ try {
                 $storage,
                 $tradeInValue,
                 $userId,
-                $_SESSION['tenant_id']
+                $_SESSION['tenant_id'],
+                $shopId
             );
             
             if (!$insertInventoryStmt->execute()) {
@@ -180,21 +190,22 @@ try {
         }
     }
     
-    // Insert transaction
+    // Insert transaction with shop_id
     $transactionStmt = $conn->prepare(
-        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, payment_method, tenant_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, payment_method, tenant_id, shop_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     );
     
     $transactionStmt->bind_param(
-        "isssdsi",
+        "isssdsi" . "i",
         $userId,
         $customerName,
         $customerPhone,
         $customerAddress,
         $totalAmount,
         $paymentMethod,
-        $_SESSION['tenant_id']
+        $_SESSION['tenant_id'],
+        $shopId
     );
     
     if (!$transactionStmt->execute()) {
@@ -206,19 +217,20 @@ try {
     
     // Insert transaction items and update inventory status for sales
     $itemStmt = $conn->prepare(
-            "INSERT INTO transaction_items (transaction_id, inventory_id, price, type, tenant_id) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO transaction_items (transaction_id, inventory_id, price, type, tenant_id, shop_id) VALUES (?, ?, ?, ?, ?, ?)"
     );
     
     // Process sale items
     foreach ($saleItems as $saleItem) {
         $type = 'sale';
         $itemStmt->bind_param(
-            "iidsi",
+            "iidsii",
             $transactionId,
             $saleItem['inventory_id'],
             $saleItem['price'],
             $type,
-            $_SESSION['tenant_id']
+            $_SESSION['tenant_id'],
+            $shopId
         );
         
         if (!$itemStmt->execute()) {
@@ -236,12 +248,13 @@ try {
     foreach ($tradeInItems as $tradeInItem) {
         $type = 'trade_in';
         $itemStmt->bind_param(
-            "iidsi",
+            "iidsii",
             $transactionId,
             $tradeInItem['inventory_id'],
             $tradeInItem['price'],
             $type,
-            $_SESSION['tenant_id']
+            $_SESSION['tenant_id'],
+            $shopId
         );
         
         if (!$itemStmt->execute()) {

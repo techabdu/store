@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 
 const AuthContext = createContext(null);
@@ -8,6 +8,11 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Multi-branch shop state
+    const [currentShop, setCurrentShop] = useState(null);
+    const [shops, setShops] = useState([]);
+    const [isOwner, setIsOwner] = useState(false);
+
     // Check session on mount
     useEffect(() => {
         const checkSession = async () => {
@@ -16,11 +21,22 @@ export const AuthProvider = ({ children }) => {
                 if (response.data.success) {
                     setUser(response.data.user);
                     setIsAuthenticated(true);
+
+                    // Set shop context from session
+                    if (response.data.shop_context) {
+                        const ctx = response.data.shop_context;
+                        setCurrentShop(ctx.current_shop);
+                        setShops(ctx.shops || []);
+                        setIsOwner(ctx.is_owner || false);
+                    }
                 }
             } catch (error) {
                 // Session invalid or expired
                 setUser(null);
                 setIsAuthenticated(false);
+                setCurrentShop(null);
+                setShops([]);
+                setIsOwner(false);
             } finally {
                 setIsLoading(false);
             }
@@ -35,7 +51,16 @@ export const AuthProvider = ({ children }) => {
             if (response.data.success) {
                 setUser(response.data.user);
                 setIsAuthenticated(true);
-                return { success: true };
+
+                // Set shop context from login response
+                if (response.data.shop_context) {
+                    const ctx = response.data.shop_context;
+                    setCurrentShop(ctx.current_shop);
+                    setShops(ctx.shops || []);
+                    setIsOwner(ctx.is_owner || false);
+                }
+
+                return { success: true, shopContext: response.data.shop_context };
             }
         } catch (error) {
             return {
@@ -53,6 +78,9 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setUser(null);
             setIsAuthenticated(false);
+            setCurrentShop(null);
+            setShops([]);
+            setIsOwner(false);
         }
     };
 
@@ -62,6 +90,43 @@ export const AuthProvider = ({ children }) => {
             ...userData
         }));
     };
+
+    // Switch current shop (for owners only)
+    const switchShop = useCallback(async (shopId) => {
+        if (!isOwner) {
+            console.error('Only owners can switch shops');
+            return { success: false, error: 'Only owners can switch shops' };
+        }
+
+        try {
+            const response = await api.post('/shops/switch.php', { shop_id: shopId });
+            if (response.data.success) {
+                setCurrentShop(response.data.shop);
+                return { success: true, shop: response.data.shop };
+            }
+            return { success: false, error: response.data.error };
+        } catch (error) {
+            console.error('Failed to switch shop:', error);
+            return {
+                success: false,
+                error: error.response?.data?.error || 'Failed to switch shop'
+            };
+        }
+    }, [isOwner]);
+
+    // Refresh shops list (after creating/deleting branches)
+    const refreshShops = useCallback(async () => {
+        if (!isAuthenticated || !isOwner) return;
+
+        try {
+            const response = await api.get('/shops/list.php');
+            if (response.data.success) {
+                setShops(response.data.shops || []);
+            }
+        } catch (error) {
+            console.error('Failed to refresh shops:', error);
+        }
+    }, [isAuthenticated, isOwner]);
 
     const getDashboardRoute = () => {
         if (!user) return '/login';
@@ -87,6 +152,12 @@ export const AuthProvider = ({ children }) => {
                 logout,
                 updateUser,
                 getDashboardRoute,
+                // Multi-branch shop context
+                currentShop,
+                shops,
+                isOwner,
+                switchShop,
+                refreshShops,
             }}
         >
             {children}

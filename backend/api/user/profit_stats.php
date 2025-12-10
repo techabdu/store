@@ -14,6 +14,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -38,10 +39,15 @@ checkAuth();
 checkRole(['user', 'admin', 'superadmin']);
 
 try {
-    $tenantId = $_SESSION['tenant_id'];
+    // Get current shop context for multi-branch support
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
     
-    // Calculate Daily Profit (today)
-    // Join transactions with transaction_items and inventory to get cost_price
+    // Calculate Daily Profit (today) - filtered by shop_id
     $dailyProfitQuery = "
         SELECT 
             COALESCE(SUM(t.total_amount), 0) as total_revenue,
@@ -50,7 +56,7 @@ try {
         INNER JOIN transaction_items ti ON t.id = ti.transaction_id
         INNER JOIN inventory i ON ti.inventory_id = i.id
         WHERE DATE(t.created_at) = CURDATE()
-        AND t.tenant_id = ?
+        AND t.shop_id = ?
         AND ti.type = 'sale'
     ";
     
@@ -58,7 +64,7 @@ try {
     if (!$dailyStmt) {
         throw new Exception("Failed to prepare daily profit query: " . $conn->error);
     }
-    $dailyStmt->bind_param("i", $tenantId);
+    $dailyStmt->bind_param("i", $shopId);
     if (!$dailyStmt->execute()) {
         throw new Exception("Failed to execute daily profit query: " . $dailyStmt->error);
     }
@@ -67,7 +73,7 @@ try {
     
     $dailyProfit = $dailyResult['total_revenue'] - $dailyResult['total_cost'];
     
-    // Calculate Monthly Profit (current month)
+    // Calculate Monthly Profit (current month) - filtered by shop_id
     $monthlyProfitQuery = "
         SELECT 
             COALESCE(SUM(t.total_amount), 0) as total_revenue,
@@ -77,7 +83,7 @@ try {
         INNER JOIN inventory i ON ti.inventory_id = i.id
         WHERE MONTH(t.created_at) = MONTH(CURRENT_DATE())
         AND YEAR(t.created_at) = YEAR(CURRENT_DATE())
-        AND t.tenant_id = ?
+        AND t.shop_id = ?
         AND ti.type = 'sale'
     ";
     
@@ -85,7 +91,7 @@ try {
     if (!$monthlyStmt) {
         throw new Exception("Failed to prepare monthly profit query: " . $conn->error);
     }
-    $monthlyStmt->bind_param("i", $tenantId);
+    $monthlyStmt->bind_param("i", $shopId);
     if (!$monthlyStmt->execute()) {
         throw new Exception("Failed to execute monthly profit query: " . $monthlyStmt->error);
     }
@@ -101,7 +107,8 @@ try {
         'data' => [
             'daily_profit' => (float)$dailyProfit,
             'monthly_profit' => (float)$monthlyProfit
-        ]
+        ],
+        'shop_id' => $shopId
     ]);
     
 } catch (Exception $e) {

@@ -17,6 +17,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -33,8 +34,16 @@ $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
 $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
 
 try {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     if ($transactionId) {
-        // Get single transaction with items
+        // Get single transaction with items (must belong to current shop)
         $stmt = $conn->prepare(
             "SELECT 
                 t.id,
@@ -47,16 +56,16 @@ try {
                 u.username as processed_by
              FROM transactions t
              LEFT JOIN users u ON t.user_id = u.id
-             WHERE t.id = ? AND t.tenant_id = ?"
+             WHERE t.id = ? AND t.shop_id = ?"
         );
 
-        $stmt->bind_param("ii", $transactionId, $_SESSION['tenant_id']);
+        $stmt->bind_param("ii", $transactionId, $shopId);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows === 0) {
             http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Transaction not found']);
+            echo json_encode(['success' => false, 'error' => 'Transaction not found in this branch']);
             exit;
         }
         
@@ -78,10 +87,10 @@ try {
                 i.condition_status
              FROM transaction_items ti
              LEFT JOIN inventory i ON ti.inventory_id = i.id
-             WHERE ti.transaction_id = ? AND ti.tenant_id = ?"
+             WHERE ti.transaction_id = ? AND ti.shop_id = ?"
         );
         
-        $itemsStmt->bind_param("ii", $transactionId, $_SESSION['tenant_id']);
+        $itemsStmt->bind_param("ii", $transactionId, $shopId);
         $itemsStmt->execute();
         $itemsResult = $itemsStmt->get_result();
         
@@ -100,7 +109,7 @@ try {
         ]);
         
     } else {
-        // Get list of transactions for current tenant
+        // Get list of transactions for current shop
         $query = "SELECT 
                     t.id,
                     t.user_id,
@@ -114,13 +123,13 @@ try {
                   FROM transactions t
                   LEFT JOIN users u ON t.user_id = u.id
                   LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
-                  WHERE t.tenant_id = ?
+                  WHERE t.shop_id = ?
                   GROUP BY t.id
                   ORDER BY t.created_at DESC
                   LIMIT ? OFFSET ?";
         
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("iii", $_SESSION['tenant_id'], $limit, $offset);
+        $stmt->bind_param("iii", $shopId, $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -129,9 +138,9 @@ try {
             $transactions[] = $row;
         }
         
-        // Get total count for current tenant
-        $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM transactions WHERE tenant_id = ?");
-        $countStmt->bind_param("i", $_SESSION['tenant_id']);
+        // Get total count for current shop
+        $countStmt = $conn->prepare("SELECT COUNT(*) as total FROM transactions WHERE shop_id = ?");
+        $countStmt->bind_param("i", $shopId);
         $countStmt->execute();
         $countResult = $countStmt->get_result();
         $totalCount = $countResult->fetch_assoc()['total'];

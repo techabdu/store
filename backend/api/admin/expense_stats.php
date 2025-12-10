@@ -14,6 +14,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -38,21 +39,29 @@ checkAuth();
 checkRole(['admin', 'superadmin']);
 
 try {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     $tenantId = $_SESSION['tenant_id'];
     
-    // Calculate Daily Expenses (today)
+    // Calculate Daily Expenses (today) - now filtered by shop_id
     $dailyExpensesQuery = "
         SELECT COALESCE(SUM(amount), 0) as total_expenses
         FROM expenses
         WHERE DATE(date) = CURDATE()
-        AND tenant_id = ?
+        AND shop_id = ?
     ";
     
     $dailyStmt = $conn->prepare($dailyExpensesQuery);
     if (!$dailyStmt) {
         throw new Exception("Failed to prepare daily expenses query: " . $conn->error);
     }
-    $dailyStmt->bind_param("i", $tenantId);
+    $dailyStmt->bind_param("i", $shopId);
     if (!$dailyStmt->execute()) {
         throw new Exception("Failed to execute daily expenses query: " . $dailyStmt->error);
     }
@@ -61,20 +70,20 @@ try {
     
     $dailyExpenses = $dailyResult['total_expenses'];
     
-    // Calculate Monthly Expenses (current month)
+    // Calculate Monthly Expenses (current month) - now filtered by shop_id
     $monthlyExpensesQuery = "
         SELECT COALESCE(SUM(amount), 0) as total_expenses
         FROM expenses
         WHERE MONTH(date) = MONTH(CURRENT_DATE())
         AND YEAR(date) = YEAR(CURRENT_DATE())
-        AND tenant_id = ?
+        AND shop_id = ?
     ";
     
     $monthlyStmt = $conn->prepare($monthlyExpensesQuery);
     if (!$monthlyStmt) {
         throw new Exception("Failed to prepare monthly expenses query: " . $conn->error);
     }
-    $monthlyStmt->bind_param("i", $tenantId);
+    $monthlyStmt->bind_param("i", $shopId);
     if (!$monthlyStmt->execute()) {
         throw new Exception("Failed to execute monthly expenses query: " . $monthlyStmt->error);
     }
@@ -83,20 +92,20 @@ try {
     
     $monthlyExpenses = $monthlyResult['total_expenses'];
     
-    // Store daily expense record (upsert - update if exists, insert if not)
+    // Store daily expense record - now with shop_id (upsert)
     $today = date('Y-m-d');
     $expenseCountQuery = "
         SELECT COUNT(*) as count
         FROM expenses
         WHERE DATE(date) = CURDATE()
-        AND tenant_id = ?
+        AND shop_id = ?
     ";
     
     $countStmt = $conn->prepare($expenseCountQuery);
     if (!$countStmt) {
         throw new Exception("Failed to prepare expense count query: " . $conn->error);
     }
-    $countStmt->bind_param("i", $tenantId);
+    $countStmt->bind_param("i", $shopId);
     if (!$countStmt->execute()) {
         throw new Exception("Failed to execute expense count query: " . $countStmt->error);
     }
@@ -104,10 +113,10 @@ try {
     $expenseCount = $countResult['count'];
     $countStmt->close();
     
-    // Upsert expense record
+    // Upsert expense record - now with shop_id
     $upsertQuery = "
-        INSERT INTO expense_records (tenant_id, date, daily_expenses, expense_count)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO expense_records (tenant_id, shop_id, date, daily_expenses, expense_count)
+        VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
             daily_expenses = VALUES(daily_expenses),
             expense_count = VALUES(expense_count),
@@ -118,7 +127,7 @@ try {
     if (!$upsertStmt) {
         throw new Exception("Failed to prepare upsert query: " . $conn->error);
     }
-    $upsertStmt->bind_param("isdi", $tenantId, $today, $dailyExpenses, $expenseCount);
+    $upsertStmt->bind_param("iisdi", $tenantId, $shopId, $today, $dailyExpenses, $expenseCount);
     if (!$upsertStmt->execute()) {
         throw new Exception("Failed to execute upsert query: " . $upsertStmt->error);
     }
@@ -131,7 +140,8 @@ try {
         'data' => [
             'daily_expenses' => (float)$dailyExpenses,
             'monthly_expenses' => (float)$monthlyExpenses
-        ]
+        ],
+        'shop_id' => $shopId
     ]);
     
 } catch (Exception $e) {

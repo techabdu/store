@@ -4,6 +4,7 @@ require_once '../config/database.php';
 require_once '../middleware/auth.php';
 require_once '../middleware/role.php';
 require_once '../helpers/sanitize.php';
+require_once '../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -20,8 +21,13 @@ if ($user_data['role'] !== 'admin' && $user_data['role'] !== 'superadmin') {
     exit();
 }
 
-// Get tenant_id from session (set by checkAuth)
-$tenant_id = $_SESSION['tenant_id'];
+// Get current shop context
+$shopId = getCurrentShopId();
+if ($shopId === null) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+    exit();
+}
 
 // Use the $conn variable from database.php
 $db = $conn;
@@ -30,7 +36,7 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 if ($action === 'get_customers') {
     try {
-        // Aggregate customers from transactions with statistics
+        // Aggregate customers from transactions for current shop
         // Group by customer_name and customer_phone to get unique customers
         // Calculate total purchases and total spent for each customer
         $query = "SELECT 
@@ -41,18 +47,19 @@ if ($action === 'get_customers') {
                     SUM(total_amount) as total_spent,
                     MAX(created_at) as last_purchase_date
                   FROM transactions
-                  WHERE tenant_id = ? AND customer_name IS NOT NULL AND customer_name != ''
+                  WHERE shop_id = ? AND customer_name IS NOT NULL AND customer_name != ''
                   GROUP BY customer_name, customer_phone, customer_address
                   ORDER BY last_purchase_date DESC";
         
         $stmt = $db->prepare($query);
-        $stmt->bind_param("i", $tenant_id);
+        $stmt->bind_param("i", $shopId);
         $stmt->execute();
         $customers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         
         echo json_encode([
             "success" => true,
-            "data" => $customers
+            "data" => $customers,
+            "shop_id" => $shopId
         ]);
     } catch (Exception $e) {
         error_log("Error fetching customers: " . $e->getMessage());
@@ -73,13 +80,7 @@ if ($action === 'get_customers') {
     }
 
     try {
-        // Get all transactions for this customer
-        // We match by name. If phone is provided, we match that too.
-        // If phone is empty in DB, we match where phone is null or empty? 
-        // For simplicity and best effort matching:
-        
-        // query to handle optional phone number safely in SQL
-        // If phone is provided, match it. If not, match where phone is empty/null.
+        // Get all transactions for this customer within current shop
         $query = "SELECT 
                     t.id as transaction_id,
                     t.created_at as purchase_date,
@@ -94,7 +95,7 @@ if ($action === 'get_customers') {
                   FROM transactions t
                   JOIN transaction_items ti ON t.id = ti.transaction_id
                   JOIN inventory i ON ti.inventory_id = i.id
-                  WHERE t.tenant_id = ? AND t.customer_name = ?
+                  WHERE t.shop_id = ? AND t.customer_name = ?
                   AND (
                       (? <> '' AND t.customer_phone = ?) 
                       OR 
@@ -103,9 +104,8 @@ if ($action === 'get_customers') {
                   ORDER BY t.created_at DESC";
         
         $stmt = $db->prepare($query);
-        // Bind parameters: tenant_id (i), name (s), phone (s), phone (s), phone (s)
-        // We pass phone 3 times to handle the logic logic inside SQL
-        $stmt->bind_param("issss", $tenant_id, $name, $phone, $phone, $phone);
+        // Bind parameters: shop_id (i), name (s), phone (s), phone (s), phone (s)
+        $stmt->bind_param("issss", $shopId, $name, $phone, $phone, $phone);
         
         $stmt->execute();
         $history = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

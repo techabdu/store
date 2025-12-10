@@ -2,6 +2,7 @@
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -16,11 +17,19 @@ if (!$user_data || !in_array($user_data['role'], ['admin', 'superadmin'])) {
     exit;
 }
 
+// Get current shop context
+$shopId = getCurrentShopId();
+if ($shopId === null) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+    exit;
+}
+
 // Use connection from database.php
 $db = $conn;
 
 try {
-    // 1. Calculate Monthly Total Sales (current month) for current tenant
+    // 1. Calculate Monthly Total Sales (current month) for current shop
     $currentMonthStart = date('Y-m-01 00:00:00');
     $lastMonthStart = date('Y-m-01 00:00:00', strtotime('-1 month'));
     $lastMonthEnd = date('Y-m-t 23:59:59', strtotime('-1 month'));
@@ -28,9 +37,9 @@ try {
     // Current month sales
     $queryCurrentSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales 
                           FROM transactions 
-                          WHERE created_at >= ? AND tenant_id = ?";
+                          WHERE created_at >= ? AND shop_id = ?";
     $stmtCurrentSales = $db->prepare($queryCurrentSales);
-    $stmtCurrentSales->bind_param("si", $currentMonthStart, $_SESSION['tenant_id']);
+    $stmtCurrentSales->bind_param("si", $currentMonthStart, $shopId);
     $stmtCurrentSales->execute();
     $currentSalesResult = $stmtCurrentSales->get_result()->fetch_assoc();
     $currentMonthSales = (float)$currentSalesResult['total_sales'];
@@ -38,9 +47,9 @@ try {
     // Last month sales for comparison
     $queryLastSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales 
                        FROM transactions 
-                       WHERE created_at >= ? AND created_at <= ? AND tenant_id = ?";
+                       WHERE created_at >= ? AND created_at <= ? AND shop_id = ?";
     $stmtLastSales = $db->prepare($queryLastSales);
-    $stmtLastSales->bind_param("ssi", $lastMonthStart, $lastMonthEnd, $_SESSION['tenant_id']);
+    $stmtLastSales->bind_param("ssi", $lastMonthStart, $lastMonthEnd, $shopId);
     $stmtLastSales->execute();
     $lastSalesResult = $stmtLastSales->get_result()->fetch_assoc();
     $lastMonthSales = (float)$lastSalesResult['total_sales'];
@@ -53,22 +62,22 @@ try {
         $salesPercentageChange = 100; // If no sales last month but sales this month
     }
     
-    // 2. Count Total Inventory (in_stock items) for current tenant
+    // 2. Count Total Inventory (in_stock items) for current shop
     $queryInventory = "SELECT COUNT(*) as total_inventory 
                        FROM inventory 
-                       WHERE status = 'in_stock' AND tenant_id = ?";
+                       WHERE status = 'in_stock' AND shop_id = ?";
     $stmtInventory = $db->prepare($queryInventory);
-    $stmtInventory->bind_param("i", $_SESSION['tenant_id']);
+    $stmtInventory->bind_param("i", $shopId);
     $stmtInventory->execute();
     $inventoryResult = $stmtInventory->get_result()->fetch_assoc();
     $totalInventory = (int)$inventoryResult['total_inventory'];
     
-    // 3. Count Monthly New Customers (unique customer_phone this month) for current tenant
+    // 3. Count Monthly New Customers (unique customer_phone this month) for current shop
     $queryCurrentCustomers = "SELECT COUNT(DISTINCT customer_phone) as new_customers 
                               FROM transactions 
-                              WHERE created_at >= ? AND customer_phone IS NOT NULL AND customer_phone != '' AND tenant_id = ?";
+                              WHERE created_at >= ? AND customer_phone IS NOT NULL AND customer_phone != '' AND shop_id = ?";
     $stmtCurrentCustomers = $db->prepare($queryCurrentCustomers);
-    $stmtCurrentCustomers->bind_param("si", $currentMonthStart, $_SESSION['tenant_id']);
+    $stmtCurrentCustomers->bind_param("si", $currentMonthStart, $shopId);
     $stmtCurrentCustomers->execute();
     $currentCustomersResult = $stmtCurrentCustomers->get_result()->fetch_assoc();
     $currentMonthCustomers = (int)$currentCustomersResult['new_customers'];
@@ -76,9 +85,9 @@ try {
     // Last month customers for comparison
     $queryLastCustomers = "SELECT COUNT(DISTINCT customer_phone) as new_customers 
                            FROM transactions 
-                           WHERE created_at >= ? AND created_at <= ? AND customer_phone IS NOT NULL AND customer_phone != '' AND tenant_id = ?";
+                           WHERE created_at >= ? AND created_at <= ? AND customer_phone IS NOT NULL AND customer_phone != '' AND shop_id = ?";
     $stmtLastCustomers = $db->prepare($queryLastCustomers);
-    $stmtLastCustomers->bind_param("ssi", $lastMonthStart, $lastMonthEnd, $_SESSION['tenant_id']);
+    $stmtLastCustomers->bind_param("ssi", $lastMonthStart, $lastMonthEnd, $shopId);
     $stmtLastCustomers->execute();
     $lastCustomersResult = $stmtLastCustomers->get_result()->fetch_assoc();
     $lastMonthCustomers = (int)$lastCustomersResult['new_customers'];
@@ -91,7 +100,7 @@ try {
         $customersPercentageChange = 100;
     }
     
-    // 4. Get Sales Overview Data (last 7 months) for current tenant
+    // 4. Get Sales Overview Data (last 7 months) for current shop
     $salesOverview = [];
     for ($i = 6; $i >= 0; $i--) {
         $monthStart = date('Y-m-01 00:00:00', strtotime("-$i months"));
@@ -100,9 +109,9 @@ try {
         
         $querySalesMonth = "SELECT COALESCE(SUM(total_amount), 0) as sales 
                             FROM transactions 
-                            WHERE created_at >= ? AND created_at <= ? AND tenant_id = ?";
+                            WHERE created_at >= ? AND created_at <= ? AND shop_id = ?";
         $stmtSalesMonth = $db->prepare($querySalesMonth);
-        $stmtSalesMonth->bind_param("ssi", $monthStart, $monthEnd, $_SESSION['tenant_id']);
+        $stmtSalesMonth->bind_param("ssi", $monthStart, $monthEnd, $shopId);
         $stmtSalesMonth->execute();
         $salesMonthResult = $stmtSalesMonth->get_result()->fetch_assoc();
         
@@ -112,16 +121,16 @@ try {
         ];
     }
     
-    // 5. Get Low Stock Alerts (items with 5 or fewer units) for current tenant
+    // 5. Get Low Stock Alerts (items with 5 or fewer units) for current shop
     $queryLowStock = "SELECT brand, model, COUNT(*) as count 
                       FROM inventory 
-                      WHERE status = 'in_stock' AND tenant_id = ?
+                      WHERE status = 'in_stock' AND shop_id = ?
                       GROUP BY brand, model 
                       HAVING count <= 5 
                       ORDER BY count ASC 
                       LIMIT 10";
     $stmtLowStock = $db->prepare($queryLowStock);
-    $stmtLowStock->bind_param("i", $_SESSION['tenant_id']);
+    $stmtLowStock->bind_param("i", $shopId);
     $stmtLowStock->execute();
     $lowStockResult = $stmtLowStock->get_result();
     
@@ -152,7 +161,8 @@ try {
             ],
             'sales_overview' => $salesOverview,
             'low_stock_alerts' => $lowStockAlerts
-        ]
+        ],
+        'shop_id' => $shopId
     ]);
     
 } catch (Exception $e) {

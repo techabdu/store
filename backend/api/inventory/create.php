@@ -13,6 +13,7 @@ require_once '../../helpers/activity_log.php';
 require_once '../../helpers/validate.php';
 require_once '../../helpers/sanitize.php';
 require_once '../../helpers/csrf.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config (Handles OPTIONS preflight)
 setCorsHeaders();
@@ -89,28 +90,36 @@ if (!in_array($status, ['in_stock', 'sold', 'returned'])) {
 }
 
 try {
-    // Check if IMEI already exists within current tenant
-    $checkStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND tenant_id = ?");
-    $checkStmt->bind_param("si", $imei, $_SESSION['tenant_id']);
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
+    // Check if IMEI already exists within current shop (branch level)
+    $checkStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND shop_id = ?");
+    $checkStmt->bind_param("si", $imei, $shopId);
     $checkStmt->execute();
     $checkResult = $checkStmt->get_result();
     
     if ($checkResult->num_rows > 0) {
         http_response_code(409);
-        echo json_encode(['success' => false, 'error' => 'IMEI already exists in inventory']);
+        echo json_encode(['success' => false, 'error' => 'IMEI already exists in this branch inventory']);
         $checkStmt->close();
         exit;
     }
     $checkStmt->close();
     
-    // Insert new inventory item with tenant_id
+    // Insert new inventory item with tenant_id and shop_id
     $stmt = $conn->prepare(
-        "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, tenant_id, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, tenant_id, shop_id, created_by) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     
     $stmt->bind_param(
-        "ssssssddsii",
+        "ssssssddsiii",
         $brand,
         $model,
         $imei,
@@ -121,6 +130,7 @@ try {
         $costPrice,
         $status,
         $_SESSION['tenant_id'],
+        $shopId,
         $createdBy
     );
     

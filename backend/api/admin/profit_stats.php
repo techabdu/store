@@ -14,6 +14,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -38,10 +39,17 @@ checkAuth();
 checkRole(['admin', 'superadmin']);
 
 try {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     $tenantId = $_SESSION['tenant_id'];
     
-    // Calculate Daily Profit (today)
-    // Join transactions with transaction_items and inventory to get cost_price
+    // Calculate Daily Profit (today) - now filtered by shop_id
     $dailyProfitQuery = "
         SELECT 
             COALESCE(SUM(t.total_amount), 0) as total_revenue,
@@ -50,7 +58,7 @@ try {
         INNER JOIN transaction_items ti ON t.id = ti.transaction_id
         INNER JOIN inventory i ON ti.inventory_id = i.id
         WHERE DATE(t.created_at) = CURDATE()
-        AND t.tenant_id = ?
+        AND t.shop_id = ?
         AND ti.type = 'sale'
     ";
     
@@ -58,7 +66,7 @@ try {
     if (!$dailyStmt) {
         throw new Exception("Failed to prepare daily profit query: " . $conn->error);
     }
-    $dailyStmt->bind_param("i", $tenantId);
+    $dailyStmt->bind_param("i", $shopId);
     if (!$dailyStmt->execute()) {
         throw new Exception("Failed to execute daily profit query: " . $dailyStmt->error);
     }
@@ -67,7 +75,7 @@ try {
     
     $dailyProfit = $dailyResult['total_revenue'] - $dailyResult['total_cost'];
     
-    // Calculate Monthly Profit (current month)
+    // Calculate Monthly Profit (current month) - now filtered by shop_id
     $monthlyProfitQuery = "
         SELECT 
             COALESCE(SUM(t.total_amount), 0) as total_revenue,
@@ -77,7 +85,7 @@ try {
         INNER JOIN inventory i ON ti.inventory_id = i.id
         WHERE MONTH(t.created_at) = MONTH(CURRENT_DATE())
         AND YEAR(t.created_at) = YEAR(CURRENT_DATE())
-        AND t.tenant_id = ?
+        AND t.shop_id = ?
         AND ti.type = 'sale'
     ";
     
@@ -85,7 +93,7 @@ try {
     if (!$monthlyStmt) {
         throw new Exception("Failed to prepare monthly profit query: " . $conn->error);
     }
-    $monthlyStmt->bind_param("i", $tenantId);
+    $monthlyStmt->bind_param("i", $shopId);
     if (!$monthlyStmt->execute()) {
         throw new Exception("Failed to execute monthly profit query: " . $monthlyStmt->error);
     }
@@ -94,20 +102,20 @@ try {
     
     $monthlyProfit = $monthlyResult['total_revenue'] - $monthlyResult['total_cost'];
     
-    // Store daily profit record (upsert - update if exists, insert if not)
+    // Store daily profit record - now with shop_id (upsert)
     $today = date('Y-m-d');
     $transactionCountQuery = "
         SELECT COUNT(DISTINCT t.id) as count
         FROM transactions t
         WHERE DATE(t.created_at) = CURDATE()
-        AND t.tenant_id = ?
+        AND t.shop_id = ?
     ";
     
     $countStmt = $conn->prepare($transactionCountQuery);
     if (!$countStmt) {
         throw new Exception("Failed to prepare transaction count query: " . $conn->error);
     }
-    $countStmt->bind_param("i", $tenantId);
+    $countStmt->bind_param("i", $shopId);
     if (!$countStmt->execute()) {
         throw new Exception("Failed to execute transaction count query: " . $countStmt->error);
     }
@@ -115,10 +123,10 @@ try {
     $transactionCount = $countResult['count'];
     $countStmt->close();
     
-    // Upsert profit record
+    // Upsert profit record - now with shop_id
     $upsertQuery = "
-        INSERT INTO profit_records (tenant_id, date, daily_profit, transaction_count)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO profit_records (tenant_id, shop_id, date, daily_profit, transaction_count)
+        VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE 
             daily_profit = VALUES(daily_profit),
             transaction_count = VALUES(transaction_count),
@@ -129,7 +137,7 @@ try {
     if (!$upsertStmt) {
         throw new Exception("Failed to prepare upsert query: " . $conn->error);
     }
-    $upsertStmt->bind_param("isdi", $tenantId, $today, $dailyProfit, $transactionCount);
+    $upsertStmt->bind_param("iisdi", $tenantId, $shopId, $today, $dailyProfit, $transactionCount);
     if (!$upsertStmt->execute()) {
         throw new Exception("Failed to execute upsert query: " . $upsertStmt->error);
     }
@@ -142,7 +150,8 @@ try {
         'data' => [
             'daily_profit' => (float)$dailyProfit,
             'monthly_profit' => (float)$monthlyProfit
-        ]
+        ],
+        'shop_id' => $shopId
     ]);
     
 } catch (Exception $e) {

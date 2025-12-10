@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../classes/SecurityMonitor.php';
 require_once __DIR__ . '/../../helpers/sanitize.php';
 require_once __DIR__ . '/../../helpers/csrf.php';
+require_once __DIR__ . '/../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -42,8 +43,8 @@ if ($securityMonitor->isRateLimited($ip, $username)) {
 }
 
 try {
-    // Check user in database
-    $stmt = $conn->prepare("SELECT id, username, password_hash, role, status FROM users WHERE username = ?");
+    // Check user in database - including shop_id for multi-branch support
+    $stmt = $conn->prepare("SELECT id, username, password_hash, role, status, shop_id, tenant_id FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -146,21 +147,33 @@ try {
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
-    $_SESSION['tenant_id'] = $tenant_id;
+    $_SESSION['tenant_id'] = $tenant_id ?? $user['tenant_id'];
+    $_SESSION['user_shop_id'] = $user['shop_id'];
     $_SESSION['last_activity'] = time();
     $_SESSION['created_at'] = time(); // For absolute timeout
+    
+    // Initialize shop context for multi-branch support
+    $shopContext = initializeShopContext($user);
 
     // Log activity
     logActivity($user['id'], 'login', 'User logged in');
 
-    // Return success
+    // Return success with shop context
     http_response_code(200);
     echo json_encode([
         'success' => true,
         'user' => [
             'id' => $user['id'],
             'username' => $user['username'],
-            'role' => $user['role']
+            'role' => $user['role'],
+            'shop_id' => $user['shop_id'],
+            'is_owner' => $shopContext['is_owner']
+        ],
+        'shop_context' => [
+            'current_shop_id' => $shopContext['current_shop_id'],
+            'current_shop' => $shopContext['current_shop'],
+            'shops' => $shopContext['shops'],
+            'is_owner' => $shopContext['is_owner']
         ]
     ]);
 

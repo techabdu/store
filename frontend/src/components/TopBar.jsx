@@ -3,6 +3,7 @@ import { Menu, Search, Bell, Settings, User, Moon, Sun, LogOut, ChevronDown } fr
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import ShopSwitcher from './ShopSwitcher';
 import api from '../utils/api';
 import './TopBar.css';
 
@@ -126,6 +127,9 @@ const TopBar = ({ toggleSidebar, user }) => {
       </div>
 
       <div className="top-bar-right">
+        {/* Shop Switcher for multi-branch support */}
+        <ShopSwitcher />
+
         <button className="icon-btn" onClick={toggleTheme} title="Toggle Theme">
           {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
         </button>

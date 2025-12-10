@@ -4,6 +4,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
+require_once __DIR__ . '/../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -38,15 +39,23 @@ switch ($method) {
 }
 
 function handleGet($conn) {
-    // Get all expenses, ordered by date desc
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
+    // Get all expenses for current shop, ordered by date desc
     $query = "SELECT e.*, u.username as created_by_name 
               FROM expenses e 
               LEFT JOIN users u ON e.created_by = u.id 
-              WHERE e.tenant_id = ?
+              WHERE e.shop_id = ?
               ORDER BY e.date DESC, e.created_at DESC";
     
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $_SESSION['tenant_id']);
+    $stmt->bind_param("i", $shopId);
     $stmt->execute();
     $result = $stmt->get_result();
     
@@ -57,10 +66,18 @@ function handleGet($conn) {
         }
     }
     
-    echo json_encode(['success' => true, 'expenses' => $expenses]);
+    echo json_encode(['success' => true, 'expenses' => $expenses, 'shop_id' => $shopId]);
 }
 
 function handlePost($conn, $currentUser) {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     $data = json_decode(file_get_contents("php://input"));
     
     if (!isset($data->description) || !isset($data->amount) || !isset($data->category) || !isset($data->date)) {
@@ -74,8 +91,8 @@ function handlePost($conn, $currentUser) {
     $category = trim($data->category);
     $date = $data->date;
     
-    $stmt = $conn->prepare("INSERT INTO expenses (description, amount, category, date, tenant_id, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sdssii", $description, $amount, $category, $date, $_SESSION['tenant_id'], $_SESSION['user_id']);
+    $stmt = $conn->prepare("INSERT INTO expenses (description, amount, category, date, tenant_id, shop_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sdssiii", $description, $amount, $category, $date, $_SESSION['tenant_id'], $shopId, $_SESSION['user_id']);
     
     if ($stmt->execute()) {
         $newId = $conn->insert_id;
@@ -100,6 +117,14 @@ function handlePost($conn, $currentUser) {
 }
 
 function handlePut($conn, $currentUser) {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     $data = json_decode(file_get_contents("php://input"));
     
     if (!isset($data->id)) {
@@ -109,6 +134,18 @@ function handlePut($conn, $currentUser) {
     }
     
     $id = $data->id;
+    
+    // Verify expense belongs to current shop
+    $checkStmt = $conn->prepare("SELECT id FROM expenses WHERE id = ? AND shop_id = ?");
+    $checkStmt->bind_param("ii", $id, $shopId);
+    $checkStmt->execute();
+    if ($checkStmt->get_result()->num_rows === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Expense not found in this branch']);
+        $checkStmt->close();
+        exit;
+    }
+    $checkStmt->close();
     
     // Build update query dynamically
     $updates = [];
@@ -145,9 +182,10 @@ function handlePut($conn, $currentUser) {
         exit;
     }
     
-    $sql = "UPDATE expenses SET " . implode(", ", $updates) . " WHERE id = ?";
-    $types .= "i";
+    $sql = "UPDATE expenses SET " . implode(", ", $updates) . " WHERE id = ? AND shop_id = ?";
+    $types .= "ii";
     $params[] = $id;
+    $params[] = $shopId;
     
     $stmt = $conn->prepare($sql);
     $stmt->bind_param($types, ...$params);
@@ -162,6 +200,14 @@ function handlePut($conn, $currentUser) {
 }
 
 function handleDelete($conn, $currentUser) {
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
     $id = $_GET['id'] ?? null;
     
     if (!$id) {
@@ -175,12 +221,18 @@ function handleDelete($conn, $currentUser) {
         exit;
     }
     
-    $stmt = $conn->prepare("DELETE FROM expenses WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    // Delete only if expense belongs to current shop
+    $stmt = $conn->prepare("DELETE FROM expenses WHERE id = ? AND shop_id = ?");
+    $stmt->bind_param("ii", $id, $shopId);
     
     if ($stmt->execute()) {
-        logActivity($currentUser['id'], 'delete_expense', "Deleted expense ID: $id");
-        echo json_encode(['success' => true, 'message' => 'Expense deleted successfully']);
+        if ($stmt->affected_rows > 0) {
+            logActivity($currentUser['id'], 'delete_expense', "Deleted expense ID: $id");
+            echo json_encode(['success' => true, 'message' => 'Expense deleted successfully']);
+        } else {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Expense not found in this branch']);
+        }
     } else {
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to delete expense']);

@@ -290,7 +290,13 @@ const AdminUserManagement = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <span style={{ textTransform: 'capitalize' }}>{user.role}</span>
+                                            {user.is_owner ? (
+                                                <span className="status-badge" style={{ background: 'rgba(var(--primary-rgb, 66, 133, 244), 0.15)', color: 'var(--primary)' }}>Owner</span>
+                                            ) : user.is_branch_manager ? (
+                                                <span className="status-badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}>Branch Manager</span>
+                                            ) : (
+                                                <span className="status-badge" style={{ background: 'rgba(var(--text-secondary-rgb, 156, 163, 175), 0.15)', color: 'var(--text-secondary)' }}>Staff</span>
+                                            )}
                                         </td>
                                         <td>
                                             <span className={`status-badge ${user.status}`}>
@@ -300,13 +306,15 @@ const AdminUserManagement = () => {
                                         <td>{user.lastActive}</td>
                                         <td>
                                             <div className="actions-cell">
-                                                <button
-                                                    className="action-btn"
-                                                    title={user.role === 'user' ? 'Upgrade to Admin' : 'Downgrade to User'}
-                                                    onClick={() => handleRoleChange(user.id, user.role)}
-                                                >
-                                                    {user.role === 'user' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
-                                                </button>
+                                                {!user.is_owner && (
+                                                    <button
+                                                        className="action-btn"
+                                                        title={user.role === 'user' ? 'Promote to Branch Manager' : 'Demote to Staff'}
+                                                        onClick={() => handleRoleChange(user.id, user.role)}
+                                                    >
+                                                        {user.role === 'user' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                                                    </button>
+                                                )}
                                                 <button
                                                     className="action-btn"
                                                     title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
@@ -336,128 +344,132 @@ const AdminUserManagement = () => {
                         </table>
                     </div>
                 </div>
-            </main>
+            </main >
 
             {/* Add User Modal */}
-            {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">Add New User</h2>
-                            <button className="close-btn" onClick={() => setShowModal(false)}>
-                                <X size={24} />
-                            </button>
+            {
+                showModal && (
+                    <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2 className="modal-title">Add New User</h2>
+                                <button className="close-btn" onClick={() => setShowModal(false)}>
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="modal-body">
+                                    <div className="form-group">
+                                        <label>Username</label>
+                                        <input
+                                            type="text"
+                                            name="username"
+                                            className={`form-input ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
+                                            value={formData.username}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                        {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
+                                            <div className={`flex items-center gap-1 mt-1 text-sm ${usernameAvailable ? 'text-green-600' : 'text-red-600'}`} style={{ fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: usernameAvailable ? '#10b981' : '#ef4444' }}>
+                                                {usernameAvailable ? (
+                                                    <>
+                                                        <Check size={14} />
+                                                        <span>Username available</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <AlertCircle size={14} />
+                                                        <span>Username not available</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                        {isCheckingUsername && (
+                                            <div style={{ fontSize: '12px', marginTop: '4px', color: '#6b7280' }}>Checking availability...</div>
+                                        )}
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            className="form-input"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Password</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            className="form-input"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Role</label>
+                                        <select
+                                            name="role"
+                                            className="form-select"
+                                            value={formData.role}
+                                            onChange={handleInputChange}
+                                        >
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>Create User</button>
+                                </div>
+                            </form>
                         </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="modal-body">
-                                <div className="form-group">
-                                    <label>Username</label>
-                                    <input
-                                        type="text"
-                                        name="username"
-                                        className={`form-input ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
-                                        value={formData.username}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                    {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
-                                        <div className={`flex items-center gap-1 mt-1 text-sm ${usernameAvailable ? 'text-green-600' : 'text-red-600'}`} style={{ fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: usernameAvailable ? '#10b981' : '#ef4444' }}>
-                                            {usernameAvailable ? (
-                                                <>
-                                                    <Check size={14} />
-                                                    <span>Username available</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <AlertCircle size={14} />
-                                                    <span>Username not available</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
-                                    {isCheckingUsername && (
-                                        <div style={{ fontSize: '12px', marginTop: '4px', color: '#6b7280' }}>Checking availability...</div>
-                                    )}
-                                </div>
-                                <div className="form-group">
-                                    <label>Email</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        className="form-input"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Password</label>
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        className="form-input"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>Role</label>
-                                    <select
-                                        name="role"
-                                        className="form-select"
-                                        value={formData.role}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="user">User</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>Create User</button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Reset Password Modal */}
-            {showResetModal && (
-                <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">Reset Password</h2>
-                            <button className="close-btn" onClick={() => setShowResetModal(false)}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleResetPasswordSubmit}>
-                            <div className="modal-body">
-                                <p className="mb-4">Resetting password for <strong>{selectedUser?.username}</strong></p>
-                                <div className="form-group">
-                                    <label>New Password</label>
-                                    <input
-                                        type="password"
-                                        className="form-input"
-                                        value={resetPassword}
-                                        onChange={(e) => setResetPassword(e.target.value)}
-                                        required
-                                        placeholder="Enter new password"
-                                        minLength={6}
-                                    />
+            {
+                showResetModal && (
+                    <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2 className="modal-title">Reset Password</h2>
+                                <button className="close-btn" onClick={() => setShowResetModal(false)}>
+                                    <X size={24} />
+                                </button>
+                            </div>
+                            <form onSubmit={handleResetPasswordSubmit}>
+                                <div className="modal-body">
+                                    <p className="mb-4">Resetting password for <strong>{selectedUser?.username}</strong></p>
+                                    <div className="form-group">
+                                        <label>New Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-input"
+                                            value={resetPassword}
+                                            onChange={(e) => setResetPassword(e.target.value)}
+                                            required
+                                            placeholder="Enter new password"
+                                            minLength={6}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-secondary" onClick={() => setShowResetModal(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Reset Password</button>
-                            </div>
-                        </form>
+                                <div className="modal-footer">
+                                    <button type="button" className="btn-secondary" onClick={() => setShowResetModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Reset Password</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -11,7 +11,8 @@ import {
   Package,
   ShoppingCart,
   DollarSign,
-  Store
+  Store,
+  GitBranch
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -34,6 +35,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
           { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
           { icon: BarChart2, label: 'Reports', path: '/admin/report' },
           { icon: Users, label: 'User Management', path: '/admin/users' },
+          { icon: GitBranch, label: 'Branches', path: '/admin/branches' },
           { icon: FileText, label: 'Sales History', path: '/admin/sales-history' },
           { icon: Package, label: 'Inventory', path: '/admin/inventory' },
           { icon: ShoppingCart, label: 'POS', path: '/admin/pos' },

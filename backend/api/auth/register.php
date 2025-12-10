@@ -94,13 +94,23 @@ try {
     }
     
     $tenant_id = $conn->insert_id;
+    
+    // 2.5 Create the first (main) shop/branch for this tenant
+    $insertShop = $conn->prepare("INSERT INTO shops (tenant_id, shop_name, shop_address, shop_phone, shop_email, business_capital, status, is_main_branch) VALUES (?, ?, ?, ?, ?, 0.00, 'active', 1)");
+    $insertShop->bind_param("issss", $tenant_id, $shop_name, $shop_address, $shop_phone, $owner_email);
+    
+    if (!$insertShop->execute()) {
+        throw new Exception("Failed to create shop branch: " . $insertShop->error);
+    }
+    
+    $shop_id = $conn->insert_id;
 
-    // 3. Create Admin User for this Tenant
+    // 3. Create Admin User for this Tenant (shop_id = NULL for owner access to all branches)
     $password_hash = password_hash($password, PASSWORD_BCRYPT);
     $role = 'admin';
     $status = 'active'; // User is active, but tenant might be pending/trial
 
-    $insertUser = $conn->prepare("INSERT INTO users (tenant_id, username, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?, ?)");
+    $insertUser = $conn->prepare("INSERT INTO users (tenant_id, shop_id, username, email, password_hash, role, status) VALUES (?, NULL, ?, ?, ?, ?, ?)");
     $insertUser->bind_param("isssss", $tenant_id, $owner_username, $owner_email, $password_hash, $role, $status);
 
     if (!$insertUser->execute()) {

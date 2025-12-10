@@ -1,0 +1,491 @@
+/* Branch Management Page Styles */
+
+.branch-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.add-branch-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.add-branch-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Branches Grid */
+.branches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Branch Card */
+.branch-card {
+    background: var(--card-bg, #1f2937);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.branch-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.branch-card.main-branch {
+    border-color: var(--primary);
+}
+
+.branch-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.branch-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary);
+    border-radius: 10px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.branch-title-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.branch-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #f3f4f6);
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.main-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.branch-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.branch-actions .action-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    color: var(--text-secondary, #9ca3af);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.branch-actions .action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #f3f4f6);
+}
+
+.branch-actions .action-btn.edit:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #818cf8;
+}
+
+.branch-actions .action-btn.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+.branch-card-body {
+    padding: 1rem 1.25rem;
+}
+
+.branch-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.875rem;
+}
+
+.branch-info-row svg {
+    color: var(--text-muted, #6b7280);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.branch-card-footer {
+    padding: 1rem 1.25rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.capital-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-badge.active {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.status-badge.suspended {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+/* Empty State */
+.empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-muted, #6b7280);
+    text-align: center;
+}
+
+.empty-state svg {
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Loading & Error States */
+.loading-state,
+.error-state {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-secondary, #9ca3af);
+}
+
+.error-state {
+    color: #f87171;
+}
+
+/* Access Denied */
+.access-denied {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    text-align: center;
+    color: var(--text-secondary, #9ca3af);
+}
+
+.access-denied svg {
+    color: #f59e0b;
+    margin-bottom: 1rem;
+}
+
+.access-denied h2 {
+    color: var(--text-primary, #f3f4f6);
+    margin-bottom: 0.5rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: var(--card-bg, #1f2937);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content.delete-modal {
+    max-width: 450px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+.modal-header.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+.modal-header.danger svg {
+    color: #f87171;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary, #f3f4f6);
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #9ca3af);
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary, #f3f4f6);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary, #f3f4f6);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--input-bg, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    color: var(--text-primary, #f3f4f6);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.form-input::placeholder {
+    color: var(--text-muted, #6b7280);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Button Styles */
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    background: var(--input-bg, rgba(255, 255, 255, 0.05));
+    color: var(--text-primary, #f3f4f6);
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-danger {
+    padding: 0.75rem 1.5rem;
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Delete Modal Specific */
+.delete-warning {
+    font-size: 1rem;
+    color: var(--text-primary, #f3f4f6);
+    margin-bottom: 1rem;
+}
+
+.delete-info {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #9ca3af);
+    margin-bottom: 0.5rem;
+}
+
+.delete-list {
+    list-style: disc;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-secondary, #9ca3af);
+    font-size: 0.875rem;
+}
+
+.delete-list li {
+    padding: 0.25rem 0;
+}
+
+.delete-note {
+    font-size: 0.8rem;
+    color: #f87171;
+    font-weight: 500;
+}
+
+/* Light Theme */
+[data-theme="light"] .branch-card {
+    background: #ffffff;
+    border-color: #e5e7eb;
+}
+
+[data-theme="light"] .branch-card.main-branch {
+    border-color: var(--primary);
+}
+
+[data-theme="light"] .modal-content {
+    background: #ffffff;
+}
+
+[data-theme="light"] .form-input {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .branches-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .branch-management-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .add-branch-btn {
+        justify-content: center;
+    }
+}

@@ -17,6 +17,7 @@ require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -34,7 +35,15 @@ $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
 $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
 
 try {
-    // Build query with filters
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
+    // Build query with filters - now filtering by shop_id
     $query = "SELECT 
                 i.id,
                 i.brand,
@@ -51,10 +60,10 @@ try {
                 u.username as created_by_username
               FROM inventory i
               LEFT JOIN users u ON i.created_by = u.id
-              WHERE i.tenant_id = ?"; // Filter by tenant_id
+              WHERE i.shop_id = ?"; // Filter by shop_id for branch isolation
     
-    $params = [$_SESSION['tenant_id']]; // Add tenant_id to parameters
-    $types = 'i'; // Type for tenant_id
+    $params = [$shopId]; // Add shop_id to parameters
+    $types = 'i'; // Type for shop_id
     
     // Filter by status
     if ($status !== 'all') {
@@ -93,8 +102,8 @@ try {
     }
     
     // Get total count for pagination
-    $countQuery = "SELECT COUNT(*) as total FROM inventory i WHERE i.tenant_id = ?";
-    $countParams = [$_SESSION['tenant_id']];
+    $countQuery = "SELECT COUNT(*) as total FROM inventory i WHERE i.shop_id = ?";
+    $countParams = [$shopId];
     $countTypes = 'i';
     
     if ($status !== 'all') {
@@ -126,7 +135,8 @@ try {
         'inventory' => $inventory,
         'total' => $totalCount,
         'limit' => $limit,
-        'offset' => $offset
+        'offset' => $offset,
+        'shop_id' => $shopId
     ]);
     
     $stmt->close();

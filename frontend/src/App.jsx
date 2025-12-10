@@ -13,6 +13,7 @@ import SystemInsights from './pages/superadmin/SystemInsights';
 import LandingPage from './pages/public/LandingPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUserManagement from './pages/admin/AdminUserManagement';
+import BranchManagement from './pages/admin/BranchManagement';
 import UserDashboard from './pages/user/UserDashboard';
 import UserProfile from './pages/user/UserProfile';
 import Inventory from './pages/user/Inventory';
@@ -97,6 +98,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin']}>
                                     <AdminUserManagement />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/branches"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <BranchManagement />
                                 </ProtectedRoute>
                             }
                         />

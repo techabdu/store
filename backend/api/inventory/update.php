@@ -12,6 +12,7 @@ require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/activity_log.php';
+require_once '../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -48,7 +49,15 @@ if (!isset($input['id']) || !is_numeric($input['id'])) {
 $inventoryId = intval($input['id']);
 
 try {
-    // Verify inventory item exists and belongs to current tenant
+    // Get current shop context
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
+        exit;
+    }
+    
+    // Verify inventory item exists and belongs to current shop
     $checkStmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?"); // Select all to get existingItem for logging
     $checkStmt->bind_param("i", $inventoryId);
     $checkStmt->execute();
@@ -62,9 +71,9 @@ try {
     }
     
     $existingItem = $checkResult->fetch_assoc(); // Fetch all data for existingItem
-    if ($existingItem['tenant_id'] != $_SESSION['tenant_id']) {
+    if ($existingItem['shop_id'] != $shopId) {
         http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Cannot update items from other tenants']);
+        echo json_encode(['success' => false, 'error' => 'Cannot update items from other branches']);
         $checkStmt->close();
         exit;
     }

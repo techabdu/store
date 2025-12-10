@@ -3,14 +3,15 @@
 -- ============================================================================
 -- 
 -- This file contains the complete database schema for the Phone Retailer 
--- Management System with multi-tenancy support.
+-- Management System with multi-tenancy and multi-branch support.
 --
 -- FEATURES:
--- - Multi-tenant architecture (multiple shops in one database)
--- - Role-based access control (SuperAdmin, Admin, User)
--- - Comprehensive inventory management
--- - Transaction tracking with trade-ins
--- - Expense management
+-- - Multi-tenant architecture (multiple business owners in one database)
+-- - Multi-branch support (each tenant can have multiple shop locations)
+-- - Role-based access control (SuperAdmin, Admin/Owner, Branch Manager, User)
+-- - Comprehensive inventory management per branch
+-- - Transaction tracking with trade-ins per branch
+-- - Expense management per branch
 -- - Activity logging and security monitoring
 -- - Session management
 -- - Password reset functionality
@@ -24,8 +25,8 @@
 -- IMPORTANT NOTES:
 -- - All tables use utf8mb4 charset for full Unicode support
 -- - Foreign keys enforce referential integrity
--- - Indexes optimize query performance for multi-tenant queries
--- - Default superadmin account is created (see below for credentials)
+-- - Indexes optimize query performance for multi-tenant/multi-branch queries
+-- - Data is scoped by shop_id for branch-level isolation
 --
 -- ============================================================================
 
@@ -34,26 +35,26 @@ SET NAMES utf8mb4;
 SET CHARACTER SET utf8mb4;
 
 -- ============================================================================
--- TABLE 1: TENANTS (Shops/Organizations)
+-- TABLE 1: TENANTS (Business Owners/Organizations)
 -- ============================================================================
--- This table stores information about each shop (tenant) in the system.
--- Each tenant represents a separate phone retail shop with its own data.
+-- This table stores information about each business owner (tenant) in the system.
+-- Each tenant represents a phone retail BUSINESS that can have multiple branches.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS tenants (
     id INT AUTO_INCREMENT PRIMARY KEY,
     
-    -- Shop Information
-    shop_name VARCHAR(100) NOT NULL COMMENT 'Name of the phone retail shop',
-    shop_address TEXT NULL COMMENT 'Physical address of the shop',
-    shop_phone VARCHAR(20) NOT NULL COMMENT 'Contact phone number',
-    shop_email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Contact email (must be unique)',
+    -- Business/Owner Information (legacy shop fields used for first branch)
+    shop_name VARCHAR(100) NOT NULL COMMENT 'Primary business name',
+    shop_address TEXT NULL COMMENT 'Primary business address',
+    shop_phone VARCHAR(20) NOT NULL COMMENT 'Primary contact phone number',
+    shop_email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Business owner email (must be unique)',
     
-    -- Business Settings
-    business_capital DECIMAL(15, 2) DEFAULT 0.00 COMMENT 'Initial business capital/investment',
+    -- Business Settings (legacy - now primarily at shop level)
+    business_capital DECIMAL(15, 2) DEFAULT 0.00 COMMENT 'Total business capital (sum of all branches)',
     
     -- Subscription & Status
-    status ENUM('active', 'suspended', 'pending', 'trial') DEFAULT 'trial' COMMENT 'Shop account status',
+    status ENUM('active', 'suspended', 'pending', 'trial') DEFAULT 'trial' COMMENT 'Business account status',
     plan_type ENUM('free_trial', 'basic', 'premium', 'enterprise') DEFAULT 'free_trial' COMMENT 'Subscription plan',
     trial_ends_at TIMESTAMP NULL COMMENT 'When free trial expires',
     subscription_ends_at TIMESTAMP NULL COMMENT 'When paid subscription expires',
@@ -72,18 +73,57 @@ CREATE TABLE IF NOT EXISTS tenants (
     INDEX idx_trial_ends_at (trial_ends_at),
     INDEX idx_email_verified (email_verified)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores information about each phone retail shop (tenant)';
+COMMENT='Stores business owner information (tenant level, can have multiple branches)';
 
 -- ============================================================================
--- TABLE 2: USERS (Shop Owners, Admins, and Staff)
+-- TABLE 2: SHOPS (Branch Locations)
+-- ============================================================================
+-- This table stores physical branch locations for each tenant.
+-- Each tenant can have multiple shops (branches) with isolated data.
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS shops (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id INT NOT NULL COMMENT 'Parent business/tenant that owns this branch',
+    
+    -- Shop/Branch Details
+    shop_name VARCHAR(100) NOT NULL COMMENT 'Branch name (e.g., Lagos Main Branch)',
+    shop_address TEXT NULL COMMENT 'Physical address of this branch',
+    shop_phone VARCHAR(20) NULL COMMENT 'Branch contact phone number',
+    shop_email VARCHAR(100) NULL COMMENT 'Branch email (optional)',
+    
+    -- Business Settings (per branch)
+    business_capital DECIMAL(15, 2) DEFAULT 0.00 COMMENT 'Capital allocated to this branch',
+    
+    -- Status
+    status ENUM('active', 'suspended') DEFAULT 'active' COMMENT 'Branch operational status',
+    is_main_branch TINYINT(1) DEFAULT 0 COMMENT '1 if this is the primary/first branch',
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Foreign Keys & Indexes
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_tenant_id (tenant_id),
+    INDEX idx_status (status),
+    INDEX idx_is_main_branch (is_main_branch),
+    INDEX idx_shops_tenant_status (tenant_id, status) COMMENT 'Composite index for active shops lookup'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Physical branch locations under each tenant (business owner)';
+
+-- ============================================================================
+-- TABLE 3: USERS (Shop Owners, Branch Managers, and Staff)
 -- ============================================================================
 -- This table stores all user accounts in the system.
--- Users belong to a specific tenant (shop) and have role-based permissions.
+-- Users belong to a tenant and optionally to a specific shop (branch).
+-- shop_id = NULL means owner-level access to all branches.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this user belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this user belongs to',
+    shop_id INT NULL COMMENT 'Branch assignment: NULL=Owner (all branches), Non-NULL=Specific branch only',
     
     -- Authentication
     username VARCHAR(50) NOT NULL COMMENT 'Unique username for login',
@@ -96,7 +136,10 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_color VARCHAR(7) NOT NULL DEFAULT '#3b82f6' COMMENT 'Hex color for avatar display',
     
     -- Role & Status
-    role ENUM('superadmin', 'admin', 'user') NOT NULL COMMENT 'User role: superadmin (IT), admin (shop owner), user (staff)',
+    -- admin with shop_id=NULL = Owner (can access all branches)
+    -- admin with shop_id=X = Branch Manager (only sees branch X)
+    -- user with shop_id=X = Staff (only sees branch X)
+    role ENUM('superadmin', 'admin', 'user') NOT NULL COMMENT 'User role',
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active' COMMENT 'Account status',
     
     -- Password Reset
@@ -117,26 +160,29 @@ CREATE TABLE IF NOT EXISTS users (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL ON UPDATE CASCADE,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_username (username),
     INDEX idx_email (email),
     INDEX idx_role (role),
     INDEX idx_reset_token (reset_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores user accounts with role-based access control';
+COMMENT='Stores user accounts with role-based and branch-based access control';
 
 -- ============================================================================
--- TABLE 3: INVENTORY (Phone Stock)
+-- TABLE 4: INVENTORY (Phone Stock)
 -- ============================================================================
--- This table stores all phone inventory items for each shop.
--- Each phone is tracked by its unique IMEI number.
+-- This table stores all phone inventory items for each branch.
+-- Each phone is tracked by its unique IMEI number per branch.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS inventory (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop owns this inventory item',
+    tenant_id INT NOT NULL COMMENT 'Which business owns this inventory item',
+    shop_id INT NOT NULL COMMENT 'Which branch this inventory item belongs to',
     
     -- Phone Details
     brand VARCHAR(100) NOT NULL COMMENT 'Phone brand (e.g., Apple, Samsung)',
@@ -158,34 +204,37 @@ CREATE TABLE IF NOT EXISTS inventory (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    -- Unique constraint
-    UNIQUE KEY unique_tenant_imei (tenant_id, imei) COMMENT 'IMEI must be unique within each tenant',
+    -- Unique constraint - IMEI unique per branch
+    UNIQUE KEY unique_shop_imei (shop_id, imei) COMMENT 'IMEI must be unique within each branch',
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_imei (imei),
     INDEX idx_status (status),
     INDEX idx_brand_model (brand, model),
     INDEX idx_created_by (created_by),
-    INDEX idx_inventory_tenant_status (tenant_id, status) COMMENT 'Composite index for filtering by tenant and status',
-    INDEX idx_inventory_tenant_created (tenant_id, created_at DESC) COMMENT 'Composite index for sorting by date'
+    INDEX idx_inventory_shop_status (shop_id, status) COMMENT 'Composite index for filtering by shop and status',
+    INDEX idx_inventory_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for sorting by date'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores phone inventory with IMEI tracking';
+COMMENT='Stores phone inventory with IMEI tracking per branch';
 
 -- ============================================================================
--- TABLE 4: TRANSACTIONS (Sales Records)
+-- TABLE 5: TRANSACTIONS (Sales Records)
 -- ============================================================================
--- This table stores sales transactions.
+-- This table stores sales transactions per branch.
 -- Each transaction can include multiple phones (see transaction_items).
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this transaction belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this transaction belongs to',
+    shop_id INT NOT NULL COMMENT 'Which branch this transaction belongs to',
     
     -- Transaction Details
     user_id INT NOT NULL COMMENT 'User who processed this sale',
@@ -201,19 +250,21 @@ CREATE TABLE IF NOT EXISTS transactions (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_user_id (user_id),
     INDEX idx_created_at (created_at),
     INDEX idx_customer_phone (customer_phone),
-    INDEX idx_transactions_tenant_created (tenant_id, created_at DESC) COMMENT 'Composite index for sorting transactions'
+    INDEX idx_transactions_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for sorting transactions'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores sales transactions';
+COMMENT='Stores sales transactions per branch';
 
 -- ============================================================================
--- TABLE 5: TRANSACTION_ITEMS (Individual Items in Each Sale)
+-- TABLE 6: TRANSACTION_ITEMS (Individual Items in Each Sale)
 -- ============================================================================
 -- This table stores individual phones sold in each transaction.
 -- Supports both regular sales and trade-ins.
@@ -221,7 +272,8 @@ COMMENT='Stores sales transactions';
 
 CREATE TABLE IF NOT EXISTS transaction_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this item belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this item belongs to',
+    shop_id INT NOT NULL COMMENT 'Which branch this item belongs to',
     
     -- Transaction Link
     transaction_id INT NOT NULL COMMENT 'Parent transaction',
@@ -236,27 +288,30 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
     FOREIGN KEY (inventory_id) REFERENCES inventory(id) ON DELETE RESTRICT,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_transaction_id (transaction_id),
     INDEX idx_inventory_id (inventory_id),
     INDEX idx_type (type),
-    INDEX idx_transaction_items_tenant_txn (tenant_id, transaction_id) COMMENT 'Composite index for JOINs'
+    INDEX idx_transaction_items_shop_txn (shop_id, transaction_id) COMMENT 'Composite index for JOINs'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores individual items in each transaction';
+COMMENT='Stores individual items in each transaction per branch';
 
 -- ============================================================================
--- TABLE 6: EXPENSES (Business Expenses)
+-- TABLE 7: EXPENSES (Business Expenses)
 -- ============================================================================
--- This table tracks all business expenses for each shop.
+-- This table tracks all business expenses per branch.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS expenses (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this expense belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this expense belongs to',
+    shop_id INT NOT NULL COMMENT 'Which branch this expense belongs to',
     
     -- Expense Details
     description VARCHAR(255) NOT NULL COMMENT 'What the expense was for',
@@ -271,27 +326,30 @@ CREATE TABLE IF NOT EXISTS expenses (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_date (date),
     INDEX idx_category (category),
     INDEX idx_created_by (created_by),
-    INDEX idx_expenses_tenant_date (tenant_id, date DESC) COMMENT 'Composite index for filtering expenses'
+    INDEX idx_expenses_shop_date (shop_id, date DESC) COMMENT 'Composite index for filtering expenses'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Tracks business expenses';
+COMMENT='Tracks business expenses per branch';
 
 -- ============================================================================
--- TABLE 7: PROFIT_RECORDS (Daily Profit Tracking)
+-- TABLE 8: PROFIT_RECORDS (Daily Profit Tracking)
 -- ============================================================================
--- This table stores daily profit snapshots for historical tracking.
+-- This table stores daily profit snapshots per branch for historical tracking.
 -- Profit is calculated as: total_amount (from transactions) - cost_price (from inventory)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS profit_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this profit record belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this profit record belongs to',
+    shop_id INT NOT NULL COMMENT 'Which branch this profit record belongs to',
     
     -- Profit Data
     date DATE NOT NULL COMMENT 'Date of the profit record',
@@ -302,28 +360,31 @@ CREATE TABLE IF NOT EXISTS profit_records (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    -- Unique constraint - one record per tenant per day
-    UNIQUE KEY unique_tenant_date (tenant_id, date) COMMENT 'One profit record per tenant per day',
+    -- Unique constraint - one record per branch per day
+    UNIQUE KEY unique_shop_date (shop_id, date) COMMENT 'One profit record per branch per day',
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE ON UPDATE CASCADE,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_date (date),
-    INDEX idx_profit_records_tenant_date (tenant_id, date DESC) COMMENT 'Composite index for querying profit history'
+    INDEX idx_profit_records_shop_date (shop_id, date DESC) COMMENT 'Composite index for querying profit history'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores daily profit snapshots for historical tracking';
+COMMENT='Stores daily profit snapshots per branch for historical tracking';
 
 -- ============================================================================
--- TABLE 8: REPORTS (Generated Financial Reports)
+-- TABLE 9: REPORTS (Generated Financial Reports)
 -- ============================================================================
 -- This table stores snapshots of financial reports generated by users.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS reports (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this report belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this report belongs to',
+    shop_id INT NOT NULL COMMENT 'Which branch this report belongs to',
     
     -- Report Data
     generated_by INT NOT NULL COMMENT 'User who generated this report',
@@ -339,22 +400,25 @@ CREATE TABLE IF NOT EXISTS reports (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (generated_by) REFERENCES users(id) ON DELETE CASCADE,
     
     -- Indexes
-    INDEX idx_tenant_id (tenant_id)
+    INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores generated financial reports';
+COMMENT='Stores generated financial reports per branch';
 
 -- ============================================================================
--- TABLE 9: ACTIVITY_LOGS (User Activity Tracking)
+-- TABLE 10: ACTIVITY_LOGS (User Activity Tracking)
 -- ============================================================================
 -- This table logs all user actions for audit trail and security monitoring.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this activity belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this activity belongs to',
+    shop_id INT NULL COMMENT 'Which branch this activity occurred in (NULL for tenant-level actions)',
     
     -- Activity Details
     user_id INT NOT NULL COMMENT 'User who performed the action',
@@ -367,18 +431,20 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
     -- Indexes for performance
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_user_id (user_id),
     INDEX idx_created_at (created_at),
-    INDEX idx_activity_logs_tenant_created (tenant_id, created_at DESC) COMMENT 'Composite index for recent activity queries'
+    INDEX idx_activity_logs_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for recent activity queries'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Logs user activities for audit trail';
 
 -- ============================================================================
--- TABLE 10: SESSIONS (Active User Sessions)
+-- TABLE 11: SESSIONS (Active User Sessions)
 -- ============================================================================
 -- This table tracks active user sessions for security monitoring.
 -- Note: PHP sessions are used for actual authentication.
@@ -386,7 +452,8 @@ COMMENT='Logs user activities for audit trail';
 
 CREATE TABLE IF NOT EXISTS sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which shop this session belongs to',
+    tenant_id INT NOT NULL COMMENT 'Which business this session belongs to',
+    shop_id INT NULL COMMENT 'Current active shop for this session',
     
     -- Session Details
     user_id INT NOT NULL COMMENT 'User who owns this session',
@@ -400,17 +467,19 @@ CREATE TABLE IF NOT EXISTS sessions (
     
     -- Foreign keys
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
     -- Indexes
     INDEX idx_tenant_id (tenant_id),
+    INDEX idx_shop_id (shop_id),
     INDEX idx_user_id (user_id),
     INDEX idx_last_activity (last_activity)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Tracks active user sessions';
 
 -- ============================================================================
--- TABLE 11: SYSTEM_ALERTS (System Notifications and Alerts)
+-- TABLE 12: SYSTEM_ALERTS (System Notifications and Alerts)
 -- ============================================================================
 -- This table stores system alerts for monitoring and notifications.
 -- Alerts can be tenant-specific or global (tenant_id = NULL).
@@ -418,7 +487,7 @@ COMMENT='Tracks active user sessions';
 
 CREATE TABLE IF NOT EXISTS system_alerts (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NULL COMMENT 'Which shop this alert belongs to (NULL for global alerts)',
+    tenant_id INT NULL COMMENT 'Which business this alert belongs to (NULL for global alerts)',
     
     -- Alert Details
     type ENUM('security', 'database', 'performance', 'business') NOT NULL COMMENT 'Alert category',
@@ -448,14 +517,14 @@ CREATE TABLE IF NOT EXISTS system_alerts (
 COMMENT='Stores system alerts and notifications';
 
 -- ============================================================================
--- TABLE 12: SECURITY_LOGS (Security Events)
+-- TABLE 13: SECURITY_LOGS (Security Events)
 -- ============================================================================
 -- This table logs security-related events like failed logins.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS security_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NULL COMMENT 'Which shop this security event relates to (NULL for unknown users)',
+    tenant_id INT NULL COMMENT 'Which business this security event relates to (NULL for unknown users)',
     
     -- Event Details
     event_type VARCHAR(50) NOT NULL COMMENT 'Type of security event (e.g., failed_login, suspicious_activity)',
@@ -480,11 +549,10 @@ CREATE TABLE IF NOT EXISTS security_logs (
 COMMENT='Logs security events for monitoring';
 
 -- ============================================================================
--- DEFAULT DATA: Create Default Tenant and SuperAdmin User
+-- DEFAULT DATA: Create Default Tenant, Shop, and SuperAdmin User
 -- ============================================================================
 
 -- Insert default "Main Shop" tenant
--- This is useful for initial setup and testing
 INSERT INTO tenants (
     shop_name, 
     shop_address, 
@@ -507,6 +575,31 @@ INSERT INTO tenants (
     NOW()
 ) ON DUPLICATE KEY UPDATE id=id;
 
+-- Create default shop (branch) for the default tenant
+INSERT INTO shops (
+    tenant_id,
+    shop_name,
+    shop_address,
+    shop_phone,
+    shop_email,
+    business_capital,
+    status,
+    is_main_branch,
+    created_at
+) SELECT 
+    id,
+    shop_name,
+    shop_address,
+    shop_phone,
+    shop_email,
+    business_capital,
+    'active',
+    1,
+    NOW()
+FROM tenants 
+WHERE shop_email = 'admin@mainshop.com'
+ON DUPLICATE KEY UPDATE id=id;
+
 -- SuperAdmin user creation has been removed from this schema for security.
 -- Please use the official setup process to create your initial administrator account.
 
@@ -519,12 +612,14 @@ SELECT '✅ DATABASE SCHEMA CREATED SUCCESSFULLY!' AS '';
 SELECT '============================================' AS '';
 SELECT '' AS '';
 SELECT 'Database Structure:' AS '';
-SELECT '- 12 tables created with proper relationships' AS '';
+SELECT '- 13 tables created with proper relationships' AS '';
 SELECT '- Multi-tenancy support enabled' AS '';
+SELECT '- Multi-branch support enabled' AS '';
 SELECT '- All indexes and foreign keys configured' AS '';
 SELECT '' AS '';
 SELECT 'Default Accounts Created:' AS '';
 SELECT '- Tenant: Main Shop (ID: 1)' AS '';
+SELECT '- Shop: Main Shop Branch (ID: 1)' AS '';
 SELECT '- SuperAdmin: [Created via Setup Script]' AS '';
 SELECT '' AS '';
 SELECT '⚠️  IMPORTANT SECURITY STEPS:' AS '';

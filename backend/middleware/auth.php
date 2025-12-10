@@ -66,10 +66,10 @@ function checkAuth() {
     // Update last activity
     $_SESSION['last_activity'] = time();
     
-    // Verify user exists and is active, and get tenant_id
+    // Verify user exists and is active, and get tenant_id and shop_id
     
     try {
-        $stmt = $conn->prepare("SELECT id, username, role, status, tenant_id FROM users WHERE id = ?");
+        $stmt = $conn->prepare("SELECT id, username, role, status, tenant_id, shop_id FROM users WHERE id = ?");
         if (!$stmt) {
              throw new Exception("Prepare failed: " . $conn->error);
         }
@@ -98,6 +98,44 @@ function checkAuth() {
         // Store tenant_id in session if not already set
         if (!isset($_SESSION['tenant_id']) || $_SESSION['tenant_id'] !== $user['tenant_id']) {
             $_SESSION['tenant_id'] = $user['tenant_id'];
+        }
+        
+        // Store user's assigned shop_id (NULL for owners who can access all shops)
+        $_SESSION['user_shop_id'] = $user['shop_id'];
+        $_SESSION['role'] = $user['role'];
+        
+        // Initialize shop context if not already set
+        if (!isset($_SESSION['current_shop_id']) && $user['role'] !== 'superadmin') {
+            if ($user['shop_id'] !== null) {
+                // Branch manager or staff - set their assigned shop
+                $_SESSION['current_shop_id'] = $user['shop_id'];
+            } else if ($user['role'] === 'admin') {
+                // Owner - set main branch as default
+                $shopStmt = $conn->prepare("SELECT id FROM shops WHERE tenant_id = ? AND is_main_branch = 1 LIMIT 1");
+                if ($shopStmt) {
+                    $shopStmt->bind_param("i", $user['tenant_id']);
+                    $shopStmt->execute();
+                    $shopResult = $shopStmt->get_result();
+                    if ($shopResult->num_rows > 0) {
+                        $mainShop = $shopResult->fetch_assoc();
+                        $_SESSION['current_shop_id'] = $mainShop['id'];
+                    } else {
+                        // Fallback: get any shop for this tenant
+                        $anyShopStmt = $conn->prepare("SELECT id FROM shops WHERE tenant_id = ? ORDER BY id LIMIT 1");
+                        if ($anyShopStmt) {
+                            $anyShopStmt->bind_param("i", $user['tenant_id']);
+                            $anyShopStmt->execute();
+                            $anyShopResult = $anyShopStmt->get_result();
+                            if ($anyShopResult->num_rows > 0) {
+                                $anyShop = $anyShopResult->fetch_assoc();
+                                $_SESSION['current_shop_id'] = $anyShop['id'];
+                            }
+                            $anyShopStmt->close();
+                        }
+                    }
+                    $shopStmt->close();
+                }
+            }
         }
         
 
