@@ -9,7 +9,7 @@ import '../user/UserProfile.css'; // Reusing UserProfile styles
 
 const AdminSettings = () => {
     const navigate = useNavigate();
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, updateShopSettings } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -138,26 +138,49 @@ const AdminSettings = () => {
         setMessage({ type: '', text: '' });
 
         try {
+            let successCount = 0;
+            let errorMessages = [];
+
             // Update Profile
-            const profilePromise = api.post('/user/update-profile.php', profileData);
+            try {
+                const profileRes = await api.post('/user/update-profile.php', profileData);
+                if (profileRes.data.success) {
+                    if (profileRes.data.user) {
+                        updateUser({
+                            ...profileData,
+                            updated_at: profileRes.data.user.updated_at
+                        });
+                    }
+                    setOriginalData(profileData);
+                    successCount++;
+                }
+            } catch (err) {
+                console.error("Profile update failed", err);
+                errorMessages.push("Failed to update profile: " + (err.response?.data?.error || err.message));
+            }
 
             // Update Shop Settings
-            const settingsPromise = api.post('/admin/update_shop_settings.php', shopSettings);
-
-            const [profileRes, settingsRes] = await Promise.all([profilePromise, settingsPromise]);
-
-            if (profileRes.data.success && settingsRes.data.success) {
-                setMessage({ type: 'success', text: 'Settings updated successfully!' });
-                setOriginalData(profileData);
-                setOriginalShopSettings(shopSettings);
-
-                // Update global auth context if needed
-                if (profileRes.data.user) {
-                    updateUser({
-                        ...profileData,
-                        updated_at: profileRes.data.user.updated_at
-                    });
+            try {
+                const settingsRes = await api.post('/admin/update_shop_settings.php', shopSettings);
+                if (settingsRes.data.success) {
+                    updateShopSettings(shopSettings);
+                    setOriginalShopSettings(shopSettings);
+                    successCount++;
                 }
+            } catch (err) {
+                console.error("Shop settings update failed", err);
+                errorMessages.push("Failed to update shop info: " + (err.response?.data?.error || err.message));
+            }
+
+            if (successCount > 0 && errorMessages.length === 0) {
+                setMessage({ type: 'success', text: 'All settings updated successfully!' });
+            } else if (successCount > 0 && errorMessages.length > 0) {
+                setMessage({ type: 'warning', text: 'Some updates failed: ' + errorMessages.join(', ') });
+            } else if (errorMessages.length > 0) {
+                setMessage({ type: 'error', text: errorMessages.join(', ') });
+            } else if (successCount === 0 && errorMessages.length === 0) {
+                // Should not happen unless no requests were made?
+                setMessage({ type: 'info', text: 'No changes made.' });
             }
         } catch (error) {
             setMessage({
@@ -301,6 +324,7 @@ const AdminSettings = () => {
                                         placeholder="Enter your phone number"
                                     />
                                 </div>
+
                             </div>
 
                             {/* Shop Information */}
@@ -320,91 +344,20 @@ const AdminSettings = () => {
                                         placeholder="Enter shop name"
                                         maxLength={23}
                                     />
-                                    <small className="text-secondary">Maximum 23 characters for optimal display</small>
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="shop_address">Shop Address</label>
-                                    <textarea
-                                        id="shop_address"
-                                        name="shop_address"
-                                        value={shopSettings.shop_address || ''}
-                                        onChange={handleShopSettingChange}
-                                        placeholder="Enter shop address"
-                                        rows="3"
-                                        className="form-textarea"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="shop_phone">Shop Phone</label>
-                                    <input
-                                        type="tel"
-                                        id="shop_phone"
-                                        name="shop_phone"
-                                        value={shopSettings.shop_phone || ''}
-                                        onChange={handleShopSettingChange}
-                                        placeholder="Enter shop contact number"
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="shop_email">Shop Email</label>
-                                    <input
-                                        type="email"
-                                        id="shop_email"
-                                        name="shop_email"
-                                        value={shopSettings.shop_email || ''}
-                                        onChange={handleShopSettingChange}
-                                        placeholder="Enter shop email address"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Business Capital & Finance */}
-                            <div className="profile-card">
-                                <div className="card-header">
-                                    <DollarSign size={20} />
-                                    <h2>Business Capital & Finance</h2>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="business_capital">Business Capital (₦)</label>
-                                    <input
-                                        type="number"
-                                        id="business_capital"
-                                        name="business_capital"
-                                        value={shopSettings.business_capital || ''}
-                                        onChange={handleShopSettingChange}
-                                        placeholder="0.00"
-                                        step="0.01"
-                                    />
-                                    <small className="text-secondary">Used for financial calculations and ROI tracking</small>
+                                    <small className="text-secondary">This name will be displayed in the top navigation bar</small>
                                 </div>
                             </div>
                         </div>
 
+
+
+
+
+
                         {/* Right Column */}
                         <div className="profile-column">
 
-                            {/* Notification Settings */}
-                            <div className="profile-card">
-                                <div className="card-header">
-                                    <Bell size={20} />
-                                    <h2>Notification Settings</h2>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="low_stock_threshold">Low Stock Threshold</label>
-                                    <input
-                                        type="number"
-                                        id="low_stock_threshold"
-                                        name="low_stock_threshold"
-                                        value={shopSettings.low_stock_threshold || ''}
-                                        onChange={handleShopSettingChange}
-                                        placeholder="5"
-                                    />
-                                    <small className="text-secondary">Alert when product stock falls below this number</small>
-                                </div>
-                            </div>
+
 
                             {/* Security Section */}
                             <div className="profile-card">
@@ -502,9 +455,9 @@ const AdminSettings = () => {
                             {saving ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
-                </div>
-            </main>
-        </div>
+                </div >
+            </main >
+        </div >
     );
 };
 

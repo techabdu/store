@@ -160,7 +160,7 @@ try {
                                         Need help? Contact us at <a href='mailto:support@prhub.shop' style='color: #667eea; text-decoration: none;'>support@prhub.shop</a>
                                     </p>
                                     <p style='margin: 0; color: #9ca3af; font-size: 12px; text-align: center;'>
-                                        © 2024 PRHUB - Phone Retailers Management System. All rights reserved.
+                                        © 2025 PRHUB - Phone Retailers Management System. All rights reserved.
                                     </p>
                                 </td>
                             </tr>

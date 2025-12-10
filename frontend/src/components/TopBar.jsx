@@ -9,10 +9,9 @@ import './TopBar.css';
 
 const TopBar = ({ toggleSidebar, user }) => {
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
+  const { logout, shopSettings } = useAuth(); // getting shopSettings from context
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [shopSettings, setShopSettings] = useState(null);
   const dropdownRef = useRef(null);
 
   // Get role display name
@@ -53,21 +52,7 @@ const TopBar = ({ toggleSidebar, user }) => {
     return user.username.substring(0, 2).toUpperCase();
   };
 
-  // Fetch shop settings
-  useEffect(() => {
-    const fetchShopSettings = async () => {
-      try {
-        const response = await api.get('/shop_settings.php');
-        if (response.data.success) {
-          setShopSettings(response.data.settings);
-        }
-      } catch (err) {
-        console.error('Failed to load shop settings:', err);
-      }
-    };
 
-    fetchShopSettings();
-  }, []);
 
   // Toggle dropdown
   const toggleDropdown = () => {

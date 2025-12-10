@@ -41,7 +41,8 @@ const BranchManagement = () => {
         shop_address: '',
         shop_phone: '',
         shop_email: '',
-        business_capital: ''
+        business_capital: '',
+        low_stock_threshold: '5'
     });
 
     // Fetch branches
@@ -99,7 +100,8 @@ const BranchManagement = () => {
             shop_address: '',
             shop_phone: '',
             shop_email: '',
-            business_capital: ''
+            business_capital: '',
+            low_stock_threshold: '5'
         });
     };
 
@@ -109,7 +111,8 @@ const BranchManagement = () => {
         try {
             const response = await api.post('/shops/create.php', {
                 ...formData,
-                business_capital: parseFloat(formData.business_capital) || 0
+                business_capital: parseFloat(formData.business_capital) || 0,
+                low_stock_threshold: parseInt(formData.low_stock_threshold) || 5
             });
             if (response.data.success) {
                 setBranches([...branches, response.data.shop]);
@@ -133,7 +136,8 @@ const BranchManagement = () => {
             shop_address: branch.shop_address || '',
             shop_phone: branch.shop_phone || '',
             shop_email: branch.shop_email || '',
-            business_capital: branch.business_capital || ''
+            business_capital: branch.business_capital || '',
+            low_stock_threshold: branch.low_stock_threshold || '5'
         });
         setShowEditModal(true);
     };
@@ -147,12 +151,13 @@ const BranchManagement = () => {
             const response = await api.put('/shops/update.php', {
                 id: selectedBranch.id,
                 ...formData,
-                business_capital: parseFloat(formData.business_capital) || 0
+                business_capital: parseFloat(formData.business_capital) || 0,
+                low_stock_threshold: parseInt(formData.low_stock_threshold) || 5
             });
             if (response.data.success) {
                 setBranches(branches.map(b =>
                     b.id === selectedBranch.id
-                        ? { ...b, ...formData, business_capital: parseFloat(formData.business_capital) || 0 }
+                        ? { ...b, ...formData, business_capital: parseFloat(formData.business_capital) || 0, low_stock_threshold: parseInt(formData.low_stock_threshold) || 5 }
                         : b
                 ));
                 setShowEditModal(false);
@@ -423,6 +428,18 @@ const BranchManagement = () => {
                                         placeholder="0.00"
                                     />
                                 </div>
+                                <div className="form-group">
+                                    <label>Low Stock Threshold</label>
+                                    <input
+                                        type="number"
+                                        name="low_stock_threshold"
+                                        className="form-input"
+                                        value={formData.low_stock_threshold}
+                                        onChange={handleInputChange}
+                                        min="1"
+                                        placeholder="5"
+                                    />
+                                </div>
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
@@ -502,6 +519,17 @@ const BranchManagement = () => {
                                         onChange={handleInputChange}
                                         min="0"
                                         step="0.01"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Low Stock Threshold</label>
+                                    <input
+                                        type="number"
+                                        name="low_stock_threshold"
+                                        className="form-input"
+                                        value={formData.low_stock_threshold}
+                                        onChange={handleInputChange}
+                                        min="1"
                                     />
                                 </div>
                             </div>

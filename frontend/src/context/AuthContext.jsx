@@ -13,6 +13,21 @@ export const AuthProvider = ({ children }) => {
     const [shops, setShops] = useState([]);
     const [isOwner, setIsOwner] = useState(false);
 
+    // Global Shop Settings
+    const [shopSettings, setShopSettings] = useState(null);
+
+    // Fetch shop settings
+    const fetchShopSettings = useCallback(async () => {
+        try {
+            const response = await api.get('/shop_settings.php');
+            if (response.data.success) {
+                setShopSettings(response.data.settings);
+            }
+        } catch (error) {
+            console.error('Failed to fetch shop settings:', error);
+        }
+    }, []);
+
     // Check session on mount
     useEffect(() => {
         const checkSession = async () => {
@@ -21,6 +36,9 @@ export const AuthProvider = ({ children }) => {
                 if (response.data.success) {
                     setUser(response.data.user);
                     setIsAuthenticated(true);
+
+                    // Fetch global shop settings
+                    fetchShopSettings();
 
                     // Set shop context from session
                     if (response.data.shop_context) {
@@ -37,13 +55,14 @@ export const AuthProvider = ({ children }) => {
                 setCurrentShop(null);
                 setShops([]);
                 setIsOwner(false);
+                setShopSettings(null);
             } finally {
                 setIsLoading(false);
             }
         };
 
         checkSession();
-    }, []);
+    }, [fetchShopSettings]);
 
     const login = async (username, password) => {
         try {
@@ -51,6 +70,9 @@ export const AuthProvider = ({ children }) => {
             if (response.data.success) {
                 setUser(response.data.user);
                 setIsAuthenticated(true);
+
+                // Fetch settings after login
+                fetchShopSettings();
 
                 // Set shop context from login response
                 if (response.data.shop_context) {
@@ -81,6 +103,7 @@ export const AuthProvider = ({ children }) => {
             setCurrentShop(null);
             setShops([]);
             setIsOwner(false);
+            setShopSettings(null);
         }
     };
 
@@ -88,6 +111,13 @@ export const AuthProvider = ({ children }) => {
         setUser(prevUser => ({
             ...prevUser,
             ...userData
+        }));
+    };
+
+    const updateShopSettings = (newSettings) => {
+        setShopSettings(prev => ({
+            ...prev,
+            ...newSettings
         }));
     };
 
@@ -158,6 +188,10 @@ export const AuthProvider = ({ children }) => {
                 isOwner,
                 switchShop,
                 refreshShops,
+                // Global settings
+                shopSettings,
+                updateShopSettings,
+                fetchShopSettings
             }}
         >
             {children}

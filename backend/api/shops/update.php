@@ -111,6 +111,12 @@ try {
         $params[] = floatval($input['business_capital']);
         $types .= 'd';
     }
+
+    if (isset($input['low_stock_threshold'])) {
+        $updates[] = "low_stock_threshold = ?";
+        $params[] = intval($input['low_stock_threshold']);
+        $types .= 'i';
+    }
     
     // Status can only be changed by owners or superadmin
     if (isset($input['status'])) {

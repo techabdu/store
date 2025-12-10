@@ -6,12 +6,12 @@
 
 session_start();
 header('Content-Type: application/json');
-// Only allow POST requests
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
-}
+
+require_once '../../config/config.php';
+require_once '../../config/database.php';
+
+// Set CORS headers using centralized config
+setCorsHeaders();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -20,11 +20,12 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once '../../config/config.php';
-require_once '../../config/database.php';
-
-// Set CORS headers using centralized config
-setCorsHeaders();
+// Only allow POST requests
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);

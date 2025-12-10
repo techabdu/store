@@ -57,6 +57,7 @@ $shopAddress = isset($input['shop_address']) ? sanitizeInput($input['shop_addres
 $shopPhone = isset($input['shop_phone']) ? sanitizeInput($input['shop_phone']) : null;
 $shopEmail = isset($input['shop_email']) ? sanitizeEmail($input['shop_email']) : null;
 $businessCapital = isset($input['business_capital']) ? floatval($input['business_capital']) : 0.00;
+$lowStockThreshold = isset($input['low_stock_threshold']) ? intval($input['low_stock_threshold']) : 5;
 
 // Determine tenant_id
 $tenantId = $_SESSION['tenant_id'];
@@ -101,17 +102,18 @@ try {
     
     // Insert new shop
     $stmt = $conn->prepare("
-        INSERT INTO shops (tenant_id, shop_name, shop_address, shop_phone, shop_email, business_capital, status, is_main_branch)
-        VALUES (?, ?, ?, ?, ?, ?, 'active', ?)
+        INSERT INTO shops (tenant_id, shop_name, shop_address, shop_phone, shop_email, business_capital, low_stock_threshold, status, is_main_branch)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?)
     ");
     $stmt->bind_param(
-        "issssdi",
+        "issssdii",
         $tenantId,
         $shopName,
         $shopAddress,
         $shopPhone,
         $shopEmail,
         $businessCapital,
+        $lowStockThreshold,
         $isMainBranch
     );
     

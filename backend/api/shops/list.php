@@ -60,7 +60,7 @@ try {
         // Owner: get all shops for tenant
         $stmt = $conn->prepare("
             SELECT id, shop_name, shop_address, shop_phone, shop_email, 
-                   business_capital, status, is_main_branch, created_at, updated_at
+                   business_capital, low_stock_threshold, status, is_main_branch, created_at, updated_at
             FROM shops 
             WHERE tenant_id = ?
             ORDER BY is_main_branch DESC, shop_name ASC
@@ -70,7 +70,7 @@ try {
         // Branch manager: get only their shop
         $stmt = $conn->prepare("
             SELECT id, shop_name, shop_address, shop_phone, shop_email, 
-                   business_capital, status, is_main_branch, created_at, updated_at
+                   business_capital, low_stock_threshold, status, is_main_branch, created_at, updated_at
             FROM shops 
             WHERE id = ?
         ");
@@ -89,6 +89,7 @@ try {
             'shop_phone' => $row['shop_phone'],
             'shop_email' => $row['shop_email'],
             'business_capital' => (float)$row['business_capital'],
+            'low_stock_threshold' => (int)($row['low_stock_threshold'] ?? 5),
             'status' => $row['status'],
             'is_main_branch' => (bool)$row['is_main_branch'],
             'created_at' => $row['created_at'],
