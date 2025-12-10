@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { FaSearch, FaPhone, FaCalendarAlt, FaMobileAlt, FaTimes, FaUser } from 'react-icons/fa';
+import { FaSearch, FaPhone, FaCalendarAlt, FaMobileAlt, FaTimes, FaUser, FaPrint } from 'react-icons/fa';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -298,6 +298,19 @@ const Customers = () => {
                                             <span className="label">Purchase Date:</span>
                                             <span className="value">{new Date(selectedPhone.purchase_date).toLocaleString()}</span>
                                         </div>
+                                    </div>
+                                    <div className="modal-footer" style={{ padding: '20px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button
+                                            className="btn-primary"
+                                            onClick={() => {
+                                                if (selectedPhone && selectedPhone.transaction_id) {
+                                                    window.open(`/admin/receipt/${selectedPhone.transaction_id}`, '_blank');
+                                                }
+                                            }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                        >
+                                            <FaPrint /> Print Receipt
+                                        </button>
                                     </div>
                                 </div>
                             </div>

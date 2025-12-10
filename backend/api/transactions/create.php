@@ -144,8 +144,9 @@ try {
                 throw new Exception("Invalid IMEI format for trade-in: $imei");
             }
             
-            // Check if IMEI already exists within current shop
-            $checkImeiStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND shop_id = ?");
+            // Check if IMEI already exists within current shop AND is currently available (in_stock or returned)
+            // We allow trading in devices that were previously sold (status='sold')
+            $checkImeiStmt = $conn->prepare("SELECT id FROM inventory WHERE imei = ? AND shop_id = ? AND status IN ('in_stock', 'returned')");
             $checkImeiStmt->bind_param("si", $imei, $shopId);
             $checkImeiStmt->execute();
             $imeiResult = $checkImeiStmt->get_result();
@@ -162,7 +163,7 @@ try {
             );
             
             $insertInventoryStmt->bind_param(
-                "sssssdiiii",
+                "sssssdiii",
                 $brand,
                 $model,
                 $imei,
