@@ -14,11 +14,20 @@
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-.top-bar-left,
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    /* Critical for text to show fully */
+    /* overflow: hidden; removed to show full text */
+}
+
 .top-bar-right {
     display: flex;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
+    margin-left: 8px;
 }
 
 .logo-text {
@@ -28,10 +37,17 @@
     margin-left: 8px;
     letter-spacing: -0.02em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 100%;
+    display: block;
+    /* changed from inline-block to work better with flex parent shrinking */
     transition: all 0.2s ease;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    /* min-width: 0; removed to prevent shrinking */
+    /* overflow: hidden; removed to show full text */
 }
 
 .breadcrumbs {
@@ -40,42 +56,9 @@
     font-size: 14px;
 }
 
-.top-bar-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    max-width: 600px;
-}
 
-.search-bar {
-    background-color: var(--bg-background);
-    border-radius: 8px;
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    max-width: 480px;
-    transition: background-color 0.2s;
-}
 
-.search-bar:focus-within {
-    background-color: var(--bg-surface);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
 
-.search-bar input {
-    border: none;
-    background: none;
-    outline: none;
-    margin-left: 8px;
-    width: 100%;
-    color: var(--text-primary);
-    font-size: 16px;
-}
-
-.search-icon {
-    color: var(--text-secondary);
-}
 
 .icon-btn {
     background: none;
@@ -314,7 +297,7 @@
         font-size: 16px;
         font-weight: 700;
         margin-left: 4px;
-        max-width: 150px;
+        /* max-width removed to let flex container handle it */
         letter-spacing: -0.01em;
     }
 
@@ -333,7 +316,7 @@
     .logo-text {
         font-size: 14px;
         font-weight: 700;
-        max-width: 120px;
+        /* max-width removed */
         letter-spacing: 0;
     }
 
@@ -343,5 +326,13 @@
 
     .top-bar-left {
         gap: 8px;
+    }
+}
+
+/* Very small mobile devices */
+@media (max-width: 360px) {
+    .logo-text {
+        font-size: 13px;
+        /* Smaller font for very small screens */
     }
 }

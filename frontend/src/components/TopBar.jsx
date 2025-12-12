@@ -105,11 +105,7 @@ const TopBar = ({ toggleSidebar, user }) => {
         </div>
       </div>
 
-      <div className="top-bar-center">
-        <div className="search-bar">
-          <input type="text" placeholder="Search..." />
-        </div>
-      </div>
+
 
       <div className="top-bar-right">
         {/* Shop Switcher for multi-branch support */}

@@ -184,7 +184,12 @@ const BranchManagement = () => {
 
         setSubmitting(true);
         try {
-            const response = await api.delete(`/shops/delete.php?shop_id=${selectedBranch.id}&confirm=true`);
+            const response = await api.delete('/shops/delete.php', {
+                data: {
+                    id: selectedBranch.id,
+                    confirm: true
+                }
+            });
             if (response.data.success) {
                 setBranches(branches.filter(b => b.id !== selectedBranch.id));
                 setShowDeleteModal(false);

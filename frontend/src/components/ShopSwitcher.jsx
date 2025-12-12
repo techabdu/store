@@ -21,17 +21,8 @@ const ShopSwitcher = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Don't render if not an owner or no shops
+    // Don't render if not an owner or if there's only one shop (nothing to switch)
     if (!isOwner || shops.length <= 1) {
-        // Show current shop name if available (for non-owners or single shop)
-        if (currentShop) {
-            return (
-                <div className="shop-indicator">
-                    <FiMapPin className="shop-icon" />
-                    <span className="shop-name">{currentShop.shop_name}</span>
-                </div>
-            );
-        }
         return null;
     }
 
