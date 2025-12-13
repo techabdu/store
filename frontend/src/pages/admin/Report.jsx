@@ -8,7 +8,7 @@ import './Report.css';
 const Report = () => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('new');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     // Data states
@@ -33,8 +33,6 @@ const Report = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

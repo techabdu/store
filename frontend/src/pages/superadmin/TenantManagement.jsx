@@ -23,7 +23,7 @@ import './TenantManagement.css';
 
 const TenantManagement = () => {
     const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [tenants, setTenants] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -56,8 +56,6 @@ const TenantManagement = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

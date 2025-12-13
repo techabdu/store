@@ -16,7 +16,7 @@ const POS = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [tempPrice, setTempPrice] = useState('');
@@ -45,8 +45,6 @@ const POS = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

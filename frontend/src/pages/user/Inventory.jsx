@@ -17,7 +17,7 @@ const Inventory = () => {
     const [showEditModal, setShowEditModal] = useState(false);
 
     const [selectedItem, setSelectedItem] = useState(null);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [currentStep, setCurrentStep] = useState(1); // Step 1 or 2 for multi-step modal
 
@@ -41,8 +41,6 @@ const Inventory = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

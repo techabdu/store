@@ -28,7 +28,7 @@ import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     // Responsive Sidebar Logic
@@ -38,8 +38,6 @@ const AdminDashboard = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

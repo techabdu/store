@@ -17,7 +17,7 @@ import './UserDashboard.css';
 
 const UserDashboard = () => {
     const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [stats, setStats] = useState({
         inventory_count: 0,
@@ -34,8 +34,6 @@ const UserDashboard = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

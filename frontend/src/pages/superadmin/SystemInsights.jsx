@@ -15,7 +15,7 @@ import './SystemInsights.css';
 
 const SystemInsights = () => {
     const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [activeTab, setActiveTab] = useState('security');
     const [data, setData] = useState(null);
@@ -40,8 +40,6 @@ const SystemInsights = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

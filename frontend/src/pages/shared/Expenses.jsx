@@ -25,7 +25,7 @@ const Expenses = () => {
     const [error, setError] = useState('');
 
     // Layout State
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
@@ -39,8 +39,6 @@ const Expenses = () => {
             setIsMobile(mobile);
             if (mobile) {
                 setSidebarOpen(false);
-            } else {
-                setSidebarOpen(true);
             }
         };
 

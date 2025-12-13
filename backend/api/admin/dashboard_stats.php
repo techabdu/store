@@ -121,29 +121,43 @@ try {
         ];
     }
     
-    // 5. Get Low Stock Alerts (items with 5 or fewer units) for current shop
+    
+    // 5. Get Low Stock Threshold from shop settings
+    $queryThreshold = "SELECT low_stock_threshold FROM shops WHERE id = ?";
+    $stmtThreshold = $db->prepare($queryThreshold);
+    $stmtThreshold->bind_param("i", $shopId);
+    $stmtThreshold->execute();
+    $thresholdResult = $stmtThreshold->get_result()->fetch_assoc();
+    $lowStockThreshold = (int)($thresholdResult['low_stock_threshold'] ?? 5);
+    $stmtThreshold->close();
+    
+    // 6. Get Low Stock Alerts (items at or below threshold) for current shop
     $queryLowStock = "SELECT brand, model, COUNT(*) as count 
                       FROM inventory 
                       WHERE status = 'in_stock' AND shop_id = ?
                       GROUP BY brand, model 
-                      HAVING count <= 5 
+                      HAVING count <= ? 
                       ORDER BY count ASC 
                       LIMIT 10";
     $stmtLowStock = $db->prepare($queryLowStock);
-    $stmtLowStock->bind_param("i", $shopId);
+    $stmtLowStock->bind_param("ii", $shopId, $lowStockThreshold);
     $stmtLowStock->execute();
     $lowStockResult = $stmtLowStock->get_result();
     
     $lowStockAlerts = [];
     while ($row = $lowStockResult->fetch_assoc()) {
+        // Use threshold to determine severity: critical if <= 40% of threshold
+        $criticalLevel = max(2, (int)($lowStockThreshold * 0.4));
+        
         $lowStockAlerts[] = [
             'title' => 'Low Stock Warning',
             'description' => $row['brand'] . ' ' . $row['model'] . ' is running low (' . $row['count'] . ' unit' . ($row['count'] > 1 ? 's' : '') . ' left)',
             'timestamp' => 'Now',
-            'color' => $row['count'] <= 2 ? 'danger' : 'warning',
+            'color' => $row['count'] <= $criticalLevel ? 'danger' : 'warning',
             'action' => 'Restock'
         ];
     }
+    $stmtLowStock->close();
     
     // Return all dashboard stats
     http_response_code(200);
