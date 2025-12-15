@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -20,6 +20,7 @@ import './Sidebar.css';
 
 const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
   const { logout, user } = useAuth();
+  const [isHovered, setIsHovered] = useState(false);
 
   // Define navigation items based on user role
   const getNavItems = () => {
@@ -67,7 +68,14 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
         <div className="sidebar-overlay" onClick={closeSidebar} />
       )}
 
-      <aside className={`sidebar ${isOpen ? 'open' : 'collapsed'} ${isMobile ? 'mobile' : ''}`}>
+      <aside
+        className={`sidebar ${isMobile
+          ? (isOpen ? 'open' : 'collapsed')
+          : (isOpen || isHovered ? 'open' : 'collapsed')
+          } ${isMobile ? 'mobile' : ''}`}
+        onMouseEnter={() => !isMobile && !isOpen && setIsHovered(true)}
+        onMouseLeave={() => !isMobile && !isOpen && setIsHovered(false)}
+      >
         <div className="sidebar-content">
           <nav className="sidebar-nav">
             {navItems.map((item) => (
@@ -78,7 +86,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
                   `nav-item ${isActive ? 'active' : ''}`
                 }
                 onClick={isMobile ? closeSidebar : undefined}
-                title={!isOpen && !isMobile ? item.label : ''}
+                title={!isMobile && !isOpen && !isHovered ? item.label : ''}
               >
                 <item.icon size={20} className="nav-icon" />
                 <span className="nav-label">{item.label}</span>
@@ -94,7 +102,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
             <button
               onClick={logout}
               className="nav-item logout-button"
-              title={!isOpen && !isMobile ? 'Logout' : ''}
+              title={!isMobile && !isOpen && !isHovered ? 'Logout' : ''}
             >
               <LogOut size={20} className="nav-icon" />
               <span className="nav-label">Logout</span>
