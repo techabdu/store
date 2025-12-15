@@ -49,6 +49,7 @@ try {
                 i.brand,
                 i.model,
                 i.imei,
+                i.vendor,
                 i.color,
                 i.storage,
                 i.condition_status,
@@ -72,14 +73,17 @@ try {
         $types .= 's';
     }
     
-    // Search filter (brand, model, or IMEI)
+    // Search filter (brand, model, IMEI, vendor, color, or storage)
     if (!empty($search)) {
-        $query .= " AND (i.brand LIKE ? OR i.model LIKE ? OR i.imei LIKE ?)";
+        $query .= " AND (i.brand LIKE ? OR i.model LIKE ? OR i.imei LIKE ? OR i.vendor LIKE ? OR i.color LIKE ? OR i.storage LIKE ?)";
         $searchParam = "%$search%";
         $params[] = $searchParam;
         $params[] = $searchParam;
         $params[] = $searchParam;
-        $types .= 'sss';
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $types .= 'ssssss';
     }
     
     // Order by most recent first
@@ -113,12 +117,15 @@ try {
     }
     
     if (!empty($search)) {
-        $countQuery .= " AND (i.brand LIKE ? OR i.model LIKE ? OR i.imei LIKE ?)";
+        $countQuery .= " AND (i.brand LIKE ? OR i.model LIKE ? OR i.imei LIKE ? OR i.vendor LIKE ? OR i.color LIKE ? OR i.storage LIKE ?)";
         $searchParam = "%$search%";
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
-        $countTypes .= 'sss';
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countTypes .= 'ssssss';
     }
     
     $countStmt = $conn->prepare($countQuery);

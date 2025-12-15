@@ -53,6 +53,7 @@ foreach ($requiredFields as $field) {
 $brand = sanitizeInput($input['brand']);
 $model = sanitizeInput($input['model']);
 $imei = sanitizeInput($input['imei']);
+$vendor = isset($input['vendor']) ? sanitizeInput($input['vendor']) : '';
 $color = isset($input['color']) ? sanitizeInput($input['color']) : '';
 $storage = isset($input['storage']) ? sanitizeInput($input['storage']) : '';
 $condition = isset($input['condition_status']) ? $input['condition_status'] : 'new';
@@ -114,15 +115,16 @@ try {
     
     // Insert new inventory item with tenant_id and shop_id
     $stmt = $conn->prepare(
-        "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, tenant_id, shop_id, created_by) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO inventory (brand, model, imei, vendor, color, storage, condition_status, price, cost_price, status, tenant_id, shop_id, created_by) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     
     $stmt->bind_param(
-        "ssssssddsiii",
+        "sssssssddsiii",
         $brand,
         $model,
         $imei,
+        $vendor,
         $color,
         $storage,
         $condition,

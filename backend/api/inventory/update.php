@@ -88,6 +88,7 @@ try {
     $allowedFields = [
         'brand' => 's',
         'model' => 's',
+        'vendor' => 's',
         'color' => 's',
         'storage' => 's',
         'condition_status' => 's',

@@ -188,6 +188,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     brand VARCHAR(100) NOT NULL COMMENT 'Phone brand (e.g., Apple, Samsung)',
     model VARCHAR(100) NOT NULL COMMENT 'Phone model (e.g., iPhone 14 Pro)',
     imei VARCHAR(20) NOT NULL COMMENT 'Unique IMEI number for this device',
+    vendor VARCHAR(100) NULL COMMENT 'Supplier/vendor name',
     color VARCHAR(50) NULL COMMENT 'Phone color',
     storage VARCHAR(20) NULL COMMENT 'Storage capacity (e.g., 128GB, 256GB)',
     condition_status ENUM('new', 'used') NOT NULL DEFAULT 'new' COMMENT 'Device condition',
@@ -218,6 +219,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     INDEX idx_imei (imei),
     INDEX idx_status (status),
     INDEX idx_brand_model (brand, model),
+    INDEX idx_vendor (vendor),
     INDEX idx_created_by (created_by),
     INDEX idx_inventory_shop_status (shop_id, status) COMMENT 'Composite index for filtering by shop and status',
     INDEX idx_inventory_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for sorting by date'

@@ -26,6 +26,7 @@ const Inventory = () => {
         brand: '',
         model: '',
         imei: '',
+        vendor: '',
         color: '',
         storage: '',
         condition_status: 'new',
@@ -159,6 +160,7 @@ const Inventory = () => {
             brand: item.brand,
             model: item.model,
             imei: item.imei,
+            vendor: item.vendor || '',
             color: item.color || '',
             storage: item.storage || '',
             condition_status: item.condition_status,
@@ -177,6 +179,7 @@ const Inventory = () => {
             brand: '',
             model: '',
             imei: '',
+            vendor: '',
             color: '',
             storage: '',
             condition_status: 'new',
@@ -250,7 +253,7 @@ const Inventory = () => {
                                 <FaSearch className="search-icon" />
                                 <input
                                     type="text"
-                                    placeholder="Search by brand, model, IMEI, color, or storage..."
+                                    placeholder="Search by brand, model, IMEI, vendor, color, or storage..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -278,6 +281,7 @@ const Inventory = () => {
                                             <th>Brand</th>
                                             <th>Model</th>
                                             <th>IMEI</th>
+                                            <th>Vendor</th>
                                             <th>Color</th>
                                             <th>Storage</th>
                                             <th>Condition</th>
@@ -290,7 +294,7 @@ const Inventory = () => {
                                     <tbody>
                                         {inventory.length === 0 ? (
                                             <tr>
-                                                <td colSpan="10" className="no-data">No inventory items found</td>
+                                                <td colSpan="12" className="no-data">No inventory items found</td>
                                             </tr>
                                         ) : (
                                             inventory.map((item) => (
@@ -298,6 +302,7 @@ const Inventory = () => {
                                                     <td>{item.brand}</td>
                                                     <td>{item.model}</td>
                                                     <td>{item.imei}</td>
+                                                    <td>{item.vendor || '-'}</td>
                                                     <td>{item.color || '-'}</td>
                                                     <td>{item.storage || '-'}</td>
                                                     <td>
@@ -461,6 +466,16 @@ const Inventory = () => {
                                                             required
                                                         />
                                                     </div>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>Vendor</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.vendor}
+                                                        onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                                                        placeholder="e.g., Supplier Name"
+                                                    />
                                                 </div>
                                             </div>
                                         )}
@@ -628,6 +643,16 @@ const Inventory = () => {
                                                             required
                                                         />
                                                     </div>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>Vendor</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.vendor}
+                                                        onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                                                        placeholder="e.g., Supplier Name"
+                                                    />
                                                 </div>
                                             </div>
                                         )}
