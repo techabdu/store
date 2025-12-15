@@ -1,0 +1,21 @@
+# Database Schema (Private)
+backend/sql/database_schema.sql
+backend/database/marketplace_schema.sql
+backend/sql/production_migration.sql
+
+# Config
+backend/config/.env
+.env
+config.php
+db_connect.php
+
+# Vendor
+vendor/
+node_modules/
+
+# Logs
+*.log
+error_log
+
+# OS
+.DS_Store

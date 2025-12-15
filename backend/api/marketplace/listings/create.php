@@ -1,0 +1,149 @@
+<?php
+// backend/api/marketplace/listings/create.php
+
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+require_once '../../../config/db_connect.php';
+
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+$data = json_decode(file_get_contents("php://input"));
+
+// 1. Validate Input
+if (!isset($data->inventory_id) || !isset($data->price) || !isset($data->title)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+    exit();
+}
+
+// 2. Check if User has a Profile and is Active
+$stmt = $conn->prepare("SELECT id, shop_id, is_active, is_restricted FROM marketplace_profiles WHERE user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$profile = $stmt->get_result()->fetch_assoc();
+
+if (!$profile) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'You must create a marketplace profile first']);
+    exit();
+}
+
+if (!$profile['is_active'] || $profile['is_restricted']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Your marketplace profile is restricted or inactive']);
+    exit();
+}
+
+$shop_id = $profile['shop_id'];
+
+// 3. Validate Inventory Item
+// Must belong to user's shop and be in 'in_stock' status
+// Assuming 'inventory' table has shop_id and status
+$stmt = $conn->prepare("
+    SELECT * FROM inventory 
+    WHERE id = ? AND shop_id = ? AND status = 'in_stock'
+");
+$stmt->bind_param("ii", $data->inventory_id, $shop_id);
+$stmt->execute();
+$inventory_item = $stmt->get_result()->fetch_assoc();
+
+if (!$inventory_item) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Invalid inventory item or item not in stock']);
+    exit();
+}
+
+// Check if already listed
+$stmt = $conn->prepare("SELECT id FROM marketplace_listings WHERE inventory_id = ? AND status IN ('active', 'pending')");
+$stmt->bind_param("i", $data->inventory_id);
+$stmt->execute();
+if ($stmt->get_result()->num_rows > 0) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'This item is already listed']);
+    exit();
+}
+
+// 4. Prepare Listing Data
+$title = trim($data->title);
+$description = isset($data->description) ? trim($data->description) : '';
+$listing_type = isset($data->listing_type) ? $data->listing_type : 'fixed_price';
+$price = floatval($data->price);
+$original_price = isset($data->original_price) ? floatval($data->original_price) : null;
+$min_offer_price = isset($data->min_offer_price) ? floatval($data->min_offer_price) : null;
+
+// Auction fields
+$auction_start_price = null;
+$auction_reserve_price = null;
+$auction_ends_at = null;
+
+if ($listing_type === 'auction') {
+    if (!isset($data->auction_ends_at)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Auction end date required']);
+        exit();
+    }
+    $auction_start_price = floatval($data->price); // Base price is start price
+    $auction_reserve_price = isset($data->auction_reserve_price) ? floatval($data->auction_reserve_price) : null;
+    $auction_ends_at = $data->auction_ends_at; // YYYY-MM-DD HH:MM:SS
+}
+
+// Denormalized fields from inventory for faster search
+$phone_model = $inventory_item['model'];
+$phone_brand = $inventory_item['brand'];
+$phone_condition = $inventory_item['condition_status'] ?? 'used'; // Map inventory condition to marketplace enum
+$phone_storage = $inventory_item['storage'];
+$phone_color = $inventory_item['color'];
+
+// 5. Insert Listing
+$stmt = $conn->prepare("
+    INSERT INTO marketplace_listings 
+    (shop_id, user_id, inventory_id, title, description, listing_type, price, original_price, min_offer_price, 
+    auction_start_price, auction_reserve_price, auction_ends_at, 
+    phone_model, phone_brand, phone_condition, phone_storage, phone_color, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+");
+
+$stmt->bind_param("iiissddddddssssss", 
+    $shop_id, $user_id, $data->inventory_id, $title, $description, $listing_type, $price, $original_price, $min_offer_price,
+    $auction_start_price, $auction_reserve_price, $auction_ends_at,
+    $phone_model, $phone_brand, $phone_condition, $phone_storage, $phone_color
+);
+
+if ($stmt->execute()) {
+    $listing_id = $conn->insert_id;
+    
+    // 6. Handle Images (Optional: If passed as array of URLs)
+    if (isset($data->images) && is_array($data->images)) {
+        $img_stmt = $conn->prepare("INSERT INTO marketplace_listing_images (listing_id, image_url, display_order, is_primary) VALUES (?, ?, ?, ?)");
+        foreach ($data->images as $index => $url) {
+            $is_primary = ($index === 0) ? 1 : 0;
+            $order = $index;
+            $img_stmt->bind_param("isii", $listing_id, $url, $order, $is_primary);
+            $img_stmt->execute();
+        }
+    }
+    
+    // Update profile stats
+    $conn->query("UPDATE marketplace_profiles SET total_listings = total_listings + 1 WHERE user_id = $user_id");
+    
+    echo json_encode(['success' => true, 'message' => 'Listing created successfully', 'listing_id' => $listing_id]);
+} else {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to create listing: ' . $conn->error]);
+}
+?>

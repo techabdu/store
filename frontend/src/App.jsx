@@ -34,6 +34,10 @@ import Report from './pages/admin/Report';
 import StockLevels from './pages/admin/StockLevels';
 import DocsLayout from './components/DocsLayout';
 import Docs from './pages/public/Docs';
+import MarketplaceDashboard from './pages/marketplace/MarketplaceDashboard';
+import MarketplaceListings from './pages/marketplace/MarketplaceListings';
+import MarketplaceProductDetails from './pages/marketplace/MarketplaceProductDetails';
+import MarketplaceWallet from './pages/marketplace/MarketplaceWallet';
 
 function App() {
     return (
@@ -248,6 +252,39 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route
+                            path="/marketplace"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/listings"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceListings />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/listing/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceProductDetails />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/wallet"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceWallet />
+                                </ProtectedRoute>
+                            }
+                        />
+
 
                         <Route path="/" element={<LandingPage />} />
                     </Routes>
