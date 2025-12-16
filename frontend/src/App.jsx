@@ -38,6 +38,9 @@ import MarketplaceDashboard from './pages/marketplace/MarketplaceDashboard';
 import MarketplaceListings from './pages/marketplace/MarketplaceListings';
 import MarketplaceProductDetails from './pages/marketplace/MarketplaceProductDetails';
 import MarketplaceWallet from './pages/marketplace/MarketplaceWallet';
+import MarketplaceMessages from './pages/marketplace/MarketplaceMessages';
+import MarketplaceOrders from './pages/marketplace/MarketplaceOrders';
+import MarketplaceProfile from './pages/marketplace/MarketplaceProfile';
 
 function App() {
     return (
@@ -284,13 +287,37 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route
+                            path="/marketplace/messages"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceMessages />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/orders"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceOrders />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/profile"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceProfile />
+                                </ProtectedRoute>
+                            }
+                        />
 
 
                         <Route path="/" element={<LandingPage />} />
                     </Routes>
                 </AuthProvider>
             </ThemeProvider>
-        </BrowserRouter>
+        </BrowserRouter >
     );
 }
 
