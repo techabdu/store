@@ -1,0 +1,524 @@
+/* Marketplace Wallet Styles */
+
+/* Main Content Responsive Margin */
+.marketplace-wallet-main {
+    margin-left: 280px;
+    transition: margin-left 0.3s ease;
+}
+
+/* Balance Cards */
+.wallet-balance-cards {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.balance-card {
+    background-color: var(--bg-surface);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.balance-card:hover {
+    box-shadow: var(--hover-shadow);
+}
+
+.balance-card-primary {
+    background: linear-gradient(135deg, var(--primary), #5a95f5);
+    color: white;
+    border: none;
+}
+
+.balance-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+}
+
+.balance-card-header h3 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.balance-amount {
+    font-size: 36px;
+    font-weight: 700;
+    margin: 16px 0 24px 0;
+    letter-spacing: -0.5px;
+}
+
+.balance-card-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-fund {
+    background-color: white;
+    color: var(--primary);
+}
+
+.btn-fund:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-2px);
+}
+
+.btn-withdraw {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-withdraw:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Secondary Balance Cards */
+.balance-card-secondary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.balance-card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.balance-card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0 0 6px 0;
+}
+
+.balance-card-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.balance-card-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Funding Form */
+.funding-form-container {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--card-shadow);
+}
+
+.funding-form {
+    max-width: 600px;
+}
+
+.funding-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+}
+
+.funding-input-group {
+    margin-bottom: 20px;
+}
+
+.funding-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.funding-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 16px;
+    color: var(--text-primary);
+    background-color: var(--bg-background);
+    transition: all 0.2s ease;
+}
+
+.funding-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+}
+
+.funding-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-cancel,
+.btn-proceed {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel {
+    background-color: var(--bg-background);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+    background-color: var(--bg-surface);
+}
+
+.btn-proceed {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-proceed:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--hover-shadow);
+}
+
+/* Transactions Section */
+.transactions-section {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+}
+
+.transactions-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transactions-header h2 {
+    margin: 0;
+}
+
+/* Transaction Filters */
+.transaction-filters {
+    display: flex;
+    gap: 8px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-background);
+    overflow-x: auto;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background-color: var(--bg-background);
+    border-color: var(--primary);
+    color: var(--text-primary);
+}
+
+.filter-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Transactions List */
+.transactions-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.transactions-loading,
+.transactions-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.transactions-empty h3 {
+    margin: 16px 0 8px 0;
+    color: var(--text-primary);
+}
+
+.transactions-empty p {
+    margin: 0;
+    max-width: 400px;
+}
+
+/* Transaction Item */
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.transaction-item:hover {
+    background-color: var(--bg-background);
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.transaction-icon-success {
+    background-color: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.transaction-icon-error {
+    background-color: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+.transaction-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-type {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+    text-transform: capitalize;
+}
+
+.transaction-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transaction-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.transaction-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.transaction-amount {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.transaction-amount-success {
+    color: var(--success);
+}
+
+.transaction-amount-error {
+    color: var(--error);
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.status-success {
+    background-color: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.status-badge.status-warning {
+    background-color: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.status-badge.status-error {
+    background-color: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+/* Scrollbar */
+.transactions-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.transactions-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.transactions-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.transactions-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .marketplace-wallet-main {
+        margin-left: 0;
+    }
+
+    .wallet-balance-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .balance-card-primary {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .marketplace-wallet-main {
+        margin-left: 0;
+        padding: 16px;
+    }
+
+    .wallet-balance-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .balance-card-primary {
+        grid-column: auto;
+    }
+
+    .balance-amount {
+        font-size: 32px;
+    }
+
+    .transaction-item {
+        padding: 12px 16px;
+    }
+
+    .transaction-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .transaction-amount {
+        font-size: 16px;
+    }
+
+    .transaction-filters {
+        padding: 12px 16px;
+    }
+
+    .funding-actions {
+        flex-direction: column;
+    }
+
+    .btn-cancel,
+    .btn-proceed {
+        width: 100%;
+    }
+
+    .page-header h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .marketplace-wallet-main {
+        padding: 12px;
+    }
+
+    .balance-card-actions {
+        flex-direction: column;
+    }
+
+    .btn-action {
+        width: 100%;
+    }
+
+    .transaction-description {
+        font-size: 12px;
+    }
+
+    .balance-amount {
+        font-size: 28px;
+    }
+
+    .transaction-amount {
+        font-size: 15px;
+    }
+
+    .funding-form-container {
+        padding: 16px;
+    }
+}

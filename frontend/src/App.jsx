@@ -36,6 +36,8 @@ import DocsLayout from './components/DocsLayout';
 import Docs from './pages/public/Docs';
 import MarketplaceDashboard from './pages/marketplace/MarketplaceDashboard';
 import MarketplaceListings from './pages/marketplace/MarketplaceListings';
+import MarketplaceBuying from './pages/marketplace/MarketplaceBuying';
+import MarketplaceSelling from './pages/marketplace/MarketplaceSelling';
 import MarketplaceProductDetails from './pages/marketplace/MarketplaceProductDetails';
 import MarketplaceWallet from './pages/marketplace/MarketplaceWallet';
 import MarketplaceMessages from './pages/marketplace/MarketplaceMessages';
@@ -268,6 +270,22 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                                     <MarketplaceListings />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/buying"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceBuying />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/selling"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceSelling />
                                 </ProtectedRoute>
                             }
                         />

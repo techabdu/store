@@ -1,0 +1,43 @@
+/* Generic Marketplace Page Styles */
+
+/* Main Content Responsive Margin for generic pages (Buying, Selling) */
+.marketplace-page-main {
+    margin-left: 280px;
+    transition: margin-left 0.3s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .marketplace-page-main {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .marketplace-page-main {
+        margin-left: 0;
+        padding: 16px;
+    }
+
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .dashboard-card {
+        padding: 40px 24px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .marketplace-page-main {
+        padding: 12px;
+    }
+
+    .dashboard-card {
+        padding: 32px 20px !important;
+    }
+
+    .page-header h1 {
+        font-size: 20px;
+    }
+}

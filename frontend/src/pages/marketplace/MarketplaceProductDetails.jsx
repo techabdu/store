@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/Sidebar';
+import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api from '../../utils/api';
-import { FaMoneyBillWave, FaComment, FaGavel } from 'react-icons/fa';
+import { ShoppingCart, MessageSquare, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
+import './MarketplaceProductDetails.css';
 
 const MarketplaceProductDetails = () => {
     const { user } = useAuth();
@@ -16,15 +17,16 @@ const MarketplaceProductDetails = () => {
     const [loading, setLoading] = useState(true);
     const [buying, setBuying] = useState(false);
 
-    // Responsive Sidebar State
+    // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
+    // Detect mobile screen size
     useEffect(() => {
         const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
+            const mobile = window.innerWidth <= 1024;
             setIsMobile(mobile);
-            if (mobile) {
+            if (!mobile) {
                 setSidebarOpen(false);
             }
         };
@@ -33,10 +35,6 @@ const MarketplaceProductDetails = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -61,7 +59,7 @@ const MarketplaceProductDetails = () => {
             const response = await api.post('/marketplace/orders/create.php', { listing_id: listing.id });
             if (response.data.success) {
                 alert("Order placed successfully! Funds are held in escrow.");
-                navigate('/marketplace/orders'); // Redirect to orders page
+                navigate('/marketplace/orders');
             }
         } catch (error) {
             alert(error.response?.data?.error || "Purchase failed");
@@ -71,111 +69,151 @@ const MarketplaceProductDetails = () => {
     };
 
     const handleMessage = () => {
-        // Navigate to messages with listing ID to start conversation
         navigate(`/marketplace/messages?new=${listing.id}`);
     };
 
-    if (loading) return <div className="p-10 text-center">Loading...</div>;
-    if (!listing) return <div className="p-10 text-center">Listing not found</div>;
+    if (loading) {
+        return (
+            <div className="dashboard-container">
+                <TopBar toggleSidebar={() => { }} user={user} />
+                <MarketplaceSidebar />
+                <main className="main-content marketplace-product-main">
+                    <div className="content-wrapper">
+                        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                            <p className="text-secondary">Loading...</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (!listing) {
+        return (
+            <div className="dashboard-container">
+                <TopBar toggleSidebar={() => { }} user={user} />
+                <MarketplaceSidebar />
+                <main className="main-content marketplace-product-main">
+                    <div className="content-wrapper">
+                        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                            <p className="text-secondary">Listing not found</p>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    const formatPrice = (price) => Number(price).toLocaleString('en-NG');
 
     return (
         <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
-
-            <Sidebar
+            <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
+            <MarketplaceSidebar
                 isOpen={sidebarOpen}
                 isMobile={isMobile}
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
+            <main className="main-content marketplace-product-main">
                 <div className="content-wrapper">
-                    <button onClick={() => navigate(-1)} className="mb-4 text-blue-500 hover:underline">
-                        ← Back to Listings
+                    <button onClick={() => navigate(-1)} className="back-button">
+                        <ArrowLeft size={18} />
+                        Back to Listings
                     </button>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="product-layout">
                         {/* Images Section */}
-                        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-                            <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
+                        <div className="product-image-section">
+                            <div className="product-image-container">
                                 <img
-                                    src={listing.images[0]?.image_url || '/placeholder-phone.png'}
+                                    src={listing.images?.[0]?.image_url || '/placeholder-phone.png'}
                                     alt={listing.title}
-                                    className="max-h-full max-w-full object-contain"
+                                    className="product-image"
                                 />
                             </div>
-                            {/* Thumbnail gallery logic would go here */}
                         </div>
 
                         {/* Details Section */}
-                        <div className="space-y-6">
-                            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                                <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">{listing.title}</h1>
-                                <p className="text-3xl font-bold text-blue-600 mb-4">
-                                    ₦{Number(listing.price).toLocaleString()}
+                        <div className="product-details-section">
+                            <div className="product-details-card">
+                                <h1 className="product-title">{listing.title}</h1>
+                                <p className="product-price">
+                                    ₦{formatPrice(listing.price)}
                                 </p>
 
-                                <div className="flex space-x-4 mb-6">
+                                <div className="product-actions">
                                     {listing.listing_type === 'fixed_price' ? (
                                         <button
                                             onClick={handleBuyNow}
                                             disabled={buying || listing.status !== 'active'}
-                                            className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition flex items-center justify-center"
+                                            className="product-btn product-btn-primary"
                                         >
-                                            {buying ? 'Processing...' : (
-                                                <><FaMoneyBillWave className="mr-2" /> Buy Now</>
-                                            )}
+                                            <ShoppingCart size={18} />
+                                            {buying ? 'Processing...' : 'Buy Now'}
                                         </button>
                                     ) : (
                                         <button
-                                            className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition flex items-center justify-center"
+                                            className="product-btn product-btn-primary"
                                             onClick={() => alert("Auction UI coming soon!")}
                                         >
-                                            <FaGavel className="mr-2" /> Place Bid
+                                            Place Bid
                                         </button>
                                     )}
 
                                     <button
                                         onClick={handleMessage}
-                                        className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white py-3 rounded-lg font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center justify-center"
+                                        className="product-btn product-btn-secondary"
                                     >
-                                        <FaComment className="mr-2" /> Chat with Seller
+                                        <MessageSquare size={18} />
+                                        Chat with Seller
                                     </button>
                                 </div>
 
-                                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                    <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Details</h3>
-                                    <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                        <li><span className="font-medium">Condition:</span> {listing.condition_state}</li>
-                                        <li><span className="font-medium">Model:</span> {listing.phone_model}</li>
-                                        <li><span className="font-medium">Location:</span> {listing.shop_name} ({listing.branch_name})</li>
-                                        <li><span className="font-medium">Posted:</span> {new Date(listing.created_at).toLocaleDateString()}</li>
+                                <div className="product-info-section">
+                                    <h3 className="product-info-title">Details</h3>
+                                    <ul className="product-info-list">
+                                        <li className="product-info-item">
+                                            <span className="product-info-label">Condition:</span>
+                                            {listing.condition_state}
+                                        </li>
+                                        <li className="product-info-item">
+                                            <span className="product-info-label">Model:</span>
+                                            {listing.phone_model}
+                                        </li>
+                                        <li className="product-info-item">
+                                            <span className="product-info-label">Location:</span>
+                                            {listing.shop_name} ({listing.branch_name})
+                                        </li>
+                                        <li className="product-info-item">
+                                            <span className="product-info-label">Posted:</span>
+                                            {new Date(listing.created_at).toLocaleDateString()}
+                                        </li>
                                     </ul>
                                 </div>
 
-                                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                                    <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Description</h3>
-                                    <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                                <div className="product-description-section">
+                                    <h3 className="product-info-title">Description</h3>
+                                    <p className="product-description-text">
                                         {listing.description}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Seller Info Card */}
-                            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow flex items-center space-x-4">
-                                <div className="w-16 h-16 bg-gray-300 rounded-full overflow-hidden">
+                            <div className="seller-card">
+                                <div className="seller-avatar">
                                     <img
                                         src={listing.seller_profile_image || '/user-avatar.png'}
                                         alt={listing.seller_name}
-                                        className="w-full h-full object-cover"
                                     />
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-gray-800 dark:text-white">{listing.seller_name}</h3>
-                                    <div className="text-yellow-500 text-sm">
+                                <div className="seller-info">
+                                    <h3 className="seller-name">{listing.seller_name}</h3>
+                                    <div className="seller-rating">
                                         ★ {listing.seller_rating || 'New Seller'}
                                     </div>
-                                    <p className="text-xs text-gray-500">Verified Seller</p>
+                                    <p className="seller-badge">Verified Seller</p>
                                 </div>
                             </div>
                         </div>

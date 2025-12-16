@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/Sidebar';
+import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { FaStore, FaWallet, FaCommentDots, FaUserCircle, FaGavel } from 'react-icons/fa';
+import MetricCard from '../../components/MetricCard';
+import { FaStore, FaWallet, FaCommentDots, FaUserCircle, FaBox, FaShoppingCart } from 'react-icons/fa';
+import { Wallet, Store, MessageSquare, User, TrendingUp, Package } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css'; // Reuse admin styles for consistency
+import './MarketplaceDashboard.css'; // Custom marketplace styles
 
 const MarketplaceDashboard = () => {
     const { user } = useAuth();
@@ -14,15 +17,16 @@ const MarketplaceDashboard = () => {
     const [wallet, setWallet] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Responsive Sidebar State
+    // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
+    // Detect mobile screen size
     useEffect(() => {
         const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
+            const mobile = window.innerWidth <= 1024;
             setIsMobile(mobile);
-            if (mobile) {
+            if (!mobile) {
                 setSidebarOpen(false);
             }
         };
@@ -31,10 +35,6 @@ const MarketplaceDashboard = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -60,86 +60,191 @@ const MarketplaceDashboard = () => {
         fetchData();
     }, []);
 
-    const cards = [
+    // Format balance for display
+    const formatBalance = (amount) => {
+        return amount ? Number(amount).toLocaleString('en-NG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) : '0.00';
+    };
+
+    // Metrics data for dashboard cards
+    const metrics = [
         {
-            title: "Browse Listings",
-            icon: <FaStore className="text-3xl text-blue-500" />,
-            desc: "Buy phones from verified sellers.",
-            action: () => navigate('/marketplace/listings'),
-            color: "border-l-4 border-blue-500"
+            title: 'Available Balance',
+            value: `₦${formatBalance(wallet?.available_balance)}`,
+            icon: Wallet,
+            subtitle: 'Wallet balance',
+            color: 'success'
         },
         {
-            title: "My Wallet",
-            icon: <FaWallet className="text-3xl text-green-500" />,
-            desc: `Balance: ₦${wallet ? Number(wallet.available_balance).toLocaleString() : '---'}`,
-            action: () => navigate('/marketplace/wallet'),
-            color: "border-l-4 border-green-500"
+            title: 'Active Listings',
+            value: '0',
+            icon: Store,
+            subtitle: 'Products for sale',
+            color: 'info'
+        },
+        {
+            title: 'Total Sales',
+            value: '0',
+            icon: TrendingUp,
+            subtitle: 'Items sold',
+            color: 'warning'
+        },
+        {
+            title: 'Pending Orders',
+            value: '0',
+            icon: Package,
+            subtitle: 'Orders to process',
+            color: 'info'
+        }
+    ];
+
+    // Quick action cards
+    const quickActions = [
+        {
+            title: "Browse Listings",
+            icon: <FaStore size={28} style={{ color: 'var(--primary)' }} />,
+            description: "Buy phones from verified sellers",
+            action: () => navigate('/marketplace/listings'),
+            colorClass: "blue"
         },
         {
             title: "Messages",
-            icon: <FaCommentDots className="text-3xl text-purple-500" />,
-            desc: "Chat with buyers and sellers.",
+            icon: <FaCommentDots size={28} style={{ color: '#9C27B0' }} />,
+            description: "Chat with buyers and sellers",
             action: () => navigate('/marketplace/messages'),
-            color: "border-l-4 border-purple-500"
+            colorClass: "purple"
         },
         {
             title: "My Profile",
-            icon: <FaUserCircle className="text-3xl text-orange-500" />,
-            desc: profile ? `${profile.display_name}` : "Create your profile",
+            icon: <FaUserCircle size={28} style={{ color: '#FF9800' }} />,
+            description: profile ? profile.display_name : "Create your profile",
             action: () => navigate('/marketplace/profile'),
-            color: "border-l-4 border-orange-500"
+            colorClass: "orange"
         }
     ];
 
     return (
         <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
+            <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
 
-            <Sidebar
+            {/* Use MarketplaceSidebar instead of regular Sidebar */}
+            <MarketplaceSidebar
                 isOpen={sidebarOpen}
                 isMobile={isMobile}
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
+                    {/* Page Header */}
                     <div className="page-header">
                         <h1 className="heading-1">Marketplace Dashboard</h1>
-                        <p className="text-secondary">Buy, sell, and manage your phone listings.</p>
+                        <p className="text-secondary">Buy, sell, and manage your phone listings</p>
                     </div>
 
+                    {/* Profile Verification Alert */}
                     {!profile && !loading && (
-                        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded" role="alert">
-                            <p className="font-bold">Complete your Profile</p>
-                            <p>You need to verify your identity to buy or sell on the marketplace.</p>
+                        <div className="alert-banner">
+                            <div className="alert-content">
+                                <h4>Complete your Profile</h4>
+                                <p>You need to verify your identity to buy or sell on the marketplace</p>
+                            </div>
                             <button
                                 onClick={() => navigate('/marketplace/profile')}
-                                className="mt-2 bg-yellow-500 text-white px-4 py-1 rounded hover:bg-yellow-600 transition"
+                                className="alert-button"
                             >
                                 Get Verified
                             </button>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {cards.map((card, index) => (
-                            <div
-                                key={index}
-                                onClick={card.action}
-                                className={`bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md hover:shadow-lg transition cursor-pointer flex items-center space-x-4 ${card.color}`}
-                            >
-                                <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full">
-                                    {card.icon}
+                    {/* Loading State */}
+                    {loading && (
+                        <div style={{ textAlign: 'center', padding: '2rem' }}>
+                            <p className="text-secondary">Loading marketplace data...</p>
+                        </div>
+                    )}
+
+                    {!loading && (
+                        <>
+                            {/* Wallet Section */}
+                            <div className="wallet-card" style={{ marginBottom: '24px' }}>
+                                <div className="wallet-header">
+                                    <div className="wallet-title">
+                                        <div className="wallet-icon">
+                                            <FaWallet size={24} style={{ color: 'var(--success)' }} />
+                                        </div>
+                                        <span>My Wallet</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{card.title}</h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{card.desc}</p>
+                                <div className="wallet-balance">
+                                    <span className="wallet-balance-label">Available Balance</span>
+                                    <span className="wallet-balance-value">
+                                        ₦{formatBalance(wallet?.available_balance)}
+                                    </span>
+                                </div>
+                                <div className="wallet-actions">
+                                    <button
+                                        className="wallet-btn wallet-btn-primary"
+                                        onClick={() => navigate('/marketplace/wallet')}
+                                    >
+                                        View Wallet
+                                    </button>
+                                    <button
+                                        className="wallet-btn"
+                                        onClick={() => navigate('/marketplace/wallet')}
+                                    >
+                                        Transaction History
+                                    </button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* Recent Activity or Featured Listings could go here */}
+                            {/* Metrics Grid */}
+                            <div className="stats-grid">
+                                {metrics.map((metric, index) => (
+                                    <MetricCard key={index} {...metric} />
+                                ))}
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div style={{ marginBottom: '24px' }}>
+                                <h2 className="heading-2" style={{ marginBottom: '16px' }}>Quick Actions</h2>
+                                <div className="quick-actions">
+                                    {quickActions.map((action, index) => (
+                                        <div
+                                            key={index}
+                                            onClick={action.action}
+                                            className="action-card"
+                                        >
+                                            <div className={`action-icon ${action.colorClass}`}>
+                                                {action.icon}
+                                            </div>
+                                            <h3>{action.title}</h3>
+                                            <p>{action.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Getting Started Section */}
+                            {!profile && (
+                                <div className="dashboard-card">
+                                    <h3 className="heading-3" style={{ marginBottom: '12px' }}>Getting Started</h3>
+                                    <p className="text-secondary" style={{ marginBottom: '16px' }}>
+                                        Complete these steps to start buying and selling on the marketplace:
+                                    </p>
+                                    <ul style={{ paddingLeft: '20px', color: 'var(--text-secondary)' }}>
+                                        <li style={{ marginBottom: '8px' }}>Verify your identity and create your profile</li>
+                                        <li style={{ marginBottom: '8px' }}>Fund your wallet to make purchases</li>
+                                        <li style={{ marginBottom: '8px' }}>Browse listings and connect with sellers</li>
+                                        <li style={{ marginBottom: '8px' }}>List your own products for sale</li>
+                                    </ul>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </main>
         </div>
