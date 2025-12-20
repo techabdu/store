@@ -1,0 +1,238 @@
+/* Confirm Delivery Modal Styles */
+.delivery-confirm-modal {
+    max-width: 600px;
+    width: 90%;
+}
+
+.delivery-confirm-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delivery-confirm-modal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.delivery-confirm-modal .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.confirmation-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.alert-icon {
+    color: #ff9800;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alert-text {
+    margin: 0;
+    color: #856404;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.financial-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.financial-details h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-label {
+    font-size: 14px;
+    color: #666;
+}
+
+.transaction-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.transaction-value.negative {
+    color: #f5576c;
+}
+
+.transaction-value.positive {
+    color: #38ef7d;
+}
+
+.important-notes {
+    margin-bottom: 24px;
+}
+
+.important-notes h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.important-notes ul {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.important-notes li {
+    padding: 8px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #555;
+}
+
+.important-notes li strong {
+    color: #333;
+}
+
+.confirmation-question {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+}
+
+.confirmation-question p {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.delivery-confirm-modal .modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #eee;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+.btn-cancel,
+.btn-proceed {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+.btn-proceed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.btn-proceed:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0e8376 0%, #2dd16a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-cancel:disabled,
+.btn-proceed:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .delivery-confirm-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .delivery-confirm-modal .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .delivery-confirm-modal .modal-body {
+        padding: 16px;
+        max-height: 60vh;
+    }
+
+    .confirmation-alert {
+        padding: 12px;
+    }
+
+    .financial-details,
+    .important-notes {
+        padding: 12px;
+    }
+
+    .delivery-confirm-modal .modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-cancel,
+    .btn-proceed {
+        width: 100%;
+    }
+}

@@ -25,25 +25,51 @@ $user_id = $_SESSION['user_id'];
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
+$type_filter = isset($_GET['type']) ? $_GET['type'] : 'all';
 
 if ($limit > 100) $limit = 100; // Cap limit
 
+// Map filter type to DB transaction types
+$type_where = "";
+$bind_params = [$user_id];
+$bind_types = "i";
+
+if ($type_filter !== 'all') {
+    switch ($type_filter) {
+        case 'fund':
+            $type_where = " AND transaction_type = 'fund'";
+            break;
+        case 'withdraw':
+            $type_where = " AND transaction_type = 'withdraw'";
+            break;
+        case 'purchase':
+            $type_where = " AND transaction_type IN ('purchase_hold', 'purchase_release', 'purchase_refund', 'refund', 'bid_hold', 'bid_release')";
+            break;
+        case 'sale':
+            $type_where = " AND transaction_type IN ('sale_pending', 'sale_complete', 'sale_cancelled', 'sale_release')";
+            break;
+    }
+}
+
 // Get total count
-$count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM marketplace_wallet_transactions WHERE user_id = ?");
+$count_query = "SELECT COUNT(*) as total FROM marketplace_wallet_transactions WHERE user_id = ?" . $type_where;
+$count_stmt = $conn->prepare($count_query);
 $count_stmt->bind_param("i", $user_id);
 $count_stmt->execute();
 $total_rows = $count_stmt->get_result()->fetch_assoc()['total'];
 $total_pages = ceil($total_rows / $limit);
 
 // Get transactions
-$stmt = $conn->prepare("
+$query = "
     SELECT * 
     FROM marketplace_wallet_transactions 
     WHERE user_id = ? 
+    $type_where
     ORDER BY created_at DESC 
     LIMIT ? OFFSET ?
-");
+";
 
+$stmt = $conn->prepare($query);
 $stmt->bind_param("iii", $user_id, $limit, $offset);
 $stmt->execute();
 $result = $stmt->get_result();

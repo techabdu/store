@@ -1,1095 +1,1692 @@
--- ============================================================================
--- PHONE RETAILER MANAGEMENT SYSTEM - COMPLETE DATABASE SCHEMA
--- ============================================================================
--- 
--- This file contains the complete database schema for the Phone Retailer 
--- Management System with multi-tenancy and multi-branch support.
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
 --
--- FEATURES:
--- - Multi-tenant architecture (multiple business owners in one database)
--- - Multi-branch support (each tenant can have multiple shop locations)
--- - Role-based access control (SuperAdmin, Admin/Owner, Branch Manager, User)
--- - Comprehensive inventory management per branch
--- - Transaction tracking with trade-ins per branch
--- - Expense management per branch
--- - Activity logging and security monitoring
--- - Session management
--- - Password reset functionality
--- - User profile management
+-- Host: localhost
+-- Generation Time: Dec 20, 2025 at 08:52 PM
+-- Server version: 10.4.28-MariaDB
+-- PHP Version: 8.2.4
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
 --
--- USAGE:
--- 1. Create a new database: CREATE DATABASE your_database_name;
--- 2. Import this file: mysql -u username -p your_database_name < database_schema.sql
--- 3. Update backend/config/database.php with your database credentials
+-- Database: `store`
 --
--- IMPORTANT NOTES:
--- - All tables use utf8mb4 charset for full Unicode support
--- - Foreign keys enforce referential integrity
--- - Indexes optimize query performance for multi-tenant/multi-branch queries
--- - Data is scoped by shop_id for branch-level isolation
+
+-- --------------------------------------------------------
+
 --
--- ============================================================================
+-- Table structure for table `activity_logs`
+--
 
--- Set character set and collation
-SET NAMES utf8mb4;
-SET CHARACTER SET utf8mb4;
+CREATE TABLE `activity_logs` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `details` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- TABLE 1: TENANTS (Business Owners/Organizations)
--- ============================================================================
--- This table stores information about each business owner (tenant) in the system.
--- Each tenant represents a phone retail BUSINESS that can have multiple branches.
--- ============================================================================
+-- --------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS tenants (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    
-    -- Business/Owner Information (legacy shop fields used for first branch)
-    shop_name VARCHAR(100) NOT NULL COMMENT 'Primary business name',
-    shop_address TEXT NULL COMMENT 'Primary business address',
-    shop_phone VARCHAR(20) NOT NULL COMMENT 'Primary contact phone number',
-    shop_email VARCHAR(100) NOT NULL UNIQUE COMMENT 'Business owner email (must be unique)',
-    
-    -- Business Settings (legacy - now primarily at shop level)
-    business_capital DECIMAL(15, 2) DEFAULT 0.00 COMMENT 'Total business capital (sum of all branches)',
-    
-    -- Subscription & Status
-    status ENUM('active', 'suspended', 'pending', 'trial') DEFAULT 'trial' COMMENT 'Business account status',
-    plan_type ENUM('free_trial', 'basic', 'premium', 'enterprise') DEFAULT 'free_trial' COMMENT 'Subscription plan',
-    trial_ends_at TIMESTAMP NULL COMMENT 'When free trial expires',
-    subscription_ends_at TIMESTAMP NULL COMMENT 'When paid subscription expires',
-    
-    -- Email Verification
-    email_verified TINYINT(1) DEFAULT 0 COMMENT '1 if email is verified, 0 otherwise',
-    verification_token VARCHAR(255) NULL COMMENT 'Token for email verification',
-    
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Indexes for performance
-    INDEX idx_status (status),
-    INDEX idx_plan_type (plan_type),
-    INDEX idx_trial_ends_at (trial_ends_at),
-    INDEX idx_email_verified (email_verified)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores business owner information (tenant level, can have multiple branches)';
+--
+-- Table structure for table `expenses`
+--
 
--- ============================================================================
--- TABLE 2: SHOPS (Branch Locations)
--- ============================================================================
--- This table stores physical branch locations for each tenant.
--- Each tenant can have multiple shops (branches) with isolated data.
--- ============================================================================
+CREATE TABLE `expenses` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) DEFAULT NULL,
+  `description` varchar(255) NOT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `date` date NOT NULL,
+  `created_by` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS shops (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Parent business/tenant that owns this branch',
-    
-    -- Shop/Branch Details
-    shop_name VARCHAR(100) NOT NULL COMMENT 'Branch name (e.g., Lagos Main Branch)',
-    shop_address TEXT NULL COMMENT 'Physical address of this branch',
-    shop_phone VARCHAR(20) NULL COMMENT 'Branch contact phone number',
-    shop_email VARCHAR(100) NULL COMMENT 'Branch email (optional)',
-    
-    -- Business Settings (per branch)
-    business_capital DECIMAL(15, 2) DEFAULT 0.00 COMMENT 'Capital allocated to this branch',
-    
-    -- Status
-    status ENUM('active', 'suspended') DEFAULT 'active' COMMENT 'Branch operational status',
-    is_main_branch TINYINT(1) DEFAULT 0 COMMENT '1 if this is the primary/first branch',
-    
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Foreign Keys & Indexes
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_status (status),
-    INDEX idx_is_main_branch (is_main_branch),
-    INDEX idx_shops_tenant_status (tenant_id, status) COMMENT 'Composite index for active shops lookup'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Physical branch locations under each tenant (business owner)';
+-- --------------------------------------------------------
 
--- ============================================================================
--- TABLE 3: USERS (Shop Owners, Branch Managers, and Staff)
--- ============================================================================
--- This table stores all user accounts in the system.
--- Users belong to a tenant and optionally to a specific shop (branch).
--- shop_id = NULL means owner-level access to all branches.
--- ============================================================================
+--
+-- Table structure for table `expense_records`
+--
 
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this user belongs to',
-    shop_id INT NULL COMMENT 'Branch assignment: NULL=Owner (all branches), Non-NULL=Specific branch only',
-    
-    -- Authentication
-    username VARCHAR(50) NOT NULL COMMENT 'Unique username for login',
-    email VARCHAR(100) NOT NULL COMMENT 'User email address',
-    password_hash VARCHAR(255) NOT NULL COMMENT 'Bcrypt hashed password',
-    
-    -- User Profile
-    full_name VARCHAR(255) NULL COMMENT 'Full name of the user',
-    phone VARCHAR(20) NULL COMMENT 'Contact phone number',
-    avatar_color VARCHAR(7) NOT NULL DEFAULT '#3b82f6' COMMENT 'Hex color for avatar display',
-    
-    -- Role & Status
-    -- admin with shop_id=NULL = Owner (can access all branches)
-    -- admin with shop_id=X = Branch Manager (only sees branch X)
-    -- user with shop_id=X = Staff (only sees branch X)
-    role ENUM('superadmin', 'admin', 'user') NOT NULL COMMENT 'User role',
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active' COMMENT 'Account status',
-    
-    -- Password Reset
-    reset_token VARCHAR(64) NULL COMMENT 'Token for password reset',
-    reset_token_expires DATETIME NULL COMMENT 'When reset token expires',
-    
-    -- Security Tracking
-    username_last_changed TIMESTAMP NULL COMMENT 'Last time username was changed',
-    created_by INT NULL COMMENT 'User ID who created this account',
-    
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Unique constraints
-    UNIQUE KEY unique_tenant_username (tenant_id, username) COMMENT 'Username must be unique within each tenant',
-    UNIQUE KEY unique_tenant_email (tenant_id, email) COMMENT 'Email must be unique within each tenant',
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL ON UPDATE CASCADE,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_username (username),
-    INDEX idx_email (email),
-    INDEX idx_role (role),
-    INDEX idx_reset_token (reset_token)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores user accounts with role-based and branch-based access control';
+CREATE TABLE `expense_records` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL COMMENT 'Which shop this expense record belongs to',
+  `shop_id` int(11) DEFAULT NULL,
+  `date` date NOT NULL COMMENT 'Date of the expense record',
+  `daily_expenses` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Total expenses for this day',
+  `expense_count` int(11) NOT NULL DEFAULT 0 COMMENT 'Number of expenses this day',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- TABLE 4: INVENTORY (Phone Stock)
--- ============================================================================
--- This table stores all phone inventory items for each branch.
--- Each phone is tracked by its unique IMEI number per branch.
--- ============================================================================
+-- --------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS inventory (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business owns this inventory item',
-    shop_id INT NOT NULL COMMENT 'Which branch this inventory item belongs to',
-    
-    -- Phone Details
-    brand VARCHAR(100) NOT NULL COMMENT 'Phone brand (e.g., Apple, Samsung)',
-    model VARCHAR(100) NOT NULL COMMENT 'Phone model (e.g., iPhone 14 Pro)',
-    imei VARCHAR(20) NOT NULL COMMENT 'Unique IMEI number for this device',
-    vendor VARCHAR(100) NULL COMMENT 'Supplier/vendor name',
-    color VARCHAR(50) NULL COMMENT 'Phone color',
-    storage VARCHAR(20) NULL COMMENT 'Storage capacity (e.g., 128GB, 256GB)',
-    condition_status ENUM('new', 'used') NOT NULL DEFAULT 'new' COMMENT 'Device condition',
-    
-    -- Pricing
-    price DECIMAL(10, 2) NOT NULL COMMENT 'Selling price',
-    cost_price DECIMAL(10, 2) NOT NULL COMMENT 'Purchase/cost price',
-    
-    -- Status
-    status ENUM('in_stock', 'sold', 'returned') NOT NULL DEFAULT 'in_stock' COMMENT 'Current inventory status',
-    
-    -- Tracking
-    created_by INT NOT NULL COMMENT 'User who added this item',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Unique constraint - IMEI unique per branch
-    UNIQUE KEY unique_shop_imei (shop_id, imei) COMMENT 'IMEI must be unique within each branch',
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_imei (imei),
-    INDEX idx_status (status),
-    INDEX idx_brand_model (brand, model),
-    INDEX idx_vendor (vendor),
-    INDEX idx_created_by (created_by),
-    INDEX idx_inventory_shop_status (shop_id, status) COMMENT 'Composite index for filtering by shop and status',
-    INDEX idx_inventory_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for sorting by date'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores phone inventory with IMEI tracking per branch';
+--
+-- Table structure for table `fraud_alerts`
+--
 
--- ============================================================================
--- TABLE 5: TRANSACTIONS (Sales Records)
--- ============================================================================
--- This table stores sales transactions per branch.
--- Each transaction can include multiple phones (see transaction_items).
--- ============================================================================
+CREATE TABLE `fraud_alerts` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `transaction_type` varchar(50) DEFAULT NULL,
+  `amount` decimal(12,2) DEFAULT NULL,
+  `flags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`flags`)),
+  `status` enum('pending_review','cleared','confirmed_fraud') DEFAULT 'pending_review',
+  `reviewed_by` int(11) DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS transactions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this transaction belongs to',
-    shop_id INT NOT NULL COMMENT 'Which branch this transaction belongs to',
-    
-    -- Transaction Details
-    user_id INT NOT NULL COMMENT 'User who processed this sale',
-    customer_name VARCHAR(100) NOT NULL COMMENT 'Customer name',
-    customer_phone VARCHAR(20) NULL COMMENT 'Customer contact number',
-    
-    -- Payment
-    total_amount DECIMAL(10, 2) NOT NULL COMMENT 'Total transaction amount',
-    payment_method ENUM('cash', 'card', 'transfer', 'mixed') NOT NULL DEFAULT 'cash' COMMENT 'Payment method used',
-    
-    -- Timestamp
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_created_at (created_at),
-    INDEX idx_customer_phone (customer_phone),
-    INDEX idx_transactions_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for sorting transactions'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores sales transactions per branch';
+-- --------------------------------------------------------
 
--- ============================================================================
--- TABLE 6: TRANSACTION_ITEMS (Individual Items in Each Sale)
--- ============================================================================
--- This table stores individual phones sold in each transaction.
--- Supports both regular sales and trade-ins.
--- ============================================================================
+--
+-- Table structure for table `inventory`
+--
 
-CREATE TABLE IF NOT EXISTS transaction_items (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this item belongs to',
-    shop_id INT NOT NULL COMMENT 'Which branch this item belongs to',
-    
-    -- Transaction Link
-    transaction_id INT NOT NULL COMMENT 'Parent transaction',
-    inventory_id INT NOT NULL COMMENT 'Phone that was sold',
-    
-    -- Item Details
-    price DECIMAL(10, 2) NOT NULL COMMENT 'Price this item was sold for',
-    type ENUM('sale', 'trade_in') NOT NULL DEFAULT 'sale' COMMENT 'Sale type: regular sale or trade-in',
-    
-    -- Timestamp
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
-    FOREIGN KEY (inventory_id) REFERENCES inventory(id) ON DELETE RESTRICT,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_transaction_id (transaction_id),
-    INDEX idx_inventory_id (inventory_id),
-    INDEX idx_type (type),
-    INDEX idx_transaction_items_shop_txn (shop_id, transaction_id) COMMENT 'Composite index for JOINs'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores individual items in each transaction per branch';
+CREATE TABLE `inventory` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) NOT NULL,
+  `brand` varchar(50) NOT NULL,
+  `model` varchar(100) NOT NULL,
+  `imei` varchar(20) NOT NULL,
+  `vendor` varchar(100) DEFAULT NULL COMMENT 'Supplier/vendor name',
+  `color` varchar(30) NOT NULL,
+  `storage` varchar(20) NOT NULL,
+  `condition_status` varchar(50) NOT NULL DEFAULT 'New',
+  `price` decimal(10,2) NOT NULL,
+  `cost_price` decimal(10,2) NOT NULL,
+  `status` enum('in_stock','sold','returned') NOT NULL DEFAULT 'in_stock',
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- TABLE 7: EXPENSES (Business Expenses)
--- ============================================================================
--- This table tracks all business expenses per branch.
--- ============================================================================
+-- --------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS expenses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this expense belongs to',
-    shop_id INT NOT NULL COMMENT 'Which branch this expense belongs to',
-    
-    -- Expense Details
-    description VARCHAR(255) NOT NULL COMMENT 'What the expense was for',
-    amount DECIMAL(10, 2) NOT NULL COMMENT 'Expense amount',
-    category VARCHAR(50) NOT NULL COMMENT 'Expense category (e.g., rent, utilities, salaries)',
-    date DATE NOT NULL COMMENT 'Date of expense',
-    
-    -- Tracking
-    created_by INT NOT NULL COMMENT 'User who recorded this expense',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_date (date),
-    INDEX idx_category (category),
-    INDEX idx_created_by (created_by),
-    INDEX idx_expenses_shop_date (shop_id, date DESC) COMMENT 'Composite index for filtering expenses'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Tracks business expenses per branch';
+--
+-- Table structure for table `kora_payment_references`
+--
 
--- ============================================================================
--- TABLE 8: PROFIT_RECORDS (Daily Profit Tracking)
--- ============================================================================
--- This table stores daily profit snapshots per branch for historical tracking.
--- Profit is calculated as: total_amount (from transactions) - cost_price (from inventory)
--- ============================================================================
+CREATE TABLE `kora_payment_references` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `wallet_transaction_id` int(11) DEFAULT NULL,
+  `kora_reference` varchar(100) NOT NULL,
+  `kora_transaction_id` varchar(100) DEFAULT NULL,
+  `transaction_type` enum('pay_in','payout') NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `currency` varchar(3) DEFAULT 'NGN',
+  `status` enum('pending','processing','success','failed','cancelled') DEFAULT 'pending',
+  `payment_method` varchar(50) DEFAULT NULL,
+  `bank_code` varchar(10) DEFAULT NULL,
+  `account_number` varchar(20) DEFAULT NULL,
+  `account_name` varchar(255) DEFAULT NULL,
+  `webhook_received_at` timestamp NULL DEFAULT NULL,
+  `webhook_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`webhook_data`)),
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS profit_records (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this profit record belongs to',
-    shop_id INT NOT NULL COMMENT 'Which branch this profit record belongs to',
-    
-    -- Profit Data
-    date DATE NOT NULL COMMENT 'Date of the profit record',
-    daily_profit DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total profit for this day',
-    transaction_count INT NOT NULL DEFAULT 0 COMMENT 'Number of transactions this day',
-    
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Unique constraint - one record per branch per day
-    UNIQUE KEY unique_shop_date (shop_id, date) COMMENT 'One profit record per branch per day',
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_date (date),
-    INDEX idx_profit_records_shop_date (shop_id, date DESC) COMMENT 'Composite index for querying profit history'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores daily profit snapshots per branch for historical tracking';
+-- --------------------------------------------------------
 
--- ============================================================================
--- TABLE 9: REPORTS (Generated Financial Reports)
--- ============================================================================
--- This table stores snapshots of financial reports generated by users.
--- ============================================================================
+--
+-- Table structure for table `marketplace_auction_bids`
+--
 
-CREATE TABLE IF NOT EXISTS reports (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this report belongs to',
-    shop_id INT NOT NULL COMMENT 'Which branch this report belongs to',
-    
-    -- Report Data
-    generated_by INT NOT NULL COMMENT 'User who generated this report',
-    inventory_value DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total value of inventory',
-    total_expenses DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total expenses',
-    business_capital DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Business capital at time of report',
-    cash_in_hand DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Available cash',
-    total_debt DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Total outstanding debt',
-    net_profit DECIMAL(15, 2) NOT NULL DEFAULT 0.00 COMMENT 'Net profit/loss',
-    
-    -- Timestamp
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (generated_by) REFERENCES users(id) ON DELETE CASCADE,
-    
-    -- Indexes
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores generated financial reports per branch';
+CREATE TABLE `marketplace_auction_bids` (
+  `id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `bidder_id` int(11) NOT NULL,
+  `bid_amount` decimal(10,2) NOT NULL,
+  `is_winning` tinyint(1) DEFAULT 0,
+  `is_auto_bid` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- ============================================================================
--- TABLE 10: ACTIVITY_LOGS (User Activity Tracking)
--- ============================================================================
--- This table logs all user actions for audit trail and security monitoring.
--- ============================================================================
+-- --------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS activity_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this activity belongs to',
-    shop_id INT NULL COMMENT 'Which branch this activity occurred in (NULL for tenant-level actions)',
-    
-    -- Activity Details
-    user_id INT NOT NULL COMMENT 'User who performed the action',
-    action VARCHAR(50) NOT NULL COMMENT 'Action performed (e.g., login, create_user, update_inventory)',
-    details TEXT NULL COMMENT 'Additional details in JSON format',
-    ip_address VARCHAR(45) NULL COMMENT 'IP address of user (supports IPv6)',
-    
-    -- Timestamp
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    
-    -- Indexes for performance
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_created_at (created_at),
-    INDEX idx_activity_logs_shop_created (shop_id, created_at DESC) COMMENT 'Composite index for recent activity queries'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Logs user activities for audit trail';
+--
+-- Table structure for table `marketplace_conversations`
+--
 
--- ============================================================================
--- TABLE 11: SESSIONS (Active User Sessions)
--- ============================================================================
--- This table tracks active user sessions for security monitoring.
--- Note: PHP sessions are used for actual authentication.
--- ============================================================================
+CREATE TABLE `marketplace_conversations` (
+  `id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `order_id` int(11) DEFAULT NULL,
+  `buyer_id` int(11) NOT NULL,
+  `seller_id` int(11) NOT NULL,
+  `is_archived_by_buyer` tinyint(1) DEFAULT 0,
+  `is_archived_by_seller` tinyint(1) DEFAULT 0,
+  `last_message_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS sessions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NOT NULL COMMENT 'Which business this session belongs to',
-    shop_id INT NULL COMMENT 'Current active shop for this session',
-    
-    -- Session Details
-    user_id INT NOT NULL COMMENT 'User who owns this session',
-    session_token VARCHAR(255) NOT NULL COMMENT 'Session identifier',
-    ip_address VARCHAR(45) NULL COMMENT 'IP address of session',
-    user_agent TEXT NULL COMMENT 'Browser/client information',
-    
-    -- Timestamps
-    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Last activity time',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    
-    -- Indexes
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_shop_id (shop_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_last_activity (last_activity)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Tracks active user sessions';
+-- --------------------------------------------------------
 
--- ============================================================================
--- TABLE 12: SYSTEM_ALERTS (System Notifications and Alerts)
--- ============================================================================
--- This table stores system alerts for monitoring and notifications.
--- Alerts can be tenant-specific or global (tenant_id = NULL).
--- ============================================================================
+--
+-- Table structure for table `marketplace_favorites`
+--
 
-CREATE TABLE IF NOT EXISTS system_alerts (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NULL COMMENT 'Which business this alert belongs to (NULL for global alerts)',
-    
-    -- Alert Details
-    type ENUM('security', 'database', 'performance', 'business') NOT NULL COMMENT 'Alert category',
-    severity ENUM('critical', 'warning', 'info') NOT NULL COMMENT 'Alert severity level',
-    message VARCHAR(255) NOT NULL COMMENT 'Brief alert description',
-    details TEXT NULL COMMENT 'Additional details in JSON format',
-    
-    -- Resolution
-    resolved TINYINT(1) DEFAULT 0 COMMENT '1 if alert has been resolved',
-    resolved_at TIMESTAMP NULL COMMENT 'When alert was resolved',
-    resolved_by INT NULL COMMENT 'User who resolved the alert',
-    
-    -- Timestamp
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL,
-    
-    -- Indexes
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_type (type),
-    INDEX idx_severity (severity),
-    INDEX idx_resolved (resolved),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Stores system alerts and notifications';
+CREATE TABLE `marketplace_favorites` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- ============================================================================
--- TABLE 13: SECURITY_LOGS (Security Events)
--- ============================================================================
--- This table logs security-related events like failed logins.
--- ============================================================================
+-- --------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS security_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tenant_id INT NULL COMMENT 'Which business this security event relates to (NULL for unknown users)',
-    
-    -- Event Details
-    event_type VARCHAR(50) NOT NULL COMMENT 'Type of security event (e.g., failed_login, suspicious_activity)',
-    username VARCHAR(50) NULL COMMENT 'Username involved in the event',
-    ip_address VARCHAR(45) NULL COMMENT 'IP address of the event',
-    user_agent TEXT NULL COMMENT 'Browser/client information',
-    details TEXT NULL COMMENT 'Additional details in JSON format',
-    
-    -- Timestamp
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign keys
-    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    
-    -- Indexes
-    INDEX idx_tenant_id (tenant_id),
-    INDEX idx_event_type (event_type),
-    INDEX idx_username (username),
-    INDEX idx_ip_address (ip_address),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Logs security events for monitoring';
+--
+-- Table structure for table `marketplace_identity_verifications`
+--
 
--- ============================================================================
--- DEFAULT DATA: Create Default Tenant, Shop, and SuperAdmin User
--- ============================================================================
+CREATE TABLE `marketplace_identity_verifications` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `is_verified` tinyint(1) DEFAULT 0,
+  `verification_level` enum('none','basic','advanced') DEFAULT 'none',
+  `verification_type` enum('bvn','nin','vnin','passport','voters_card') NOT NULL,
+  `kora_verification_id` varchar(100) DEFAULT NULL,
+  `kora_reference` varchar(100) DEFAULT NULL,
+  `id_number` varchar(255) DEFAULT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `verification_status` enum('pending','success','failed','expired') DEFAULT 'pending',
+  `match_score` decimal(5,2) DEFAULT NULL,
+  `verification_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`verification_data`)),
+  `selfie_image_path` varchar(500) DEFAULT NULL,
+  `facial_match_performed` tinyint(1) DEFAULT 0,
+  `facial_match_score` decimal(5,2) DEFAULT NULL,
+  `user_consent_given` tinyint(1) DEFAULT 0,
+  `consent_timestamp` timestamp NULL DEFAULT NULL,
+  `verified_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Insert default "Main Shop" tenant
-INSERT INTO tenants (
-    shop_name, 
-    shop_address, 
-    shop_phone, 
-    shop_email, 
-    business_capital,
-    status, 
-    plan_type,
-    email_verified,
-    created_at
-) VALUES (
-    'Main Shop',
-    '123 Tech Street, Digital City',
-    '+1234567890',
-    'admin@mainshop.com',
-    0.00,
-    'active',
-    'enterprise',
-    1,
-    NOW()
-) ON DUPLICATE KEY UPDATE id=id;
+-- --------------------------------------------------------
 
--- Create default shop (branch) for the default tenant
-INSERT INTO shops (
-    tenant_id,
-    shop_name,
-    shop_address,
-    shop_phone,
-    shop_email,
-    business_capital,
-    status,
-    is_main_branch,
-    created_at
-) SELECT 
-    id,
-    shop_name,
-    shop_address,
-    shop_phone,
-    shop_email,
-    business_capital,
-    'active',
-    1,
-    NOW()
-FROM tenants 
-WHERE shop_email = 'admin@mainshop.com'
-ON DUPLICATE KEY UPDATE id=id;
+--
+-- Table structure for table `marketplace_interests`
+--
 
--- SuperAdmin user creation has been removed from this schema for security.
--- Please use the official setup process to create your initial administrator account.
+CREATE TABLE `marketplace_interests` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- COMPLETION MESSAGE
--- ============================================================================
+-- --------------------------------------------------------
 
-SELECT '============================================' AS '';
-SELECT '✅ DATABASE SCHEMA CREATED SUCCESSFULLY!' AS '';
-SELECT '============================================' AS '';
-SELECT '' AS '';
-SELECT 'Database Structure:' AS '';
-SELECT '- 13 tables created with proper relationships' AS '';
-SELECT '- Multi-tenancy support enabled' AS '';
-SELECT '- Multi-branch support enabled' AS '';
-SELECT '- All indexes and foreign keys configured' AS '';
-SELECT '' AS '';
-SELECT 'Default Accounts Created:' AS '';
-SELECT '- Tenant: Main Shop (ID: 1)' AS '';
-SELECT '- Shop: Main Shop Branch (ID: 1)' AS '';
-SELECT '- SuperAdmin: [Created via Setup Script]' AS '';
-SELECT '' AS '';
-SELECT '⚠️  IMPORTANT SECURITY STEPS:' AS '';
-SELECT '1. Change the default superadmin password immediately!' AS '';
-SELECT '2. Update database credentials in backend/config/database.php' AS '';
-SELECT '3. Ensure .env file is not committed to version control' AS '';
-SELECT '4. Enable HTTPS in production' AS '';
-SELECT '' AS '';
-SELECT 'Next Steps:' AS '';
-SELECT '1. Configure your backend database connection' AS '';
-SELECT '2. Test the application' AS '';
-SELECT '3. Create additional admin/user accounts as needed' AS '';
-SELECT '4. Set up regular database backups' AS '';
-SELECT '' AS '';
-SELECT '============================================' AS '';
--- ============================================
--- MARKETPLACE PRODUCTION MIGRATION SCRIPT
--- Run this on your production database to create the new tables
--- ============================================
+--
+-- Table structure for table `marketplace_listings`
+--
 
-SET FOREIGN_KEY_CHECKS = 0;
+CREATE TABLE `marketplace_listings` (
+  `id` int(11) NOT NULL,
+  `shop_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `inventory_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `listing_type` enum('fixed_price','auction') NOT NULL DEFAULT 'fixed_price',
+  `price` decimal(10,2) NOT NULL,
+  `original_price` decimal(10,2) DEFAULT NULL,
+  `min_offer_price` decimal(10,2) DEFAULT NULL,
+  `auction_start_price` decimal(10,2) DEFAULT NULL,
+  `auction_reserve_price` decimal(10,2) DEFAULT NULL,
+  `auction_ends_at` timestamp NULL DEFAULT NULL,
+  `current_bid` decimal(10,2) DEFAULT NULL,
+  `highest_bidder_id` int(11) DEFAULT NULL,
+  `phone_model` varchar(255) DEFAULT NULL,
+  `phone_brand` varchar(100) DEFAULT NULL,
+  `phone_condition` varchar(50) NOT NULL DEFAULT 'New',
+  `phone_storage` varchar(50) DEFAULT NULL,
+  `phone_color` varchar(50) DEFAULT NULL,
+  `status` enum('active','sold','pending','expired','removed','suspended') DEFAULT 'active',
+  `is_featured` tinyint(1) DEFAULT 0,
+  `views_count` int(11) DEFAULT 0,
+  `inquiries_count` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `sold_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Marketplace Profiles
-CREATE TABLE IF NOT EXISTS marketplace_profiles (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL UNIQUE,
-    shop_id INT NOT NULL,
-    display_name VARCHAR(100) NOT NULL,
-    bio TEXT,
-    profile_image VARCHAR(500),
-    is_verified BOOLEAN DEFAULT FALSE,
-    verification_level ENUM('none', 'basic', 'advanced') DEFAULT 'none',
-    total_listings INT DEFAULT 0,
-    total_sales INT DEFAULT 0,
-    total_purchases INT DEFAULT 0,
-    average_rating DECIMAL(3, 2) DEFAULT 0.00,
-    total_reviews INT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    is_restricted BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-    INDEX idx_user (user_id),
-    INDEX idx_shop (shop_id),
-    INDEX idx_verified (is_verified)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- User Wallets
-CREATE TABLE IF NOT EXISTS marketplace_wallets (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL UNIQUE,
-    available_balance DECIMAL(12, 2) DEFAULT 0.00,
-    pending_balance DECIMAL(12, 2) DEFAULT 0.00,
-    held_balance DECIMAL(12, 2) DEFAULT 0.00,
-    total_funded DECIMAL(12, 2) DEFAULT 0.00,
-    total_withdrawn DECIMAL(12, 2) DEFAULT 0.00,
-    total_sales DECIMAL(12, 2) DEFAULT 0.00,
-    total_purchases DECIMAL(12, 2) DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_listing_images`
+--
 
--- Wallet Transactions
-CREATE TABLE IF NOT EXISTS marketplace_wallet_transactions (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    wallet_id INT NOT NULL,
-    user_id INT NOT NULL,
-    transaction_type ENUM('fund', 'withdraw', 'purchase_hold', 'purchase_release', 'sale_pending', 'sale_complete', 'refund') NOT NULL,
-    amount DECIMAL(12, 2) NOT NULL,
-    available_balance_after DECIMAL(12, 2) NOT NULL,
-    pending_balance_after DECIMAL(12, 2) NOT NULL,
-    held_balance_after DECIMAL(12, 2) NOT NULL,
-    order_id INT NULL,
-    reference_number VARCHAR(50) UNIQUE,
-    description TEXT,
-    metadata JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (wallet_id) REFERENCES marketplace_wallets(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_wallet (wallet_id),
-    INDEX idx_user (user_id),
-    INDEX idx_type (transaction_type),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_listing_images` (
+  `id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `image_url` varchar(500) NOT NULL,
+  `display_order` int(11) DEFAULT 0,
+  `is_primary` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Marketplace Listings
-CREATE TABLE IF NOT EXISTS marketplace_listings (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    shop_id INT NOT NULL,
-    user_id INT NOT NULL,
-    inventory_id INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    listing_type ENUM('fixed_price', 'negotiable', 'auction') DEFAULT 'fixed_price',
-    price DECIMAL(10, 2) NOT NULL,
-    original_price DECIMAL(10, 2) NULL,
-    min_offer_price DECIMAL(10, 2) NULL,
-    auction_start_price DECIMAL(10, 2) NULL,
-    auction_reserve_price DECIMAL(10, 2) NULL,
-    auction_ends_at TIMESTAMP NULL,
-    current_bid DECIMAL(10, 2) NULL,
-    highest_bidder_id INT NULL,
-    phone_model VARCHAR(255),
-    phone_brand VARCHAR(100),
-    phone_condition ENUM('new', 'like_new', 'good', 'fair', 'poor') NOT NULL,
-    phone_storage VARCHAR(50),
-    phone_color VARCHAR(50),
-    status ENUM('active', 'sold', 'pending', 'expired', 'removed', 'suspended') DEFAULT 'active',
-    is_featured BOOLEAN DEFAULT FALSE,
-    views_count INT DEFAULT 0,
-    inquiries_count INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NULL,
-    sold_at TIMESTAMP NULL,
-    FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (inventory_id) REFERENCES inventory(id) ON DELETE CASCADE,
-    FOREIGN KEY (highest_bidder_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_status (status),
-    INDEX idx_shop (shop_id),
-    INDEX idx_user (user_id),
-    INDEX idx_listing_type (listing_type),
-    INDEX idx_created (created_at),
-    INDEX idx_price (price)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- Listing Images
-CREATE TABLE IF NOT EXISTS marketplace_listing_images (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    listing_id INT NOT NULL,
-    image_url VARCHAR(500) NOT NULL,
-    display_order INT DEFAULT 0,
-    is_primary BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    INDEX idx_listing (listing_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_listing_views`
+--
 
--- Listing Views
-CREATE TABLE IF NOT EXISTS marketplace_listing_views (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    listing_id INT NOT NULL,
-    user_id INT NULL,
-    ip_address VARCHAR(45),
-    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_listing (listing_id),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_listing_views` (
+  `id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `viewed_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Favorites
-CREATE TABLE IF NOT EXISTS marketplace_favorites (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    listing_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_favorite (user_id, listing_id),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- Marketplace Orders
-CREATE TABLE IF NOT EXISTS marketplace_orders (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    order_number VARCHAR(50) UNIQUE NOT NULL,
-    listing_id INT NOT NULL,
-    seller_id INT NOT NULL,
-    seller_shop_id INT NOT NULL,
-    buyer_id INT NOT NULL,
-    buyer_shop_id INT NOT NULL,
-    phone_model VARCHAR(255),
-    agreed_price DECIMAL(10, 2) NOT NULL,
-    escrow_status ENUM('pending_payment', 'funds_held', 'funds_released', 'refunded', 'disputed') DEFAULT 'pending_payment',
-    order_status ENUM('pending', 'paid', 'shipped', 'delivered', 'completed', 'cancelled', 'disputed') DEFAULT 'pending',
-    shipping_method VARCHAR(100),
-    tracking_number VARCHAR(100),
-    delivery_address TEXT,
-    delivery_notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    paid_at TIMESTAMP NULL,
-    shipped_at TIMESTAMP NULL,
-    delivered_at TIMESTAMP NULL,
-    completed_at TIMESTAMP NULL,
-    cancelled_at TIMESTAMP NULL,
-    cancellation_reason TEXT,
-    cancelled_by INT NULL,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (seller_shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-    FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (buyer_shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-    FOREIGN KEY (cancelled_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_seller (seller_id),
-    INDEX idx_buyer (buyer_id),
-    INDEX idx_status (order_status),
-    INDEX idx_escrow (escrow_status),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_messages`
+--
 
--- Order History
-CREATE TABLE IF NOT EXISTS marketplace_order_history (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT NOT NULL,
-    status_from VARCHAR(50),
-    status_to VARCHAR(50) NOT NULL,
-    changed_by INT NULL,
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES marketplace_orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_order (order_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_messages` (
+  `id` int(11) NOT NULL,
+  `conversation_id` int(11) NOT NULL,
+  `sender_id` int(11) NOT NULL,
+  `receiver_id` int(11) NOT NULL,
+  `message` text NOT NULL,
+  `is_offer` tinyint(1) DEFAULT 0,
+  `offer_amount` decimal(10,2) DEFAULT NULL,
+  `offer_status` enum('pending','accepted','rejected','expired') DEFAULT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Conversations
-CREATE TABLE IF NOT EXISTS marketplace_conversations (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    listing_id INT NOT NULL,
-    buyer_id INT NOT NULL,
-    seller_id INT NOT NULL,
-    is_archived_by_buyer BOOLEAN DEFAULT FALSE,
-    is_archived_by_seller BOOLEAN DEFAULT FALSE,
-    last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_conversation (listing_id, buyer_id),
-    INDEX idx_buyer (buyer_id),
-    INDEX idx_seller (seller_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- Messages
-CREATE TABLE IF NOT EXISTS marketplace_messages (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    conversation_id INT NOT NULL,
-    sender_id INT NOT NULL,
-    receiver_id INT NOT NULL,
-    message TEXT NOT NULL,
-    is_offer BOOLEAN DEFAULT FALSE,
-    offer_amount DECIMAL(10, 2) NULL,
-    offer_status ENUM('pending', 'accepted', 'rejected', 'expired') NULL,
-    is_read BOOLEAN DEFAULT FALSE,
-    read_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (conversation_id) REFERENCES marketplace_conversations(id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_conversation (conversation_id),
-    INDEX idx_receiver_unread (receiver_id, is_read),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_orders`
+--
 
--- Auction Bids
-CREATE TABLE IF NOT EXISTS marketplace_auction_bids (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    listing_id INT NOT NULL,
-    bidder_id INT NOT NULL,
-    bid_amount DECIMAL(10, 2) NOT NULL,
-    is_winning BOOLEAN DEFAULT FALSE,
-    is_auto_bid BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    FOREIGN KEY (bidder_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_listing (listing_id),
-    INDEX idx_bidder (bidder_id),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_orders` (
+  `id` int(11) NOT NULL,
+  `order_number` varchar(50) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `seller_id` int(11) NOT NULL,
+  `seller_shop_id` int(11) NOT NULL,
+  `buyer_id` int(11) NOT NULL,
+  `buyer_shop_id` int(11) NOT NULL,
+  `phone_model` varchar(255) DEFAULT NULL,
+  `agreed_price` decimal(10,2) NOT NULL,
+  `escrow_status` enum('pending_payment','funds_held','funds_released','refunded','disputed') DEFAULT 'pending_payment',
+  `order_status` enum('pending','paid','shipped','delivered','completed','cancelled','disputed') DEFAULT 'pending',
+  `delivery_status` enum('pending','shipped','received') DEFAULT 'pending',
+  `shipping_method` varchar(100) DEFAULT NULL,
+  `tracking_number` varchar(100) DEFAULT NULL,
+  `delivery_address` text DEFAULT NULL,
+  `delivery_notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `paid_at` timestamp NULL DEFAULT NULL,
+  `shipped_at` timestamp NULL DEFAULT NULL,
+  `delivered_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `cancelled_at` timestamp NULL DEFAULT NULL,
+  `cancellation_reason` text DEFAULT NULL,
+  `cancelled_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Reviews
-CREATE TABLE IF NOT EXISTS marketplace_reviews (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT NOT NULL UNIQUE,
-    listing_id INT NOT NULL,
-    reviewer_id INT NOT NULL,
-    reviewed_user_id INT NOT NULL,
-    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-    review_text TEXT,
-    seller_response TEXT NULL,
-    seller_responded_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES marketplace_orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewed_user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_reviewed_user (reviewed_user_id),
-    INDEX idx_rating (rating)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- Kora Payment References
-CREATE TABLE IF NOT EXISTS kora_payment_references (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    wallet_transaction_id INT NULL,
-    kora_reference VARCHAR(100) UNIQUE NOT NULL,
-    kora_transaction_id VARCHAR(100) UNIQUE,
-    transaction_type ENUM('pay_in', 'payout') NOT NULL,
-    amount DECIMAL(12, 2) NOT NULL,
-    currency VARCHAR(3) DEFAULT 'NGN',
-    status ENUM('pending', 'processing', 'success', 'failed', 'cancelled') DEFAULT 'pending',
-    payment_method VARCHAR(50),
-    bank_code VARCHAR(10),
-    account_number VARCHAR(20),
-    account_name VARCHAR(255),
-    webhook_received_at TIMESTAMP NULL,
-    webhook_data JSON,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (wallet_transaction_id) REFERENCES marketplace_wallet_transactions(id) ON DELETE SET NULL,
-    INDEX idx_kora_reference (kora_reference),
-    INDEX idx_status (status),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_order_history`
+--
 
--- Withdrawal Requests
-CREATE TABLE IF NOT EXISTS marketplace_withdrawal_requests (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    wallet_id INT NOT NULL,
-    kora_payment_id INT NULL,
-    amount DECIMAL(12, 2) NOT NULL,
-    bank_name VARCHAR(100) NOT NULL,
-    bank_code VARCHAR(10) NOT NULL,
-    account_number VARCHAR(20) NOT NULL,
-    account_name VARCHAR(255) NOT NULL,
-    status ENUM('pending', 'processing', 'completed', 'failed', 'cancelled') DEFAULT 'pending',
-    requires_approval BOOLEAN DEFAULT FALSE,
-    approved_by INT NULL,
-    approved_at TIMESTAMP NULL,
-    failure_reason TEXT,
-    retry_count INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (wallet_id) REFERENCES marketplace_wallets(id) ON DELETE CASCADE,
-    FOREIGN KEY (kora_payment_id) REFERENCES kora_payment_references(id) ON DELETE SET NULL,
-    FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_user (user_id),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_order_history` (
+  `id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `status_from` varchar(50) DEFAULT NULL,
+  `status_to` varchar(50) NOT NULL,
+  `changed_by` int(11) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Identity Verifications
-CREATE TABLE IF NOT EXISTS marketplace_identity_verifications (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL UNIQUE,
-    is_verified BOOLEAN DEFAULT FALSE,
-    verification_level ENUM('none', 'basic', 'advanced') DEFAULT 'none',
-    verification_type ENUM('bvn', 'nin', 'vnin', 'passport', 'voters_card') NOT NULL,
-    kora_verification_id VARCHAR(100) UNIQUE,
-    kora_reference VARCHAR(100) UNIQUE,
-    id_number VARCHAR(255),
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    date_of_birth DATE,
-    verification_status ENUM('pending', 'success', 'failed', 'expired') DEFAULT 'pending',
-    match_score DECIMAL(5, 2),
-    verification_data JSON,
-    selfie_image_path VARCHAR(500),
-    facial_match_performed BOOLEAN DEFAULT FALSE,
-    facial_match_score DECIMAL(5, 2),
-    user_consent_given BOOLEAN DEFAULT FALSE,
-    consent_timestamp TIMESTAMP NULL,
-    verified_at TIMESTAMP NULL,
-    expires_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user (user_id),
-    INDEX idx_status (verification_status),
-    INDEX idx_verified (is_verified)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- Verification Attempts
-CREATE TABLE IF NOT EXISTS marketplace_verification_attempts (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    verification_type ENUM('bvn', 'nin', 'vnin', 'passport', 'voters_card') NOT NULL,
-    attempt_status ENUM('success', 'failed', 'error') NOT NULL,
-    kora_reference VARCHAR(100),
-    error_message TEXT,
-    response_data JSON,
-    verification_cost DECIMAL(10, 2),
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user (user_id),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_profiles`
+--
 
--- Restrictions
-CREATE TABLE IF NOT EXISTS marketplace_restrictions (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    restricted_by INT NOT NULL,
-    restriction_type ENUM('listing_banned', 'buying_banned', 'messaging_banned', 'full_ban') NOT NULL,
-    reason TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    starts_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    lifted_at TIMESTAMP NULL,
-    lifted_by INT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (restricted_by) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (lifted_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_user (user_id),
-    INDEX idx_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_profiles` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `shop_id` int(11) DEFAULT NULL,
+  `display_name` varchar(100) NOT NULL,
+  `bio` text DEFAULT NULL,
+  `profile_image` varchar(500) DEFAULT NULL,
+  `is_verified` tinyint(1) DEFAULT 0,
+  `verification_level` enum('none','basic','advanced') DEFAULT 'none',
+  `total_listings` int(11) DEFAULT 0,
+  `total_sales` int(11) DEFAULT 0,
+  `total_purchases` int(11) DEFAULT 0,
+  `average_rating` decimal(3,2) DEFAULT 0.00,
+  `total_reviews` int(11) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `is_restricted` tinyint(1) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Reports
-CREATE TABLE IF NOT EXISTS marketplace_reports (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    reported_by INT NOT NULL,
-    report_type ENUM('listing', 'user', 'message') NOT NULL,
-    listing_id INT NULL,
-    reported_user_id INT NULL,
-    message_id INT NULL,
-    reason ENUM('scam', 'inappropriate', 'fake_listing', 'harassment', 'other') NOT NULL,
-    description TEXT,
-    status ENUM('pending', 'reviewing', 'resolved', 'dismissed') DEFAULT 'pending',
-    reviewed_by INT NULL,
-    resolution_notes TEXT,
-    action_taken VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    reviewed_at TIMESTAMP NULL,
-    FOREIGN KEY (reported_by) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (listing_id) REFERENCES marketplace_listings(id) ON DELETE SET NULL,
-    FOREIGN KEY (reported_user_id) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (message_id) REFERENCES marketplace_messages(id) ON DELETE SET NULL,
-    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_status (status),
-    INDEX idx_type (report_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- --------------------------------------------------------
 
--- Rate Limiting
-CREATE TABLE IF NOT EXISTS rate_limit_log (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    action VARCHAR(50) NOT NULL,
-    ip_address VARCHAR(45),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_user_action (user_id, action, created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+--
+-- Table structure for table `marketplace_reports`
+--
 
--- Fraud Alerts
-CREATE TABLE IF NOT EXISTS fraud_alerts (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    transaction_type VARCHAR(50),
-    amount DECIMAL(12, 2),
-    flags JSON,
-    status ENUM('pending_review', 'cleared', 'confirmed_fraud') DEFAULT 'pending_review',
-    reviewed_by INT NULL,
-    reviewed_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_status (status),
-    INDEX idx_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `marketplace_reports` (
+  `id` int(11) NOT NULL,
+  `reported_by` int(11) NOT NULL,
+  `report_type` enum('listing','user','message') NOT NULL,
+  `listing_id` int(11) DEFAULT NULL,
+  `reported_user_id` int(11) DEFAULT NULL,
+  `message_id` int(11) DEFAULT NULL,
+  `reason` enum('scam','inappropriate','fake_listing','harassment','other') NOT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('pending','reviewing','resolved','dismissed') DEFAULT 'pending',
+  `reviewed_by` int(11) DEFAULT NULL,
+  `resolution_notes` text DEFAULT NULL,
+  `action_taken` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `reviewed_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-SET FOREIGN_KEY_CHECKS = 1;
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `marketplace_restrictions`
+--
+
+CREATE TABLE `marketplace_restrictions` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `restricted_by` int(11) NOT NULL,
+  `restriction_type` enum('listing_banned','buying_banned','messaging_banned','full_ban') NOT NULL,
+  `reason` text NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `starts_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `lifted_at` timestamp NULL DEFAULT NULL,
+  `lifted_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `marketplace_reviews`
+--
+
+CREATE TABLE `marketplace_reviews` (
+  `id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `listing_id` int(11) NOT NULL,
+  `reviewer_id` int(11) NOT NULL,
+  `reviewed_user_id` int(11) NOT NULL,
+  `rating` int(11) NOT NULL CHECK (`rating` between 1 and 5),
+  `review_text` text DEFAULT NULL,
+  `seller_response` text DEFAULT NULL,
+  `seller_responded_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `marketplace_verification_attempts`
+--
+
+CREATE TABLE `marketplace_verification_attempts` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `verification_type` enum('bvn','nin','vnin','passport','voters_card') NOT NULL,
+  `attempt_status` enum('success','failed','error') NOT NULL,
+  `kora_reference` varchar(100) DEFAULT NULL,
+  `error_message` text DEFAULT NULL,
+  `response_data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`response_data`)),
+  `verification_cost` decimal(10,2) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `marketplace_wallets`
+--
+
+CREATE TABLE `marketplace_wallets` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `available_balance` decimal(12,2) DEFAULT 0.00,
+  `pending_balance` decimal(12,2) DEFAULT 0.00,
+  `held_balance` decimal(12,2) DEFAULT 0.00,
+  `total_funded` decimal(12,2) DEFAULT 0.00,
+  `total_withdrawn` decimal(12,2) DEFAULT 0.00,
+  `total_sales` decimal(12,2) DEFAULT 0.00,
+  `total_purchases` decimal(12,2) DEFAULT 0.00,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `marketplace_wallet_transactions`
+--
+
+CREATE TABLE `marketplace_wallet_transactions` (
+  `id` int(11) NOT NULL,
+  `wallet_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `transaction_type` enum('fund','withdraw','purchase_hold','purchase_release','sale_pending','sale_complete','refund','purchase_refund','sale_cancelled') DEFAULT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `available_balance_after` decimal(12,2) NOT NULL,
+  `pending_balance_after` decimal(12,2) NOT NULL,
+  `held_balance_after` decimal(12,2) NOT NULL,
+  `order_id` int(11) DEFAULT NULL,
+  `reference_number` varchar(50) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `marketplace_withdrawal_requests`
+--
+
+CREATE TABLE `marketplace_withdrawal_requests` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `wallet_id` int(11) NOT NULL,
+  `kora_payment_id` int(11) DEFAULT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `bank_name` varchar(100) NOT NULL,
+  `bank_code` varchar(10) NOT NULL,
+  `account_number` varchar(20) NOT NULL,
+  `account_name` varchar(255) NOT NULL,
+  `status` enum('pending','processing','completed','failed','cancelled') DEFAULT 'pending',
+  `requires_approval` tinyint(1) DEFAULT 0,
+  `approved_by` int(11) DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `failure_reason` text DEFAULT NULL,
+  `retry_count` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `completed_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `order_disputes`
+--
+
+CREATE TABLE `order_disputes` (
+  `id` int(11) NOT NULL,
+  `order_id` int(11) NOT NULL,
+  `reporter_id` int(11) NOT NULL,
+  `reported_id` int(11) NOT NULL,
+  `issue_type` enum('not_shipped','wrong_item','damaged','not_as_described','payment_issue','other') NOT NULL,
+  `description` text NOT NULL,
+  `status` enum('open','under_review','resolved','closed') DEFAULT 'open',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `profit_records`
+--
+
+CREATE TABLE `profit_records` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL COMMENT 'Which shop this profit record belongs to',
+  `shop_id` int(11) DEFAULT NULL,
+  `date` date NOT NULL COMMENT 'Date of the profit record',
+  `daily_profit` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Total profit for this day',
+  `transaction_count` int(11) NOT NULL DEFAULT 0 COMMENT 'Number of transactions this day',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `rate_limit_log`
+--
+
+CREATE TABLE `rate_limit_log` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reports`
+--
+
+CREATE TABLE `reports` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) DEFAULT NULL,
+  `generated_by` int(11) NOT NULL,
+  `inventory_value` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_expenses` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `business_capital` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `cash_in_hand` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_debt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_profit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `security_logs`
+--
+
+CREATE TABLE `security_logs` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) DEFAULT NULL COMMENT 'Which shop this security event relates to (NULL for unknown users)',
+  `event_type` enum('failed_login','suspicious_activity','session_hijack','brute_force','unauthorized_access') NOT NULL,
+  `username` varchar(100) DEFAULT NULL COMMENT 'Username involved in the event',
+  `user_id` int(11) DEFAULT NULL COMMENT 'User ID if authenticated',
+  `ip_address` varchar(45) NOT NULL COMMENT 'IPv4 or IPv6 address',
+  `user_agent` text DEFAULT NULL COMMENT 'Browser/client information',
+  `details` text DEFAULT NULL COMMENT 'Additional event details in JSON format',
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sessions`
+--
+
+CREATE TABLE `sessions` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `user_id` int(11) NOT NULL,
+  `session_token` varchar(255) NOT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `last_activity` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `shops`
+--
+
+CREATE TABLE `shops` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL COMMENT 'Parent business/tenant that owns this branch',
+  `shop_name` varchar(100) NOT NULL COMMENT 'Branch name (e.g., Lagos Main Branch)',
+  `shop_address` text DEFAULT NULL COMMENT 'Physical address of this branch',
+  `shop_phone` varchar(20) DEFAULT NULL COMMENT 'Branch contact phone number',
+  `shop_email` varchar(100) DEFAULT NULL COMMENT 'Branch email (optional, can differ from tenant email)',
+  `business_capital` decimal(15,2) DEFAULT 0.00 COMMENT 'Capital allocated to this branch',
+  `low_stock_threshold` int(11) DEFAULT 5,
+  `status` enum('active','suspended') DEFAULT 'active' COMMENT 'Branch operational status',
+  `is_main_branch` tinyint(1) DEFAULT 0 COMMENT '1 if this is the primary/first branch',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Physical branch locations under each tenant (business owner)';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `system_alerts`
+--
+
+CREATE TABLE `system_alerts` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) DEFAULT NULL,
+  `type` varchar(50) NOT NULL COMMENT 'Alert category: security, database, performance, business',
+  `severity` enum('critical','warning','info') NOT NULL DEFAULT 'info',
+  `message` varchar(255) NOT NULL COMMENT 'Brief alert description',
+  `details` text DEFAULT NULL COMMENT 'Additional alert information in JSON format',
+  `resolved` tinyint(1) DEFAULT 0 COMMENT 'Whether alert has been addressed',
+  `resolved_at` datetime DEFAULT NULL,
+  `resolved_by` int(11) DEFAULT NULL COMMENT 'User ID who resolved the alert',
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `system_metrics`
+--
+
+CREATE TABLE `system_metrics` (
+  `id` int(11) NOT NULL,
+  `metric_type` varchar(100) NOT NULL COMMENT 'Type of metric: db_size, table_stats, api_performance, etc.',
+  `metric_data` text NOT NULL COMMENT 'Metric values in JSON format',
+  `cached_at` datetime DEFAULT current_timestamp(),
+  `expires_at` datetime NOT NULL COMMENT 'Cache expiration time (5 minutes from cached_at)'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tenants`
+--
+
+CREATE TABLE `tenants` (
+  `id` int(11) NOT NULL,
+  `shop_name` varchar(100) NOT NULL,
+  `shop_address` text DEFAULT NULL,
+  `shop_phone` varchar(20) NOT NULL,
+  `shop_email` varchar(100) NOT NULL,
+  `business_capital` decimal(15,2) DEFAULT 0.00,
+  `status` enum('active','suspended','pending','trial') DEFAULT 'trial',
+  `plan_type` enum('free_trial','basic','premium','enterprise') DEFAULT 'free_trial',
+  `trial_ends_at` timestamp NULL DEFAULT NULL,
+  `subscription_ends_at` timestamp NULL DEFAULT NULL,
+  `email_verified` tinyint(1) DEFAULT 0,
+  `verification_token` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `transactions`
+--
+
+CREATE TABLE `transactions` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
+  `customer_name` varchar(100) DEFAULT NULL,
+  `customer_phone` varchar(20) DEFAULT NULL,
+  `customer_address` text DEFAULT NULL,
+  `total_amount` decimal(10,2) NOT NULL,
+  `payment_method` enum('cash','card','transfer','mixed') NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `transaction_items`
+--
+
+CREATE TABLE `transaction_items` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) DEFAULT NULL,
+  `transaction_id` int(11) NOT NULL,
+  `inventory_id` int(11) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `type` enum('sale','trade_in') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) DEFAULT NULL COMMENT 'Branch assignment: NULL=Owner (all branches), Non-NULL=Specific branch only',
+  `username` varchar(50) NOT NULL,
+  `full_name` varchar(255) DEFAULT NULL,
+  `email` varchar(100) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `avatar_color` varchar(7) NOT NULL DEFAULT '#3b82f6',
+  `password_hash` varchar(255) NOT NULL,
+  `role` enum('superadmin','admin','user') NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `username_last_changed` timestamp NULL DEFAULT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `reset_token` varchar(64) DEFAULT NULL,
+  `reset_token_expires` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_activity_logs_tenant_id` (`tenant_id`),
+  ADD KEY `idx_activity_logs_shop` (`shop_id`);
+
+--
+-- Indexes for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_date` (`date`),
+  ADD KEY `idx_category` (`category`),
+  ADD KEY `idx_created_by` (`created_by`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_expenses_shop` (`shop_id`);
+
+--
+-- Indexes for table `expense_records`
+--
+ALTER TABLE `expense_records`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_tenant_date` (`tenant_id`,`date`) COMMENT 'One expense record per tenant per day',
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_date` (`date`),
+  ADD KEY `idx_expense_records_tenant_date` (`tenant_id`,`date`),
+  ADD KEY `idx_expense_records_shop` (`shop_id`);
+
+--
+-- Indexes for table `fraud_alerts`
+--
+ALTER TABLE `fraud_alerts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `reviewed_by` (`reviewed_by`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_user` (`user_id`);
+
+--
+-- Indexes for table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `idx_imei` (`imei`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_brand_model` (`brand`,`model`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_shop_id` (`shop_id`),
+  ADD KEY `idx_inventory_shop_status` (`shop_id`,`status`) COMMENT 'Composite for shop inventory queries',
+  ADD KEY `idx_vendor` (`vendor`);
+
+--
+-- Indexes for table `kora_payment_references`
+--
+ALTER TABLE `kora_payment_references`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `kora_reference` (`kora_reference`),
+  ADD UNIQUE KEY `kora_transaction_id` (`kora_transaction_id`),
+  ADD KEY `wallet_transaction_id` (`wallet_transaction_id`),
+  ADD KEY `idx_kora_reference` (`kora_reference`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_user` (`user_id`);
+
+--
+-- Indexes for table `marketplace_auction_bids`
+--
+ALTER TABLE `marketplace_auction_bids`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_listing` (`listing_id`),
+  ADD KEY `idx_bidder` (`bidder_id`),
+  ADD KEY `idx_created` (`created_at`);
+
+--
+-- Indexes for table `marketplace_conversations`
+--
+ALTER TABLE `marketplace_conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_conversation` (`listing_id`,`buyer_id`),
+  ADD KEY `idx_buyer` (`buyer_id`),
+  ADD KEY `idx_seller` (`seller_id`),
+  ADD KEY `order_id` (`order_id`);
+
+--
+-- Indexes for table `marketplace_favorites`
+--
+ALTER TABLE `marketplace_favorites`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_favorite` (`user_id`,`listing_id`),
+  ADD KEY `listing_id` (`listing_id`),
+  ADD KEY `idx_user` (`user_id`);
+
+--
+-- Indexes for table `marketplace_identity_verifications`
+--
+ALTER TABLE `marketplace_identity_verifications`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`),
+  ADD UNIQUE KEY `kora_verification_id` (`kora_verification_id`),
+  ADD UNIQUE KEY `kora_reference` (`kora_reference`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_status` (`verification_status`),
+  ADD KEY `idx_verified` (`is_verified`);
+
+--
+-- Indexes for table `marketplace_interests`
+--
+ALTER TABLE `marketplace_interests`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`,`listing_id`),
+  ADD KEY `listing_id` (`listing_id`);
+
+--
+-- Indexes for table `marketplace_listings`
+--
+ALTER TABLE `marketplace_listings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `inventory_id` (`inventory_id`),
+  ADD KEY `highest_bidder_id` (`highest_bidder_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_shop` (`shop_id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_listing_type` (`listing_type`),
+  ADD KEY `idx_created` (`created_at`),
+  ADD KEY `idx_price` (`price`);
+
+--
+-- Indexes for table `marketplace_listing_images`
+--
+ALTER TABLE `marketplace_listing_images`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_listing` (`listing_id`);
+
+--
+-- Indexes for table `marketplace_listing_views`
+--
+ALTER TABLE `marketplace_listing_views`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_listing` (`listing_id`),
+  ADD KEY `idx_user` (`user_id`);
+
+--
+-- Indexes for table `marketplace_messages`
+--
+ALTER TABLE `marketplace_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sender_id` (`sender_id`),
+  ADD KEY `idx_conversation` (`conversation_id`),
+  ADD KEY `idx_receiver_unread` (`receiver_id`,`is_read`),
+  ADD KEY `idx_created` (`created_at`);
+
+--
+-- Indexes for table `marketplace_orders`
+--
+ALTER TABLE `marketplace_orders`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `order_number` (`order_number`),
+  ADD KEY `listing_id` (`listing_id`),
+  ADD KEY `seller_shop_id` (`seller_shop_id`),
+  ADD KEY `buyer_shop_id` (`buyer_shop_id`),
+  ADD KEY `cancelled_by` (`cancelled_by`),
+  ADD KEY `idx_seller` (`seller_id`),
+  ADD KEY `idx_buyer` (`buyer_id`),
+  ADD KEY `idx_status` (`order_status`),
+  ADD KEY `idx_escrow` (`escrow_status`),
+  ADD KEY `idx_created` (`created_at`);
+
+--
+-- Indexes for table `marketplace_order_history`
+--
+ALTER TABLE `marketplace_order_history`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `changed_by` (`changed_by`),
+  ADD KEY `idx_order` (`order_id`);
+
+--
+-- Indexes for table `marketplace_profiles`
+--
+ALTER TABLE `marketplace_profiles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_shop_unique` (`shop_id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_shop` (`shop_id`),
+  ADD KEY `idx_verified` (`is_verified`);
+
+--
+-- Indexes for table `marketplace_reports`
+--
+ALTER TABLE `marketplace_reports`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `reported_by` (`reported_by`),
+  ADD KEY `listing_id` (`listing_id`),
+  ADD KEY `reported_user_id` (`reported_user_id`),
+  ADD KEY `message_id` (`message_id`),
+  ADD KEY `reviewed_by` (`reviewed_by`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_type` (`report_type`);
+
+--
+-- Indexes for table `marketplace_restrictions`
+--
+ALTER TABLE `marketplace_restrictions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `restricted_by` (`restricted_by`),
+  ADD KEY `lifted_by` (`lifted_by`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_active` (`is_active`);
+
+--
+-- Indexes for table `marketplace_reviews`
+--
+ALTER TABLE `marketplace_reviews`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `order_id` (`order_id`),
+  ADD KEY `listing_id` (`listing_id`),
+  ADD KEY `reviewer_id` (`reviewer_id`),
+  ADD KEY `idx_reviewed_user` (`reviewed_user_id`),
+  ADD KEY `idx_rating` (`rating`);
+
+--
+-- Indexes for table `marketplace_verification_attempts`
+--
+ALTER TABLE `marketplace_verification_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_created` (`created_at`);
+
+--
+-- Indexes for table `marketplace_wallets`
+--
+ALTER TABLE `marketplace_wallets`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`),
+  ADD KEY `idx_user` (`user_id`);
+
+--
+-- Indexes for table `marketplace_wallet_transactions`
+--
+ALTER TABLE `marketplace_wallet_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `reference_number` (`reference_number`),
+  ADD KEY `idx_wallet` (`wallet_id`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_type` (`transaction_type`),
+  ADD KEY `idx_created` (`created_at`);
+
+--
+-- Indexes for table `marketplace_withdrawal_requests`
+--
+ALTER TABLE `marketplace_withdrawal_requests`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `wallet_id` (`wallet_id`),
+  ADD KEY `kora_payment_id` (`kora_payment_id`),
+  ADD KEY `approved_by` (`approved_by`),
+  ADD KEY `idx_user` (`user_id`),
+  ADD KEY `idx_status` (`status`);
+
+--
+-- Indexes for table `order_disputes`
+--
+ALTER TABLE `order_disputes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_order_id` (`order_id`),
+  ADD KEY `idx_reporter_id` (`reporter_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `reported_id` (`reported_id`);
+
+--
+-- Indexes for table `profit_records`
+--
+ALTER TABLE `profit_records`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_tenant_date` (`tenant_id`,`date`) COMMENT 'One profit record per tenant per day',
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_date` (`date`),
+  ADD KEY `idx_profit_records_tenant_date` (`tenant_id`,`date`),
+  ADD KEY `idx_profit_records_shop` (`shop_id`);
+
+--
+-- Indexes for table `rate_limit_log`
+--
+ALTER TABLE `rate_limit_log`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_action` (`user_id`,`action`,`created_at`);
+
+--
+-- Indexes for table `reports`
+--
+ALTER TABLE `reports`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `generated_by` (`generated_by`),
+  ADD KEY `idx_tenant_id` (`tenant_id`);
+
+--
+-- Indexes for table `security_logs`
+--
+ALTER TABLE `security_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_event_type` (`event_type`),
+  ADD KEY `idx_username` (`username`),
+  ADD KEY `idx_ip_address` (`ip_address`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `idx_tenant_id` (`tenant_id`);
+
+--
+-- Indexes for table `sessions`
+--
+ALTER TABLE `sessions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_last_activity` (`last_activity`),
+  ADD KEY `idx_tenant_id` (`tenant_id`);
+
+--
+-- Indexes for table `shops`
+--
+ALTER TABLE `shops`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_is_main_branch` (`is_main_branch`),
+  ADD KEY `idx_shops_tenant_status` (`tenant_id`,`status`) COMMENT 'Composite index for active shops lookup';
+
+--
+-- Indexes for table `system_alerts`
+--
+ALTER TABLE `system_alerts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_severity` (`severity`),
+  ADD KEY `idx_resolved` (`resolved`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `resolved_by` (`resolved_by`),
+  ADD KEY `idx_tenant_id` (`tenant_id`);
+
+--
+-- Indexes for table `system_metrics`
+--
+ALTER TABLE `system_metrics`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_metric_type` (`metric_type`),
+  ADD KEY `idx_metric_type` (`metric_type`),
+  ADD KEY `idx_expires_at` (`expires_at`);
+
+--
+-- Indexes for table `tenants`
+--
+ALTER TABLE `tenants`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `shop_email` (`shop_email`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_plan_type` (`plan_type`),
+  ADD KEY `idx_trial_ends_at` (`trial_ends_at`),
+  ADD KEY `idx_email_verified` (`email_verified`);
+
+--
+-- Indexes for table `transactions`
+--
+ALTER TABLE `transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_created_at` (`created_at`),
+  ADD KEY `idx_user_id` (`user_id`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_transactions_shop` (`shop_id`);
+
+--
+-- Indexes for table `transaction_items`
+--
+ALTER TABLE `transaction_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `inventory_id` (`inventory_id`),
+  ADD KEY `idx_transaction_id` (`transaction_id`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_transaction_items_shop` (`shop_id`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `idx_username` (`username`),
+  ADD KEY `idx_role` (`role`),
+  ADD KEY `idx_tenant_id` (`tenant_id`),
+  ADD KEY `idx_reset_token` (`reset_token`),
+  ADD KEY `idx_users_username` (`username`),
+  ADD KEY `idx_users_email` (`email`),
+  ADD KEY `idx_shop_id` (`shop_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `expenses`
+--
+ALTER TABLE `expenses`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `expense_records`
+--
+ALTER TABLE `expense_records`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `fraud_alerts`
+--
+ALTER TABLE `fraud_alerts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `inventory`
+--
+ALTER TABLE `inventory`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `kora_payment_references`
+--
+ALTER TABLE `kora_payment_references`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_auction_bids`
+--
+ALTER TABLE `marketplace_auction_bids`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_conversations`
+--
+ALTER TABLE `marketplace_conversations`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_favorites`
+--
+ALTER TABLE `marketplace_favorites`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_identity_verifications`
+--
+ALTER TABLE `marketplace_identity_verifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_interests`
+--
+ALTER TABLE `marketplace_interests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_listings`
+--
+ALTER TABLE `marketplace_listings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_listing_images`
+--
+ALTER TABLE `marketplace_listing_images`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_listing_views`
+--
+ALTER TABLE `marketplace_listing_views`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_messages`
+--
+ALTER TABLE `marketplace_messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_orders`
+--
+ALTER TABLE `marketplace_orders`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_order_history`
+--
+ALTER TABLE `marketplace_order_history`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_profiles`
+--
+ALTER TABLE `marketplace_profiles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_reports`
+--
+ALTER TABLE `marketplace_reports`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_restrictions`
+--
+ALTER TABLE `marketplace_restrictions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_reviews`
+--
+ALTER TABLE `marketplace_reviews`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_verification_attempts`
+--
+ALTER TABLE `marketplace_verification_attempts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_wallets`
+--
+ALTER TABLE `marketplace_wallets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_wallet_transactions`
+--
+ALTER TABLE `marketplace_wallet_transactions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `marketplace_withdrawal_requests`
+--
+ALTER TABLE `marketplace_withdrawal_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `order_disputes`
+--
+ALTER TABLE `order_disputes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `profit_records`
+--
+ALTER TABLE `profit_records`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `rate_limit_log`
+--
+ALTER TABLE `rate_limit_log`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `reports`
+--
+ALTER TABLE `reports`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `security_logs`
+--
+ALTER TABLE `security_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `sessions`
+--
+ALTER TABLE `sessions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `shops`
+--
+ALTER TABLE `shops`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `system_alerts`
+--
+ALTER TABLE `system_alerts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `system_metrics`
+--
+ALTER TABLE `system_metrics`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `tenants`
+--
+ALTER TABLE `tenants`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `transactions`
+--
+ALTER TABLE `transactions`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `transaction_items`
+--
+ALTER TABLE `transaction_items`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  ADD CONSTRAINT `activity_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_activity_logs_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `expenses`
+--
+ALTER TABLE `expenses`
+  ADD CONSTRAINT `expenses_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_expenses_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_expenses_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `expense_records`
+--
+ALTER TABLE `expense_records`
+  ADD CONSTRAINT `expense_records_ibfk_1` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `fraud_alerts`
+--
+ALTER TABLE `fraud_alerts`
+  ADD CONSTRAINT `fraud_alerts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fraud_alerts_ibfk_2` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD CONSTRAINT `fk_inventory_shop_id` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_inventory_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `inventory_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `kora_payment_references`
+--
+ALTER TABLE `kora_payment_references`
+  ADD CONSTRAINT `kora_payment_references_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `kora_payment_references_ibfk_2` FOREIGN KEY (`wallet_transaction_id`) REFERENCES `marketplace_wallet_transactions` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_auction_bids`
+--
+ALTER TABLE `marketplace_auction_bids`
+  ADD CONSTRAINT `marketplace_auction_bids_ibfk_1` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_auction_bids_ibfk_2` FOREIGN KEY (`bidder_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_conversations`
+--
+ALTER TABLE `marketplace_conversations`
+  ADD CONSTRAINT `marketplace_conversations_ibfk_1` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_conversations_ibfk_2` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_conversations_ibfk_3` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_conversations_ibfk_4` FOREIGN KEY (`order_id`) REFERENCES `marketplace_orders` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_favorites`
+--
+ALTER TABLE `marketplace_favorites`
+  ADD CONSTRAINT `marketplace_favorites_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_favorites_ibfk_2` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_identity_verifications`
+--
+ALTER TABLE `marketplace_identity_verifications`
+  ADD CONSTRAINT `marketplace_identity_verifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_interests`
+--
+ALTER TABLE `marketplace_interests`
+  ADD CONSTRAINT `marketplace_interests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_interests_ibfk_2` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_listings`
+--
+ALTER TABLE `marketplace_listings`
+  ADD CONSTRAINT `marketplace_listings_ibfk_1` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_listings_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_listings_ibfk_3` FOREIGN KEY (`inventory_id`) REFERENCES `inventory` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_listings_ibfk_4` FOREIGN KEY (`highest_bidder_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_listing_images`
+--
+ALTER TABLE `marketplace_listing_images`
+  ADD CONSTRAINT `marketplace_listing_images_ibfk_1` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_listing_views`
+--
+ALTER TABLE `marketplace_listing_views`
+  ADD CONSTRAINT `marketplace_listing_views_ibfk_1` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_listing_views_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_messages`
+--
+ALTER TABLE `marketplace_messages`
+  ADD CONSTRAINT `marketplace_messages_ibfk_1` FOREIGN KEY (`conversation_id`) REFERENCES `marketplace_conversations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_messages_ibfk_2` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_messages_ibfk_3` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_orders`
+--
+ALTER TABLE `marketplace_orders`
+  ADD CONSTRAINT `marketplace_orders_ibfk_1` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_orders_ibfk_2` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_orders_ibfk_3` FOREIGN KEY (`seller_shop_id`) REFERENCES `shops` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_orders_ibfk_4` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_orders_ibfk_5` FOREIGN KEY (`buyer_shop_id`) REFERENCES `shops` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_orders_ibfk_6` FOREIGN KEY (`cancelled_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_order_history`
+--
+ALTER TABLE `marketplace_order_history`
+  ADD CONSTRAINT `marketplace_order_history_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `marketplace_orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_order_history_ibfk_2` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_profiles`
+--
+ALTER TABLE `marketplace_profiles`
+  ADD CONSTRAINT `marketplace_profiles_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_profiles_ibfk_2` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_reports`
+--
+ALTER TABLE `marketplace_reports`
+  ADD CONSTRAINT `marketplace_reports_ibfk_1` FOREIGN KEY (`reported_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_reports_ibfk_2` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `marketplace_reports_ibfk_3` FOREIGN KEY (`reported_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `marketplace_reports_ibfk_4` FOREIGN KEY (`message_id`) REFERENCES `marketplace_messages` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `marketplace_reports_ibfk_5` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_restrictions`
+--
+ALTER TABLE `marketplace_restrictions`
+  ADD CONSTRAINT `marketplace_restrictions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_restrictions_ibfk_2` FOREIGN KEY (`restricted_by`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_restrictions_ibfk_3` FOREIGN KEY (`lifted_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `marketplace_reviews`
+--
+ALTER TABLE `marketplace_reviews`
+  ADD CONSTRAINT `marketplace_reviews_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `marketplace_orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_reviews_ibfk_2` FOREIGN KEY (`listing_id`) REFERENCES `marketplace_listings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_reviews_ibfk_3` FOREIGN KEY (`reviewer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_reviews_ibfk_4` FOREIGN KEY (`reviewed_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_verification_attempts`
+--
+ALTER TABLE `marketplace_verification_attempts`
+  ADD CONSTRAINT `marketplace_verification_attempts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_wallets`
+--
+ALTER TABLE `marketplace_wallets`
+  ADD CONSTRAINT `marketplace_wallets_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_wallet_transactions`
+--
+ALTER TABLE `marketplace_wallet_transactions`
+  ADD CONSTRAINT `marketplace_wallet_transactions_ibfk_1` FOREIGN KEY (`wallet_id`) REFERENCES `marketplace_wallets` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_wallet_transactions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `marketplace_withdrawal_requests`
+--
+ALTER TABLE `marketplace_withdrawal_requests`
+  ADD CONSTRAINT `marketplace_withdrawal_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_withdrawal_requests_ibfk_2` FOREIGN KEY (`wallet_id`) REFERENCES `marketplace_wallets` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `marketplace_withdrawal_requests_ibfk_3` FOREIGN KEY (`kora_payment_id`) REFERENCES `kora_payment_references` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `marketplace_withdrawal_requests_ibfk_4` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `order_disputes`
+--
+ALTER TABLE `order_disputes`
+  ADD CONSTRAINT `order_disputes_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `marketplace_orders` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_disputes_ibfk_2` FOREIGN KEY (`reporter_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_disputes_ibfk_3` FOREIGN KEY (`reported_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `profit_records`
+--
+ALTER TABLE `profit_records`
+  ADD CONSTRAINT `profit_records_ibfk_1` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `reports`
+--
+ALTER TABLE `reports`
+  ADD CONSTRAINT `fk_reports_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `reports_ibfk_1` FOREIGN KEY (`generated_by`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `security_logs`
+--
+ALTER TABLE `security_logs`
+  ADD CONSTRAINT `fk_security_logs_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `security_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `sessions`
+--
+ALTER TABLE `sessions`
+  ADD CONSTRAINT `fk_sessions_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `shops`
+--
+ALTER TABLE `shops`
+  ADD CONSTRAINT `shops_ibfk_1` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `system_alerts`
+--
+ALTER TABLE `system_alerts`
+  ADD CONSTRAINT `fk_system_alerts_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `system_alerts_ibfk_1` FOREIGN KEY (`resolved_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `transactions`
+--
+ALTER TABLE `transactions`
+  ADD CONSTRAINT `fk_transactions_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_transactions_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `transaction_items`
+--
+ALTER TABLE `transaction_items`
+  ADD CONSTRAINT `fk_transaction_items_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_transaction_items_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `transaction_items_ibfk_1` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `transaction_items_ibfk_2` FOREIGN KEY (`inventory_id`) REFERENCES `inventory` (`id`);
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `fk_users_shop_id` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_users_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON UPDATE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

@@ -2,14 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { User, MapPin, Phone, Mail, Calendar, Shield, ShieldCheck, ShieldAlert, Camera, Edit2, Save, X } from 'lucide-react';
+import { User, MapPin, Phone, Mail, Calendar, Shield, ShieldCheck, ShieldAlert, Camera, Edit2, Save, X, MessageSquare } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
+import './MarketplacePage.css';
 import './MarketplaceProfile.css';
 
 const MarketplaceProfile = () => {
-    const { user } = useAuth();
+    const { user, currentShop } = useAuth();
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [stats, setStats] = useState(null);
@@ -45,23 +46,24 @@ const MarketplaceProfile = () => {
 
     useEffect(() => {
         fetchProfile();
-    }, []);
+    }, [currentShop]);
 
     const fetchProfile = async () => {
         try {
             const [profileRes, statsRes] = await Promise.all([
-                api.get('/marketplace/profile/get_profile.php'),
-                api.get('/marketplace/profile/get_stats.php')
+                api.get('/marketplace/profile/get.php', { params: { shop_id: currentShop?.id } }),
+                api.get('/marketplace/profile/get_stats.php', { params: { shop_id: currentShop?.id } })
             ]);
 
             if (profileRes.data.success) {
                 const profileData = profileRes.data.profile;
                 setProfile(profileData);
                 setFormData({
-                    business_name: profileData.business_name || '',
-                    phone: profileData.phone || '',
-                    location: profileData.location || '',
+                    business_name: profileData.shop_name || '',
+                    phone: profileData.shop_phone || '',
+                    location: profileData.shop_address || '',
                     bio: profileData.bio || '',
+                    shop_id: currentShop?.id // Store shop_id in formData or use from context
                 });
             }
 
@@ -84,7 +86,10 @@ const MarketplaceProfile = () => {
 
     const handleSaveProfile = async () => {
         try {
-            const res = await api.post('/marketplace/profile/update_profile.php', formData);
+            const res = await api.post('/marketplace/profile/update_profile.php', {
+                ...formData,
+                shop_id: currentShop?.id
+            });
             if (res.data.success) {
                 setProfile({ ...profile, ...formData });
                 setEditing(false);
@@ -121,7 +126,7 @@ const MarketplaceProfile = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-profile-main">
+            <main className="main-content marketplace-page-main">
                 <div className="content-wrapper">
                     {/* Page Header */}
                     <div className="page-header">
@@ -241,8 +246,8 @@ const MarketplaceProfile = () => {
                                     <div className="profile-form">
                                         <div className="form-group">
                                             <label className="form-label">
-                                                <User size={16} />
-                                                Business Name
+                                                <User size={18} />
+                                                <span>Business Name</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -257,8 +262,8 @@ const MarketplaceProfile = () => {
 
                                         <div className="form-group">
                                             <label className="form-label">
-                                                <Phone size={16} />
-                                                Phone Number
+                                                <Phone size={18} />
+                                                <span>Phone Number</span>
                                             </label>
                                             <input
                                                 type="tel"
@@ -273,8 +278,8 @@ const MarketplaceProfile = () => {
 
                                         <div className="form-group">
                                             <label className="form-label">
-                                                <MapPin size={16} />
-                                                Location
+                                                <MapPin size={18} />
+                                                <span>Location</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -289,8 +294,8 @@ const MarketplaceProfile = () => {
 
                                         <div className="form-group">
                                             <label className="form-label">
-                                                <Mail size={16} />
-                                                Bio
+                                                <MessageSquare size={18} />
+                                                <span>Bio</span>
                                             </label>
                                             <textarea
                                                 name="bio"

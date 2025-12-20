@@ -126,9 +126,10 @@ try {
     }
     
     // Validate condition if provided
-    if (isset($input['condition_status']) && !in_array($input['condition_status'], ['new', 'used'])) {
+    $validConditions = ['New', 'Open Box', 'UK Used', 'Used'];
+    if (isset($input['condition_status']) && !in_array($input['condition_status'], $validConditions)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid condition']);
+        echo json_encode(['success' => false, 'error' => 'Invalid condition. Must be one of: ' . implode(', ', $validConditions)]);
         exit;
     }
     

@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import { Send, Paperclip, MoreVertical, Search } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import DeliveryActionBar from '../../components/marketplace/DeliveryActionBar';
+import ConfirmDeliveryModal from '../../components/marketplace/ConfirmDeliveryModal';
+import ReportIssueModal from '../../components/marketplace/ReportIssueModal';
 import '../admin/AdminDashboard.css';
+import './MarketplacePage.css';
 import './MarketplaceInbox.css';
 
 const MarketplaceMessages = () => {
-    const { user } = useAuth();
+    const { user, currentShop } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -18,10 +23,32 @@ const MarketplaceMessages = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [loading, setLoading] = useState(true);
     const [showMessagesOnMobile, setShowMessagesOnMobile] = useState(false);
+    const [sending, setSending] = useState(false);
+    const autoMessageSentRef = useRef(false);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+
+    // Delivery tracking state
+    const [currentOrder, setCurrentOrder] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [modalLoading, setModalLoading] = useState(false);
+
+    const filteredConversations = conversations.filter(conv => {
+        if (activeFilter === 'all') return true;
+        if (activeFilter === 'buying') return conv.buyer_id == user?.id;
+        if (activeFilter === 'selling') return conv.seller_id == user?.id;
+        return true;
+    });
+
+    // Get listing_id from URL if present
+    const queryParams = new URLSearchParams(location.search);
+    const listingIdParam = queryParams.get('listing_id');
+    const buyerIdParam = queryParams.get('buyer_id');
+    const brandParam = queryParams.get('brand');
+    const modelParam = queryParams.get('model');
 
     // Detect mobile screen size
     useEffect(() => {
@@ -38,13 +65,113 @@ const MarketplaceMessages = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Mock data for demonstration (replace with API calls)
+    // Fetch conversations
+    const fetchConversations = async (selectId = null) => {
+        try {
+            setLoading(true);
+            const shopId = currentShop?.id;
+            const response = await api.get(`/marketplace/messaging/get_conversations.php${shopId ? `?shop_id=${shopId}` : ''}`);
+            if (response.data.success) {
+                setConversations(response.data.conversations);
+
+                // If we have a conversation to auto-select
+                if (selectId) {
+                    const conv = response.data.conversations.find(c => c.conversation_id == selectId);
+                    if (conv) {
+                        setSelectedConversation(conv);
+                        fetchMessages(conv.conversation_id);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching conversations:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch messages for a conversation
+    const fetchMessages = async (conversationId) => {
+        try {
+            const response = await api.get(`/marketplace/messaging/get_messages.php?conversation_id=${conversationId}`);
+            if (response.data.success) {
+                setMessages(response.data.messages);
+            }
+        } catch (err) {
+            console.error("Error fetching messages:", err);
+        }
+    };
+
+    // Fetch order details for the selected conversation
+    const fetchOrderDetails = async (conversationId) => {
+        try {
+            const response = await api.get(`/marketplace/orders/get_by_conversation.php?conversation_id=${conversationId}`);
+            if (response.data.success && response.data.order) {
+                setCurrentOrder(response.data.order);
+            } else {
+                setCurrentOrder(null);
+            }
+        } catch (err) {
+            console.error("Error fetching order details:", err);
+            setCurrentOrder(null);
+        }
+    };
+
+    // Initialize conversation from listing_id
     useEffect(() => {
-        // TODO: Fetch conversations from API
-        const mockConversations = [];
-        setConversations(mockConversations);
-        setLoading(false);
-    }, []);
+        const initChat = async () => {
+            if (listingIdParam) {
+                try {
+                    const response = await api.post('/marketplace/messaging/initialize_conversation.php', {
+                        listing_id: listingIdParam,
+                        buyer_id: buyerIdParam
+                    });
+                    if (response.data.success) {
+                        const conversationId = response.data.conversation_id;
+
+                        // If brand and model params exist, send automatic interest message
+                        // Only send if we haven't already sent it (prevent duplicates)
+                        if (brandParam && modelParam && !autoMessageSentRef.current) {
+                            autoMessageSentRef.current = true; // Mark as sent
+                            const interestMessage = `I am interested in this ${brandParam} ${modelParam}`;
+                            try {
+                                await api.post('/marketplace/messaging/send.php', {
+                                    conversation_id: conversationId,
+                                    message: interestMessage
+                                });
+                            } catch (msgErr) {
+                                console.error("Error sending interest message:", msgErr);
+                                autoMessageSentRef.current = false; // Reset on error so user can retry
+                            }
+                        }
+
+                        // Fetch conversations and select the new one
+                        fetchConversations(conversationId);
+                    } else {
+                        fetchConversations();
+                    }
+                } catch (err) {
+                    console.error("Error initializing conversation:", err);
+                    fetchConversations();
+                }
+            } else {
+                fetchConversations();
+            }
+        };
+
+        initChat();
+    }, [listingIdParam, buyerIdParam, currentShop?.id]);
+
+    // Polling for new messages in selected conversation
+    useEffect(() => {
+        let interval;
+        if (selectedConversation) {
+            interval = setInterval(() => {
+                fetchMessages(selectedConversation.conversation_id);
+            }, 5000); // Poll every 5 seconds
+        }
+        return () => clearInterval(interval);
+    }, [selectedConversation]);
 
     const filterTabs = [
         { id: 'all', label: 'All' },
@@ -52,22 +179,124 @@ const MarketplaceMessages = () => {
         { id: 'buying', label: 'Buying' },
     ];
 
-    const handleSendMessage = (e) => {
+    const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !selectedConversation || sending) return;
 
-        // TODO: Send message via API
-        console.log('Sending message:', newMessage);
-        setNewMessage('');
+        try {
+            setSending(true);
+            const response = await api.post('/marketplace/messaging/send.php', {
+                conversation_id: selectedConversation.conversation_id,
+                listing_id: selectedConversation.listing_id,
+                message: newMessage.trim()
+            });
+
+            if (response.data.success) {
+                setNewMessage('');
+                fetchMessages(selectedConversation.conversation_id);
+                // Also update conversation list to show latest message
+                fetchConversations();
+            }
+        } catch (err) {
+            console.error("Error sending message:", err);
+            alert("Failed to send message. Please try again.");
+        } finally {
+            setSending(false);
+        }
     };
 
     const handleSelectConversation = (conversation) => {
         setSelectedConversation(conversation);
+        setMessages([]); // Clear old messages while loading
+        setCurrentOrder(null); // Clear old order
+        fetchMessages(conversation.conversation_id);
+        fetchOrderDetails(conversation.conversation_id);
         setShowMessagesOnMobile(true);
     };
 
     const handleBackToConversations = () => {
         setShowMessagesOnMobile(false);
+    };
+
+    // Handle seller marking order as shipped
+    const handleMarkShipped = async () => {
+        if (!currentOrder) return;
+
+        try {
+            const response = await api.post('/marketplace/orders/mark_shipped.php', {
+                order_id: currentOrder.id
+            });
+
+            if (response.data.success) {
+                // Refresh order and messages
+                await fetchOrderDetails(selectedConversation.conversation_id);
+                await fetchMessages(selectedConversation.conversation_id);
+                alert('Order marked as shipped successfully!');
+            }
+        } catch (err) {
+            console.error('Error marking order as shipped:', err);
+            alert(err.response?.data?.error || 'Failed to mark order as shipped');
+        }
+    };
+
+    // Handle buyer confirming delivery (show modal first)
+    const handleConfirmDelivery = async () => {
+        setShowConfirmModal(true);
+    };
+
+    // Actually confirm delivery after modal confirmation
+    const handleProceedConfirmDelivery = async () => {
+        if (!currentOrder) return;
+
+        try {
+            setModalLoading(true);
+            const response = await api.post('/marketplace/orders/confirm_delivery.php', {
+                order_id: currentOrder.id
+            });
+
+            if (response.data.success) {
+                setShowConfirmModal(false);
+                // Refresh order and messages
+                await fetchOrderDetails(selectedConversation.conversation_id);
+                await fetchMessages(selectedConversation.conversation_id);
+                alert('Delivery confirmed! Funds have been released to the seller.');
+            }
+        } catch (err) {
+            console.error('Error confirming delivery:', err);
+            alert(err.response?.data?.error || 'Failed to confirm delivery');
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    // Handle dispute reporting
+    const handleReportIssue = () => {
+        setShowReportModal(true);
+    };
+
+    const handleSubmitDispute = async (disputeData) => {
+        if (!currentOrder) return;
+
+        try {
+            setModalLoading(true);
+            const response = await api.post('/marketplace/disputes/create.php', {
+                order_id: currentOrder.id,
+                issue_type: disputeData.issue_type,
+                description: disputeData.description
+            });
+
+            if (response.data.success) {
+                setShowReportModal(false);
+                // Refresh messages to show the dispute notification
+                await fetchMessages(selectedConversation.conversation_id);
+                alert('Dispute reported successfully. Our support team will review your case.');
+            }
+        } catch (err) {
+            console.error('Error reporting dispute:', err);
+            alert(err.response?.data?.error || 'Failed to report dispute');
+        } finally {
+            setModalLoading(false);
+        }
     };
 
     return (
@@ -79,163 +308,201 @@ const MarketplaceMessages = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-messages-main">
-                <div className="content-wrapper">
-                    {/* Page Header */}
-                    <div className="page-header">
-                        <h1 className="heading-1">Inbox</h1>
-                        <p className="text-secondary">Manage your conversations with buyers and sellers</p>
-                    </div>
-
-                    {/* Inbox Container */}
-                    <div className="inbox-container">
-                        {/* Conversations List */}
-                        <div className={`conversations-panel ${showMessagesOnMobile ? 'hide-on-mobile' : ''}`}>
-                            {/* Filter Tabs */}
-                            <div className="filter-tabs">
-                                {filterTabs.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveFilter(tab.id)}
-                                        className={`filter-tab ${activeFilter === tab.id ? 'active' : ''}`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Search Bar */}
-                            <div className="conversation-search">
-                                <input
-                                    type="text"
-                                    placeholder="Search conversations..."
-                                    className="search-input"
-                                />
-                            </div>
-
-                            {/* Conversations List */}
-                            <div className="conversations-list">
-                                {loading ? (
-                                    <div className="empty-state-small">
-                                        <p>Loading conversations...</p>
-                                    </div>
-                                ) : conversations.length === 0 ? (
-                                    <div className="empty-state">
-                                        <div className="empty-state-icon">
-                                            <Send size={48} style={{ opacity: 0.3 }} />
-                                        </div>
-                                        <h3 className="empty-state-title">No conversations</h3>
-                                        <p className="empty-state-description">
-                                            Start chatting with buyers and sellers
-                                        </p>
-                                    </div>
-                                ) : (
-                                    conversations.map((conversation) => (
-                                        <div
-                                            key={conversation.id}
-                                            onClick={() => handleSelectConversation(conversation)}
-                                            className={`conversation-card ${selectedConversation?.id === conversation.id ? 'active' : ''}`}
-                                        >
-                                            <div className="conversation-avatar">
-                                                {conversation.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="conversation-info">
-                                                <div className="conversation-header">
-                                                    <h4 className="conversation-name">{conversation.name}</h4>
-                                                    <span className="conversation-time">{conversation.time}</span>
-                                                </div>
-                                                <p className="conversation-preview">{conversation.lastMessage}</p>
-                                            </div>
-                                            {conversation.unread > 0 && (
-                                                <div className="unread-badge">{conversation.unread}</div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+            <main className="main-content marketplace-page-main marketplace-messages-main">
+                {/* Inbox Container */}
+                <div className="inbox-container">
+                    {/* Conversations List */}
+                    <div className={`conversations-panel ${showMessagesOnMobile ? 'hide-on-mobile' : ''}`}>
+                        {/* Filter Tabs */}
+                        <div className="filter-tabs">
+                            {filterTabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveFilter(tab.id)}
+                                    className={`filter-tab ${activeFilter === tab.id ? 'active' : ''}`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
 
-                        {/* Messages Panel */}
-                        <div className={`messages-panel ${!showMessagesOnMobile ? 'hide-on-mobile' : ''}`}>
-                            {!selectedConversation ? (
-                                <div className="empty-messages-state">
-                                    <Send size={64} style={{ color: 'var(--text-secondary)', opacity: 0.2 }} />
-                                    <h3 className="heading-3" style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
-                                        Select a conversation
-                                    </h3>
-                                    <p className="text-secondary" style={{ fontSize: '14px' }}>
-                                        Choose a conversation from the list to view messages
+                        {/* Search Bar */}
+                        <div className="conversation-search">
+                            <input
+                                type="text"
+                                placeholder="Search conversations..."
+                                className="search-input"
+                            />
+                        </div>
+
+                        {/* Conversations List */}
+                        <div className="conversations-list">
+                            {loading ? (
+                                <div className="empty-state-small">
+                                    <p>Loading conversations...</p>
+                                </div>
+                            ) : filteredConversations.length === 0 ? (
+                                <div className="empty-state">
+                                    <div className="empty-state-icon">
+                                        <Send size={48} style={{ opacity: 0.3 }} />
+                                    </div>
+                                    <h3 className="empty-state-title">No {activeFilter === 'all' ? '' : activeFilter} conversations</h3>
+                                    <p className="empty-state-description">
+                                        {activeFilter === 'buying'
+                                            ? "You haven't messaged any sellers yet"
+                                            : activeFilter === 'selling'
+                                                ? "No buyers have messaged your shop yet"
+                                                : "Start chatting with buyers and sellers"}
                                     </p>
                                 </div>
                             ) : (
-                                <>
-                                    {/* Chat Header */}
-                                    <div className="chat-header">
-                                        <button
-                                            onClick={handleBackToConversations}
-                                            className="back-to-conversations-btn"
-                                            aria-label="Back to conversations"
-                                        >
-                                            ←
-                                        </button>
-                                        <div className="chat-user-info">
-                                            <div className="conversation-avatar">
-                                                {selectedConversation.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <h3 className="chat-user-name">{selectedConversation.name}</h3>
-                                                <p className="chat-user-status">Online</p>
-                                            </div>
+                                filteredConversations.map((conversation) => (
+                                    <div
+                                        key={conversation.conversation_id}
+                                        onClick={() => handleSelectConversation(conversation)}
+                                        className={`conversation-card ${selectedConversation?.conversation_id === conversation.conversation_id ? 'active' : ''}`}
+                                    >
+                                        <div className="conversation-avatar">
+                                            {conversation.other_party_image ? (
+                                                <img src={conversation.other_party_image} alt={conversation.other_party_name} className="avatar-img" />
+                                            ) : (
+                                                conversation.other_party_name.charAt(0).toUpperCase()
+                                            )}
                                         </div>
-                                        <button className="chat-options-btn">
-                                            <MoreVertical size={20} />
-                                        </button>
-                                    </div>
-
-                                    {/* Messages Area */}
-                                    <div className="messages-area">
-                                        {messages.length === 0 ? (
-                                            <div className="no-messages">
-                                                <p className="text-secondary">No messages yet. Start the conversation!</p>
+                                        <div className="conversation-info">
+                                            <div className="conversation-header">
+                                                <h4 className="conversation-name">{conversation.other_party_name}</h4>
+                                                <span className="conversation-time">
+                                                    {new Date(conversation.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
                                             </div>
-                                        ) : (
-                                            messages.map((message, index) => (
-                                                <div
-                                                    key={index}
-                                                    className={`message ${message.sentByMe ? 'sent' : 'received'}`}
-                                                >
-                                                    <div className="message-bubble">
-                                                        <p className="message-text">{message.text}</p>
-                                                        <span className="message-time">{message.time}</span>
-                                                    </div>
-                                                </div>
-                                            ))
+                                            <p className="conversation-preview">{conversation.last_message || "No messages yet"}</p>
+                                            <p className="listing-tag">{conversation.listing_title}</p>
+                                        </div>
+                                        {conversation.has_unread && (
+                                            <div className="unread-badge">!</div>
                                         )}
                                     </div>
-
-                                    {/* Message Input */}
-                                    <div className="message-input-container">
-                                        <form onSubmit={handleSendMessage} className="message-input-form">
-                                            <button type="button" className="attach-btn">
-                                                <Paperclip size={20} />
-                                            </button>
-                                            <input
-                                                type="text"
-                                                value={newMessage}
-                                                onChange={(e) => setNewMessage(e.target.value)}
-                                                placeholder="Type a message..."
-                                                className="message-input"
-                                            />
-                                            <button type="submit" className="send-btn" disabled={!newMessage.trim()}>
-                                                <Send size={20} />
-                                            </button>
-                                        </form>
-                                    </div>
-                                </>
+                                ))
                             )}
                         </div>
                     </div>
+
+                    {/* Messages Panel */}
+                    <div className={`messages-panel ${!showMessagesOnMobile ? 'hide-on-mobile' : ''}`}>
+                        {!selectedConversation ? (
+                            <div className="empty-messages-state">
+                                <Send size={64} style={{ color: 'var(--text-secondary)', opacity: 0.2 }} />
+                                <h3 className="heading-3" style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
+                                    Select a conversation
+                                </h3>
+                                <p className="text-secondary" style={{ fontSize: '14px' }}>
+                                    Choose a conversation from the list to view messages
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Chat Header */}
+                                <div className="chat-header">
+                                    <button
+                                        onClick={handleBackToConversations}
+                                        className="back-to-conversations-btn"
+                                        aria-label="Back to conversations"
+                                    >
+                                        ←
+                                    </button>
+                                    <div className="chat-user-info">
+                                        <div className="conversation-avatar">
+                                            {selectedConversation.other_party_image ? (
+                                                <img src={selectedConversation.other_party_image} alt={selectedConversation.other_party_name} className="avatar-img" />
+                                            ) : (
+                                                selectedConversation.other_party_name.charAt(0).toUpperCase()
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h3 className="chat-user-name">{selectedConversation.other_party_name}</h3>
+                                            <p className="chat-user-status">{selectedConversation.listing_title}</p>
+                                        </div>
+                                    </div>
+                                    <button className="chat-options-btn">
+                                        <MoreVertical size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Delivery Action Bar */}
+                                {currentOrder && (
+                                    <DeliveryActionBar
+                                        order={currentOrder}
+                                        currentUserId={user?.id}
+                                        onShipped={handleMarkShipped}
+                                        onReceived={handleConfirmDelivery}
+                                        onReportIssue={handleReportIssue}
+                                    />
+                                )}
+
+                                {/* Messages Area */}
+                                <div className="messages-area">
+                                    {messages.length === 0 ? (
+                                        <div className="no-messages">
+                                            <p className="text-secondary">No messages yet. Start the conversation!</p>
+                                        </div>
+                                    ) : (
+                                        messages.map((message, index) => (
+                                            <div
+                                                key={message.id || index}
+                                                className={`message ${message.is_me ? 'sent' : 'received'}`}
+                                            >
+                                                <div className="message-bubble">
+                                                    <p className="message-text">{message.message}</p>
+                                                    <span className="message-time">
+                                                        {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Message Input */}
+                                <div className="message-input-container">
+                                    <form onSubmit={handleSendMessage} className="message-input-form">
+                                        <button type="button" className="attach-btn">
+                                            <Paperclip size={20} />
+                                        </button>
+                                        <input
+                                            type="text"
+                                            value={newMessage}
+                                            onChange={(e) => setNewMessage(e.target.value)}
+                                            placeholder="Type a message..."
+                                            className="message-input"
+                                        />
+                                        <button type="submit" className="send-btn" disabled={!newMessage.trim() || sending}>
+                                            {sending ? '...' : <Send size={20} />}
+                                        </button>
+                                    </form>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
+
+                {/* Modals */}
+                <ConfirmDeliveryModal
+                    isOpen={showConfirmModal}
+                    onClose={() => setShowConfirmModal(false)}
+                    onConfirm={handleProceedConfirmDelivery}
+                    order={currentOrder}
+                    isLoading={modalLoading}
+                />
+
+                <ReportIssueModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
+                    onSubmit={handleSubmitDispute}
+                    order={currentOrder}
+                    isBuyer={currentOrder?.buyer_id === user?.id}
+                    isLoading={modalLoading}
+                />
             </main>
         </div>
     );

@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import api from '../../utils/api';
+import api, { SERVER_URL, isProduction } from '../../utils/api';
 import { FaStore, FaPlus } from 'react-icons/fa';
+import { Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
+import './MarketplacePage.css';
 import './MarketplaceListings.css';
 
 const MarketplaceListings = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [listings, setListings] = useState([]);
+    const [interests, setInterests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         search: '',
@@ -22,6 +25,9 @@ const MarketplaceListings = () => {
     });
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [randomSeed, setRandomSeed] = useState(Date.now());
+    const [loadingMore, setLoadingMore] = useState(false);
+    const observerTarget = React.useRef(null);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,29 +48,113 @@ const MarketplaceListings = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const fetchListings = async () => {
-        setLoading(true);
+    const fetchListings = async (pageNum = 1, append = false) => {
+        if (append) {
+            setLoadingMore(true);
+        } else {
+            setLoading(true);
+        }
+
         try {
+            // Filter out empty strings
+            const activeFilters = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v !== '')
+            );
+
             const params = {
-                page,
+                page: pageNum,
                 limit: 12,
-                ...filters
+                random: 'true',
+                seed: randomSeed,
+                ...activeFilters
             };
+
             const response = await api.get('/marketplace/listings/list.php', { params });
             if (response.data.success) {
-                setListings(response.data.listings);
+                if (append) {
+                    // Append new listings to existing ones
+                    setListings(prev => [...prev, ...response.data.listings]);
+                } else {
+                    // Replace listings (initial load or refresh)
+                    setListings(response.data.listings);
+                }
                 setHasMore(response.data.listings.length === 12);
             }
         } catch (error) {
             console.error("Error fetching listings:", error);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     };
 
+    const fetchInterests = async () => {
+        try {
+            const response = await api.get('/marketplace/interests/list.php');
+            if (response.data.success) {
+                setInterests(response.data.interests.map(i => i.id));
+            }
+        } catch (error) {
+            console.error("Error fetching interests:", error);
+        }
+    };
+
+    // Initial load and filter changes
     useEffect(() => {
-        fetchListings();
-    }, [page, filters.search]); // Re-fetch on page or search change
+        // Generate new random seed on filter change or initial load
+        setRandomSeed(Date.now());
+        setPage(1);
+        fetchListings(1, false);
+        if (user) {
+            fetchInterests();
+        }
+    }, [filters.search, user]);
+
+    // Infinite scroll observer
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    fetchListings(nextPage, true);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [hasMore, loading, loadingMore, page]);
+
+
+    const toggleInterest = async (e, listingId) => {
+        e.stopPropagation();
+        if (!user) {
+            alert("Please log in to save items to your interests.");
+            navigate('/auth/login');
+            return;
+        }
+        try {
+            const response = await api.post('/marketplace/interests/toggle.php', { listing_id: listingId });
+            if (response.data.success) {
+                if (response.data.action === 'added') {
+                    setInterests([...interests, listingId]);
+                } else {
+                    setInterests(interests.filter(id => id !== listingId));
+                }
+            }
+        } catch (error) {
+            console.error("Error toggling interest:", error);
+        }
+    };
 
     const handleFilterChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
@@ -81,6 +171,26 @@ const MarketplaceListings = () => {
         return Number(price).toLocaleString('en-NG');
     };
 
+    const getImageUrl = (url) => {
+        if (!url) return '/placeholder-phone.png';
+        if (url.startsWith('http')) return url;
+
+        // Ensure we don't double-slash or miss a slash
+        // url usually comes as '/store/backend/uploads/...' or '/backend/uploads/...'
+
+        // If in production (prhub.shop), the backend returns relative path which might be '/store/backend/...' 
+        // but the SERVER_URL is 'https://prhub.shop'. 
+        // If the path already has /store and we are on prod, we might need to strip it if SERVER_URL + /store is wrong.
+        // However, standardizing: SERVER_URL should be base domain.
+
+        // Simple heuristic: 
+        // If url starts with '/', prepend SERVER_URL unless SERVER_URL is in the path?
+        // Actually, let's just use the URL as returned if it starts with /store and we are on localhost context
+
+        // Clean implementation:
+        return `${SERVER_URL}${url}`;
+    };
+
     return (
         <div className="dashboard-container">
             <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
@@ -93,21 +203,18 @@ const MarketplaceListings = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-listings-main">
+            <main className="main-content marketplace-page-main">
                 <div className="content-wrapper">
                     {/* Header Section */}
                     <div className="listings-header">
                         <div className="page-header">
-                            <h1 className="heading-1">Browse Listings</h1>
-                            <p className="text-secondary">Explore phones from verified sellers</p>
+                            <h1 className="heading-1">Today's picks</h1>
+                            <div className="location-indicator">
+                                <span className="location-pin-icon">📍</span>
+                                <span>Abuja • 65 km</span>
+                            </div>
                         </div>
-                        <button
-                            onClick={() => navigate('/marketplace/create-listing')}
-                            className="btn-sell-item"
-                        >
-                            <FaPlus size={14} />
-                            <span>Sell Item</span>
-                        </button>
+
                     </div>
 
                     {/* Loading State */}
@@ -123,31 +230,48 @@ const MarketplaceListings = () => {
                             {listings.map(item => (
                                 <div
                                     key={item.id}
-                                    className="product-card"
+                                    className="product-item-wrapper"
                                     onClick={() => navigate(`/marketplace/listing/${item.id}`)}
                                 >
-                                    <div className="product-image-container">
-                                        <img
-                                            src={item.image_url || '/placeholder-phone.png'}
-                                            alt={item.title}
-                                            className="product-image"
-                                        />
-                                        {item.listing_type === 'auction' && (
-                                            <span className="listing-badge">
-                                                Auction
-                                            </span>
-                                        )}
+                                    <div className="product-card">
+                                        <div className="product-image-container">
+                                            <img
+                                                src={getImageUrl(item.image_url)}
+                                                alt={item.title}
+                                                className="product-image"
+                                                onError={(e) => {
+                                                    const placeholder = '/placeholder-phone.png';
+                                                    if (!e.target.src.endsWith(placeholder)) {
+                                                        e.target.src = placeholder;
+                                                    }
+                                                }}
+                                            />
+                                            {item.listing_type === 'auction' && (
+                                                <span className="listing-badge">
+                                                    Auction
+                                                </span>
+                                            )}
+                                            <button
+                                                className={`star-button ${interests.includes(item.id) ? 'active' : ''}`}
+                                                onClick={(e) => toggleInterest(e, item.id)}
+                                                aria-label="Star item"
+                                            >
+                                                <Star
+                                                    size={22}
+                                                    strokeWidth={2.5}
+                                                    fill={interests.includes(item.id) ? "#1877F2" : "none"}
+                                                    color={interests.includes(item.id) ? "#1877F2" : "#444444"}
+                                                />
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="product-info">
-                                        <h3 className="product-title">{item.title}</h3>
                                         <p className="product-price">
                                             ₦{formatPrice(item.price)}
                                         </p>
-                                        <div className="product-meta">
-                                            <span className="product-condition">{item.condition_state}</span>
-                                            <span className="product-shop">
-                                                {item.shop_name}
-                                            </span>
+                                        <h3 className="product-title">{item.title}</h3>
+                                        <div className="product-location">
+                                            {item.shop_address}
                                         </div>
                                     </div>
                                 </div>
@@ -170,24 +294,34 @@ const MarketplaceListings = () => {
                         </div>
                     )}
 
-                    {/* Pagination */}
+
+                    {/* Infinite Scroll Loading Indicator */}
                     {!loading && listings.length > 0 && (
-                        <div className="pagination">
-                            <button
-                                disabled={page === 1}
-                                onClick={() => setPage(p => p - 1)}
-                                className="pagination-btn"
-                            >
-                                Previous
-                            </button>
-                            <span className="pagination-info">Page {page}</span>
-                            <button
-                                disabled={!hasMore}
-                                onClick={() => setPage(p => p + 1)}
-                                className="pagination-btn"
-                            >
-                                Next
-                            </button>
+                        <div
+                            ref={observerTarget}
+                            className="infinite-scroll-trigger"
+                            style={{
+                                height: '60px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginTop: '32px'
+                            }}
+                        >
+                            {loadingMore && (
+                                <div className="loading-more">
+                                    <div className="spinner"></div>
+                                    <p>Loading more...</p>
+                                </div>
+                            )}
+                            {!hasMore && !loadingMore && (
+                                <p style={{
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '14px'
+                                }}>
+                                    No more listings to show
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

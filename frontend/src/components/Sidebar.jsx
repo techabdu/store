@@ -110,6 +110,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
                 to={backPath}
                 className="nav-item"
                 title={!isMobile && !isOpen && !isHovered ? 'Back to Dashboard' : ''}
+                onClick={() => isMobile && setTimeout(closeSidebar, 150)}
               >
                 <ArrowLeft size={20} className="nav-icon" />
                 <span className="nav-label">Back to System</span>
@@ -124,7 +125,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
                 className={({ isActive }) =>
                   `nav-item ${isActive ? 'active' : ''}`
                 }
-                onClick={isMobile ? closeSidebar : undefined}
+                onClick={() => isMobile && setTimeout(closeSidebar, 150)}
                 title={!isMobile && !isOpen && !isHovered ? item.label : ''}
               >
                 <item.icon size={20} className="nav-icon" />

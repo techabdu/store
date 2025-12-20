@@ -1,13 +1,15 @@
 import axios from 'axios';
 
 // Detect environment based on hostname
-const isProduction = window.location.hostname !== 'localhost';
+export const isProduction = window.location.hostname !== 'localhost';
+
+export const SERVER_URL = isProduction
+    ? 'https://prhub.shop'
+    : 'http://localhost';
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: isProduction
-        ? 'https://prhub.shop/backend/api'  // Production URL
-        : 'http://localhost/store/backend/api',        // Local XAMPP
+    baseURL: `${SERVER_URL}${isProduction ? '' : '/store'}/backend/api`,
     withCredentials: true, // Important for cookies/sessions
     headers: {
         'Content-Type': 'application/json',
@@ -50,6 +52,13 @@ api.interceptors.request.use(async (config) => {
             config.headers['X-CSRF-Token'] = token;
         }
     }
+
+    // Fix for FormData upload issues
+    // If saving FormData, let browser handle Content-Type (boundary)
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+
     return config;
 }, (error) => {
     return Promise.reject(error);

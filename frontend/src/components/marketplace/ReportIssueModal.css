@@ -1,0 +1,195 @@
+/* Report Issue Modal Styles */
+.report-issue-modal {
+    max-width: 550px;
+    width: 90%;
+}
+
+.report-issue-modal .modal-header {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-title h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.report-issue-modal .modal-body {
+    padding: 24px;
+}
+
+.report-intro {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    border-radius: 4px;
+}
+
+.report-intro p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #0d47a1;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.char-count {
+    font-size: 12px;
+    font-weight: 400;
+    color: #666;
+}
+
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.form-group select.error,
+.form-group textarea.error {
+    border-color: #f5576c;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.error-message {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: #f5576c;
+}
+
+.form-note {
+    padding: 12px;
+    background: #fff3cd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.form-note p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #856404;
+}
+
+.form-note strong {
+    color: #654300;
+}
+
+.report-issue-modal .modal-footer {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.report-issue-modal .btn-cancel,
+.report-issue-modal .btn-submit {
+    flex: 1;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.report-issue-modal .btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.report-issue-modal .btn-cancel:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+.report-issue-modal .btn-submit {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.report-issue-modal .btn-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e67fe8 0%, #e04356 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.report-issue-modal .btn-cancel:disabled,
+.report-issue-modal .btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .report-issue-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .report-issue-modal .modal-header {
+        padding: 16px;
+    }
+
+    .header-title h2 {
+        font-size: 18px;
+    }
+
+    .report-issue-modal .modal-body {
+        padding: 16px;
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+
+    .report-issue-modal .modal-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .report-issue-modal .btn-cancel,
+    .report-issue-modal .btn-submit {
+        width: 100%;
+    }
+}

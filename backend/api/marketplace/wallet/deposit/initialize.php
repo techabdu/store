@@ -26,69 +26,84 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->amount) || floatval($data->amount) <= 0) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Invalid amount']);
-    exit();
-}
+try {
+    // 0. Check Verification Status
+    $v_stmt = $conn->prepare("SELECT is_verified FROM marketplace_identity_verifications WHERE user_id = ?");
+    $v_stmt->bind_param("i", $user_id);
+    $v_stmt->execute();
+    $v_res = $v_stmt->get_result()->fetch_assoc();
 
-$amount = floatval($data->amount);
-
-// 1. Get User Details (Email/Name required for Kora)
-$stmt = $conn->prepare("SELECT email, username FROM users WHERE id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
-
-if (!$user || empty($user['email'])) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'User email required for payment']);
-    exit();
-}
-
-// 2. Generate Reference
-$reference = generateSecureReference('DEP');
-
-// 3. Initiate with Kora
-$kora = new KoraAPI();
-$customer_data = [
-    'email' => $user['email'],
-    'name' => $user['username']
-];
-
-$result = $kora->initiatePayment($amount, $customer_data, $reference);
-
-if ($result['success']) {
-    // 4. Record Payment Reference in DB
-    // Assuming table `marketplace_kora_references` or generic transaction log?
-    // Using `marketplace_wallet_transactions` with status 'pending' is better for visibility
-    // But we need to distinguish "Payment Attempt" from "Actual Credit". 
-    // Usually we insert into a temporary table or `marketplace_payment_references` table from schema.
-    
-    // Check schema for suitable table. 
-    // In Stage 1 task, "Create Kora integration tables (`kora_payment_references`)" was mentioned.
-    
-    $stmt = $conn->prepare("
-        INSERT INTO kora_payment_references 
-        (user_id, reference, transaction_type, amount, status, created_at)
-        VALUES (?, ?, 'deposit', ?, 'pending', NOW())
-    ");
-    $stmt->bind_param("isd", $user_id, $reference, $amount);
-    
-    if ($stmt->execute()) {
-         echo json_encode([
-             'success' => true,
-             'message' => 'Payment initialized',
-             'checkout_url' => $result['data']['checkout_url'] ?? $result['data']['payment_url'] ?? '', // Adjust based on actual Kora response
-             'reference' => $reference
-         ]);
-    } else {
-         http_response_code(500);
-         echo json_encode(['success' => false, 'error' => 'Database error recording reference']);
+    if (!$v_res || !$v_res['is_verified']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Your account must be verified before you can fund your wallet.']);
+        exit();
     }
-    
-} else {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Kora initialization failed: ' . ($result['message'] ?? 'Unknown error')]);
+
+    if (!isset($data->amount) || floatval($data->amount) <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid amount']);
+        exit();
+    }
+
+    $amount = floatval($data->amount);
+
+    // 1. Get User Details (Email/Name required for Kora)
+    $stmt = $conn->prepare("SELECT email, username FROM users WHERE id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $user = $stmt->get_result()->fetch_assoc();
+
+    if (!$user || empty($user['email'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'User email required for payment']);
+        exit();
+    }
+
+    // 2. Generate Reference
+    $reference = generateSecureReference('DEP');
+
+    // 3. Initiate with Kora
+    $kora = new KoraAPI();
+    $customer_data = [
+        'email' => $user['email'],
+        'name' => $user['username']
+    ];
+
+    $result = $kora->initiatePayment($amount, $customer_data, $reference);
+
+    if ($result['success']) {
+        // 4. Record Payment Reference in DB
+        // Use kora_reference column and pay_in type per DB schema
+        $stmt = $conn->prepare("
+            INSERT INTO kora_payment_references 
+            (user_id, kora_reference, transaction_type, amount, status, created_at)
+            VALUES (?, ?, 'pay_in', ?, 'pending', NOW())
+        ");
+        
+        if (!$stmt) {
+            throw new Exception("Database prepare failed: " . $conn->error);
+        }
+
+        $stmt->bind_param("isd", $user_id, $reference, $amount);
+        
+        if ($stmt->execute()) {
+             echo json_encode([
+                 'success' => true,
+                 'message' => 'Payment initialized',
+                 'checkout_url' => $result['data']['checkout_url'] ?? $result['data']['payment_url'] ?? '',
+                 'reference' => $reference
+             ]);
+        } else {
+             throw new Exception("Database execution failed: " . $stmt->error);
+        }
+        
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Kora initialization failed: ' . ($result['message'] ?? 'Unknown error')]);
+    }
+} catch (Exception $e) {
+    error_log("Wallet Deposit Initialization Error: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'An internal error occurred while processing your request. Please try again later.']);
 }
 ?>

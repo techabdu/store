@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once '../../../config/db_connect.php';
 require_once '../../../includes/encryption.php'; // For reference generation
+require_once '../messaging/send_system_message.php'; // For automatic notifications
 
 session_start();
 
@@ -37,6 +38,16 @@ $listing_id = intval($data->listing_id);
 $conn->begin_transaction();
 
 try {
+    // 0. Check Verification Status (Buyer must be verified)
+    $v_stmt = $conn->prepare("SELECT is_verified FROM marketplace_identity_verifications WHERE user_id = ?");
+    $v_stmt->bind_param("i", $buyer_id);
+    $v_stmt->execute();
+    $v_res = $v_stmt->get_result()->fetch_assoc();
+
+    if (!$v_res || !$v_res['is_verified']) {
+        throw new Exception('Your account must be verified before you can make purchases.');
+    }
+
     // 1. Fetch Listing & Validate
     // Use FOR UPDATE to lock the row and prevent double booking
     $stmt = $conn->prepare("SELECT * FROM marketplace_listings WHERE id = ? FOR UPDATE");
@@ -82,10 +93,10 @@ try {
     }
 
     // 3. Process Payment (Escrow)
-    // Debit Buyer
+    // Debit Buyer: Available -> Held
     $new_buyer_balance = $buyer_wallet['available_balance'] - $price;
-    $stmt = $conn->prepare("UPDATE marketplace_wallets SET available_balance = ?, total_purchases = total_purchases + ? WHERE user_id = ?");
-    $stmt->bind_param("ddi", $new_buyer_balance, $price, $buyer_id);
+    $stmt = $conn->prepare("UPDATE marketplace_wallets SET available_balance = ?, held_balance = held_balance + ?, total_purchases = total_purchases + ? WHERE user_id = ?");
+    $stmt->bind_param("dddi", $new_buyer_balance, $price, $price, $buyer_id);
     if (!$stmt->execute()) throw new Exception('Failed to debit buyer');
 
     // Credit Seller (Pending Balance)
@@ -110,32 +121,100 @@ try {
     if (!$stmt->execute()) throw new Exception('Failed to update listing status');
 
     // 6. Log Transactions
-    // Buyer Debit Log
+    // Get Updated Buyer Balances for log
+    $b_bal_stmt = $conn->prepare("SELECT available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $b_bal_stmt->bind_param("i", $buyer_id);
+    $b_bal_stmt->execute();
+    $b_balances = $b_bal_stmt->get_result()->fetch_assoc();
+
+    // Buyer Debit Log - Use 'purchase_hold' as funds are in escrow
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, reference, status, description, created_at)
-        VALUES (?, ?, 'purchase', ?, ?, 'completed', ?, NOW())
+        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, 'purchase_hold', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_buyer = "Purchase of listing #$listing_id";
-    $stmt->bind_param("iids", $buyer_wallet['id'], $buyer_id, $price, $order_reference, $desc_buyer);
+    $buyer_ref = $order_reference . '_DEBIT';
+    $stmt->bind_param("iiddddss", 
+        $buyer_wallet['id'], 
+        $buyer_id, 
+        $price, 
+        $b_balances['available_balance'], 
+        $b_balances['pending_balance'], 
+        $b_balances['held_balance'], 
+        $buyer_ref, 
+        $desc_buyer
+    );
     $stmt->execute();
 
     // Seller Credit Log (Escrow)
-    // We need seller wallet ID
-    $s_wallet_stmt = $conn->prepare("SELECT id FROM marketplace_wallets WHERE user_id = ?");
-    $s_wallet_stmt->bind_param("i", $seller_id);
-    $s_wallet_stmt->execute();
-    $seller_wallet = $s_wallet_stmt->get_result()->fetch_assoc();
-    $seller_wallet_id = $seller_wallet['id']; // Assumes exists
+    // Get Updated Seller Balances for log
+    $s_bal_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $s_bal_stmt->bind_param("i", $seller_id);
+    $s_bal_stmt->execute();
+    $s_wallet_data = $s_bal_stmt->get_result()->fetch_assoc();
+    $seller_wallet_id = $s_wallet_data['id'];
 
+    // Seller gets funds in pending, so use 'sale_pending'
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, reference, status, description, created_at)
-        VALUES (?, ?, 'sale_escrow', ?, ?, 'pending', ?, NOW())
+        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, 'sale_pending', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_seller = "Sale of listing #$listing_id (Funds held in Escrow)";
-    $stmt->bind_param("iids", $seller_wallet_id, $seller_id, $price, $order_reference, $desc_seller);
+    $seller_escrow_ref = $order_reference . '_ESCROW';
+    $stmt->bind_param("iiddddss", 
+        $seller_wallet_id, 
+        $seller_id, 
+        $price, 
+        $s_wallet_data['available_balance'], 
+        $s_wallet_data['pending_balance'], 
+        $s_wallet_data['held_balance'], 
+        $seller_escrow_ref, 
+        $desc_seller
+    );
     $stmt->execute();
+
+    // 7. Send Automatic Notification to Seller
+    // Fetch buyer's name
+    $buyer_name_stmt = $conn->prepare("SELECT display_name FROM marketplace_profiles WHERE user_id = ? LIMIT 1");
+    $buyer_name_stmt->bind_param("i", $buyer_id);
+    $buyer_name_stmt->execute();
+    $buyer_profile = $buyer_name_stmt->get_result()->fetch_assoc();
+    $buyer_name = $buyer_profile['display_name'] ?? 'A buyer';
+    
+    // Create notification message
+    $notification_message = "$buyer_name placed an order for {$listing['title']}";
+    
+    // Send system message (buyer is the sender since they initiated the order)
+    sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $notification_message, $buyer_id);
+
+    // 8. Link Order to Conversation
+    // Find the conversation for this buyer-seller-listing combination
+    $conv_stmt = $conn->prepare("
+        SELECT id FROM marketplace_conversations 
+        WHERE buyer_id = ? AND seller_id = ? AND listing_id = ?
+        LIMIT 1
+    ");
+    $conv_stmt->bind_param("iii", $buyer_id, $seller_id, $listing_id);
+    $conv_stmt->execute();
+    $conv_result = $conv_stmt->get_result();
+    
+    if ($conv_result->num_rows > 0) {
+        $conversation = $conv_result->fetch_assoc();
+        $conversation_id = $conversation['id'];
+        
+        // Update conversation with order_id
+        $update_conv_stmt = $conn->prepare("
+            UPDATE marketplace_conversations 
+            SET order_id = ? 
+            WHERE id = ?
+        ");
+        $update_conv_stmt->bind_param("ii", $order_id, $conversation_id);
+        $update_conv_stmt->execute();
+        $update_conv_stmt->close();
+    }
+    $conv_stmt->close();
 
     // Commit
     $conn->commit();

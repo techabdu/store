@@ -40,7 +40,7 @@ if ($event['event'] === 'charge.success') {
     }
     
     // Check if reference exists in our log
-    $stmt = $conn->prepare("SELECT id, user_id, amount, status, transaction_type FROM kora_payment_references WHERE reference = ?");
+    $stmt = $conn->prepare("SELECT id, user_id, amount, status, transaction_type FROM kora_payment_references WHERE kora_reference = ?");
     $stmt->bind_param("s", $reference);
     $stmt->execute();
     $tx = $stmt->get_result()->fetch_assoc();
@@ -57,7 +57,7 @@ if ($event['event'] === 'charge.success') {
         exit('Already processed');
     }
     
-    if ($tx['transaction_type'] !== 'deposit') {
+    if ($tx['transaction_type'] !== 'pay_in') {
         // Mismatch type (should not happen if refs are unique)
         exit('Transaction type mismatch'); 
     }
@@ -76,7 +76,7 @@ if ($event['event'] === 'charge.success') {
         // Update Reference Status
         $up_stmt = $conn->prepare("UPDATE kora_payment_references SET status = 'success', kora_transaction_id = ?, updated_at = NOW() WHERE id = ?");
         // transaction_id might be in data
-        $kora_tx_id = $data['id'] ?? ''; 
+        $kora_tx_id = $data['id'] ?? null; 
         $up_stmt->bind_param("si", $kora_tx_id, $tx['id']);
         $up_stmt->execute();
         
@@ -100,13 +100,27 @@ if ($event['event'] === 'charge.success') {
         $wid_stmt->execute();
         $wallet_id = $wid_stmt->get_result()->fetch_assoc()['id'];
         
+        // Get Updated Balances for log
+        $bal_stmt = $conn->prepare("SELECT available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE id = ?");
+        $bal_stmt->bind_param("i", $wallet_id);
+        $bal_stmt->execute();
+        $balances = $bal_stmt->get_result()->fetch_assoc();
+
         // Log to Wallet Transaction History
         $log_stmt = $conn->prepare("
             INSERT INTO marketplace_wallet_transactions 
-            (wallet_id, user_id, transaction_type, amount, reference, status, description, created_at) 
-            VALUES (?, ?, 'deposit', ?, ?, 'completed', 'Wallet Funding via Kora', NOW())
+            (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+            VALUES (?, ?, 'fund', ?, ?, ?, ?, ?, 'Wallet Funding via Kora', NOW())
         ");
-        $log_stmt->bind_param("iids", $wallet_id, $user_id, $amount, $reference);
+        $log_stmt->bind_param("iidddds", 
+            $wallet_id, 
+            $user_id, 
+            $amount, 
+            $balances['available_balance'], 
+            $balances['pending_balance'], 
+            $balances['held_balance'], 
+            $reference
+        );
         $log_stmt->execute();
         
         $conn->commit();
@@ -125,15 +139,10 @@ elseif ($event['event'] === 'transfer.success') {
     $data = $event['data'];
     $reference = $data['reference'];
     
-    // Find transaction
-    $stmt = $conn->prepare("SELECT id, status FROM marketplace_wallet_transactions WHERE reference = ? AND transaction_type = 'withdraw'");
-    $stmt->bind_param("s", $reference);
-    $stmt->execute();
-    $tx = $stmt->get_result()->fetch_assoc();
-    
-    if ($tx && $tx['status'] === 'pending') {
-        $up_stmt = $conn->prepare("UPDATE marketplace_wallet_transactions SET status = 'completed', updated_at = NOW() WHERE id = ?");
-        $up_stmt->bind_param("i", $tx['id']);
+    // Update withdrawal request
+    $up_stmt = $conn->prepare("UPDATE marketplace_withdrawal_requests SET status = 'completed', completed_at = NOW() WHERE kora_reference = ? AND status = 'processing'");
+    if ($up_stmt) {
+        $up_stmt->bind_param("s", $reference);
         $up_stmt->execute();
     }
     http_response_code(200);
@@ -143,33 +152,47 @@ elseif ($event['event'] === 'transfer.failed' || $event['event'] === 'transfer.r
     $data = $event['data'];
     $reference = $data['reference'];
     
-    // Find transaction
-    $stmt = $conn->prepare("SELECT id, user_id, amount, status, wallet_id FROM marketplace_wallet_transactions WHERE reference = ? AND transaction_type = 'withdraw'");
+    // Find withdrawal request
+    $stmt = $conn->prepare("SELECT id, user_id, amount, wallet_id, status FROM marketplace_withdrawal_requests WHERE kora_reference = ?");
     $stmt->bind_param("s", $reference);
     $stmt->execute();
-    $tx = $stmt->get_result()->fetch_assoc();
+    $req = $stmt->get_result()->fetch_assoc();
     
-    if ($tx && $tx['status'] === 'pending') {
+    if ($req && $req['status'] === 'processing') {
         $conn->begin_transaction();
         try {
-            // 1. Mark transaction as failed
-            $up_stmt = $conn->prepare("UPDATE marketplace_wallet_transactions SET status = 'failed', updated_at = NOW() WHERE id = ?");
-            $up_stmt->bind_param("i", $tx['id']);
+            // 1. Mark request as failed
+            $up_stmt = $conn->prepare("UPDATE marketplace_withdrawal_requests SET status = 'failed', failure_reason = ?, updated_at = NOW() WHERE id = ?");
+            $reason = $data['reason'] ?? 'Transfer failed at provider';
+            $up_stmt->bind_param("si", $reason, $req['id']);
             $up_stmt->execute();
             
             // 2. Refund balance
-            $ref_stmt = $conn->prepare("UPDATE marketplace_wallets SET available_balance = available_balance + ?, total_withdrawn = total_withdrawn - ? WHERE id = ?");
-            $ref_stmt->bind_param("ddi", $tx['amount'], $tx['amount'], $tx['wallet_id']);
+            $ref_stmt = $conn->prepare("UPDATE marketplace_wallets SET available_balance = available_balance + ?, total_withdrawn = total_withdrawn - ? WHERE user_id = ?");
+            $ref_stmt->bind_param("ddi", $req['amount'], $req['amount'], $req['user_id']);
             $ref_stmt->execute();
             
-            // 3. Log refund entry (optional, but good for clarity)
+            // 3. Log refund entry with balances
+            $bal_stmt = $conn->prepare("SELECT available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE id = ?");
+            $bal_stmt->bind_param("i", $req['wallet_id']);
+            $bal_stmt->execute();
+            $balances = $bal_stmt->get_result()->fetch_assoc();
+
             $log_stmt = $conn->prepare("
                 INSERT INTO marketplace_wallet_transactions 
-                (wallet_id, user_id, transaction_type, amount, reference, status, description, created_at) 
-                VALUES (?, ?, 'refund', ?, ?, 'completed', 'Refund for failed withdrawal', NOW())
+                (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+                VALUES (?, ?, 'refund', ?, ?, ?, ?, ?, 'Refund for failed withdrawal', NOW())
             ");
             $refund_ref = $reference . '_REF';
-            $log_stmt->bind_param("iids", $tx['wallet_id'], $tx['user_id'], $tx['amount'], $refund_ref);
+            $log_stmt->bind_param("iidddds", 
+                $req['wallet_id'], 
+                $req['user_id'], 
+                $req['amount'], 
+                $balances['available_balance'], 
+                $balances['pending_balance'], 
+                $balances['held_balance'], 
+                $refund_ref
+            );
             $log_stmt->execute();
             
             $conn->commit();

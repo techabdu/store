@@ -11,7 +11,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// DEBUG: Enable error reporting
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once '../../../config/db_connect.php';
+require_once '../../../vendor/autoload.php';
+// Load .env
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(dirname(dirname(dirname(__DIR__))));
+    $dotenv->safeLoad();
+} catch (Exception $e) {
+    // Ignore if .env missing or already loaded
+}
+
 require_once '../../../includes/kora_api.php';
 require_once '../../../includes/encryption.php';
 require_once '../../../includes/security.php';
@@ -25,9 +39,12 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$data = json_decode(file_get_contents("php://input"));
+$raw_input = file_get_contents("php://input");
+file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Request Data: " . $raw_input . "\n", FILE_APPEND);
+$data = json_decode($raw_input);
 
 if (!isset($data->nin) || !isset($data->consent) || !$data->consent) {
+    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Error: Missing fields\n", FILE_APPEND);
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Missing NIN or consent']);
     exit();
@@ -37,7 +54,9 @@ $nin = trim($data->nin);
 
 // Security Check: Rate Limiting
 $rate_limiter = new RateLimiter($conn);
-if (!$rate_limiter->checkLimit($user_id, 'nin_verification', 3, 120)) {
+// ALLOWED ATTEMPTS: 50, TIME WINDOW: 60 minutes (1 hour)
+// To reduce later, change '50' to a lower number (e.g., 3) and '60' to desired minutes (e.g., 120 for 2 hours)
+if (!$rate_limiter->checkLimit($user_id, 'nin_verification', 50, 60)) {
     http_response_code(429);
     echo json_encode(['success' => false, 'error' => 'Too many verification attempts. Please try again later.']);
     exit();
@@ -55,12 +74,15 @@ if ($stmt->get_result()->num_rows > 0) {
 
 // Call Kora API
 $kora = new KoraAPI();
+// API expects verification_consent => true (boolean)
+// Assuming endpoint /identities/ng/nin
 $request_data = [
     'id' => $nin,
-    'kycType' => 'nin'
+    'verification_consent' => true // Should be boolean true
 ];
 
 $result = $kora->verifyIdentity('identities/ng/nin', $request_data);
+file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Kora Result: " . print_r($result, true) . "\n", FILE_APPEND);
 
 // Log attempt
 $status = $result['success'] ? 'success' : 'failed';
@@ -91,15 +113,45 @@ if ($result['success']) {
     $lname = $api_data['surname'] ?? $api_data['last_name'] ?? '';
     $dob_api = $api_data['birthdate'] ?? $api_data['dob'] ?? null; 
     
-    $stmt->bind_param("issssssss" . "sssssss", 
+    // 7 params for INSERT, 6 for UPDATE = 13 total
+    // Types: i (user_id) + s (kora_ref) + s (id) + s (fname) + s (lname) + s (dob) + s (data) = issssss
+    // Update: s (kora_ref) + s (id) + s (fname) + s (lname) + s (dob) + s (data) = ssssss
+    $stmt->bind_param("issssssssssss", 
         $user_id, $kora_ref, $encrypted_id, $fname, $lname, $dob_api, $verification_data,
         $kora_ref, $encrypted_id, $fname, $lname, $dob_api, $verification_data
     );
     
     if ($stmt->execute()) {
-         $conn->query("UPDATE marketplace_profiles SET is_verified = 1, verification_level = 'basic' WHERE user_id = $user_id");
+         // Create or Update Marketplace Profile
+         $display_name = trim("$fname $lname");
+         if (empty($display_name)) $display_name = "User $user_id";
          
-        echo json_encode(['success' => true, 'message' => 'NIN Verification Successful']);
+         $profile_query = "
+            INSERT INTO marketplace_profiles (user_id, display_name, is_verified, verification_level, created_at, updated_at) 
+            VALUES (?, ?, 1, 'basic', NOW(), NOW())
+            ON DUPLICATE KEY UPDATE is_verified = 1, verification_level = 'basic', updated_at = NOW()
+         ";
+         
+         $profile_stmt = $conn->prepare($profile_query);
+         
+         if ($profile_stmt) {
+             $profile_stmt->bind_param("is", $user_id, $display_name);
+             if (!$profile_stmt->execute()) {
+                 error_log("Profile update failed: " . $profile_stmt->error);
+             }
+         } else {
+             error_log("Profile prepare failed: " . $conn->error);
+         }
+         
+        echo json_encode([
+            'success' => true, 
+            'message' => 'NIN Verification Successful',
+            'verification_details' => [
+                'verification_type' => 'nin',
+                'name' => trim("$fname $lname"),
+                'verified_at' => date('Y-m-d H:i:s')
+            ]
+        ]);
     } else {
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Database error saving verification']);
@@ -107,6 +159,11 @@ if ($result['success']) {
 
 } else {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $result['error'] ?? 'Verification failed']);
+    $errorMsg = $result['error'] ?? $result['message'] ?? 'Verification failed';
+    // Append detailed debug info if available (remove in production if strict)
+    if (isset($result['data']['message'])) {
+        $errorMsg .= ': ' . $result['data']['message'];
+    }
+    echo json_encode(['success' => false, 'error' => $errorMsg]);
 }
 ?>

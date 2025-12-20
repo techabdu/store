@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { Wallet, Plus, ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
+import MetricCard from '../../components/MetricCard';
+import { Wallet, Plus, ArrowDownCircle, ArrowUpCircle, Clock, CheckCircle, XCircle, TrendingUp, DollarSign, Lock, RotateCcw } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
-import './MarketplaceWallet.css';
+import './MarketplacePage.css';
+import './MarketplaceDashboard.css'; // Use dashboard styles for consistency
 
 const MarketplaceWallet = () => {
     const { user } = useAuth();
@@ -14,6 +16,8 @@ const MarketplaceWallet = () => {
     const [wallet, setWallet] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [verifying, setVerifying] = useState(false);
+    const [isVerified, setIsVerified] = useState(true); // Default true until check
     const [showFunding, setShowFunding] = useState(false);
     const [amount, setAmount] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
@@ -38,14 +42,57 @@ const MarketplaceWallet = () => {
     }, []);
 
     useEffect(() => {
-        fetchData();
+        const queryParams = new URLSearchParams(window.location.search);
+        const reference = queryParams.get('reference');
+        const status = queryParams.get('status');
+
+        if (reference && status === 'processing') {
+            handleVerifyPayment(reference);
+        } else {
+            fetchData();
+        }
     }, []);
+
+    // Refetch transactions when filter changes
+    useEffect(() => {
+        if (!loading) {
+            fetchTransactions(activeFilter);
+        }
+    }, [activeFilter]);
+
+    const fetchTransactions = async (filter) => {
+        try {
+            const txRes = await api.get(`/marketplace/wallet/get_transactions.php?limit=50&type=${filter}`);
+            if (txRes.data.success) {
+                setTransactions(txRes.data.transactions);
+            }
+        } catch (error) {
+            console.error("Error fetching transactions", error);
+        }
+    };
+
+    const handleVerifyPayment = async (reference) => {
+        setVerifying(true);
+        try {
+            const res = await api.post('/marketplace/wallet/deposit/verify.php', { reference });
+            if (res.data.success) {
+                // Clear query params without reload
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } catch (error) {
+            console.error("Verification failed", error);
+        } finally {
+            setVerifying(false);
+            fetchData();
+        }
+    };
 
     const fetchData = async () => {
         try {
-            const [walletRes, txRes] = await Promise.all([
+            const [walletRes, txRes, verifyRes] = await Promise.all([
                 api.get('/marketplace/wallet/get_balance.php'),
-                api.get('/marketplace/wallet/get_transactions.php?limit=20')
+                api.get(`/marketplace/wallet/get_transactions.php?limit=50&type=${activeFilter}`),
+                api.get('/marketplace/identity/check_status.php')
             ]);
 
             if (walletRes.data.success) {
@@ -53,6 +100,9 @@ const MarketplaceWallet = () => {
             }
             if (txRes.data.success) {
                 setTransactions(txRes.data.transactions);
+            }
+            if (verifyRes.data.success) {
+                setIsVerified(verifyRes.data.is_verified);
             }
         } catch (error) {
             console.error("Error fetching wallet data", error);
@@ -83,57 +133,52 @@ const MarketplaceWallet = () => {
     };
 
     const filterTabs = [
-        { id: 'all', label: 'All' },
-        { id: 'deposit', label: 'Deposits' },
-        { id: 'withdrawal', label: 'Withdrawals' },
+        { id: 'all', label: 'All Transactions' },
+        { id: 'fund', label: 'Deposits' },
+        { id: 'withdraw', label: 'Withdrawals' },
         { id: 'purchase', label: 'Purchases' },
-        { id: 'sale_release', label: 'Sales' },
+        { id: 'sale', label: 'Sales' },
     ];
 
     const getTransactionIcon = (type) => {
         const icons = {
-            deposit: ArrowDownCircle,
-            withdrawal: ArrowUpCircle,
-            purchase: ArrowUpCircle,
-            sale_release: ArrowDownCircle,
-            bid_lock: Clock,
-            bid_release: CheckCircle,
+            fund: ArrowDownCircle,
+            withdraw: ArrowUpCircle,
+            purchase_hold: Clock,
+            purchase_release: ArrowUpCircle,
+            sale_pending: Clock,
+            sale_complete: ArrowDownCircle,
+            refund: RotateCcw,
         };
         return icons[type] || TrendingUp;
     };
 
-    const getTransactionColor = (type) => {
-        if (type === 'deposit' || type === 'sale_release' || type === 'bid_release') {
-            return 'success';
-        }
-        return 'error';
-    };
-
     const getStatusBadge = (status) => {
+        const s = status || 'completed';
         const config = {
-            completed: { color: 'success', icon: CheckCircle, label: 'Completed' },
-            pending: { color: 'warning', icon: Clock, label: 'Pending' },
-            failed: { color: 'error', icon: XCircle, label: 'Failed' },
+            completed: 'success',
+            pending: 'warning',
+            failed: 'danger',
+            processing: 'info'
         };
 
-        const statusData = config[status] || config.pending;
-        const Icon = statusData.icon;
-
+        const color = config[s] || 'secondary';
         return (
-            <span className={`status-badge status-${statusData.color}`}>
-                <Icon size={12} />
-                {statusData.label}
+            <span className={`status-badge status-${color}`}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
             </span>
         );
     };
 
     const formatPrice = (price) => {
-        return Number(price).toLocaleString('en-NG');
+        return Number(price || 0).toLocaleString('en-NG', {
+            style: 'currency',
+            currency: 'NGN'
+        });
     };
 
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -142,9 +187,7 @@ const MarketplaceWallet = () => {
         });
     };
 
-    const filteredTransactions = activeFilter === 'all'
-        ? transactions
-        : transactions.filter(tx => tx.transaction_type === activeFilter);
+    const filteredTransactions = transactions;
 
     return (
         <div className="dashboard-container">
@@ -155,155 +198,229 @@ const MarketplaceWallet = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-wallet-main">
+            <main className="main-content marketplace-page-main">
                 <div className="content-wrapper">
+                    {/* Verification Warning */}
+                    {!isVerified && !loading && (
+                        <div className="warning-banner" style={{
+                            backgroundColor: '#fff4e5',
+                            color: '#663c00',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            marginBottom: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            border: '1px solid #ffe7c4'
+                        }}>
+                            <Clock size={20} />
+                            <div style={{ flex: 1 }}>
+                                <p style={{ fontWeight: '600', marginBottom: '2px' }}>Verification Required</p>
+                                <p style={{ fontSize: '13px' }}>You must verify your identity before you can add funds to your wallet.</p>
+                            </div>
+                            <button
+                                onClick={() => navigate('/marketplace/verify')}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '12px' }}
+                            >
+                                Verify Now
+                            </button>
+                        </div>
+                    )}
+
                     {/* Page Header */}
-                    <div className="page-header">
-                        <h1 className="heading-1">My Wallet</h1>
-                        <p className="text-secondary">Manage your funds and transactions</p>
-                    </div>
-
-                    {/* Balance Cards */}
-                    <div className="wallet-balance-cards">
-                        {/* Main Balance Card */}
-                        <div className="balance-card balance-card-primary">
-                            <div className="balance-card-header">
-                                <Wallet size={24} />
-                                <h3>Available Balance</h3>
-                            </div>
-                            <p className="balance-amount">
-                                ₦{wallet ? formatPrice(wallet.available_balance) : '0.00'}
+                    <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h1 className="heading-1">My Wallet</h1>
+                            <p className="text-secondary">
+                                {verifying ? "Verifying your payment, please wait..." : "Manage your funds and transactions"}
                             </p>
-                            <div className="balance-card-actions">
-                                <button onClick={() => setShowFunding(!showFunding)} className="btn-action btn-fund">
-                                    <Plus size={18} />
-                                    Add Funds
-                                </button>
-                                <button onClick={handleWithdraw} className="btn-action btn-withdraw">
-                                    <ArrowUpCircle size={18} />
-                                    Withdraw
-                                </button>
-                            </div>
                         </div>
-
-                        {/* Pending Balance */}
-                        <div className="balance-card balance-card-secondary">
-                            <div className="balance-card-icon" style={{ backgroundColor: 'rgba(251, 188, 4, 0.1)' }}>
-                                <Clock size={24} style={{ color: 'var(--warning)' }} />
-                            </div>
-                            <div>
-                                <h4 className="balance-card-title">Pending (Escrow)</h4>
-                                <p className="balance-card-value">₦{wallet ? formatPrice(wallet.pending_balance) : '0.00'}</p>
-                                <p className="balance-card-subtitle">Funds from sales</p>
-                            </div>
-                        </div>
-
-                        {/* Held Balance */}
-                        <div className="balance-card balance-card-secondary">
-                            <div className="balance-card-icon" style={{ backgroundColor: 'rgba(156, 39, 176, 0.1)' }}>
-                                <TrendingUp size={24} style={{ color: '#9C27B0' }} />
-                            </div>
-                            <div>
-                                <h4 className="balance-card-title">Held (Bids)</h4>
-                                <p className="balance-card-value">₦{wallet ? formatPrice(wallet.held_balance) : '0.00'}</p>
-                                <p className="balance-card-subtitle">Locked in auctions</p>
-                            </div>
-                        </div>
+                        <button
+                            className="btn-primary"
+                            onClick={() => {
+                                if (!isVerified) {
+                                    alert("Please verify your account to fund your wallet.");
+                                    navigate('/marketplace/verify');
+                                    return;
+                                }
+                                setShowFunding(true);
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                opacity: isVerified ? 1 : 0.6,
+                                cursor: isVerified ? 'pointer' : 'not-allowed'
+                            }}
+                        >
+                            <Plus size={16} />
+                            Add Funds
+                        </button>
                     </div>
 
-                    {/* Funding Form */}
+                    {/* Main Wallet Card */}
+                    {wallet && (
+                        <div className="wallet-card" style={{ marginBottom: '24px' }}>
+                            <div className="wallet-header">
+                                <div className="wallet-title">
+                                    <div className="wallet-icon">
+                                        <Wallet size={24} style={{ color: 'var(--success)' }} />
+                                    </div>
+                                    <span>Available Balance</span>
+                                </div>
+                            </div>
+                            <div className="wallet-balance">
+                                <span className="wallet-balance-value">
+                                    {formatPrice(wallet.available_balance)}
+                                </span>
+                                <span className="wallet-balance-label">Total available for withdrawal or purchase</span>
+                            </div>
+                            <div className="wallet-actions">
+                                <button className="wallet-btn wallet-btn-primary" onClick={handleWithdraw}>
+                                    Withdraw Funds
+                                </button>
+                                {/* Add Funds is also in header, but keeping primary action accessible */}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Secondary Metrics */}
+                    <div className="stats-grid">
+                        <MetricCard
+                            title="Pending Balance"
+                            value={formatPrice(wallet?.pending_balance)}
+                            icon={Clock}
+                            subtitle="Funds from sales in escrow"
+                            color="warning"
+                        />
+                        <MetricCard
+                            title="Held Balance"
+                            value={formatPrice(wallet?.held_balance)}
+                            icon={Lock}
+                            subtitle="Funds locked in active bids"
+                            color="info"
+                        />
+                        <MetricCard
+                            title="Total Transactions"
+                            value={transactions.length}
+                            icon={TrendingUp}
+                            subtitle="All time activity"
+                            color="success"
+                        />
+                    </div>
+
+                    {/* Funding Form Modal/Overlay or Inline */}
                     {showFunding && (
-                        <div className="funding-form-container">
-                            <form onSubmit={handleFundWallet} className="funding-form">
-                                <h3 className="funding-title">Add Funds to Wallet</h3>
-                                <div className="funding-input-group">
-                                    <label className="funding-label">Enter Amount (Min: ₦100)</label>
+                        <div className="dashboard-card" style={{ marginBottom: '24px', border: '1px solid var(--primary)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <h3 className="heading-3">Add Funds</h3>
+                                <button onClick={() => setShowFunding(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                    <XCircle size={20} color="var(--text-secondary)" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleFundWallet} style={{ maxWidth: '400px' }}>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Amount (NGN)</label>
                                     <input
                                         type="number"
                                         value={amount}
                                         onChange={(e) => setAmount(e.target.value)}
-                                        placeholder="Enter amount"
-                                        className="funding-input"
+                                        placeholder="Enter amount (min 100)"
+                                        className="form-control"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '6px'
+                                        }}
                                         min="100"
                                         required
                                     />
                                 </div>
-                                <div className="funding-actions">
-                                    <button type="button" onClick={() => setShowFunding(false)} className="btn-cancel">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="btn-proceed">
-                                        Proceed to Payment
-                                    </button>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button type="button" onClick={() => setShowFunding(false)} className="btn-secondary">Cancel</button>
+                                    <button type="submit" className="btn-primary">Proceed to Payment</button>
                                 </div>
                             </form>
                         </div>
                     )}
 
                     {/* Transaction History */}
-                    <div className="transactions-section">
-                        <div className="transactions-header">
-                            <h2 className="heading-2">Transaction History</h2>
-                        </div>
-
-                        {/* Filter Tabs */}
-                        <div className="transaction-filters">
-                            {filterTabs.map((tab) => (
+                    <div className="dashboard-card table-container" style={{ padding: '0' }}>
+                        <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', gap: '10px', overflowX: 'auto' }}>
+                            {filterTabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveFilter(tab.id)}
                                     className={`filter-btn ${activeFilter === tab.id ? 'active' : ''}`}
+                                    style={{
+                                        padding: '6px 16px',
+                                        borderRadius: '20px',
+                                        border: activeFilter === tab.id ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                                        backgroundColor: activeFilter === tab.id ? 'var(--primary)' : 'transparent',
+                                        color: activeFilter === tab.id ? '#fff' : 'var(--text-secondary)',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        whiteSpace: 'nowrap'
+                                    }}
                                 >
                                     {tab.label}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Transactions List */}
-                        <div className="transactions-list">
-                            {loading ? (
-                                <div className="transactions-loading">
-                                    <p className="text-secondary">Loading transactions...</p>
-                                </div>
-                            ) : filteredTransactions.length === 0 ? (
-                                <div className="transactions-empty">
-                                    <Wallet size={48} style={{ opacity: 0.3, color: 'var(--text-secondary)' }} />
-                                    <h3 className="heading-3">No transactions found</h3>
-                                    <p className="text-secondary">
-                                        {activeFilter === 'all'
-                                            ? "You haven't made any transactions yet"
-                                            : `No ${activeFilter} transactions found`}
-                                    </p>
-                                </div>
-                            ) : (
-                                filteredTransactions.map((tx) => {
-                                    const Icon = getTransactionIcon(tx.transaction_type);
-                                    const color = getTransactionColor(tx.transaction_type);
-                                    const isCredit = tx.transaction_type === 'deposit' || tx.transaction_type === 'sale_release';
-
-                                    return (
-                                        <div key={tx.id} className="transaction-item">
-                                            <div className={`transaction-icon transaction-icon-${color}`}>
-                                                <Icon size={20} />
-                                            </div>
-                                            <div className="transaction-details">
-                                                <h4 className="transaction-type">
-                                                    {tx.transaction_type.replace('_', ' ').toUpperCase()}
-                                                </h4>
-                                                <p className="transaction-description">{tx.description}</p>
-                                                <span className="transaction-date">{formatDate(tx.created_at)}</span>
-                                            </div>
-                                            <div className="transaction-right">
-                                                <p className={`transaction-amount transaction-amount-${color}`}>
-                                                    {isCredit ? '+' : '-'}₦{formatPrice(tx.amount)}
-                                                </p>
-                                                {getStatusBadge(tx.status)}
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
-                        </div>
+                        {loading ? (
+                            <div style={{ padding: '40px', textAlign: 'center' }}>Loading transactions...</div>
+                        ) : filteredTransactions.length === 0 ? (
+                            <div style={{ padding: '60px', textAlign: 'center' }}>
+                                <DollarSign size={48} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
+                                <h3 className="heading-3">No transactions found</h3>
+                                <p className="text-secondary">Your transaction history will appear here.</p>
+                            </div>
+                        ) : (
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th style={{ textAlign: 'right' }}>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredTransactions.map(tx => {
+                                        const isCredit = ['fund', 'sale_complete', 'sale_release', 'refund', 'bid_release'].includes(tx.transaction_type);
+                                        return (
+                                            <tr key={tx.id}>
+                                                <td>
+                                                    <span style={{
+                                                        fontWeight: '500',
+                                                        textTransform: 'capitalize',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px'
+                                                    }}>
+                                                        {tx.transaction_type.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                                <td className="text-secondary" style={{ fontSize: '13px' }}>{tx.description}</td>
+                                                <td>{formatDate(tx.created_at)}</td>
+                                                <td>{getStatusBadge(tx.status)}</td>
+                                                <td style={{
+                                                    textAlign: 'right',
+                                                    fontWeight: '600',
+                                                    color: isCredit ? 'var(--success)' : 'var(--text-primary)'
+                                                }}>
+                                                    {isCredit ? '+' : '-'}{formatPrice(tx.amount)}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
                 </div>
             </main>

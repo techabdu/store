@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import { Package, Clock, CheckCircle, XCircle, Truck, Eye } from 'lucide-react';
-import api from '../../utils/api';
+import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
+import './MarketplacePage.css';
 import './MarketplaceOrders.css';
 
 const MarketplaceOrders = () => {
@@ -13,6 +14,7 @@ const MarketplaceOrders = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
+    const [activeRole, setActiveRole] = useState('buyer'); // 'buyer' or 'seller'
     const [loading, setLoading] = useState(true);
 
     // Sidebar state for mobile
@@ -34,13 +36,23 @@ const MarketplaceOrders = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Mock data for demonstration (replace with API calls)
+    const fetchOrders = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get(`/marketplace/orders/list.php?role=${activeRole}`);
+            if (response.data.success) {
+                setOrders(response.data.orders);
+            }
+        } catch (error) {
+            console.error("Error fetching orders:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        // TODO: Fetch orders from API
-        const mockOrders = [];
-        setOrders(mockOrders);
-        setLoading(false);
-    }, []);
+        fetchOrders();
+    }, [activeRole]);
 
     const filterTabs = [
         { id: 'all', label: 'All Orders' },
@@ -97,12 +109,48 @@ const MarketplaceOrders = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-orders-main">
+            <main className="main-content marketplace-page-main">
                 <div className="content-wrapper">
                     {/* Page Header */}
-                    <div className="page-header">
-                        <h1 className="heading-1">My Orders</h1>
-                        <p className="text-secondary">Track and manage your marketplace orders</p>
+                    <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                        <div>
+                            <h1 className="heading-1">My Orders</h1>
+                            <p className="text-secondary">Track and manage your marketplace {activeRole === 'buyer' ? 'purchases' : 'sales'}</p>
+                        </div>
+                        <div className="orders-role-toggle" style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px' }}>
+                            <button
+                                onClick={() => setActiveRole('buyer')}
+                                className={`role-toggle-btn ${activeRole === 'buyer' ? 'active' : ''}`}
+                                style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    background: activeRole === 'buyer' ? 'var(--primary-color)' : 'transparent',
+                                    color: activeRole === 'buyer' ? 'white' : 'var(--text-secondary)'
+                                }}
+                            >
+                                Buying
+                            </button>
+                            <button
+                                onClick={() => setActiveRole('seller')}
+                                className={`role-toggle-btn ${activeRole === 'seller' ? 'active' : ''}`}
+                                style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    background: activeRole === 'seller' ? 'var(--primary-color)' : 'transparent',
+                                    color: activeRole === 'seller' ? 'white' : 'var(--text-secondary)'
+                                }}
+                            >
+                                Selling
+                            </button>
+                        </div>
                     </div>
 
                     {/* Filter Tabs */}
@@ -132,15 +180,17 @@ const MarketplaceOrders = () => {
                                 <h3 className="heading-3">No orders found</h3>
                                 <p className="text-secondary">
                                     {activeFilter === 'all'
-                                        ? "You haven't placed any orders yet"
+                                        ? (activeRole === 'buyer' ? "You haven't placed any orders yet" : "You haven't sold any items yet")
                                         : `No ${activeFilter} orders at the moment`}
                                 </p>
-                                <button
-                                    onClick={() => navigate('/marketplace/listings')}
-                                    className="btn-browse-products"
-                                >
-                                    Browse Products
-                                </button>
+                                {activeRole === 'buyer' && (
+                                    <button
+                                        onClick={() => navigate('/marketplace/listings')}
+                                        className="btn-browse-products"
+                                    >
+                                        Browse Products
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="orders-list">
@@ -157,30 +207,28 @@ const MarketplaceOrders = () => {
                                             </div>
                                         </div>
 
-                                        {/* Order Items */}
+                                        {/* Order Item */}
                                         <div className="order-items">
-                                            {order.items && order.items.map((item, index) => (
-                                                <div key={index} className="order-item">
-                                                    <img
-                                                        src={item.image || '/placeholder-phone.png'}
-                                                        alt={item.name}
-                                                        className="order-item-image"
-                                                    />
-                                                    <div className="order-item-info">
-                                                        <h5 className="order-item-name">{item.name}</h5>
-                                                        <p className="order-item-details">
-                                                            Qty: {item.quantity} × ₦{formatPrice(item.price)}
-                                                        </p>
-                                                    </div>
+                                            <div className="order-item">
+                                                <img
+                                                    src={order.listing_image ? (order.listing_image.startsWith('http') ? order.listing_image : `${SERVER_URL}${order.listing_image}`) : '/placeholder-phone.png'}
+                                                    alt={order.listing_title}
+                                                    className="order-item-image"
+                                                />
+                                                <div className="order-item-info">
+                                                    <h5 className="order-item-name">{order.listing_title}</h5>
+                                                    <p className="order-item-details">
+                                                        {activeRole === 'buyer' ? 'Seller' : 'Buyer'}: {order.other_party_name || 'Marketplace User'}
+                                                    </p>
                                                 </div>
-                                            ))}
+                                            </div>
                                         </div>
 
                                         {/* Order Footer */}
                                         <div className="order-footer">
                                             <div className="order-total">
-                                                <span className="order-total-label">Total:</span>
-                                                <span className="order-total-amount">₦{formatPrice(order.total)}</span>
+                                                <span className="order-total-label">{activeRole === 'buyer' ? 'Amount Paid' : 'Amount Earned'}:</span>
+                                                <span className="order-total-amount">₦{formatPrice(order.total_amount)}</span>
                                             </div>
                                             <button
                                                 onClick={() => navigate(`/marketplace/order/${order.id}`)}

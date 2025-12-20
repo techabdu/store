@@ -12,6 +12,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../../../config/db_connect.php';
+require_once '../../../vendor/autoload.php';
+// Load .env
+try {
+    $dotenv = Dotenv\Dotenv::createImmutable(dirname(dirname(dirname(__DIR__))));
+    $dotenv->safeLoad();
+} catch (Exception $e) {
+    // Ignore
+}
+
 require_once '../../../includes/kora_api.php';
 require_once '../../../includes/encryption.php';
 require_once '../../../includes/security.php';
@@ -40,7 +49,9 @@ $dob = trim($data->dob); // Format: YYYY-MM-DD
 
 // Security Check: Rate Limiting
 $rate_limiter = new RateLimiter($conn);
-if (!$rate_limiter->checkLimit($user_id, 'bvn_verification', 3, 120)) {
+// ALLOWED ATTEMPTS: 50, TIME WINDOW: 60 minutes (1 hour)
+// To reduce later, change '50' to a lower number (e.g., 3) and '60' to desired minutes (e.g., 120 for 2 hours)
+if (!$rate_limiter->checkLimit($user_id, 'bvn_verification', 50, 60)) {
     http_response_code(429);
     echo json_encode(['success' => false, 'error' => 'Too many verification attempts. Please try again later.']);
     exit();
@@ -58,9 +69,10 @@ if ($stmt->get_result()->num_rows > 0) {
 
 // Call Kora API
 $kora = new KoraAPI();
+// API expects verification_consent => true (boolean)
 $request_data = [
     'id' => $bvn,
-    'kycType' => 'bvn'
+    'verification_consent' => true
 ];
 
 $result = $kora->verifyIdentity('identities/ng/bvn', $request_data); // Using verifyIdentity helper which calls KoraAPI
@@ -98,16 +110,44 @@ if ($result['success']) {
     $lname = $api_data['last_name'] ?? '';
     $dob_api = $api_data['dob'] ?? $dob; // Use API return or input
     
-    $stmt->bind_param("issssssss" . "sssssss", 
+    // 7 params for INSERT, 6 for UPDATE = 13 total
+    $stmt->bind_param("issssssssssss", 
         $user_id, $kora_ref, $encrypted_id, $fname, $lname, $dob_api, $verification_data,
         $kora_ref, $encrypted_id, $fname, $lname, $dob_api, $verification_data
     );
     
     if ($stmt->execute()) {
         // Also update main profile verification status if exists
-         $conn->query("UPDATE marketplace_profiles SET is_verified = 1, verification_level = 'basic' WHERE user_id = $user_id");
+         // Create or Update Marketplace Profile
+         $display_name = trim("$fname $lname");
+         if (empty($display_name)) $display_name = "User $user_id";
          
-        echo json_encode(['success' => true, 'message' => 'BVN Verification Successful']);
+         $profile_query = "
+            INSERT INTO marketplace_profiles (user_id, display_name, is_verified, verification_level, created_at, updated_at) 
+            VALUES (?, ?, 1, 'basic', NOW(), NOW())
+            ON DUPLICATE KEY UPDATE is_verified = 1, verification_level = 'basic', updated_at = NOW()
+         ";
+         
+         $profile_stmt = $conn->prepare($profile_query);
+         
+         if ($profile_stmt) {
+             $profile_stmt->bind_param("is", $user_id, $display_name);
+             if (!$profile_stmt->execute()) {
+                 error_log("Profile update failed: " . $profile_stmt->error);
+             }
+         } else {
+             error_log("Profile prepare failed: " . $conn->error);
+         }
+         
+        echo json_encode([
+            'success' => true, 
+            'message' => 'BVN Verification Successful',
+            'verification_details' => [
+                'verification_type' => 'bvn',
+                'name' => trim("$fname $lname"),
+                'verified_at' => date('Y-m-d H:i:s')
+            ]
+        ]);
     } else {
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Database error saving verification']);
@@ -115,6 +155,11 @@ if ($result['success']) {
 
 } else {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $result['error'] ?? 'Verification failed']);
+    $errorMsg = $result['error'] ?? $result['message'] ?? 'Verification failed';
+    // Append detailed debug info if available
+    if (isset($result['data']['message'])) {
+        $errorMsg .= ': ' . $result['data']['message'];
+    }
+    echo json_encode(['success' => false, 'error' => $errorMsg]);
 }
 ?>

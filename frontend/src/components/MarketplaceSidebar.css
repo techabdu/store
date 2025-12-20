@@ -242,7 +242,7 @@
 }
 
 /* Overlay for mobile */
-.sidebar-overlay {
+.marketplace-sidebar-overlay {
     position: fixed;
     top: 64px;
     left: 0;

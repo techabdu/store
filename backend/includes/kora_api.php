@@ -34,20 +34,22 @@ class KoraAPI {
     /**
      * Initiate payment (Pay-in)
      */
-    public function initiatePayment($amount, $customer_data, $reference) {
+    public function initiatePayment($amount, $customer_data, $reference, $redirect_url = null) {
         $url = $this->api_url . '/charges/initialize'; 
-        // Note: Check exact endpoint for Kora pay-in. Usually /charges/initialize for checkout or /charges for direct charge.
-        // Assuming checkout flow for safety.
         
-        $callback_url = getenv('APP_URL') ? getenv('APP_URL') . '/api/marketplace/wallet/webhooks/kora_webhook.php' : 'http://localhost/store/api/marketplace/wallet/webhooks/kora_webhook.php';
+        $frontend_url = getenv('FRONTEND_URL') ?: 'http://localhost:5173';
+        $backend_url = getenv('APP_URL') ?: 'http://localhost/store';
+        
+        $notification_url = $backend_url . '/api/marketplace/wallet/webhooks/kora_webhook.php';
+        $final_redirect_url = $redirect_url ?: ($frontend_url . '/marketplace/wallet?status=processing&reference=' . $reference);
         
         $data = [
             'reference' => $reference,
             'amount' => $amount,
             'currency' => 'NGN',
             'customer' => $customer_data, // [name, email]
-            'notification_url' => $callback_url,
-            'redirect_url' => $callback_url, // For frontend redirect
+            'notification_url' => $notification_url,
+            'redirect_url' => $final_redirect_url, // For browser redirect
             'channels' => ['card', 'bank_transfer', 'mobile_money']
         ];
         
@@ -98,9 +100,17 @@ class KoraAPI {
     }
     
     /**
+     * Get transaction details from Kora
+     */
+    public function getPaymentStatus($reference) {
+        $url = $this->api_url . '/charges/' . $reference;
+        return $this->makeRequest($url, null, 'GET');
+    }
+
+    /**
      * Make HTTP request to Kora API
      */
-    private function makeRequest($url, $data) {
+    private function makeRequest($url, $data = null, $method = 'POST') {
         $headers = [
             'Authorization: Bearer ' . $this->secret_key,
             'Content-Type: application/json'
@@ -108,10 +118,18 @@ class KoraAPI {
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        
+        if ($method === 'POST') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            if ($data) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+        } else {
+            curl_setopt($ch, CURLOPT_HTTPGET, true);
+        }
+        
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true); // Should be true in production
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         
         $response = curl_exec($ch);
@@ -120,13 +138,24 @@ class KoraAPI {
         curl_close($ch);
         
         if ($curl_error) {
+            error_log("Kora API Request Failed. URL: $url");
             error_log("Kora API cURL Error: " . $curl_error);
             return ['success' => false, 'error' => 'Connection error: ' . $curl_error];
         }
         
         $response_data = json_decode($response, true);
         
-        // Kora usually returns status: true/false in body
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("Kora API JSON Decode Error: " . json_last_error_msg());
+            return [
+                'success' => false,
+                'data' => null,
+                'message' => 'Invalid response from payment gateway',
+                'http_code' => $http_code
+            ];
+        }
+        
+        // Kora usually returns status: true/false or 'success' in body
         $is_success = ($http_code >= 200 && $http_code < 300) && ($response_data['status'] ?? false);
         
         return [

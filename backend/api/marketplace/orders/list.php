@@ -61,12 +61,14 @@ $query = "
         CASE 
             WHEN o.buyer_id = ? THEN p_seller.display_name
             ELSE p_buyer.display_name
-        END as other_party_name
+        END as other_party_name,
+
+        (SELECT image_url FROM marketplace_listing_images WHERE listing_id = l.id ORDER BY is_primary DESC, id ASC LIMIT 1) as listing_image
         
     FROM marketplace_orders o
     JOIN marketplace_listings l ON o.listing_id = l.id
-    LEFT JOIN marketplace_profiles p_buyer ON o.buyer_id = p_buyer.user_id
-    LEFT JOIN marketplace_profiles p_seller ON o.seller_id = p_seller.user_id
+    LEFT JOIN marketplace_profiles p_buyer ON o.buyer_id = p_buyer.user_id AND (o.buyer_shop_id = p_buyer.shop_id OR (o.buyer_shop_id IS NULL AND p_buyer.shop_id IS NULL))
+    LEFT JOIN marketplace_profiles p_seller ON o.seller_id = p_seller.user_id AND (o.seller_shop_id = p_seller.shop_id OR (o.seller_shop_id IS NULL AND p_seller.shop_id IS NULL))
     
     WHERE $where_clause
     ORDER BY o.created_at DESC

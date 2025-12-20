@@ -77,9 +77,10 @@ if (!validatePositiveNumber($price) || !validatePositiveNumber($costPrice)) {
 }
 
 // Validate condition
-if (!in_array($condition, ['new', 'used'])) {
+$validConditions = ['New', 'Open Box', 'UK Used', 'Used'];
+if (!in_array($condition, $validConditions)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Invalid condition. Must be "new" or "used"']);
+    echo json_encode(['success' => false, 'error' => 'Invalid condition. Must be one of: ' . implode(', ', $validConditions)]);
     exit;
 }
 

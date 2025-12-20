@@ -11,10 +11,11 @@ import '../admin/AdminDashboard.css'; // Reuse admin styles for consistency
 import './MarketplaceDashboard.css'; // Custom marketplace styles
 
 const MarketplaceDashboard = () => {
-    const { user } = useAuth();
+    const { user, currentShop } = useAuth();
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [wallet, setWallet] = useState(null);
+    const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Sidebar state for mobile
@@ -39,8 +40,10 @@ const MarketplaceDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Profile
-                const profileRes = await api.get('/marketplace/profile/get.php');
+                // Fetch Profile for current shop
+                const profileRes = await api.get('/marketplace/profile/get.php', {
+                    params: { shop_id: currentShop?.id }
+                });
                 if (profileRes.data.success) {
                     setProfile(profileRes.data.profile);
                 }
@@ -50,6 +53,14 @@ const MarketplaceDashboard = () => {
                 if (walletRes.data.success) {
                     setWallet(walletRes.data.wallet);
                 }
+
+                // Fetch Stats
+                const statsRes = await api.get('/marketplace/profile/get_stats.php', {
+                    params: { shop_id: currentShop?.id }
+                });
+                if (statsRes.data.success) {
+                    setStats(statsRes.data.stats);
+                }
             } catch (error) {
                 console.error("Error fetching marketplace data:", error);
             } finally {
@@ -58,7 +69,7 @@ const MarketplaceDashboard = () => {
         };
 
         fetchData();
-    }, []);
+    }, [currentShop]);
 
     // Format balance for display
     const formatBalance = (amount) => {
@@ -78,22 +89,29 @@ const MarketplaceDashboard = () => {
             color: 'success'
         },
         {
-            title: 'Active Listings',
-            value: '0',
-            icon: Store,
-            subtitle: 'Products for sale',
-            color: 'info'
+            title: 'Total Purchases',
+            value: stats?.total_purchases || '0',
+            icon: FaShoppingCart,
+            subtitle: 'Items bought',
+            color: 'success'
         },
         {
             title: 'Total Sales',
-            value: '0',
+            value: stats?.total_sales || '0',
             icon: TrendingUp,
             subtitle: 'Items sold',
             color: 'warning'
         },
         {
+            title: 'Active Listings',
+            value: stats?.active_listings || '0',
+            icon: Store,
+            subtitle: 'Products for sale',
+            color: 'info'
+        },
+        {
             title: 'Pending Orders',
-            value: '0',
+            value: stats?.pending_orders || '0',
             icon: Package,
             subtitle: 'Orders to process',
             color: 'info'

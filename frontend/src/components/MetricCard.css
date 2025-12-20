@@ -10,6 +10,14 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 16px;
+    min-width: 0;
+    /* Allow container to shrink for truncation */
+}
+
+.metric-info {
+    flex: 1;
+    min-width: 0;
+    /* Critical for truncation in flex children */
 }
 
 .metric-title {
@@ -17,12 +25,18 @@
     color: var(--text-secondary);
     font-weight: 500;
     margin: 0 0 8px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .metric-value {
     font-size: 28px;
     font-weight: 600;
     color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .metric-icon-wrapper {
@@ -39,6 +53,7 @@
     align-items: center;
     gap: 8px;
     font-size: 12px;
+    min-width: 0;
 }
 
 .trend-indicator {
@@ -58,6 +73,10 @@
 
 .metric-subtitle {
     color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
 }
 
 /* Mobile Responsive Metrics */

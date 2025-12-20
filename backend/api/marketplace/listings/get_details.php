@@ -30,55 +30,87 @@ if (!isset($_GET['id'])) {
 $listing_id = intval($_GET['id']);
 $user_id = $_SESSION['user_id'];
 
-// Fetch Listing Details
-$stmt = $conn->prepare("
-    SELECT 
-        l.*,
-        s.name as shop_name,
-        s.address as shop_address,
-        p.display_name as seller_name,
-        p.profile_image as seller_image,
-        p.is_verified as seller_verified,
-        p.total_sales as seller_sales,
-        p.average_rating as seller_rating
-    FROM marketplace_listings l
-    JOIN shops s ON l.shop_id = s.id
-    JOIN marketplace_profiles p ON l.user_id = p.user_id
-    WHERE l.id = ?
-");
+try {
+    $query = "
+        SELECT 
+            l.*,
+            l.phone_brand,
+            l.phone_model,
+            l.phone_condition,
+            s.shop_name as shop_name,
+            s.shop_address as shop_address,
+            s.shop_phone as shop_phone,
+            p.display_name as seller_name,
+            p.profile_image as seller_image,
+            p.is_verified as seller_verified,
+            p.total_sales as seller_sales,
+            p.average_rating as seller_rating
+        FROM marketplace_listings l
+        JOIN shops s ON l.shop_id = s.id
+        JOIN marketplace_profiles p ON l.user_id = p.user_id
+        WHERE l.id = ?
+    ";
+    $stmt = $conn->prepare($query);
 
-$stmt->bind_param("i", $listing_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$listing = $result->fetch_assoc();
+    if (!$stmt) {
+        throw new Exception('Database error (main query connect): ' . $conn->error);
+    }
 
-if (!$listing) {
-    http_response_code(404);
-    echo json_encode(['success' => false, 'error' => 'Listing not found']);
-    exit();
+    $stmt->bind_param("i", $listing_id);
+    if (!$stmt->execute()) {
+        throw new Exception('Query execution failed: ' . $stmt->error);
+    }
+    $result = $stmt->get_result();
+    $listing = $result->fetch_assoc();
+
+    if (!$listing) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Listing not found']);
+        exit();
+    }
+
+    // Fetch Images
+    $img_query = "SELECT image_url FROM marketplace_listing_images WHERE listing_id = ? ORDER BY display_order ASC";
+    $img_stmt = $conn->prepare($img_query);
+
+    if ($img_stmt) {
+        $img_stmt->bind_param("i", $listing_id);
+        if ($img_stmt->execute()) {
+            $img_result = $img_stmt->get_result();
+            $images = [];
+            while ($row = $img_result->fetch_assoc()) {
+                $images[] = $row['image_url'];
+            }
+        } else {
+            $images = [];
+        }
+    } else {
+        $images = [];
+    }
+    
+    $listing['images'] = $images;
+
+    // Increment View Count
+    $conn->query("UPDATE marketplace_listings SET views_count = views_count + 1 WHERE id = $listing_id");
+
+    // Log View
+    $view_query = "INSERT INTO marketplace_listing_views (listing_id, user_id, ip_address) VALUES (?, ?, ?)";
+    $view_stmt = $conn->prepare($view_query);
+
+    if ($view_stmt) {
+        $ip = $_SERVER['REMOTE_ADDR'];
+        $view_stmt->bind_param("iis", $listing_id, $user_id, $ip);
+        try {
+            $view_stmt->execute();
+        } catch (Exception $e) {
+            // Ignore view log error
+        }
+    }
+
+    echo json_encode(['success' => true, 'listing' => $listing]);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Server Error: ' . $e->getMessage()]);
 }
-
-// Fetch Images
-$img_stmt = $conn->prepare("SELECT image_url FROM marketplace_listing_images WHERE listing_id = ? ORDER BY display_order ASC");
-$img_stmt->bind_param("i", $listing_id);
-$img_stmt->execute();
-$img_result = $img_stmt->get_result();
-
-$images = [];
-while ($row = $img_result->fetch_assoc()) {
-    $images[] = $row['image_url'];
-}
-
-$listing['images'] = $images;
-
-// Increment View Count (prevent dupes via session/cookie in real app, simplistic here)
-$conn->query("UPDATE marketplace_listings SET views_count = views_count + 1 WHERE id = $listing_id");
-
-// Log View (Optional, good for analytics)
-$view_stmt = $conn->prepare("INSERT INTO marketplace_listing_views (listing_id, user_id, ip_address) VALUES (?, ?, ?)");
-$ip = $_SERVER['REMOTE_ADDR'];
-$view_stmt->bind_param("iis", $listing_id, $user_id, $ip);
-$view_stmt->execute();
-
-echo json_encode(['success' => true, 'listing' => $listing]);
 ?>

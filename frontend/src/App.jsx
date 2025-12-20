@@ -43,6 +43,10 @@ import MarketplaceWallet from './pages/marketplace/MarketplaceWallet';
 import MarketplaceMessages from './pages/marketplace/MarketplaceMessages';
 import MarketplaceOrders from './pages/marketplace/MarketplaceOrders';
 import MarketplaceProfile from './pages/marketplace/MarketplaceProfile';
+import MarketplaceCreateListing from './pages/marketplace/MarketplaceCreateListing';
+import MarketplaceVerification from './pages/marketplace/MarketplaceVerification';
+import MarketplaceEditListing from './pages/marketplace/MarketplaceEditListing';
+import MarketplaceOrderDetails from './pages/marketplace/MarketplaceOrderDetails';
 
 function App() {
     return (
@@ -274,6 +278,14 @@ function App() {
                             }
                         />
                         <Route
+                            path="/marketplace/create-listing"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceCreateListing />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
                             path="/marketplace/buying"
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
@@ -286,6 +298,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                                     <MarketplaceSelling />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/edit-listing/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceEditListing />
                                 </ProtectedRoute>
                             }
                         />
@@ -322,10 +342,26 @@ function App() {
                             }
                         />
                         <Route
+                            path="/marketplace/order/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceOrderDetails />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
                             path="/marketplace/profile"
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                                     <MarketplaceProfile />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/verify"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceVerification />
                                 </ProtectedRoute>
                             }
                         />

@@ -14,7 +14,9 @@ import {
     Tag
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../utils/api';
 import './MarketplaceSidebar.css';
+import { useState, useEffect } from 'react';
 
 const MarketplaceSidebar = ({ filters, onFilterChange, onApplyFilters, isOpen, isMobile, closeSidebar }) => {
     const { logout, user } = useAuth();
@@ -37,27 +39,35 @@ const MarketplaceSidebar = ({ filters, onFilterChange, onApplyFilters, isOpen, i
     // Phone condition categories
     const phoneConditions = [
         { value: '', label: 'All Conditions' },
-        { value: 'New', label: 'Brand New' },
+        { value: 'New', label: 'New' },
+        { value: 'Open Box', label: 'Open Box' },
         { value: 'UK Used', label: 'UK Used' },
-        { value: 'Fairly Used', label: 'Fairly Used' },
-        { value: 'Refurbished', label: 'Refurbished' },
+        { value: 'Used', label: 'Used' },
     ];
 
     // Popular phone brands
-    const phoneBrands = [
-        { value: '', label: 'All Brands' },
-        { value: 'Apple', label: 'Apple' },
-        { value: 'Samsung', label: 'Samsung' },
-        { value: 'Huawei', label: 'Huawei' },
-        { value: 'Xiaomi', label: 'Xiaomi' },
-        { value: 'Oppo', label: 'Oppo' },
-        { value: 'Vivo', label: 'Vivo' },
-        { value: 'Tecno', label: 'Tecno' },
-        { value: 'Infinix', label: 'Infinix' },
-        { value: 'Google', label: 'Google' },
-        { value: 'OnePlus', label: 'OnePlus' },
-        { value: 'Nokia', label: 'Nokia' },
-    ];
+    const [phoneBrands, setPhoneBrands] = useState([{ value: '', label: 'All Brands' }]);
+
+    useEffect(() => {
+        const fetchBrands = async () => {
+            try {
+                const response = await api.get('/marketplace/brands/list.php');
+                if (response.data.success) {
+                    const brands = response.data.brands.map(brand => ({
+                        value: brand,
+                        label: brand
+                    }));
+                    setPhoneBrands([{ value: '', label: 'All Brands' }, ...brands]);
+                }
+            } catch (error) {
+                console.error("Error fetching brands:", error);
+            }
+        };
+
+        if (isListingsPage) {
+            fetchBrands();
+        }
+    }, [isListingsPage]);
 
     // Determine back path based on role
     const backPath = user?.role === 'superadmin' ? '/superadmin/dashboard' :
@@ -68,7 +78,7 @@ const MarketplaceSidebar = ({ filters, onFilterChange, onApplyFilters, isOpen, i
         <>
             {/* Overlay for mobile */}
             {isMobile && isOpen && (
-                <div className="sidebar-overlay" onClick={closeSidebar}></div>
+                <div className="marketplace-sidebar-overlay" onClick={closeSidebar}></div>
             )}
 
             <aside className={`marketplace-sidebar ${isOpen ? 'open' : ''} ${isMobile ? 'mobile' : ''}`}>
@@ -79,6 +89,7 @@ const MarketplaceSidebar = ({ filters, onFilterChange, onApplyFilters, isOpen, i
                         <NavLink
                             to={backPath}
                             className="marketplace-nav-item"
+                            onClick={() => isMobile && setTimeout(closeSidebar, 150)}
                         >
                             <ArrowLeft size={20} className="marketplace-nav-icon" />
                             <span className="marketplace-nav-label">Back to System</span>
@@ -93,7 +104,7 @@ const MarketplaceSidebar = ({ filters, onFilterChange, onApplyFilters, isOpen, i
                                 className={({ isActive }) =>
                                     `marketplace-nav-item ${isActive ? 'active' : ''}`
                                 }
-                                onClick={isMobile ? closeSidebar : undefined}
+                                onClick={() => isMobile && setTimeout(closeSidebar, 150)}
                             >
                                 <item.icon size={20} className="marketplace-nav-icon" />
                                 <span className="marketplace-nav-label">{item.label}</span>

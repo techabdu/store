@@ -29,7 +29,7 @@ const Inventory = () => {
         vendor: '',
         color: '',
         storage: '',
-        condition_status: 'new',
+        condition_status: 'New',
         price: '',
         cost_price: '',
         status: 'in_stock'
@@ -182,7 +182,10 @@ const Inventory = () => {
             vendor: '',
             color: '',
             storage: '',
-            condition_status: 'new',
+            color: '',
+            storage: '',
+            condition_status: 'New',
+            price: '',
             price: '',
             cost_price: '',
             status: 'in_stock'
@@ -424,8 +427,10 @@ const Inventory = () => {
                                                             onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
                                                             required
                                                         >
-                                                            <option value="new">New</option>
-                                                            <option value="used">Used</option>
+                                                            <option value="New">New</option>
+                                                            <option value="Open Box">Open Box</option>
+                                                            <option value="UK Used">UK Used</option>
+                                                            <option value="Used">Used</option>
                                                         </select>
                                                     </div>
                                                     <div className="form-group">
@@ -600,8 +605,10 @@ const Inventory = () => {
                                                             onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
                                                             required
                                                         >
-                                                            <option value="new">New</option>
-                                                            <option value="used">Used</option>
+                                                            <option value="New">New</option>
+                                                            <option value="Open Box">Open Box</option>
+                                                            <option value="UK Used">UK Used</option>
+                                                            <option value="Used">Used</option>
                                                         </select>
                                                     </div>
                                                     <div className="form-group">
