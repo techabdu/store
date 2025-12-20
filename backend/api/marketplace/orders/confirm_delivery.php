@@ -98,8 +98,8 @@ try {
     $seller_id = $order['seller_id'];
     $buyer_id = $order['buyer_id'];
 
-    // Step 1: Update delivery status to received
-    $stmt = $conn->prepare("UPDATE marketplace_orders SET delivery_status = 'received' WHERE id = ?");
+    // Step 1: Update delivery and order status to completed
+    $stmt = $conn->prepare("UPDATE marketplace_orders SET delivery_status = 'received', order_status = 'completed', completed_at = NOW() WHERE id = ?");
     $stmt->bind_param("i", $order_id);
     $stmt->execute();
     $stmt->close();

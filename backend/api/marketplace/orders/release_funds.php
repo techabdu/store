@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../../../config/db_connect.php';
+require_once '../messaging/send_system_message.php'; // For automatic notifications
 
 session_start();
 
@@ -144,6 +145,11 @@ try {
         $desc_seller
     );
     $stmt->execute();
+    $stmt->close();
+
+    // 5. Send automatic notification to seller
+    $notification_message = "✅ Funds for order #" . $order['order_reference'] . " have been released to your available balance.";
+    sendSystemMessage($conn, $order['listing_id'], $buyer_id, $seller_id, $notification_message, $buyer_id);
 
     $conn->commit();
 
