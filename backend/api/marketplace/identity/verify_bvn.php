@@ -154,12 +154,22 @@ if ($result['success']) {
     }
 
 } else {
-    http_response_code(400);
+    http_response_code($result['http_code'] ?: 400);
     $errorMsg = $result['error'] ?? $result['message'] ?? 'Verification failed';
+    
+    // Log detailed failure for admin
+    $log_data = [
+        'user_id' => $user_id,
+        'http_code' => $result['http_code'],
+        'kora_message' => $result['message'] ?? 'No message',
+        'kora_data' => $result['data'] ?? []
+    ];
+    error_log("BVN Verification Failed: " . json_encode($log_data));
+    
     // Append detailed debug info if available
     if (isset($result['data']['message'])) {
         $errorMsg .= ': ' . $result['data']['message'];
     }
-    echo json_encode(['success' => false, 'error' => $errorMsg]);
+    echo json_encode(['success' => false, 'error' => $errorMsg, 'debug_info' => $result['message'] ?? '']);
 }
 ?>

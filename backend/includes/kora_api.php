@@ -8,15 +8,27 @@ class KoraAPI {
     private $environment;
     
     public function __construct() {
+        // Ensure .env is loaded if not already
+        if (empty(getenv('KORA_SECRET_KEY')) && empty($_ENV['KORA_SECRET_KEY'])) {
+            try {
+                // Adjust path as needed based on where this is called from
+                $dotenvPath = __DIR__ . '/..';
+                if (file_exists($dotenvPath . '/.env')) {
+                    $dotenv = \Dotenv\Dotenv::createImmutable($dotenvPath);
+                    $dotenv->safeLoad();
+                }
+            } catch (\Exception $e) {
+                error_log("KoraAPI: Dotenv auto-load fail: " . $e->getMessage());
+            }
+        }
+
         $this->secret_key = getenv('KORA_SECRET_KEY') ?: ($_ENV['KORA_SECRET_KEY'] ?? '');
         $this->public_key = getenv('KORA_PUBLIC_KEY') ?: ($_ENV['KORA_PUBLIC_KEY'] ?? '');
         $this->api_url = getenv('KORA_API_URL') ?: ($_ENV['KORA_API_URL'] ?? 'https://api.korapay.com/merchant/api/v1');
         $this->environment = getenv('KORA_ENVIRONMENT') ?: ($_ENV['KORA_ENVIRONMENT'] ?? 'test');
         
         if (!$this->secret_key) {
-            error_log("Kora API configuration error: Secret key missing");
-            // We don't throw exception in constructor to avoid crashing app on init, 
-            // but methods will fail.
+            error_log("Kora API configuration error: Secret key missing or failed to load from environment.");
         }
     }
     
