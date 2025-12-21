@@ -40,8 +40,21 @@ Add these secrets:
 10. **`SMTP_FROM_NAME`**
     - Value: Your application name (e.g., "Phone Store")
 
+### Kora API Credentials (Identity Verification)
+11. **`KORA_SECRET_KEY`**
+    - Value: Your Kora Secret Key (Live or Test)
+
+12. **`KORA_PUBLIC_KEY`**
+    - Value: Your Kora Public Key
+
+13. **`KORA_API_URL`**
+    - Value: `https://api.korapay.com/merchant/api/v1`
+
+14. **`KORA_ENVIRONMENT`**
+    - Value: `live` or `test`
+
 ### FTP Credentials (Hostinger Deployment)
-11. **`FTP_HOST`**
+15. **`FTP_HOST`**
     - Value: Your Hostinger FTP hostname (e.g., `ftp.yoursite.com` or IP address)
     - Find in: Hostinger → Files → FTP Accounts
 

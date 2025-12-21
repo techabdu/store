@@ -64,6 +64,10 @@ jobs:
           SMTP_PORT=${{ secrets.SMTP_PORT }}
           SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}
           SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}
+          KORA_SECRET_KEY=${{ secrets.KORA_SECRET_KEY }}
+          KORA_PUBLIC_KEY=${{ secrets.KORA_PUBLIC_KEY }}
+          KORA_API_URL=${{ secrets.KORA_API_URL }}
+          KORA_ENVIRONMENT=${{ secrets.KORA_ENVIRONMENT }}
           EOF
 
       # 8. Deploy Backend to Hostinger via FTP
