@@ -170,6 +170,6 @@ if ($result['success']) {
     if (isset($result['data']['message'])) {
         $errorMsg .= ': ' . $result['data']['message'];
     }
-    echo json_encode(['success' => false, 'error' => $errorMsg, 'debug_info' => $result['message'] ?? '']);
+    echo json_encode(['success' => false, 'error' => $errorMsg]);
 }
 ?>
