@@ -1,7 +1,9 @@
-<?php
 // backend/api/marketplace/identity/debug_tables.php
+session_start();
 header("Content-Type: application/json");
 require_once '../../../config/db_connect.php';
+
+$user_id = $_SESSION['user_id'] ?? null;
 
 $tables = [
     'marketplace_identity_verifications',
@@ -23,6 +25,7 @@ echo json_encode([
     'php_version' => phpversion(),
     'session_status' => session_status(),
     'session_id' => session_id(),
+    'user_id' => $user_id,
     'test_rate_limiter' => 'Starting...',
 ]);
 

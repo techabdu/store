@@ -116,6 +116,8 @@ const MarketplaceVerification = () => {
                         await fetchStatus();
                     }, 1000);
                 }
+            } else {
+                setError(response.data.error || "Verification failed. Please try again.");
             }
         } catch (err) {
             console.error("Verification error:", err);
