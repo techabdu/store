@@ -40,4 +40,17 @@ try {
 } catch (Throwable $e) {
     echo "\nRateLimiter CRASHED: " . $e->getMessage();
 }
+
+// Show last 10 lines of debug_verify.log if it exists
+echo "\n\n--- LAST 10 LOG ENTRIES ---\n";
+$logFile = __DIR__ . '/debug_verify.log';
+if (file_exists($logFile)) {
+    $lines = file($logFile);
+    $lastLines = array_slice($lines, -15);
+    foreach ($lastLines as $line) {
+        echo $line;
+    }
+} else {
+    echo "Log file not found at $logFile";
+}
 ?>
