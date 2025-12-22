@@ -161,7 +161,13 @@ if ($result['success']) {
     // Force a 400 error if Kora failed, even if they returned HTTP 200
     $httpCode = ($result['http_code'] >= 200 && $result['http_code'] < 300) ? 400 : ($result['http_code'] ?: 400);
     http_response_code($httpCode);
-    $errorMsg = $result['error'] ?? $result['message'] ?? 'Verification failed';
+    // Extract specific error message
+    $errorMsg = 'Verification failed';
+    if (!empty($result['error'])) {
+        $errorMsg = $result['error'];
+    } elseif (!empty($result['message'])) {
+        $errorMsg = $result['message'];
+    }
     
     // Log detailed failure for admin
     $log_data = [

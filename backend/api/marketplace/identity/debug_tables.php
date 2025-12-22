@@ -1,3 +1,4 @@
+<?php
 // backend/api/marketplace/identity/debug_tables.php
 session_start();
 header("Content-Type: application/json");
