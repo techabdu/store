@@ -69,6 +69,8 @@ jobs:
           KORA_API_URL=${{ secrets.KORA_API_URL }}
           KORA_ENVIRONMENT=${{ secrets.KORA_ENVIRONMENT }}
           ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          APP_URL=${{ secrets.APP_URL }}
           EOF
 
       # 8. Deploy Backend to Hostinger via FTP
@@ -89,3 +91,4 @@ jobs:
             **/.git*/**
             **/node_modules/**
             **/.gitignore
+            

@@ -52,6 +52,11 @@ class KoraAPI {
         $frontend_url = getenv('FRONTEND_URL') ?: 'http://localhost:5173';
         $backend_url = getenv('APP_URL') ?: 'http://localhost/store';
         
+        // Log warning in production if URLs are missing
+        if ($this->environment === 'production' && (getenv('FRONTEND_URL') === false || getenv('APP_URL') === false)) {
+            error_log("KoraAPI Warning: FRONTEND_URL or APP_URL not set in production environment. Defaulting to localhost.");
+        }
+        
         $notification_url = $backend_url . '/api/marketplace/wallet/webhooks/kora_webhook.php';
         $final_redirect_url = $redirect_url ?: ($frontend_url . '/marketplace/wallet?status=processing&reference=' . $reference);
         
