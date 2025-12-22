@@ -36,7 +36,11 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$data = json_decode(file_get_contents("php://input"));
+
+try {
+    $raw_input = file_get_contents("php://input");
+    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "BVN Request Data: " . $raw_input . "\n", FILE_APPEND);
+    $data = json_decode($raw_input);
 
 if (!isset($data->bvn) || !isset($data->dob) || !isset($data->consent) || !$data->consent) {
     http_response_code(400);
@@ -111,49 +115,58 @@ if ($result['success']) {
     $dob_api = $api_data['dob'] ?? $dob; // Use API return or input
     
     // 7 params for INSERT, 6 for UPDATE = 13 total
+    // Let's verify: user_id(1), kora_ref(2), id(3), fname(4), lname(5), dob(6), data(7) + ref(8), id(9), fname(10), lname(11), dob(12), data(13)
     $stmt->bind_param("issssssssssss", 
         $user_id, $kora_ref, $encrypted_id, $fname, $lname, $dob_api, $verification_data,
         $kora_ref, $encrypted_id, $fname, $lname, $dob_api, $verification_data
     );
     
     if ($stmt->execute()) {
-        // Also update main profile verification status if exists
-         // Create or Update Marketplace Profile
-         $display_name = trim("$fname $lname");
-         if (empty($display_name)) $display_name = "User $user_id";
-         
-         $profile_query = "
-            INSERT INTO marketplace_profiles (user_id, display_name, is_verified, verification_level, created_at, updated_at) 
-            VALUES (?, ?, 1, 'basic', NOW(), NOW())
-            ON DUPLICATE KEY UPDATE is_verified = 1, verification_level = 'basic', updated_at = NOW()
-         ";
-         
-         $profile_stmt = $conn->prepare($profile_query);
-         
-         if ($profile_stmt) {
-             $profile_stmt->bind_param("is", $user_id, $display_name);
-             if (!$profile_stmt->execute()) {
-                 error_log("Profile update failed: " . $profile_stmt->error);
+            // Also update main profile verification status if exists
+             // Create or Update Marketplace Profile
+             $display_name = trim("$fname $lname");
+             if (empty($display_name)) $display_name = "User $user_id";
+             
+             $profile_query = "
+                INSERT INTO marketplace_profiles (user_id, display_name, is_verified, verification_level, created_at, updated_at) 
+                VALUES (?, ?, 1, 'basic', NOW(), NOW())
+                ON DUPLICATE KEY UPDATE is_verified = 1, verification_level = 'basic', updated_at = NOW()
+             ";
+             
+             $profile_stmt = $conn->prepare($profile_query);
+             
+             if ($profile_stmt) {
+                 $profile_stmt->bind_param("is", $user_id, $display_name);
+                 if (!$profile_stmt->execute()) {
+                     error_log("Profile update failed: " . $profile_stmt->error);
+                 }
+             } else {
+                 error_log("Profile prepare failed: " . $conn->error);
              }
-         } else {
-             error_log("Profile prepare failed: " . $conn->error);
-         }
-         
-        echo json_encode([
-            'success' => true, 
-            'message' => 'BVN Verification Successful',
-            'verification_details' => [
-                'verification_type' => 'bvn',
-                'name' => trim("$fname $lname"),
-                'verified_at' => date('Y-m-d H:i:s')
-            ]
-        ]);
-    } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Database error saving verification']);
+             
+            echo json_encode([
+                'success' => true, 
+                'message' => 'BVN Verification Successful',
+                'verification_details' => [
+                    'verification_type' => 'bvn',
+                    'name' => trim("$fname $lname"),
+                    'verified_at' => date('Y-m-d H:i:s')
+                ]
+            ]);
+        } else {
+            error_log("Verification Save Failed (BVN): " . $stmt->error);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Database error saving verification: ' . $stmt->error]);
+        }
+        }
     }
 
-} else {
+} catch (Throwable $e) {
+    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Global BVN Crash: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n", FILE_APPEND);
+    error_log("BVN Verification Crash: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'An internal error occurred: ' . $e->getMessage()]);
+}
     // Force a 400 error if Kora failed, even if they returned HTTP 200
     $httpCode = ($result['http_code'] >= 200 && $result['http_code'] < 300) ? 400 : ($result['http_code'] ?: 400);
     http_response_code($httpCode);

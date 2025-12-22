@@ -53,8 +53,11 @@ Add these secrets:
 14. **`KORA_ENVIRONMENT`**
     - Value: `live` or `test`
 
+15. **`ENCRYPTION_KEY`**
+    - Value: A secure 32-character string for data encryption.
+
 ### FTP Credentials (Hostinger Deployment)
-15. **`FTP_HOST`**
+16. **`FTP_HOST`**
     - Value: Your Hostinger FTP hostname (e.g., `ftp.yoursite.com` or IP address)
     - Find in: Hostinger → Files → FTP Accounts
 

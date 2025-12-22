@@ -15,14 +15,24 @@ $tables = [
 ];
 
 $results = [];
+$structures = [];
 foreach ($tables as $table) {
     $res = $conn->query("SHOW TABLES LIKE '$table'");
-    $results[$table] = $res && $res->num_rows > 0;
+    $exists = $res && $res->num_rows > 0;
+    $results[$table] = $exists;
+    
+    if ($exists) {
+        $struct = $conn->query("DESCRIBE $table");
+        while ($row = $struct->fetch_assoc()) {
+            $structures[$table][] = $row;
+        }
+    }
 }
 
 echo json_encode([
     'success' => true,
     'tables' => $results,
+    'structures' => $structures,
     'php_version' => phpversion(),
     'session_status' => session_status(),
     'session_id' => session_id(),
