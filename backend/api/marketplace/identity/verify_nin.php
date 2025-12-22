@@ -175,7 +175,32 @@ if ($result['success']) {
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Database error saving verification: ' . $stmt->error]);
         }
+    } else {
+        // Force a 400 error if Kora failed, even if they returned HTTP 200
+        $httpCode = ($result['http_code'] >= 200 && $result['http_code'] < 300) ? 400 : ($result['http_code'] ?: 400);
+        http_response_code($httpCode);
+        // Extract specific error message
+        $errorMsg = 'Verification failed';
+        if (!empty($result['error'])) {
+            $errorMsg = $result['error'];
+        } elseif (!empty($result['message'])) {
+            $errorMsg = $result['message'];
         }
+        
+        // Log detailed failure for admin
+        $log_data = [
+            'user_id' => $user_id,
+            'http_code' => $result['http_code'],
+            'kora_message' => $result['message'] ?? 'No message',
+            'kora_data' => $result['data'] ?? []
+        ];
+        error_log("NIN Verification Failed: " . json_encode($log_data));
+        
+        // Append detailed debug info if available (remove in production if strict)
+        if (isset($result['data']['message'])) {
+            $errorMsg .= ': ' . $result['data']['message'];
+        }
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
     }
 
 } catch (Throwable $e) {
@@ -183,31 +208,5 @@ if ($result['success']) {
     error_log("Verification Crash: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'An internal error occurred: ' . $e->getMessage()]);
-}
-    // Force a 400 error if Kora failed, even if they returned HTTP 200
-    $httpCode = ($result['http_code'] >= 200 && $result['http_code'] < 300) ? 400 : ($result['http_code'] ?: 400);
-    http_response_code($httpCode);
-    // Extract specific error message
-    $errorMsg = 'Verification failed';
-    if (!empty($result['error'])) {
-        $errorMsg = $result['error'];
-    } elseif (!empty($result['message'])) {
-        $errorMsg = $result['message'];
-    }
-    
-    // Log detailed failure for admin
-    $log_data = [
-        'user_id' => $user_id,
-        'http_code' => $result['http_code'],
-        'kora_message' => $result['message'] ?? 'No message',
-        'kora_data' => $result['data'] ?? []
-    ];
-    error_log("NIN Verification Failed: " . json_encode($log_data));
-    
-    // Append detailed debug info if available (remove in production if strict)
-    if (isset($result['data']['message'])) {
-        $errorMsg .= ': ' . $result['data']['message'];
-    }
-    echo json_encode(['success' => false, 'error' => $errorMsg]);
 }
 ?>
