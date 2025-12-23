@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
+import MetricCard from '../../components/MetricCard';
+import { ShoppingBag, Receipt, DollarSign } from 'lucide-react';
 import './Report.css';
 
 const Report = () => {
@@ -246,19 +248,28 @@ const Report = () => {
                             {error && <div className="error-message">{error}</div>}
                             {successMsg && <div className="success-message" style={{ color: 'green', marginBottom: '15px' }}>{successMsg}</div>}
 
-                            <div className="stats-grid">
-                                <div className="stat-item">
-                                    <h3>Inventory Value (In Stock)</h3>
-                                    <p>{formatCurrency(stats.inventory_value)}</p>
-                                </div>
-                                <div className="stat-item">
-                                    <h3>Total Expenses</h3>
-                                    <p>{formatCurrency(stats.total_expenses)}</p>
-                                </div>
-                                <div className="stat-item">
-                                    <h3>Business Capital</h3>
-                                    <p>{formatCurrency(stats.business_capital)}</p>
-                                </div>
+                            <div className="report-stats-grid">
+                                <MetricCard
+                                    title="Inventory Value (In Stock)"
+                                    value={formatCurrency(stats.inventory_value)}
+                                    icon={ShoppingBag}
+                                    color="info"
+                                    subtitle="Current stock value"
+                                />
+                                <MetricCard
+                                    title="Total Expenses"
+                                    value={formatCurrency(stats.total_expenses)}
+                                    icon={Receipt}
+                                    color="danger"
+                                    subtitle="Total business spending"
+                                />
+                                <MetricCard
+                                    title="Business Capital"
+                                    value={formatCurrency(stats.business_capital)}
+                                    icon={DollarSign}
+                                    color="warning"
+                                    subtitle="Initial capital investment"
+                                />
                             </div>
 
                             <div className="input-grid">

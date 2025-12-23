@@ -43,10 +43,12 @@ $query = "
         s.shop_name,
         s.shop_address,
         s.shop_phone,
-        miv.verification_status as id_verification_status
+        miv.verification_status as id_verification_status,
+        u.full_name
     FROM marketplace_profiles mp
     LEFT JOIN shops s ON mp.shop_id = s.id
     LEFT JOIN marketplace_identity_verifications miv ON mp.user_id = miv.user_id
+    LEFT JOIN users u ON mp.user_id = u.id
     WHERE mp.user_id = ?
 ";
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceDashboard.css'; // Use dashboard styles for consistency
+import './MarketplaceWallet.css';
 
 const MarketplaceWallet = () => {
     const { user } = useAuth();
@@ -28,6 +29,10 @@ const MarketplaceWallet = () => {
     const [accountNumber, setAccountNumber] = useState('');
     const [selectedBank, setSelectedBank] = useState('');
     const [withdrawLoading, setWithdrawLoading] = useState(false);
+
+    // Refs for scrolling
+    const fundingFormRef = useRef(null);
+    const withdrawFormRef = useRef(null);
 
     const banks = [
         { code: '044', name: 'Access Bank' },
@@ -156,6 +161,10 @@ const MarketplaceWallet = () => {
 
     const handleWithdraw = () => {
         setShowWithdraw(true);
+        // Use timeout to allow React to render the component before scrolling
+        setTimeout(() => {
+            withdrawFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
     };
 
     const handleWithdrawSubmit = async (e) => {
@@ -307,6 +316,10 @@ const MarketplaceWallet = () => {
                                     return;
                                 }
                                 setShowFunding(true);
+                                // Use timeout to allow React to render the component before scrolling
+                                setTimeout(() => {
+                                    fundingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
                             }}
                             style={{
                                 display: 'flex',
@@ -363,18 +376,11 @@ const MarketplaceWallet = () => {
                             subtitle="Funds locked in active bids"
                             color="info"
                         />
-                        <MetricCard
-                            title="Total Transactions"
-                            value={transactions.length}
-                            icon={TrendingUp}
-                            subtitle="All time activity"
-                            color="success"
-                        />
                     </div>
 
                     {/* Funding Form Modal/Overlay or Inline */}
                     {showFunding && (
-                        <div className="dashboard-card" style={{ marginBottom: '24px', border: '1px solid var(--primary)' }}>
+                        <div ref={fundingFormRef} className="dashboard-card" style={{ marginBottom: '24px', border: '1px solid var(--primary)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h3 className="heading-3">Add Funds</h3>
                                 <button onClick={() => setShowFunding(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -400,7 +406,7 @@ const MarketplaceWallet = () => {
                                         required
                                     />
                                 </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div className="funding-actions">
                                     <button type="button" onClick={() => setShowFunding(false)} className="btn-secondary">Cancel</button>
                                     <button type="submit" className="btn-primary">Proceed to Payment</button>
                                 </div>
@@ -410,7 +416,7 @@ const MarketplaceWallet = () => {
 
                     {/* Withdrawal Modal */}
                     {showWithdraw && (
-                        <div className="dashboard-card" style={{ marginBottom: '24px', border: '1px solid var(--primary)' }}>
+                        <div ref={withdrawFormRef} className="dashboard-card" style={{ marginBottom: '24px', border: '1px solid var(--primary)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h3 className="heading-3">Withdraw Funds</h3>
                                 <button onClick={() => setShowWithdraw(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -482,7 +488,7 @@ const MarketplaceWallet = () => {
                                     />
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div className="funding-actions">
                                     <button type="button" onClick={() => setShowWithdraw(false)} className="btn-secondary">Cancel</button>
                                     <button type="submit" className="btn-primary" disabled={withdrawLoading}>
                                         {withdrawLoading ? 'Processing...' : 'Withdraw Funds'}

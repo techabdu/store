@@ -175,6 +175,16 @@
     transform: translateY(-1px);
 }
 
+.btn-sm {
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+}
+
+.btn-sm svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
 /* Stats Grid */
 .profile-stats-grid {
     display: grid;
@@ -240,9 +250,12 @@
 }
 
 .section-header {
-    padding: 20px 24px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--border-color);
     background-color: var(--bg-background);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .section-title {
@@ -443,25 +456,6 @@
         align-items: center;
     }
 
-    .profile-header-actions {
-        width: 100%;
-    }
-
-    .btn-edit-profile,
-    .edit-actions {
-        width: 100%;
-    }
-
-    .edit-actions {
-        flex-direction: column;
-    }
-
-    .btn-cancel-edit,
-    .btn-save-profile {
-        width: 100%;
-        justify-content: center;
-    }
-
     .profile-stats-grid {
         grid-template-columns: 1fr;
     }
@@ -477,6 +471,28 @@
 
     .page-header h1 {
         font-size: 24px;
+    }
+
+    .section-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .profile-header-actions,
+    .btn-edit-profile,
+    .edit-actions,
+    .btn-cancel-edit,
+    .btn-save-profile {
+        width: auto !important;
+    }
+
+    .edit-actions {
+        display: flex;
+        flex-direction: row !important;
+        gap: 8px !important;
+        align-items: center;
     }
 }
 
@@ -517,5 +533,43 @@
 
     .profile-name {
         font-size: 18px;
+    }
+
+    .section-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .profile-header-actions,
+    .btn-edit-profile,
+    .edit-actions,
+    .btn-cancel-edit,
+    .btn-save-profile {
+        width: auto !important;
+    }
+
+    .edit-actions {
+        flex-direction: row !important;
+        gap: 8px !important;
+    }
+
+    .btn-text {
+        display: none;
+    }
+
+    .btn-sm {
+        padding: 8px !important;
+        border-radius: 50% !important;
+        width: 36px !important;
+        height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .btn-sm svg {
+        margin: 0 !important;
     }
 }

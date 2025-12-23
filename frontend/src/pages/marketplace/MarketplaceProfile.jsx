@@ -145,37 +145,15 @@ const MarketplaceProfile = () => {
                                 <div className="profile-avatar-section">
                                     <div className="profile-avatar">
                                         <User size={48} />
-                                        <button className="avatar-upload-btn">
-                                            <Camera size={16} />
-                                        </button>
                                     </div>
                                     <div className="profile-header-info">
-                                        <h2 className="profile-name">{user?.username || 'User'}</h2>
+                                        <h2 className="profile-name">{profile?.full_name || user?.username || 'User'}</h2>
                                         <p className="profile-email">{user?.email}</p>
                                         <div className={`verification-badge verification-${verificationStatus.color}`}>
                                             <VerificationIcon size={16} />
                                             {verificationStatus.label}
                                         </div>
                                     </div>
-                                </div>
-                                <div className="profile-header-actions">
-                                    {!editing ? (
-                                        <button onClick={() => setEditing(true)} className="btn-edit-profile">
-                                            <Edit2 size={18} />
-                                            Edit Profile
-                                        </button>
-                                    ) : (
-                                        <div className="edit-actions">
-                                            <button onClick={() => setEditing(false)} className="btn-cancel-edit">
-                                                <X size={18} />
-                                                Cancel
-                                            </button>
-                                            <button onClick={handleSaveProfile} className="btn-save-profile">
-                                                <Save size={18} />
-                                                Save Changes
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
@@ -242,6 +220,25 @@ const MarketplaceProfile = () => {
                                 <div className="profile-section">
                                     <div className="section-header">
                                         <h3 className="section-title">Profile Information</h3>
+                                        <div className="profile-header-actions">
+                                            {!editing ? (
+                                                <button onClick={() => setEditing(true)} className="btn-edit-profile btn-sm">
+                                                    <Edit2 size={16} />
+                                                    <span className="btn-text">Edit Profile</span>
+                                                </button>
+                                            ) : (
+                                                <div className="edit-actions">
+                                                    <button onClick={() => setEditing(false)} className="btn-cancel-edit btn-sm">
+                                                        <X size={16} />
+                                                        <span className="btn-text">Cancel</span>
+                                                    </button>
+                                                    <button onClick={handleSaveProfile} className="btn-save-profile btn-sm">
+                                                        <Save size={16} />
+                                                        <span className="btn-text">Save Changes</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="profile-form">
                                         <div className="form-group">
