@@ -22,6 +22,32 @@ const MarketplaceWallet = () => {
     const [amount, setAmount] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
 
+    // Withdrawal State
+    const [showWithdraw, setShowWithdraw] = useState(false);
+    const [withdrawAmount, setWithdrawAmount] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
+    const [selectedBank, setSelectedBank] = useState('');
+    const [withdrawLoading, setWithdrawLoading] = useState(false);
+
+    const banks = [
+        { code: '044', name: 'Access Bank' },
+        { code: '058', name: 'Guaranty Trust Bank' },
+        { code: '033', name: 'United Bank for Africa (UBA)' },
+        { code: '057', name: 'Zenith Bank' },
+        { code: '011', name: 'First Bank of Nigeria' },
+        { code: '214', name: 'FCMB' },
+        { code: '050', name: 'Ecobank Nigeria' },
+        { code: '070', name: 'Fidelity Bank' },
+        { code: '082', name: 'Keystone Bank' },
+        { code: '221', name: 'Stanbic IBTC Bank' },
+        { code: '232', name: 'Sterling Bank' },
+        { code: '032', name: 'Union Bank of Nigeria' },
+        { code: '035', name: 'Wema Bank' },
+        { code: '999992', name: 'Opay' },
+        { code: '50211', name: 'Kuda Bank' },
+        { code: '999991', name: 'PalmPay' },
+    ];
+
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -129,7 +155,43 @@ const MarketplaceWallet = () => {
     };
 
     const handleWithdraw = () => {
-        navigate('/marketplace/wallet/withdraw');
+        setShowWithdraw(true);
+    };
+
+    const handleWithdrawSubmit = async (e) => {
+        e.preventDefault();
+        if (!withdrawAmount || !accountNumber || !selectedBank) {
+            alert("Please fill all withdrawal details");
+            return;
+        }
+
+        if (Number(withdrawAmount) > Number(wallet?.available_balance || 0)) {
+            alert("Insufficient balance");
+            return;
+        }
+
+        setWithdrawLoading(true);
+        try {
+            const res = await api.post('/marketplace/wallet/withdraw/initiate.php', {
+                amount: withdrawAmount,
+                account_number: accountNumber,
+                bank_code: selectedBank
+            });
+
+            if (res.data.success) {
+                alert(`Withdrawal initiated successfully!\nReference: ${res.data.reference}\n(Save this reference for webhook simulation)`);
+                setShowWithdraw(false);
+                setWithdrawAmount('');
+                setAccountNumber('');
+                setSelectedBank('');
+                fetchData(); // Refresh balance
+            }
+        } catch (error) {
+            console.error("Withdrawal error", error);
+            alert(error.response?.data?.error || "Withdrawal failed. Please try again.");
+        } finally {
+            setWithdrawLoading(false);
+        }
     };
 
     const filterTabs = [
@@ -341,6 +403,90 @@ const MarketplaceWallet = () => {
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <button type="button" onClick={() => setShowFunding(false)} className="btn-secondary">Cancel</button>
                                     <button type="submit" className="btn-primary">Proceed to Payment</button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* Withdrawal Modal */}
+                    {showWithdraw && (
+                        <div className="dashboard-card" style={{ marginBottom: '24px', border: '1px solid var(--primary)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <h3 className="heading-3">Withdraw Funds</h3>
+                                <button onClick={() => setShowWithdraw(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                    <XCircle size={20} color="var(--text-secondary)" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleWithdrawSubmit} style={{ maxWidth: '400px' }}>
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Amount (NGN)</label>
+                                    <input
+                                        type="number"
+                                        value={withdrawAmount}
+                                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                                        placeholder={`Max: ${wallet?.available_balance || 0}`}
+                                        className="form-control"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '6px'
+                                        }}
+                                        min="100"
+                                        max={wallet?.available_balance}
+                                        required
+                                    />
+                                    <small style={{ color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                                        Processing fee may apply.
+                                    </small>
+                                </div>
+
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Select Bank</label>
+                                    <select
+                                        value={selectedBank}
+                                        onChange={(e) => setSelectedBank(e.target.value)}
+                                        className="form-control"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '6px'
+                                        }}
+                                        required
+                                    >
+                                        <option value="">-- Choose Bank --</option>
+                                        {banks.map(bank => (
+                                            <option key={bank.code} value={bank.code}>{bank.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Account Number</label>
+                                    <input
+                                        type="text"
+                                        value={accountNumber}
+                                        onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                        placeholder="10-digit account number"
+                                        className="form-control"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '6px'
+                                        }}
+                                        minLength="10"
+                                        maxLength="10"
+                                        required
+                                    />
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button type="button" onClick={() => setShowWithdraw(false)} className="btn-secondary">Cancel</button>
+                                    <button type="submit" className="btn-primary" disabled={withdrawLoading}>
+                                        {withdrawLoading ? 'Processing...' : 'Withdraw Funds'}
+                                    </button>
                                 </div>
                             </form>
                         </div>

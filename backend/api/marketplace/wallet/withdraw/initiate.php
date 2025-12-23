@@ -25,6 +25,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$shop_id = $_SESSION['current_shop_id'] ?? 1;
 $data = json_decode(file_get_contents("php://input"));
 
 // Input Validation
@@ -52,8 +53,8 @@ if ($amount < $min_withdrawal) {
 $conn->begin_transaction();
 
 try {
-    $stmt = $conn->prepare("SELECT id, available_balance, user_id FROM marketplace_wallets WHERE user_id = ? FOR UPDATE");
-    $stmt->bind_param("i", $user_id);
+    $stmt = $conn->prepare("SELECT id, available_balance, user_id FROM marketplace_wallets WHERE user_id = ? AND shop_id = ? FOR UPDATE");
+    $stmt->bind_param("ii", $user_id, $shop_id);
     $stmt->execute();
     $wallet = $stmt->get_result()->fetch_assoc();
 
@@ -83,10 +84,11 @@ try {
         SELECT SUM(amount) as daily_total 
         FROM marketplace_wallet_transactions 
         WHERE user_id = ? 
+        AND shop_id = ?
         AND transaction_type = 'withdraw' 
         AND created_at >= ?
     ");
-    $l_stmt->bind_param("is", $user_id, $today);
+    $l_stmt->bind_param("iis", $user_id, $shop_id, $today);
     $l_stmt->execute();
     $day_total = $l_stmt->get_result()->fetch_assoc()['daily_total'] ?? 0;
     
@@ -132,13 +134,28 @@ try {
     $masked_account = str_repeat('*', strlen($account_number) - 4) . substr($account_number, -4);
     $description = "Withdrawal to $bank_code - $masked_account";
     
+    // Fetch latest balance details for log
+    $b_stmt = $conn->prepare("SELECT available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE id = ?");
+    $b_stmt->bind_param("i", $wallet['id']);
+    $b_stmt->execute();
+    $b_row = $b_stmt->get_result()->fetch_assoc();
+
     $log_stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, reference, status, description, created_at) 
-        VALUES (?, ?, 'withdraw', ?, ?, 'pending', ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, reference_number, status, description, available_balance_after, pending_balance_after, held_balance_after, created_at) 
+        VALUES (?, ?, ?, 'withdraw', ?, ?, 'pending', ?, ?, ?, ?, NOW())
     ");
-    $log_stmt->bind_param("iidsds", $wallet['id'], $user_id, $amount, $reference, $description);
+    $log_stmt->bind_param("iiidsdddd", $wallet['id'], $user_id, $shop_id, $amount, $reference, $description, $b_row['available_balance'], $b_row['pending_balance'], $b_row['held_balance']);
     $log_stmt->execute();
+
+    // 7. Create Withdrawal Request Record (for Webhook tracking)
+    $req_stmt = $conn->prepare("
+        INSERT INTO marketplace_withdrawal_requests 
+        (user_id, shop_id, wallet_id, amount, status, kora_reference, bank_code, account_number, created_at)
+        VALUES (?, ?, ?, ?, 'processing', ?, ?, ?, NOW())
+    ");
+    $req_stmt->bind_param("iiidsss", $user_id, $shop_id, $wallet['id'], $amount, $reference, $bank_code, $account_number);
+    $req_stmt->execute();
 
     $conn->commit();
     

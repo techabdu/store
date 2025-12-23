@@ -145,6 +145,14 @@ elseif ($event['event'] === 'transfer.success') {
         $up_stmt->bind_param("s", $reference);
         $up_stmt->execute();
     }
+
+    // Update wallet transaction status (so user sees it as completed)
+    $tx_up = $conn->prepare("UPDATE marketplace_wallet_transactions SET status = 'completed' WHERE reference_number = ? AND transaction_type = 'withdraw'");
+    if ($tx_up) {
+        $tx_up->bind_param("s", $reference);
+        $tx_up->execute();
+    }
+
     http_response_code(200);
 }
 elseif ($event['event'] === 'transfer.failed' || $event['event'] === 'transfer.reversed') {
@@ -167,6 +175,13 @@ elseif ($event['event'] === 'transfer.failed' || $event['event'] === 'transfer.r
             $up_stmt->bind_param("si", $reason, $req['id']);
             $up_stmt->execute();
             
+            // Update original wallet transaction status to failed
+            $tx_fail = $conn->prepare("UPDATE marketplace_wallet_transactions SET status = 'failed' WHERE reference_number = ? AND transaction_type = 'withdraw'");
+            if ($tx_fail) {
+                $tx_fail->bind_param("s", $reference);
+                $tx_fail->execute();
+            }
+
             // 2. Refund balance
             $ref_stmt = $conn->prepare("UPDATE marketplace_wallets SET available_balance = available_balance + ?, total_withdrawn = total_withdrawn - ? WHERE user_id = ?");
             $ref_stmt->bind_param("ddi", $req['amount'], $req['amount'], $req['user_id']);

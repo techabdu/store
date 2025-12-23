@@ -97,6 +97,11 @@ const MarketplaceProductDetails = () => {
     };
 
     const handleMessage = () => {
+        if (user && listing.user_id == user.id) {
+            // User is the seller, just go to messages
+            navigate('/marketplace/messages');
+            return;
+        }
         const brand = listing.phone_brand || '';
         const model = listing.phone_model || '';
         navigate(`/marketplace/messages?listing_id=${listing.id}&brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}`);

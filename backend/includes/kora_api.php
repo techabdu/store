@@ -81,13 +81,14 @@ class KoraAPI {
         
         $data = [
             'reference' => $reference,
-            'amount' => $amount,
-            'currency' => 'NGN',
             'destination' => [
                 'type' => 'bank_account',
                 'amount' => $amount,
                 'currency' => 'NGN',
-                'bank_account' => $bank_details // [bank_code, account_number]
+                'bank_account' => [
+                    'bank' => $bank_details['bank_code'],
+                    'account' => $bank_details['account_number']
+                ]
             ],
             'narration' => 'Withdrawal from Marketplace Wallet'
         ];

@@ -152,6 +152,9 @@ const MarketplaceMessages = () => {
                     }
                 } catch (err) {
                     console.error("Error initializing conversation:", err);
+                    if (err.response?.data?.error) {
+                        alert(err.response.data.error);
+                    }
                     fetchConversations();
                 }
             } else {
