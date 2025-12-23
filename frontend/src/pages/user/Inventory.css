@@ -180,39 +180,6 @@
     white-space: nowrap;
 }
 
-.btn-primary {
-    background: #4CAF50;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.3s;
-    white-space: nowrap;
-}
-
-.btn-primary:hover {
-    background: #45a049;
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.btn-secondary:hover {
-    background: #5a6268;
-}
-
 .btn-edit {
     background: #007bff;
     color: white;
@@ -259,127 +226,10 @@
     font-size: 1.125rem;
 }
 
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1rem;
-}
-
-.modal-content {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 2rem;
-    max-width: 600px;
-    width: 100%;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-sizing: border-box;
-}
-
-.modal-content h2 {
-    margin: 0 0 1.5rem 0;
-    color: var(--text-primary);
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 1rem;
-    background: var(--input-bg);
-    color: var(--text-primary);
-    box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: #4CAF50;
-}
-
-.form-group small {
-    display: block;
-    margin-top: 0.25rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
 .disabled-input {
     background: var(--disabled-bg);
     cursor: not-allowed;
 }
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 1.5rem;
-    flex-wrap: wrap;
-}
-
-/* Multi-Step Modal Styles */
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.modal-header h2 {
-    margin: 0;
-}
-
-.step-indicator {
-    background: var(--primary);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.form-step {
-    min-height: 300px;
-}
-
-.step-title {
-    color: var(--text-primary);
-    font-size: 1.125rem;
-    margin: 0 0 1.25rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
 
 /* Responsive Design */
 @media (max-width: 1024px) {
@@ -387,51 +237,17 @@
         padding-left: 12px !important;
         padding-right: 12px !important;
     }
-
-    .inventory-container {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .inventory-table-container {
-        width: 100%;
-        max-width: 100%;
-    }
 }
 
 @media (max-width: 768px) {
     .content-wrapper {
         padding-top: 72px;
         padding-bottom: 32px;
-        width: 100%;
-        max-width: 100%;
     }
 
     .main-content {
         padding-left: 8px !important;
         padding-right: 8px !important;
-    }
-
-    .inventory-container {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .inventory-table-container {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .inventory-header {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: nowrap;
-    }
-
-    .inventory-header .btn-primary {
-        width: auto;
-        white-space: nowrap;
     }
 
     .inventory-header h1 {
@@ -443,78 +259,18 @@
         gap: 0.75rem;
     }
 
-    .search-input-wrapper {
-        width: 100%;
-    }
-
     .status-filter {
         width: 100%;
         min-width: auto;
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
     }
 
     .inventory-table {
         font-size: 0.875rem;
     }
 
-    .inventory-table th,
-    .inventory-table td {
-        padding: 0.75rem 0.5rem;
-    }
-
     .actions {
         flex-direction: column;
         gap: 0.25rem;
-    }
-
-    .btn-edit,
-    .btn-delete {
-        width: 100%;
-        padding: 0.5rem;
-    }
-
-    .modal-content {
-        padding: 1.5rem;
-        margin: 0.5rem;
-    }
-
-    .modal-actions {
-        flex-direction: column-reverse;
-    }
-
-    .modal-actions button {
-        width: 100%;
-    }
-
-    /* Multi-Step Modal Mobile Styles */
-    .modal-header {
-        flex-direction: row;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .modal-header h2 {
-        font-size: 1.125rem;
-        flex: 1;
-    }
-
-    .step-indicator {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.7rem;
-        white-space: nowrap;
-    }
-
-    .step-title {
-        font-size: 1rem;
-    }
-
-    .form-step {
-        min-height: 250px;
     }
 }
 
@@ -522,22 +278,10 @@
     .content-wrapper {
         padding-top: 68px;
         padding-bottom: 24px;
-        width: 100%;
-        max-width: 100%;
     }
 
     .main-content {
         padding: 4px !important;
-    }
-
-    .inventory-container {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .inventory-table-container {
-        width: 100%;
-        max-width: 100%;
     }
 
     .inventory-header h1 {
@@ -548,82 +292,27 @@
         width: auto;
         padding: 0.5rem 0.75rem;
         font-size: 0.875rem;
-        justify-content: center;
     }
 
     .inventory-table {
         font-size: 0.8rem;
     }
+}
 
-    .inventory-table th,
-    .inventory-table td {
-        padding: 0.5rem 0.25rem;
-    }
+/* Badge specific for inventory */
+.badge-returned {
+    background: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+}
 
-    .badge {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
-    }
+.badge-sold {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
 
-    /* Compact Modal for Small Screens */
-    .modal-content {
-        padding: 1rem;
-        max-height: 95vh;
-        overflow-y: auto;
-    }
-
-    .modal-header {
-        margin-bottom: 1rem;
-        padding-bottom: 0.75rem;
-    }
-
-    .modal-header h2 {
-        font-size: 1rem;
-    }
-
-    .step-indicator {
-        font-size: 0.7rem;
-        padding: 0.3rem 0.6rem;
-    }
-
-    .step-title {
-        font-size: 0.95rem;
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-    }
-
-    .form-group {
-        margin-bottom: 0.75rem;
-    }
-
-    .form-group label {
-        margin-bottom: 0.35rem;
-        font-size: 0.875rem;
-    }
-
-    .form-group input,
-    .form-group select {
-        padding: 0.6rem;
-        font-size: 0.9rem;
-    }
-
-    .form-row {
-        gap: 0.75rem;
-    }
-
-    .modal-actions {
-        margin-top: 1rem;
-        gap: 0.75rem;
-    }
-
-    .modal-actions button {
-        padding: 0.65rem 1rem;
-        font-size: 0.9rem;
-    }
-
-    .form-step {
-        min-height: auto;
-    }
+.badge-in-stock {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
 }
 
 @media (max-width: 425px) {

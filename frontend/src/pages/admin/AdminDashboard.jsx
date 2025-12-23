@@ -198,7 +198,7 @@ const AdminDashboard = () => {
                     {!loading && !error && (
                         <>
                             {/* Metrics Grid */}
-                            <div className="grid-4">
+                            <div className="grid-3">
                                 {metrics.map((metric, index) => (
                                     <MetricCard key={index} {...metric} />
                                 ))}

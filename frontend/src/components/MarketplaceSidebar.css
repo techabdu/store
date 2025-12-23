@@ -124,7 +124,6 @@
     display: block;
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-primary);
     margin-bottom: 6px;
 }
 
@@ -134,8 +133,7 @@
     border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 14px;
-    color: var(--text-primary);
-    background-color: var(--bg-surface);
+    background-color: var(--input-bg);
     transition: all 0.2s ease;
 }
 

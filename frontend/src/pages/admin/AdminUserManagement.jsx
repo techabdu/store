@@ -29,6 +29,7 @@ const AdminUserManagement = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [resetPassword, setResetPassword] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [view, setView] = useState('list'); // 'list', 'add'
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -65,13 +66,13 @@ const AdminUserManagement = () => {
             }
         };
 
-        if (showModal) {
+        if (view === 'add') {
             const timeoutId = setTimeout(checkAvailability, 500);
             return () => clearTimeout(timeoutId);
         } else {
             setUsernameAvailable(null);
         }
-    }, [formData.username, showModal]);
+    }, [formData.username, view]);
 
     // Fetch users
     const fetchUsers = async () => {
@@ -126,7 +127,7 @@ const AdminUserManagement = () => {
             const response = await api.post('/admin-users.php', formData);
             if (response.data.success) {
                 setUsers([...users, response.data.user]);
-                setShowModal(false);
+                setView('list');
                 setFormData({ username: '', email: '', password: '', role: 'user' });
                 alert('User created successfully');
             }
@@ -236,200 +237,205 @@ const AdminUserManagement = () => {
 
             <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
                 <div className="content-wrapper">
-                    {/* Page Header */}
-                    <div className="user-management-header">
-                        <div>
-                            <h1 className="heading-1">User Management</h1>
-                            <p className="text-secondary">Manage users and their access levels</p>
-                        </div>
-                        <button className="add-user-btn" onClick={() => setShowModal(true)}>
-                            <Plus size={20} />
-                            Add User
-                        </button>
-                    </div>
+                    {view === 'list' ? (
+                        <>
+                            {/* Page Header */}
+                            <div className="user-management-header">
+                                <div>
+                                    <h1 className="heading-1">User Management</h1>
+                                    <p className="text-secondary">Manage users and their access levels</p>
+                                </div>
+                                <button className="add-user-btn" onClick={() => setView('add')}>
+                                    <Plus size={20} />
+                                    Add User
+                                </button>
+                            </div>
 
-                    {/* Search Bar */}
-                    <div className="search-bar-container">
-                        <div className="search-input-wrapper">
-                            <FaSearch className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Search by username or email..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                            {/* Search Bar */}
+                            <div className="search-bar-container">
+                                <div className="search-input-wrapper">
+                                    <FaSearch className="search-icon" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search by username or email..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
 
-                    {/* Users Table */}
-                    <div className="dashboard-card user-table-container">
-                        <table className="user-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Last Active</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.map((user) => (
-                                    <tr key={user.id}>
-                                        <td>
-                                            <div className="user-info">
-                                                <div className="user-avatar">
-                                                    {user.username.charAt(0).toUpperCase()}
+                            {/* Users Table */}
+                            <div className="dashboard-card user-table-container">
+                                <table className="user-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Last Active</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredUsers.map((user) => (
+                                            <tr key={user.id}>
+                                                <td>
+                                                    <div className="user-info">
+                                                        <div className="user-avatar">
+                                                            {user.username.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div className="user-details">
+                                                            <span className="user-name">{user.username}</span>
+                                                            <span className="user-email">{user.email}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {user.is_owner ? (
+                                                        <span className="status-badge" style={{ background: 'rgba(var(--primary-rgb, 66, 133, 244), 0.15)', color: 'var(--primary)' }}>Owner</span>
+                                                    ) : user.is_branch_manager ? (
+                                                        <span className="status-badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}>Branch Manager</span>
+                                                    ) : (
+                                                        <span className="status-badge" style={{ background: 'rgba(var(--text-secondary-rgb, 156, 163, 175), 0.15)', color: 'var(--text-secondary)' }}>Staff</span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <span className={`status-badge ${user.status}`}>
+                                                        {user.status}
+                                                    </span>
+                                                </td>
+                                                <td>{user.lastActive}</td>
+                                                <td>
+                                                    <div className="actions-cell">
+                                                        {!user.is_owner && (
+                                                            <button
+                                                                className="action-btn"
+                                                                title={user.role === 'user' ? 'Promote to Branch Manager' : 'Demote to Staff'}
+                                                                onClick={() => handleRoleChange(user.id, user.role)}
+                                                            >
+                                                                {user.role === 'user' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="action-btn"
+                                                            title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
+                                                            onClick={() => handleToggleStatus(user.id, user.status)}
+                                                        >
+                                                            {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
+                                                        </button>
+                                                        <button
+                                                            className="action-btn"
+                                                            title="Reset Password"
+                                                            onClick={() => openResetModal(user)}
+                                                        >
+                                                            <Lock size={18} />
+                                                        </button>
+                                                        <button
+                                                            className="action-btn delete"
+                                                            title="Delete User"
+                                                            onClick={() => handleDelete(user.id)}
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="focus-view-container animate-slide-in">
+                            <div className="focus-view-header">
+                                <h2 className="heading-2">Create New User</h2>
+                                <button className="back-btn" onClick={() => setView('list')}>
+                                    <X size={20} />
+                                    <span>Back to List</span>
+                                </button>
+                            </div>
+
+                            <div className="dashboard-card focus-view-card">
+                                <form onSubmit={handleSubmit}>
+                                    <div className="focus-view-body">
+                                        <div className="form-grid">
+                                            <div className="form-group">
+                                                <label>Username</label>
+                                                <div className="input-with-icon">
+                                                    <input
+                                                        type="text"
+                                                        name="username"
+                                                        className={`form-input ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
+                                                        value={formData.username}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                        placeholder="Enter unique username"
+                                                    />
+                                                    {isCheckingUsername && <div className="spinner-small"></div>}
                                                 </div>
-                                                <div className="user-details">
-                                                    <span className="user-name">{user.username}</span>
-                                                    <span className="user-email">{user.email}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            {user.is_owner ? (
-                                                <span className="status-badge" style={{ background: 'rgba(var(--primary-rgb, 66, 133, 244), 0.15)', color: 'var(--primary)' }}>Owner</span>
-                                            ) : user.is_branch_manager ? (
-                                                <span className="status-badge" style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}>Branch Manager</span>
-                                            ) : (
-                                                <span className="status-badge" style={{ background: 'rgba(var(--text-secondary-rgb, 156, 163, 175), 0.15)', color: 'var(--text-secondary)' }}>Staff</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <span className={`status-badge ${user.status}`}>
-                                                {user.status}
-                                            </span>
-                                        </td>
-                                        <td>{user.lastActive}</td>
-                                        <td>
-                                            <div className="actions-cell">
-                                                {!user.is_owner && (
-                                                    <button
-                                                        className="action-btn"
-                                                        title={user.role === 'user' ? 'Promote to Branch Manager' : 'Demote to Staff'}
-                                                        onClick={() => handleRoleChange(user.id, user.role)}
-                                                    >
-                                                        {user.role === 'user' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
-                                                    </button>
+                                                {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
+                                                    <div className={`availability-msg ${usernameAvailable ? 'success' : 'error'}`}>
+                                                        {usernameAvailable ? <><Check size={14} /> Available</> : <><AlertCircle size={14} /> Not Available</>}
+                                                    </div>
                                                 )}
-                                                <button
-                                                    className="action-btn"
-                                                    title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
-                                                    onClick={() => handleToggleStatus(user.id, user.status)}
-                                                >
-                                                    {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
-                                                </button>
-                                                <button
-                                                    className="action-btn"
-                                                    title="Reset Password"
-                                                    onClick={() => openResetModal(user)}
-                                                >
-                                                    <Lock size={18} />
-                                                </button>
-                                                <button
-                                                    className="action-btn delete"
-                                                    title="Delete User"
-                                                    onClick={() => handleDelete(user.id)}
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
                                             </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+
+                                            <div className="form-group">
+                                                <label>Email Address</label>
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    className="form-input"
+                                                    value={formData.email}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    placeholder="user@example.com"
+                                                />
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label>Initial Password</label>
+                                                <input
+                                                    type="password"
+                                                    name="password"
+                                                    className="form-input"
+                                                    value={formData.password}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    placeholder="Min. 6 characters"
+                                                    minLength={6}
+                                                />
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label>User Role</label>
+                                                <select
+                                                    name="role"
+                                                    className="form-select"
+                                                    value={formData.role}
+                                                    onChange={handleInputChange}
+                                                >
+                                                    <option value="user">Staff / User</option>
+                                                    <option value="admin">Administrator</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="focus-view-footer">
+                                            <button type="button" className="btn-secondary" onClick={() => setView('list')}>Cancel</button>
+                                            <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>
+                                                <Plus size={18} />
+                                                Create User Account
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </main >
 
-            {/* Add User Modal */}
-            {
-                showModal && (
-                    <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                        <div className="modal-content" onClick={e => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h2 className="modal-title">Add New User</h2>
-                                <button className="close-btn" onClick={() => setShowModal(false)}>
-                                    <X size={24} />
-                                </button>
-                            </div>
-                            <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    <div className="form-group">
-                                        <label>Username</label>
-                                        <input
-                                            type="text"
-                                            name="username"
-                                            className={`form-input ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
-                                            value={formData.username}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                        {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
-                                            <div className={`flex items-center gap-1 mt-1 text-sm ${usernameAvailable ? 'text-green-600' : 'text-red-600'}`} style={{ fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', color: usernameAvailable ? '#10b981' : '#ef4444' }}>
-                                                {usernameAvailable ? (
-                                                    <>
-                                                        <Check size={14} />
-                                                        <span>Username available</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <AlertCircle size={14} />
-                                                        <span>Username not available</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
-                                        {isCheckingUsername && (
-                                            <div style={{ fontSize: '12px', marginTop: '4px', color: '#6b7280' }}>Checking availability...</div>
-                                        )}
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Email</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            className="form-input"
-                                            value={formData.email}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Password</label>
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            className="form-input"
-                                            value={formData.password}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Role</label>
-                                        <select
-                                            name="role"
-                                            className="form-select"
-                                            value={formData.role}
-                                            onChange={handleInputChange}
-                                        >
-                                            <option value="user">User</option>
-                                            <option value="admin">Admin</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                                    <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>Create User</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
 
             {/* Reset Password Modal */}
             {

@@ -13,8 +13,7 @@ const Inventory = () => {
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('in_stock');
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
+    const [view, setView] = useState('list'); // 'list', 'add', 'edit'
 
     const [selectedItem, setSelectedItem] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -92,7 +91,7 @@ const Inventory = () => {
             const response = await api.post('/inventory/create.php', formData);
 
             if (response.data.success) {
-                setShowAddModal(false);
+                setView('list');
                 resetForm();
                 fetchInventory();
             } else {
@@ -116,7 +115,7 @@ const Inventory = () => {
             });
 
             if (response.data.success) {
-                setShowEditModal(false);
+                setView('list');
                 setSelectedItem(null);
                 resetForm();
                 fetchInventory();
@@ -170,7 +169,7 @@ const Inventory = () => {
         });
         setCurrentStep(1); // Reset to step 1
         setError(''); // Clear any errors
-        setShowEditModal(true);
+        setView('edit');
     };
 
     // Reset form
@@ -244,363 +243,206 @@ const Inventory = () => {
                                 <h1>Inventory Management</h1>
                                 <p className="text-secondary">View and Manage Inventory</p>
                             </div>
-                            <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+                            <button className="btn-primary" onClick={() => {
+                                setView('add');
+                                resetForm();
+                            }}>
                                 + Add Phone
                             </button>
                         </div>
 
                         {error && <div className="error-message">{error}</div>}
 
-                        <div className="search-bar-container">
-                            <div className="search-input-wrapper">
-                                <FaSearch className="search-icon" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by brand, model, IMEI, vendor, color, or storage..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
+                        {view === 'list' ? (
+                            <>
+                                <div className="search-bar-container">
+                                    <div className="search-input-wrapper">
+                                        <FaSearch className="search-icon" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search by brand, model, IMEI, vendor, color, or storage..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                    </div>
 
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="status-filter"
-                            >
-                                <option value="all">All Status</option>
-                                <option value="in_stock">In Stock</option>
-                                <option value="sold">Sold</option>
-                                <option value="returned">Returned</option>
-                            </select>
-                        </div>
-
-                        {loading ? (
-                            <div className="loading">Loading inventory...</div>
-                        ) : (
-                            <div className="inventory-table-container">
-                                <table className="inventory-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Brand</th>
-                                            <th>Model</th>
-                                            <th>IMEI</th>
-                                            <th>Vendor</th>
-                                            <th>Color</th>
-                                            <th>Storage</th>
-                                            <th>Condition</th>
-                                            <th>Price</th>
-                                            <th>Cost</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {inventory.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="12" className="no-data">No inventory items found</td>
-                                            </tr>
-                                        ) : (
-                                            inventory.map((item) => (
-                                                <tr key={item.id}>
-                                                    <td>{item.brand}</td>
-                                                    <td>{item.model}</td>
-                                                    <td>{item.imei}</td>
-                                                    <td>{item.vendor || '-'}</td>
-                                                    <td>{item.color || '-'}</td>
-                                                    <td>{item.storage || '-'}</td>
-                                                    <td>
-                                                        <span className={`badge badge-${item.condition_status}`}>
-                                                            {item.condition_status}
-                                                        </span>
-                                                    </td>
-                                                    <td>₦{parseFloat(item.price).toFixed(2)}</td>
-                                                    <td>₦{parseFloat(item.cost_price).toFixed(2)}</td>
-                                                    <td>
-                                                        <span className={`badge badge-${item.status}`}>
-                                                            {item.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="actions">
-                                                        <button
-                                                            className="btn-edit"
-                                                            onClick={() => openEditModal(item)}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        {(user.role === 'admin' || user.role === 'superadmin') && (
-                                                            <button
-                                                                className="btn-delete"
-                                                                onClick={() => handleDeleteItem(item.id)}
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {/* Add Modal - Multi-Step */}
-                        {showAddModal && (
-                            <div className="modal-overlay" onClick={() => {
-                                setShowAddModal(false);
-                                resetForm();
-                            }}>
-                                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-
-                                    <form onSubmit={handleAddItem}>
-                                        {/* Step 1: Basic Information */}
-                                        {currentStep === 1 && (
-                                            <div className="form-step">
-                                                <h3 className="step-title">Basic Information</h3>
-
-                                                <div className="form-row">
-                                                    <div className="form-group">
-                                                        <label>Brand *</label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.brand}
-                                                            onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                                                            placeholder="e.g., iPhone, Samsung"
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Model *</label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.model}
-                                                            onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                                                            placeholder="e.g., 14 Pro Max"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="form-group">
-                                                    <label>IMEI (15 digits) *</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.imei}
-                                                        onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
-                                                        pattern="[0-9]{15}"
-                                                        maxLength="15"
-                                                        placeholder="Enter 15-digit IMEI"
-                                                    />
-                                                </div>
-
-                                                <div className="form-row">
-                                                    <div className="form-group">
-                                                        <label>Color</label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.color}
-                                                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                                            placeholder="e.g., Black, White"
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Storage</label>
-                                                        <input
-                                                            type="text"
-                                                            value={formData.storage}
-                                                            onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                                                            placeholder="e.g., 128GB, 256GB"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Step 2: Pricing & Status */}
-                                        {currentStep === 2 && (
-                                            <div className="form-step">
-                                                <h3 className="step-title">Pricing & Status</h3>
-
-                                                <div className="form-row">
-                                                    <div className="form-group">
-                                                        <label>Condition *</label>
-                                                        <select
-                                                            value={formData.condition_status}
-                                                            onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
-                                                            required
-                                                        >
-                                                            <option value="New">New</option>
-                                                            <option value="Open Box">Open Box</option>
-                                                            <option value="UK Used">UK Used</option>
-                                                            <option value="Used">Used</option>
-                                                        </select>
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Status *</label>
-                                                        <select
-                                                            value={formData.status}
-                                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                                            required
-                                                        >
-                                                            <option value="in_stock">In Stock</option>
-                                                            <option value="returned">Returned</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                <div className="form-row">
-                                                    <div className="form-group">
-                                                        <label>Selling Price (₦) *</label>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            min="0"
-                                                            value={formData.price}
-                                                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                                            placeholder="0.00"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Cost Price (₦) *</label>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            min="0"
-                                                            value={formData.cost_price}
-                                                            onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                                                            placeholder="0.00"
-                                                            required
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="form-group">
-                                                    <label>Vendor</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.vendor}
-                                                        onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                                                        placeholder="e.g., Supplier Name"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Navigation Buttons */}
-                                        <div className="modal-actions">
-                                            {currentStep === 1 ? (
-                                                <>
-                                                    <button type="button" className="btn-secondary" onClick={() => {
-                                                        setShowAddModal(false);
-                                                        resetForm();
-                                                    }}>
-                                                        Cancel
-                                                    </button>
-                                                    <button type="button" className="btn-primary" onClick={handleNext}>
-                                                        Next →
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button type="button" className="btn-secondary" onClick={handlePrevious}>
-                                                        ← Previous
-                                                    </button>
-                                                    <button type="submit" className="btn-primary">
-                                                        Add Phone
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </form>
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                        className="status-filter"
+                                    >
+                                        <option value="all">All Status</option>
+                                        <option value="in_stock">In Stock</option>
+                                        <option value="sold">Sold</option>
+                                        <option value="returned">Returned</option>
+                                    </select>
                                 </div>
-                            </div>
-                        )}
 
-                        {/* Edit Modal - Multi-Step */}
-                        {showEditModal && selectedItem && (
-                            <div className="modal-overlay" onClick={() => {
-                                setShowEditModal(false);
-                                setSelectedItem(null);
-                                resetForm();
-                            }}>
-                                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                                    <form onSubmit={handleEditItem}>
-                                        {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
+                                {loading ? (
+                                    <div className="loading">Loading inventory...</div>
+                                ) : (
+                                    <div className="inventory-table-container">
+                                        <table className="inventory-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Brand</th>
+                                                    <th>Model</th>
+                                                    <th>IMEI</th>
+                                                    <th>Vendor</th>
+                                                    <th>Color</th>
+                                                    <th>Storage</th>
+                                                    <th>Condition</th>
+                                                    <th>Price</th>
+                                                    <th>Cost</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {inventory.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="11" className="no-data">No inventory items found</td>
+                                                    </tr>
+                                                ) : (
+                                                    inventory.map((item) => (
+                                                        <tr key={item.id}>
+                                                            <td>{item.brand}</td>
+                                                            <td>{item.model}</td>
+                                                            <td>{item.imei}</td>
+                                                            <td>{item.vendor || '-'}</td>
+                                                            <td>{item.color || '-'}</td>
+                                                            <td>{item.storage || '-'}</td>
+                                                            <td>
+                                                                <span className={`badge badge-${item.condition_status.replace(/\s+/g, '-').toLowerCase()}`}>
+                                                                    {item.condition_status}
+                                                                </span>
+                                                            </td>
+                                                            <td>₦{parseFloat(item.price).toLocaleString()}</td>
+                                                            <td>₦{parseFloat(item.cost_price).toLocaleString()}</td>
+                                                            <td>
+                                                                <span className={`badge badge-${item.status}`}>
+                                                                    {item.status.replace('_', ' ')}
+                                                                </span>
+                                                            </td>
+                                                            <td className="actions">
+                                                                <button
+                                                                    className="btn-edit"
+                                                                    onClick={() => openEditModal(item)}
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                {(user.role === 'admin' || user.role === 'superadmin') && (
+                                                                    <button
+                                                                        className="btn-delete"
+                                                                        onClick={() => handleDeleteItem(item.id)}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="focus-view-container animate-slide-in">
+                                <div className="focus-view-header">
+                                    <h2 className="heading-2">
+                                        {view === 'add' ? 'Add New Phone' : `Edit ${selectedItem?.brand} ${selectedItem?.model}`}
+                                    </h2>
+                                    <button className="back-btn" onClick={() => setView('list')}>
+                                        <span>Back to List</span>
+                                    </button>
+                                </div>
 
-                                        {/* Step 1: Basic Information */}
-                                        {currentStep === 1 && (
-                                            <div className="form-step">
-                                                <h3 className="step-title">Basic Information</h3>
+                                <div className="dashboard-card focus-view-card">
+                                    <div className="wizard-steps">
+                                        <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                            <div className="step-number">{currentStep > 1 ? '✓' : '1'}</div>
+                                            <div className="step-label">Phone Details</div>
+                                        </div>
+                                        <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                            <div className="step-number">2</div>
+                                            <div className="step-label">Pricing & Status</div>
+                                        </div>
+                                    </div>
 
-                                                <div className="form-row">
+                                    <form onSubmit={view === 'add' ? handleAddItem : handleEditItem}>
+                                        <div className="focus-view-body">
+                                            {currentStep === 1 && (
+                                                <div className="form-grid">
                                                     <div className="form-group">
                                                         <label>Brand *</label>
                                                         <input
                                                             type="text"
+                                                            className="form-input"
                                                             value={formData.brand}
                                                             onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                                                             placeholder="e.g., iPhone, Samsung"
+                                                            required
                                                         />
                                                     </div>
                                                     <div className="form-group">
                                                         <label>Model *</label>
                                                         <input
                                                             type="text"
+                                                            className="form-input"
                                                             value={formData.model}
                                                             onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                                                             placeholder="e.g., 14 Pro Max"
+                                                            required
                                                         />
                                                     </div>
-                                                </div>
-
-                                                <div className="form-group">
-                                                    <label>IMEI (15 digits) *</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.imei}
-                                                        onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
-                                                        pattern="[0-9]{15}"
-                                                        maxLength="15"
-                                                        placeholder="Enter 15-digit IMEI"
-                                                        disabled={user.role !== 'admin' && user.role !== 'superadmin'}
-                                                        className={user.role !== 'admin' && user.role !== 'superadmin' ? 'disabled-input' : ''}
-                                                    />
-                                                    {user.role !== 'admin' && user.role !== 'superadmin' && (
-                                                        <small>IMEI can only be edited by Admin</small>
-                                                    )}
-                                                </div>
-
-                                                <div className="form-row">
+                                                    <div className="form-group full-width">
+                                                        <label>IMEI (15 digits) *</label>
+                                                        <input
+                                                            type="text"
+                                                            className={`form-input ${(user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit') ? 'disabled-input' : ''}`}
+                                                            value={formData.imei}
+                                                            onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
+                                                            pattern="[0-9]{15}"
+                                                            maxLength="15"
+                                                            placeholder="Enter 15-digit IMEI"
+                                                            disabled={user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit'}
+                                                            required
+                                                        />
+                                                        {user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit' && (
+                                                            <small className="help-text">IMEI can only be edited by Admin</small>
+                                                        )}
+                                                    </div>
                                                     <div className="form-group">
                                                         <label>Color</label>
                                                         <input
                                                             type="text"
+                                                            className="form-input"
                                                             value={formData.color}
                                                             onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                                            placeholder="e.g., Black, White"
+                                                            placeholder="e.g., Space Black"
                                                         />
                                                     </div>
                                                     <div className="form-group">
-                                                        <label>Storage</label>
+                                                        <label>Storage Capacity</label>
                                                         <input
                                                             type="text"
+                                                            className="form-input"
                                                             value={formData.storage}
                                                             onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                                                            placeholder="e.g., 128GB, 256GB"
+                                                            placeholder="e.g., 256GB"
                                                         />
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {/* Step 2: Pricing & Status */}
-                                        {currentStep === 2 && (
-                                            <div className="form-step">
-                                                <h3 className="step-title">Pricing & Status</h3>
-
-                                                <div className="form-row">
+                                            {currentStep === 2 && (
+                                                <div className="form-grid">
                                                     <div className="form-group">
                                                         <label>Condition *</label>
                                                         <select
+                                                            className="form-input"
                                                             value={formData.condition_status}
                                                             onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
                                                             required
@@ -612,24 +454,23 @@ const Inventory = () => {
                                                         </select>
                                                     </div>
                                                     <div className="form-group">
-                                                        <label>Status *</label>
+                                                        <label>Inventory Status *</label>
                                                         <select
+                                                            className="form-input"
                                                             value={formData.status}
                                                             onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                                             required
                                                         >
                                                             <option value="in_stock">In Stock</option>
-                                                            <option value="sold">Sold</option>
+                                                            <option value="sold" disabled={view === 'add'}>Sold</option>
                                                             <option value="returned">Returned</option>
                                                         </select>
                                                     </div>
-                                                </div>
-
-                                                <div className="form-row">
                                                     <div className="form-group">
                                                         <label>Selling Price (₦) *</label>
                                                         <input
                                                             type="number"
+                                                            className="form-input"
                                                             step="0.01"
                                                             min="0"
                                                             value={formData.price}
@@ -642,6 +483,7 @@ const Inventory = () => {
                                                         <label>Cost Price (₦) *</label>
                                                         <input
                                                             type="number"
+                                                            className="form-input"
                                                             step="0.01"
                                                             min="0"
                                                             value={formData.cost_price}
@@ -650,45 +492,40 @@ const Inventory = () => {
                                                             required
                                                         />
                                                     </div>
+                                                    <div className="form-group full-width">
+                                                        <label>Vendor / Supplier</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input"
+                                                            value={formData.vendor}
+                                                            onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                                                            placeholder="Who supplied this phone?"
+                                                        />
+                                                    </div>
                                                 </div>
-
-                                                <div className="form-group">
-                                                    <label>Vendor</label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.vendor}
-                                                        onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                                                        placeholder="e.g., Supplier Name"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Navigation Buttons */}
-                                        <div className="modal-actions">
-                                            {currentStep === 1 ? (
-                                                <>
-                                                    <button type="button" className="btn-secondary" onClick={() => {
-                                                        setShowEditModal(false);
-                                                        setSelectedItem(null);
-                                                        resetForm();
-                                                    }}>
-                                                        Cancel
-                                                    </button>
-                                                    <button type="button" className="btn-primary" onClick={handleNext}>
-                                                        Next →
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button type="button" className="btn-secondary" onClick={handlePrevious}>
-                                                        ← Previous
-                                                    </button>
-                                                    <button type="submit" className="btn-primary">
-                                                        Update Phone
-                                                    </button>
-                                                </>
                                             )}
+
+                                            <div className="focus-view-footer">
+                                                {currentStep === 1 ? (
+                                                    <>
+                                                        <button type="button" className="btn-secondary" onClick={() => setView('list')}>
+                                                            Cancel
+                                                        </button>
+                                                        <button type="button" className="btn-primary" onClick={handleNext}>
+                                                            Next Step →
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button type="button" className="btn-secondary" onClick={handlePrevious}>
+                                                            ← Previous
+                                                        </button>
+                                                        <button type="submit" className="btn-primary">
+                                                            {view === 'add' ? 'Add Phone to Inventory' : 'Update Item Details'}
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </form>
                                 </div>

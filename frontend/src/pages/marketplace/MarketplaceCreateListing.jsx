@@ -352,8 +352,7 @@ const MarketplaceCreateListing = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => navigate('/marketplace/listings')}
-                                                className="btn-text"
-                                                style={{ padding: '10px 20px', background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+                                                className="btn-secondary"
                                             >
                                                 Cancel
                                             </button>
@@ -361,15 +360,6 @@ const MarketplaceCreateListing = () => {
                                                 type="submit"
                                                 disabled={submitting}
                                                 className="btn-primary"
-                                                style={{
-                                                    padding: '10px 24px',
-                                                    backgroundColor: 'var(--primary)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    cursor: submitting ? 'not-allowed' : 'pointer',
-                                                    opacity: submitting ? 0.7 : 1
-                                                }}
                                             >
                                                 {submitting ? 'Creating...' : 'Create Listing'}
                                             </button>

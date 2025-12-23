@@ -192,41 +192,6 @@
     color: var(--error);
 }
 
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: var(--bg-surface);
-    border-radius: 8px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: var(--hover-shadow);
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
 .modal-header {
     padding: 20px 24px;
     border-bottom: 1px solid var(--border-color);
@@ -259,70 +224,12 @@
     padding: 24px;
 }
 
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: var(--text-primary);
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.form-input,
-.form-select {
-    width: 90%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--bg-background);
-    color: var(--text-primary);
-    font-size: 14px;
-    transition: border-color 0.2s;
-}
-
-.form-input:focus,
-.form-select:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
 .modal-footer {
     padding: 20px 24px;
     border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-}
-
-.btn-secondary {
-    background-color: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.btn-secondary:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-.btn-primary {
-    background-color: var(--primary);
-    border: 1px solid var(--primary);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.btn-primary:hover {
-    background-color: var(--primary-hover);
 }
 
 /* Content Wrapper Styles */
@@ -364,22 +271,11 @@
     .user-table th:nth-child(2),
     .user-table td:nth-child(2) {
         display: none;
-        /* Hide Role on mobile */
     }
 
     .user-table th:nth-child(4),
     .user-table td:nth-child(4) {
         display: none;
-        /* Hide Last Active on mobile */
-    }
-
-    .modal-content {
-        width: 95%;
-        margin: 0 10px;
-    }
-
-    .modal-body {
-        padding: 16px;
     }
 
     .modal-body {
@@ -523,7 +419,6 @@
         height: 24px;
         font-size: 10px;
         min-width: 24px;
-        /* Prevent shrinking */
     }
 
     .status-badge {
@@ -538,21 +433,28 @@
     .action-btn {
         padding: 2px;
     }
+}
 
-    /* Ensure modal fits */
-    .modal-content {
-        margin: 0;
-        width: 100%;
-        border-radius: 0;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
-    .modal-body {
-        flex: 1;
-        overflow-y: auto;
-    }
+.availability-msg {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.availability-msg.success {
+    color: var(--success);
+}
+
+.availability-msg.error {
+    color: var(--error);
 }
 
 /* Validation Styles */
@@ -575,12 +477,12 @@
 .spinner-small {
     width: 16px;
     height: 16px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #3498db;
+    border: 2px solid rgba(var(--primary-rgb), 0.1);
+    border-top: 2px solid var(--primary);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    margin-left: 8px;
+    animation: spin 0.8s linear infinite;
+    position: absolute;
+    right: 12px;
 }
 
 @keyframes spin {

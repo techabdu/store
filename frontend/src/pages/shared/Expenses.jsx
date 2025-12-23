@@ -348,10 +348,10 @@ const Expenses = () => {
                                     </div>
 
                                     <div className="modal-actions">
-                                        <button type="button" className="cancel-btn" onClick={closeModal}>
+                                        <button type="button" className="btn-secondary" onClick={closeModal}>
                                             Cancel
                                         </button>
-                                        <button type="submit" className="cancel-btn">
+                                        <button type="submit" className="btn-primary">
                                             {currentExpense ? 'Update Expense' : 'Add Expense'}
                                         </button>
                                     </div>

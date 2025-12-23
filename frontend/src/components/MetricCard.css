@@ -95,20 +95,34 @@
 }
 
 @media (max-width: 480px) {
+    .metric-card {
+        padding: 12px !important;
+    }
+
     .metric-value {
-        font-size: 22px;
+        font-size: 20px;
     }
 
     .metric-title {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .metric-icon-wrapper {
-        padding: 8px;
+        padding: 6px;
+    }
+
+    .metric-icon-wrapper svg {
+        width: 18px;
+        height: 18px;
     }
 
     .metric-footer {
-        font-size: 11px;
+        font-size: 10px;
+        gap: 4px;
+    }
+
+    .metric-subtitle {
+        font-size: 10px;
     }
 }
 

@@ -36,16 +36,18 @@
 
 /* Branch Card */
 .branch-card {
-    background: var(--card-bg, #1f2937);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .branch-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--hover-shadow);
 }
 
 .branch-card.main-branch {
@@ -55,229 +57,148 @@
 .branch-card-header {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 1.25rem;
     padding: 1.25rem;
-    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    position: relative;
 }
 
-.branch-icon {
-    width: 48px;
-    height: 48px;
+.branch-icon-box {
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--primary);
-    border-radius: 10px;
+    background: #4285F4;
+    /* Google Blue */
+    border-radius: 8px;
     color: white;
     flex-shrink: 0;
 }
 
-.branch-title-section {
+.branch-info-header {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     min-width: 0;
 }
 
 .branch-name {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
-    color: var(--text-primary, #f3f4f6);
-    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .main-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    background: var(--primary);
+    gap: 4px;
+    padding: 2px 8px;
+    background: #4285F4;
     color: white;
     border-radius: 4px;
-    font-size: 0.7rem;
+    font-size: 10px;
     font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-badge-pill {
+    display: inline-flex;
+    padding: 4px 12px;
+    background: #E6F4EA;
+    /* Light success gray */
+    color: #1E8E3E;
+    /* Google Green */
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
     text-transform: uppercase;
 }
 
-.branch-actions {
-    display: flex;
-    gap: 0.5rem;
+[data-theme='dark'] .status-badge-pill {
+    background: rgba(30, 142, 62, 0.2);
+    color: #81C995;
 }
 
-.branch-actions .action-btn {
+.branch-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: -4px;
+    /* Align slightly higher like reference */
+}
+
+.card-action-btn {
     width: 36px;
     height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 8px;
-    color: var(--text-secondary, #9ca3af);
+    color: var(--text-primary) !important;
+    /* Stronger contrast */
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s;
+    padding: 0;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 
-.branch-actions .action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary, #f3f4f6);
+.card-action-btn svg {
+    display: block !important;
+    color: inherit !important;
+    stroke: currentColor !important;
 }
 
-.branch-actions .action-btn.edit:hover {
-    background: rgba(99, 102, 241, 0.2);
-    border-color: rgba(99, 102, 241, 0.5);
-    color: #818cf8;
+.card-action-btn:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--text-secondary) !important;
 }
 
-.branch-actions .action-btn.delete:hover {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: rgba(239, 68, 68, 0.5);
-    color: #f87171;
+.card-action-btn.edit:hover {
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
-.branch-card-body {
-    padding: 1rem 1.25rem;
+.card-action-btn.delete:hover {
+    border-color: var(--error);
+    color: var(--error);
 }
 
-.branch-info-row {
+.branch-card-details {
+    padding: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
     display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
-    color: var(--text-secondary, #9ca3af);
-    font-size: 0.875rem;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.branch-info-row svg {
-    color: var(--text-muted, #6b7280);
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.detail-item svg {
+    color: var(--text-secondary);
     flex-shrink: 0;
-    margin-top: 2px;
 }
 
-.branch-card-footer {
-    padding: 1rem 1.25rem;
-    background: rgba(0, 0, 0, 0.1);
-    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+.detail-item.capital {
+    font-weight: 500;
 }
 
-.capital-display {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #10b981;
-}
-
-/* Status Badge */
-.status-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: capitalize;
-}
-
-.status-badge.active {
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
-}
-
-.status-badge.suspended {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-}
-
-/* Empty State */
-.empty-state {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    color: var(--text-muted, #6b7280);
-    text-align: center;
-}
-
-.empty-state svg {
-    margin-bottom: 1rem;
-    opacity: 0.5;
-}
-
-/* Loading & Error States */
-.loading-state,
-.error-state {
-    padding: 3rem;
-    text-align: center;
-    color: var(--text-secondary, #9ca3af);
-}
-
-.error-state {
-    color: #f87171;
-}
-
-/* Access Denied */
-.access-denied {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4rem;
-    text-align: center;
-    color: var(--text-secondary, #9ca3af);
-}
-
-.access-denied svg {
-    color: #f59e0b;
-    margin-bottom: 1rem;
-}
-
-.access-denied h2 {
-    color: var(--text-primary, #f3f4f6);
-    margin-bottom: 0.5rem;
-}
-
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1rem;
-}
-
-.modal-content {
-    background: var(--card-bg, #1f2937);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-
-.modal-content.delete-modal {
-    max-width: 450px;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-}
-
+/* Modal refinements for this page */
 .modal-header.danger {
     background: rgba(239, 68, 68, 0.1);
     border-bottom-color: rgba(239, 68, 68, 0.2);
@@ -285,181 +206,6 @@
 
 .modal-header.danger svg {
     color: #f87171;
-}
-
-.modal-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary, #f3f4f6);
-    margin: 0;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary, #9ca3af);
-    cursor: pointer;
-    padding: 0.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary, #f3f4f6);
-}
-
-.modal-body {
-    padding: 1.5rem;
-}
-
-.modal-footer {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-}
-
-/* Multi-Step Modal Styles */
-.step-indicator {
-    background: var(--primary);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-.form-step {
-    min-height: 300px;
-}
-
-.step-title {
-    color: var(--text-primary, #f3f4f6);
-    font-size: 1.125rem;
-    margin: 0 0 1.25rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-}
-
-/* Form Styles */
-.form-group {
-    margin-bottom: 1.25rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary, #f3f4f6);
-}
-
-.form-input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: var(--input-bg, rgba(255, 255, 255, 0.05));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-    border-radius: 8px;
-    color: var(--text-primary, #f3f4f6);
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
-.form-input::placeholder {
-    color: var(--text-muted, #6b7280);
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-/* Button Styles */
-.btn-primary {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-width: 140px;
-    height: 44px;
-    padding: 0 1.5rem;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: var(--primary-hover);
-}
-
-.btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.btn-secondary {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-width: 140px;
-    height: 44px;
-    padding: 0 1.5rem;
-    background: var(--input-bg, rgba(255, 255, 255, 0.05));
-    color: var(--text-primary, #f3f4f6);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.btn-danger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-width: 140px;
-    height: 44px;
-    padding: 0 1.5rem;
-    background: var(--error);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.btn-danger:hover:not(:disabled) {
-    opacity: 0.9;
-}
-
-.btn-danger:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
 }
 
 /* Delete Modal Specific */
@@ -493,33 +239,37 @@
     font-weight: 500;
 }
 
-/* Light Theme */
+.btn-danger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 140px;
+    height: 44px;
+    padding: 0 1.5rem;
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-danger:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+/* Light Theme tweaks */
 [data-theme="light"] .branch-card {
     background: #ffffff;
     border-color: #e5e7eb;
 }
 
-[data-theme="light"] .branch-card.main-branch {
-    border-color: var(--primary);
-}
-
-[data-theme="light"] .modal-content {
-    background: #ffffff;
-}
-
-[data-theme="light"] .form-input {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    color: #111827;
-}
-
-/* Responsive */
+/* Mobile grid */
 @media (max-width: 768px) {
     .branches-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .form-row {
         grid-template-columns: 1fr;
     }
 

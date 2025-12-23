@@ -1,35 +1,3 @@
-:root {
-    /* Google Color Palette */
-    --primary: #4285F4;
-    --primary-hover: #357AE8;
-    --success: #34A853;
-    --warning: #FBBC04;
-    --error: #EA4335;
-    --info: #4285F4;
-
-    /* Light Theme Variables */
-    --bg-background: #F8F9FA;
-    --bg-surface: #FFFFFF;
-    --bg-sidebar: #FFFFFF;
-    --text-primary: #202124;
-    --text-secondary: #5F6368;
-    --border-color: #DADCE0;
-    --card-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-    --hover-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
-}
-
-[data-theme='dark'] {
-    /* Dark Theme Variables */
-    --bg-background: #1A1A1A;
-    --bg-surface: #2D2D2D;
-    --bg-sidebar: #252525;
-    --text-primary: #E8EAED;
-    --text-secondary: #9AA0A6;
-    --border-color: #3C4043;
-    --card-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15);
-    --hover-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 4px 8px 3px rgba(0, 0, 0, 0.15);
-}
-
 /* Global Reset & Typography */
 * {
     box-sizing: border-box;
@@ -42,6 +10,26 @@ body {
     margin: 0;
     padding: 0;
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Form Visibility Fixes */
+label,
+.form-label,
+.filter-label {
+    color: var(--text-primary) !important;
+}
+
+.form-control,
+.filter-input {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.form-control::placeholder,
+.filter-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
 }
 
 /* Layout Utilities */
@@ -144,8 +132,22 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
-    margin-bottom: 15px;
+    margin-bottom: 24px;
     align-items: stretch;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.grid-3>*,
+.grid-4>* {
+    min-width: 0;
 }
 
 .grid-2 {
@@ -180,10 +182,12 @@ body {
         padding: 16px;
     }
 
-    .grid-4 {
+    .grid-4,
+    .grid-3 {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
         margin-bottom: 10px;
+        min-width: 0;
     }
 
     .grid-2,
@@ -204,10 +208,12 @@ body {
         padding: 12px;
     }
 
-    .grid-4 {
+    .grid-4,
+    .grid-3 {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
         margin-bottom: 10px;
+        min-width: 0;
     }
 
     .grid-2,
@@ -229,22 +235,29 @@ body {
         padding: 8px;
     }
 
-    .grid-4 {
+    .grid-4,
+    .grid-3 {
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 8px;
+        margin-bottom: 8px;
+        min-width: 0;
+    }
+
+    .grid-4>*,
+    .grid-3>* {
+        min-width: 0;
     }
 
     .grid-2 {
         grid-template-columns: 1fr;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 8px;
+        margin-bottom: 8px;
     }
 
     .grid-1 {
         grid-template-columns: 1fr;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 8px;
+        margin-bottom: 8px;
     }
 
     .dashboard-card {
