@@ -22,6 +22,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$shop_id = $_SESSION['current_shop_id'] ?? 1;
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $limit;
@@ -31,8 +32,8 @@ if ($limit > 100) $limit = 100; // Cap limit
 
 // Map filter type to DB transaction types
 $type_where = "";
-$bind_params = [$user_id];
-$bind_types = "i";
+$bind_params = [$user_id, $shop_id];
+$bind_types = "ii";
 
 if ($type_filter !== 'all') {
     switch ($type_filter) {
@@ -52,9 +53,9 @@ if ($type_filter !== 'all') {
 }
 
 // Get total count
-$count_query = "SELECT COUNT(*) as total FROM marketplace_wallet_transactions WHERE user_id = ?" . $type_where;
+$count_query = "SELECT COUNT(*) as total FROM marketplace_wallet_transactions WHERE user_id = ? AND shop_id = ?" . $type_where;
 $count_stmt = $conn->prepare($count_query);
-$count_stmt->bind_param("i", $user_id);
+$count_stmt->bind_param("ii", $user_id, $shop_id);
 $count_stmt->execute();
 $total_rows = $count_stmt->get_result()->fetch_assoc()['total'];
 $total_pages = ceil($total_rows / $limit);
@@ -63,14 +64,14 @@ $total_pages = ceil($total_rows / $limit);
 $query = "
     SELECT * 
     FROM marketplace_wallet_transactions 
-    WHERE user_id = ? 
+    WHERE user_id = ? AND shop_id = ? 
     $type_where
     ORDER BY created_at DESC 
     LIMIT ? OFFSET ?
 ";
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("iii", $user_id, $limit, $offset);
+$stmt->bind_param("iiii", $user_id, $shop_id, $limit, $offset);
 $stmt->execute();
 $result = $stmt->get_result();
 

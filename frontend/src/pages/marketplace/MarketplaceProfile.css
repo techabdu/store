@@ -342,12 +342,14 @@
 .profile-form .form-label {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
     font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 10px;
     line-height: normal;
+    width: fit-content;
 }
 
 .profile-form .form-label svg {

@@ -30,16 +30,18 @@ if (!isset($data->listing_id)) {
 
 $listing_id = $data->listing_id;
 
-// Check if interest already exists
-$stmt = $conn->prepare("SELECT id FROM marketplace_interests WHERE user_id = ? AND listing_id = ?");
-$stmt->bind_param("ii", $user_id, $listing_id);
+$shop_id = $_SESSION['current_shop_id'] ?? 1;
+
+// Check if interest already exists for this shop
+$stmt = $conn->prepare("SELECT id FROM marketplace_interests WHERE user_id = ? AND listing_id = ? AND shop_id = ?");
+$stmt->bind_param("iii", $user_id, $listing_id, $shop_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     // Already interested, so remove it (toggle off)
-    $delete_stmt = $conn->prepare("DELETE FROM marketplace_interests WHERE user_id = ? AND listing_id = ?");
-    $delete_stmt->bind_param("ii", $user_id, $listing_id);
+    $delete_stmt = $conn->prepare("DELETE FROM marketplace_interests WHERE user_id = ? AND listing_id = ? AND shop_id = ?");
+    $delete_stmt->bind_param("iii", $user_id, $listing_id, $shop_id);
     if ($delete_stmt->execute()) {
         echo json_encode(["success" => true, "action" => "removed", "message" => "Removed from interests"]);
     } else {
@@ -48,8 +50,8 @@ if ($result->num_rows > 0) {
     }
 } else {
     // Not interested yet, so add it (toggle on)
-    $insert_stmt = $conn->prepare("INSERT INTO marketplace_interests (user_id, listing_id) VALUES (?, ?)");
-    $insert_stmt->bind_param("ii", $user_id, $listing_id);
+    $insert_stmt = $conn->prepare("INSERT INTO marketplace_interests (user_id, listing_id, shop_id) VALUES (?, ?, ?)");
+    $insert_stmt->bind_param("iii", $user_id, $listing_id, $shop_id);
     if ($insert_stmt->execute()) {
         echo json_encode(["success" => true, "action" => "added", "message" => "Added to interests"]);
     } else {

@@ -53,11 +53,18 @@ if (empty($updates)) {
     exit();
 }
 
-// Add user_id to params
-$types .= "i";
-$params[] = $user_id;
-
-$sql = "UPDATE marketplace_profiles SET " . implode(", ", $updates) . " WHERE user_id = ?";
+// Add user_id and shop_id to params
+$shop_id = $_SESSION['current_shop_id'] ?? null;
+if ($shop_id) {
+    $types .= "ii";
+    $params[] = $user_id;
+    $params[] = $shop_id;
+    $sql = "UPDATE marketplace_profiles SET " . implode(", ", $updates) . " WHERE user_id = ? AND shop_id = ?";
+} else {
+    $types .= "i";
+    $params[] = $user_id;
+    $sql = "UPDATE marketplace_profiles SET " . implode(", ", $updates) . " WHERE user_id = ?";
+}
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param($types, ...$params);

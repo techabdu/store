@@ -35,10 +35,18 @@ if (isset($_GET['shop_id']) && !empty($_GET['shop_id'])) {
 
 // User Filter (for "My Listings")
 if (isset($_GET['user_id'])) {
+    $current_shop_id = $_SESSION['current_shop_id'] ?? null;
     if ($_GET['user_id'] === 'me') {
         $filters[] = "l.user_id = ?";
         $types .= "i";
         $params[] = $_SESSION['user_id'];
+        
+        // Enforce shop isolation for "My Listings"
+        if ($current_shop_id) {
+            $filters[] = "l.shop_id = ?";
+            $types .= "i";
+            $params[] = $current_shop_id;
+        }
     } else {
         $filters[] = "l.user_id = ?";
         $types .= "i";

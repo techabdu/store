@@ -24,7 +24,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
 $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
-$shop_id = isset($_GET['shop_id']) ? intval($_GET['shop_id']) : null;
+$shop_id = isset($_GET['shop_id']) ? intval($_GET['shop_id']) : ($_SESSION['current_shop_id'] ?? null);
 
 // Determine if user is buyer or seller in the conv and fetch OTHER party's details
 // Also join Listing to get title/image

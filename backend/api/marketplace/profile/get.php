@@ -35,7 +35,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 // Optional: Allow getting other users' profiles by ID in query param
 $target_user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : $user_id;
-$target_shop_id = isset($_GET['shop_id']) ? intval($_GET['shop_id']) : null;
+$target_shop_id = isset($_GET['shop_id']) ? intval($_GET['shop_id']) : ($_SESSION['current_shop_id'] ?? null);
 
 $query = "
     SELECT 

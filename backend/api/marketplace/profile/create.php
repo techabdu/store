@@ -84,7 +84,9 @@ $stmt->bind_param("iissss", $user_id, $shop_id, $display_name, $bio, $profile_im
 
 if ($stmt->execute()) {
     // 5. Also Create Wallet if not exists
-    $conn->query("INSERT IGNORE INTO marketplace_wallets (user_id) VALUES ($user_id)");
+    $wallet_stmt = $conn->prepare("INSERT IGNORE INTO marketplace_wallets (user_id, shop_id) VALUES (?, ?)");
+    $wallet_stmt->bind_param("ii", $user_id, $shop_id);
+    $wallet_stmt->execute();
     
     echo json_encode(['success' => true, 'message' => 'Marketplace profile created successfully']);
 } else {

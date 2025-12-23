@@ -22,15 +22,16 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$shop_id = $_SESSION['current_shop_id'] ?? 1; // Default to 1 if not set
 
-// Get wallet details
+// Get wallet details for THIS shop
 $stmt = $conn->prepare("
     SELECT id, available_balance, pending_balance, held_balance, total_funded, total_withdrawn, total_sales, total_purchases
     FROM marketplace_wallets 
-    WHERE user_id = ?
+    WHERE user_id = ? AND shop_id = ?
 ");
 
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("ii", $user_id, $shop_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -38,8 +39,10 @@ if ($row = $result->fetch_assoc()) {
     echo json_encode(['success' => true, 'wallet' => $row]);
 } else {
     // Should not happen if profile creation auto-creates wallet, but just in case
-    // Create wallet if missing
-    $conn->query("INSERT IGNORE INTO marketplace_wallets (user_id) VALUES ($user_id)");
+    // Create wallet if missing for this branch
+    $ins_stmt = $conn->prepare("INSERT IGNORE INTO marketplace_wallets (user_id, shop_id) VALUES (?, ?)");
+    $ins_stmt->bind_param("ii", $user_id, $shop_id);
+    $ins_stmt->execute();
     
     // Retry fetch
     $stmt->execute();
@@ -48,7 +51,7 @@ if ($row = $result->fetch_assoc()) {
         echo json_encode(['success' => true, 'wallet' => $row]);
     } else {
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Could not retrieve wallet']);
+        echo json_encode(['success' => false, 'error' => 'Could not retrieve wallet for branch ' . $shop_id]);
     }
 }
 ?>

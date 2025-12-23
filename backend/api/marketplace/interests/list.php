@@ -20,6 +20,8 @@ if (!$user_id) {
     exit;
 }
 
+$shop_id = $_SESSION['current_shop_id'] ?? 1;
+
 // Fetch listings that the user is interested in
 $query = "SELECT 
             l.id, l.title, l.price, l.listing_type, l.phone_model, l.phone_condition, l.created_at as listed_at,
@@ -29,11 +31,11 @@ $query = "SELECT
           FROM marketplace_interests i
           JOIN marketplace_listings l ON i.listing_id = l.id
           JOIN shops s ON l.shop_id = s.id
-          WHERE i.user_id = ? AND l.status = 'active'
+          WHERE i.user_id = ? AND i.shop_id = ? AND l.status = 'active'
           ORDER BY i.created_at DESC";
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("ii", $user_id, $shop_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

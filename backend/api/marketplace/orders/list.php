@@ -34,11 +34,21 @@ $types = "";
 
 if ($role === 'seller') {
     $where[] = "o.seller_id = ?";
+    $shop_id = $_SESSION['current_shop_id'] ?? null;
+    if ($shop_id) {
+        $where[] = "o.seller_shop_id = ?";
+        $types .= "ii";
+        $params[] = $user_id;
+        $params[] = $shop_id;
+    } else {
+        $types .= "i";
+        $params[] = $user_id;
+    }
 } else {
     $where[] = "o.buyer_id = ?";
+    $types .= "i";
+    $params[] = $user_id;
 }
-$types .= "i";
-$params[] = $user_id;
 
 if (!empty($status)) {
     $where[] = "o.order_status = ?";
