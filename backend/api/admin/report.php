@@ -74,12 +74,21 @@ function getStats($conn, $shopId) {
         $capitalResult = $stmtCapital->get_result()->fetch_assoc();
         $businessCapital = $capitalResult['business_capital'] ?? 0;
 
+        // 4. Total Outstanding Debt for current shop
+        $queryDebts = "SELECT SUM(remaining_balance) as total_outstanding FROM debts WHERE shop_id = ? AND status != 'written_off'";
+        $stmtDebts = $conn->prepare($queryDebts);
+        $stmtDebts->bind_param("i", $shopId);
+        $stmtDebts->execute();
+        $debtsResult = $stmtDebts->get_result()->fetch_assoc();
+        $totalOutstandingDebt = $debtsResult['total_outstanding'] ?? 0;
+
         echo json_encode([
             "success" => true,
             "data" => [
                 "inventory_value" => (float)$totalInventoryCost,
                 "total_expenses" => (float)$totalExpenses,
-                "business_capital" => (float)$businessCapital
+                "business_capital" => (float)$businessCapital,
+                "total_outstanding_debt" => (float)$totalOutstandingDebt
             ],
             "shop_id" => $shopId
         ]);

@@ -159,6 +159,15 @@ try {
     }
     $stmtLowStock->close();
     
+    // 7. Calculate Total Outstanding Debt for current shop
+    $queryDebtStats = "SELECT COALESCE(SUM(remaining_balance), 0) as total_outstanding FROM debts WHERE shop_id = ? AND status != 'written_off'";
+    $stmtDebtStats = $db->prepare($queryDebtStats);
+    $stmtDebtStats->bind_param("i", $shopId);
+    $stmtDebtStats->execute();
+    $debtStatsResult = $stmtDebtStats->get_result()->fetch_assoc();
+    $totalOutstandingDebt = (float)$debtStatsResult['total_outstanding'];
+    $stmtDebtStats->close();
+    
     // Return all dashboard stats
     http_response_code(200);
     echo json_encode([
@@ -174,7 +183,8 @@ try {
                 'percentage_change' => round($customersPercentageChange, 1)
             ],
             'sales_overview' => $salesOverview,
-            'low_stock_alerts' => $lowStockAlerts
+            'low_stock_alerts' => $lowStockAlerts,
+            'total_outstanding_debt' => $totalOutstandingDebt
         ],
         'shop_id' => $shopId
     ]);

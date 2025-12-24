@@ -163,12 +163,17 @@ const SalesHistory = () => {
                                                 <span className={`badge badge-${tx.payment_method === 'cash' ? 'success' : 'primary'}`}>
                                                     {tx.payment_method.toUpperCase()}
                                                 </span>
+                                                {tx.transaction_type === 'debt_payment' && (
+                                                    <span className="badge" style={{ marginLeft: '4px', background: '#f59e0b', color: 'white', fontSize: '0.7rem' }}>
+                                                        DEBT PAYMENT
+                                                    </span>
+                                                )}
                                             </td>
                                             <td>{tx.processed_by}</td>
                                             <td>
                                                 <button
                                                     className="btn-icon"
-                                                    onClick={() => navigate(`/receipt/${tx.id}`)}
+                                                    onClick={() => navigate(`/receipt/${tx.parent_transaction_id || tx.id}`)}
                                                     title="View Receipt"
                                                 >
                                                     📄

@@ -17,7 +17,8 @@ const Report = () => {
     const [stats, setStats] = useState({
         inventory_value: 0,
         total_expenses: 0,
-        business_capital: 0
+        business_capital: 0,
+        total_outstanding_debt: 0
     });
     const [inputs, setInputs] = useState({
         cash_in_hand: '',
@@ -59,7 +60,13 @@ const Report = () => {
         try {
             const response = await api.get('/admin/report.php?action=stats');
             if (response.data.success) {
-                setStats(response.data.data);
+                const data = response.data.data;
+                setStats(data);
+                // Pre-fill total debt field
+                setInputs(prev => ({
+                    ...prev,
+                    total_debt: data.total_outstanding_debt?.toString() || ''
+                }));
             }
         } catch (err) {
             console.error('Error fetching stats:', err);

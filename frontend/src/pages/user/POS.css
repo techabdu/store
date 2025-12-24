@@ -435,9 +435,7 @@
 .btn-trade-in-outline:hover {
     background: #ff9800;
     color: white;
-}
-
-/* Highlight input for trade-in value */
+}/* Highlight input for trade-in value */
 .highlight-input {
     font-size: 1.25rem;
     font-weight: 600;
@@ -445,9 +443,134 @@
     border-color: rgba(76, 175, 80, 0.3) !important;
 }
 
+/* Payment Summary */
+.payment-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.payment-summary.debt {
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.change-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.change-amount {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.payment-summary.debt .change-amount {
+    color: #ff9800;
+}
+
+/* Checkout Buttons */
+.checkout-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.btn-debt {
+    width: 100%;
+    background: #ff9800;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1.125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-debt:hover:not(:disabled) {
+    background: #e68900;
+}
+
+.btn-debt:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Debt Wizard Sections */
+.debt-summary-section,
+.customer-info-section {
+    margin-bottom: 2rem;
+}
+
+.debt-summary-section h3,
+.customer-info-section h3 {
+    font-size: 1.25rem;
+    margin: 0 0 1rem 0;
+    color: var(--text-primary);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.summary-item {
+    padding: 1rem;
+    background: var(--hover-bg);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.summary-item.highlight {
+    background: rgba(255, 152, 0, 0.1);
+    border: 2px solid #ff9800;
+}
+
+.summary-item .label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.summary-item .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.summary-item .value.paid {
+    color: #4CAF50;
+}
+
+.summary-item .value.remaining {
+    color: #ff9800;
+}
+
+.form-help {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* Responsive fixes */
 @media (max-width: 768px) {
     .pos-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-grid {
         grid-template-columns: 1fr;
     }
 }

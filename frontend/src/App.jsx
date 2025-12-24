@@ -47,6 +47,7 @@ import MarketplaceCreateListing from './pages/marketplace/MarketplaceCreateListi
 import MarketplaceVerification from './pages/marketplace/MarketplaceVerification';
 import MarketplaceEditListing from './pages/marketplace/MarketplaceEditListing';
 import MarketplaceOrderDetails from './pages/marketplace/MarketplaceOrderDetails';
+import Debts from './pages/shared/Debts';
 
 function App() {
     return (
@@ -195,6 +196,14 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route
+                            path="/admin/debts"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <Debts />
+                                </ProtectedRoute>
+                            }
+                        />
 
                         <Route
                             path="/user/dashboard"
@@ -233,6 +242,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['user']}>
                                     <UserActivity />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/user/debts"
+                            element={
+                                <ProtectedRoute allowedRoles={['user']}>
+                                    <Debts />
                                 </ProtectedRoute>
                             }
                         />

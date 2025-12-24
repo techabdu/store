@@ -52,10 +52,17 @@ try {
                 t.customer_phone,
                 t.total_amount,
                 t.payment_method,
+                t.transaction_type,
+                t.debt_payment_id,
+                (SELECT d.transaction_id FROM debt_payments dp JOIN debts d ON dp.debt_id = d.id WHERE dp.id = t.debt_payment_id) as parent_transaction_id,
                 t.created_at,
-                u.username as processed_by
+                u.username as processed_by,
+                d.id as debt_id,
+                d.paid_amount as debt_paid,
+                d.remaining_balance as debt_remaining
              FROM transactions t
              LEFT JOIN users u ON t.user_id = u.id
+             LEFT JOIN debts d ON t.id = d.transaction_id
              WHERE t.id = ? AND t.shop_id = ?"
         );
 
@@ -101,6 +108,60 @@ try {
         
         $transaction['items'] = $items;
         $itemsStmt->close();
+
+        // If this transaction is a debt payment, fetch the specific payment info
+        if ($transaction['transaction_type'] === 'debt_payment' && !empty($transaction['debt_payment_id'])) {
+            $payStmt = $conn->prepare(
+                "SELECT 
+                    dp.*,
+                    d.total_amount as original_debt_total,
+                    (SELECT SUM(amount_paid) FROM debt_payments dp2 WHERE dp2.debt_id = dp.debt_id AND dp2.payment_date <= dp.payment_date) as cumulative_paid
+                 FROM debt_payments dp
+                 JOIN debts d ON dp.debt_id = d.id
+                 WHERE dp.id = ?"
+            );
+            $payStmt->bind_param("i", $transaction['debt_payment_id']);
+            $payStmt->execute();
+            $payResult = $payStmt->get_result();
+            
+            if ($payResult->num_rows > 0) {
+                $payInfo = $payResult->fetch_assoc();
+                $transaction['installment_info'] = [
+                    'amount_paid' => $payInfo['amount_paid'],
+                    'previous_balance' => $payInfo['original_debt_total'] - ($payInfo['cumulative_paid'] - $payInfo['amount_paid']),
+                    'new_balance' => $payInfo['original_debt_total'] - $payInfo['cumulative_paid'],
+                    'notes' => $payInfo['notes'],
+                    'receipt_number' => "PMT-" . str_pad($payInfo['id'], 6, '0', STR_PAD_LEFT)
+                ];
+            }
+            $payStmt->close();
+        }
+
+        // If this transaction has a debt (it was a sale with debt), fetch the payment history
+        if (!empty($transaction['debt_id'])) {
+            $historyStmt = $conn->prepare(
+                "SELECT 
+                    dp.id,
+                    dp.amount_paid,
+                    dp.payment_date,
+                    dp.notes,
+                    u.username as recorded_by_name
+                 FROM debt_payments dp
+                 LEFT JOIN users u ON dp.recorded_by = u.id
+                 WHERE dp.debt_id = ?
+                 ORDER BY dp.payment_date ASC"
+            );
+            $historyStmt->bind_param("i", $transaction['debt_id']);
+            $historyStmt->execute();
+            $historyResult = $historyStmt->get_result();
+            
+            $payment_history = [];
+            while ($row = $historyResult->fetch_assoc()) {
+                $payment_history[] = $row;
+            }
+            $transaction['payment_history'] = $payment_history;
+            $historyStmt->close();
+        }
         
         http_response_code(200);
         echo json_encode([
@@ -117,6 +178,9 @@ try {
                     t.customer_phone,
                     t.total_amount,
                     t.payment_method,
+                    t.transaction_type,
+                    t.debt_payment_id,
+                    (SELECT d.transaction_id FROM debt_payments dp JOIN debts d ON dp.debt_id = d.id WHERE dp.id = t.debt_payment_id) as parent_transaction_id,
                     t.created_at,
                     u.username as processed_by,
                     COUNT(ti.id) as item_count

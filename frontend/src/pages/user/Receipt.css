@@ -308,4 +308,58 @@
         background: #f3f4f6 !important;
         color: #6b7280 !important;
     }
+
+    /* Print styles for history table */
+    .payment-history-section h3 {
+        color: #6b7280 !important;
+    }
+
+    .history-table th {
+        color: #6b7280 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+
+    .history-table td {
+        color: #111827 !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+    }
+}
+
+/* Payment History Table */
+.payment-history-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px dashed #e5e7eb;
+}
+
+.payment-history-section h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin: 0 0 0.75rem 0;
+    text-transform: uppercase;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.history-table th {
+    text-align: left;
+    color: #6b7280;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.history-table td {
+    padding: 0.5rem 0;
+    color: #111827;
+    border-bottom: 1px solid #f9fafb;
+}
+
+.history-table tr:last-child td {
+    border-bottom: none;
 }

@@ -27,8 +27,12 @@ const POS = () => {
     const [customerAddress, setCustomerAddress] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
 
+    // Payment and debt tracking
+    const [paymentReceived, setPaymentReceived] = useState('');
+    const [showDebtOption, setShowDebtOption] = useState(false);
+
     // Trade-in modal
-    const [view, setView] = useState('pos'); // 'pos', 'trade-in'
+    const [view, setView] = useState('pos'); // 'pos', 'trade-in', 'debt'
     const [tradeInData, setTradeInData] = useState({
         brand: '',
         model: '',
@@ -36,6 +40,16 @@ const POS = () => {
         color: '',
         storage: '',
         trade_in_value: ''
+    });
+
+    // Debt logging data
+    const [debtData, setDebtData] = useState({
+        customer_name: '',
+        customer_phone: '',
+        customer_address: '',
+        total_amount: 0,
+        paid_amount: 0,
+        transaction_id: null
     });
 
     // Responsive Sidebar Logic
@@ -202,6 +216,106 @@ const POS = () => {
             const itemPrice = item.type === 'sale' ? (item.customPrice || item.price) : item.price;
             return sum + itemPrice;
         }, 0);
+    };
+
+    // Handle payment received change
+    const handlePaymentReceivedChange = (value) => {
+        setPaymentReceived(value);
+    };
+
+    // Keep debt option in sync with cart and payment
+    useEffect(() => {
+        const total = calculateTotal();
+        const payment = parseFloat(paymentReceived) || 0;
+
+        // Show debt option only if payment is entered and is less than total
+        // We check paymentReceived !== '' to avoid triggering on initial load or empty input
+        const isDebt = total > 0 && paymentReceived !== '' && payment < total;
+        setShowDebtOption(isDebt);
+    }, [cart, paymentReceived]);
+
+    // Open debt logging wizard
+    const openDebtWizard = () => {
+        const total = calculateTotal();
+        const payment = parseFloat(paymentReceived) || 0;
+
+        setDebtData({
+            customer_name: customerName || '',
+            customer_phone: customerPhone || '',
+            customer_address: customerAddress || '',
+            total_amount: total,
+            paid_amount: payment
+        });
+
+        setView('debt');
+    };
+
+    // Create debt record
+    const handleCreateDebt = async () => {
+        // Validation
+        if (!debtData.customer_name.trim()) {
+            setError('Customer name is required');
+            return;
+        }
+
+        if (!debtData.customer_phone.trim()) {
+            setError('Customer phone number is required');
+            return;
+        }
+
+        if (!debtData.customer_address.trim()) {
+            setError('Customer address is required');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            // First, create the transaction
+            const transactionResponse = await api.post('/transactions/create.php', {
+                customer_name: debtData.customer_name,
+                customer_phone: debtData.customer_phone,
+                customer_address: debtData.customer_address,
+                payment_method: paymentMethod,
+                items: cart
+            });
+
+            if (!transactionResponse.data.success) {
+                throw new Error(transactionResponse.data.error || 'Transaction failed');
+            }
+
+            const transactionId = transactionResponse.data.transaction_id;
+
+            // Then, create the debt record
+            const debtResponse = await api.post('/debts/create_debt.php', {
+                transaction_id: transactionId,
+                customer_name: debtData.customer_name,
+                customer_phone: debtData.customer_phone,
+                customer_address: debtData.customer_address,
+                total_amount: debtData.total_amount,
+                paid_amount: debtData.paid_amount
+            });
+
+            if (debtResponse.data.success) {
+                setSuccess('Debt created successfully!');
+
+                // Redirect to receipt page after short delay
+                setTimeout(() => {
+                    const receiptPath = user.role === 'admin'
+                        ? `/admin/receipt/${transactionId}`
+                        : `/receipt/${transactionId}`;
+                    navigate(receiptPath);
+                }, 1500);
+            } else {
+                setError(debtResponse.data.error || 'Failed to create debt record');
+            }
+        } catch (err) {
+            setError(err.response?.data?.error || err.message || 'Failed to process debt');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Process checkout
@@ -472,17 +586,66 @@ const POS = () => {
                                             </select>
                                         </div>
 
-                                        <button
-                                            className="btn-checkout"
-                                            onClick={handleCheckout}
-                                            disabled={loading || cart.length === 0}
-                                        >
-                                            {loading ? 'Processing...' : 'Complete Sale'}
-                                        </button>
+                                        <div className="form-group">
+                                            <label>Payment Received (₦)</label>
+                                            <p className="text-secondary" style={{ fontSize: '0.85rem', marginBottom: '8px' }}>
+                                                Specify the initial payment received. If less than the total, the remaining balance can be logged as customer debt.
+                                            </p>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                value={paymentReceived}
+                                                onChange={(e) => handlePaymentReceivedChange(e.target.value)}
+                                                placeholder="Enter amount received"
+                                            />
+                                        </div>
+
+                                        {paymentReceived && (() => {
+                                            const total = calculateTotal();
+                                            const payment = parseFloat(paymentReceived);
+                                            const change = payment - total;
+
+                                            if (payment >= total) {
+                                                return (
+                                                    <div className="payment-summary">
+                                                        <span className="change-label">Change:</span>
+                                                        <span className="change-amount">₦{change.toFixed(2)}</span>
+                                                    </div>
+                                                );
+                                            } else if (payment > 0) {
+                                                return (
+                                                    <div className="payment-summary debt">
+                                                        <span className="change-label">Remaining Balance:</span>
+                                                        <span className="change-amount">₦{Math.abs(change).toFixed(2)}</span>
+                                                    </div>
+                                                );
+                                            }
+                                        })()}
+
+                                        <div className="checkout-buttons">
+                                            {showDebtOption ? (
+                                                <button
+                                                    className="btn-debt"
+                                                    onClick={openDebtWizard}
+                                                    disabled={loading || cart.length === 0}
+                                                >
+                                                    {loading ? 'Processing...' : 'Log as Debt'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="btn-checkout"
+                                                    onClick={handleCheckout}
+                                                    disabled={loading || cart.length === 0}
+                                                >
+                                                    {loading ? 'Processing...' : 'Complete Sale'}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        ) : (
+                        ) : view === 'trade-in' ? (
                             <div className="focus-view-container animate-slide-in">
                                 <div className="focus-view-header">
                                     <h2 className="heading-2">Add Trade-In Device</h2>
@@ -577,7 +740,102 @@ const POS = () => {
                                     </form>
                                 </div>
                             </div>
-                        )}
+                        ) : view === 'debt' ? (
+                            <div className="focus-view-container animate-slide-in">
+                                <div className="focus-view-header">
+                                    <h2 className="heading-2">Log Customer Debt</h2>
+                                    <button className="back-btn" onClick={() => setView('pos')}>
+                                        <span>Back to POS</span>
+                                    </button>
+                                </div>
+
+                                <div className="dashboard-card focus-view-card">
+                                    <div className="focus-view-body">
+                                        {/* Debt Summary */}
+                                        <div className="debt-summary-section">
+                                            <h3>Transaction Summary</h3>
+                                            <div className="summary-grid">
+                                                <div className="summary-item">
+                                                    <span className="label">Total Amount:</span>
+                                                    <span className="value">₦{debtData.total_amount.toFixed(2)}</span>
+                                                </div>
+                                                <div className="summary-item">
+                                                    <span className="label">Amount Paid:</span>
+                                                    <span className="value paid">₦{debtData.paid_amount.toFixed(2)}</span>
+                                                </div>
+                                                <div className="summary-item highlight">
+                                                    <span className="label">Remaining Balance:</span>
+                                                    <span className="value remaining">₦{(debtData.total_amount - debtData.paid_amount).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Customer Information Form */}
+                                        <div className="customer-info-section">
+                                            <h3>Customer Information</h3>
+                                            <div className="form-grid">
+                                                <div className="form-group full-width">
+                                                    <label>Customer Name *</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-input"
+                                                        value={debtData.customer_name}
+                                                        onChange={(e) => setDebtData({ ...debtData, customer_name: e.target.value })}
+                                                        placeholder="Enter customer full name"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div className="form-group full-width">
+                                                    <label>Phone Number *</label>
+                                                    <input
+                                                        type="tel"
+                                                        className="form-input"
+                                                        value={debtData.customer_phone}
+                                                        onChange={(e) => setDebtData({ ...debtData, customer_phone: e.target.value })}
+                                                        placeholder="+234XXXXXXXXXX or 0XXXXXXXXXX"
+                                                        pattern="(\+234|0)[789][01]\d{8}"
+                                                        required
+                                                    />
+                                                    <small className="form-help">Use Nigerian format: +234XXXXXXXXXX or 0XXXXXXXXXX</small>
+                                                </div>
+
+                                                <div className="form-group full-width">
+                                                    <label>Customer Address *</label>
+                                                    <textarea
+                                                        className="form-input"
+                                                        value={debtData.customer_address}
+                                                        onChange={(e) => setDebtData({ ...debtData, customer_address: e.target.value })}
+                                                        placeholder="Enter complete address"
+                                                        rows="3"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="focus-view-footer">
+                                            <button
+                                                type="button"
+                                                className="btn-secondary"
+                                                onClick={() => setView('pos')}
+                                                disabled={loading}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-primary"
+                                                onClick={handleCreateDebt}
+                                                disabled={loading}
+                                            >
+                                                {loading ? 'Creating...' : 'Create Debt Record'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : null}
 
                     </div>
                 </div>

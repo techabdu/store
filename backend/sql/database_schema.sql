@@ -735,7 +735,7 @@ CREATE TABLE `tenants` (
 -- Table structure for table `transactions`
 --
 
-CREATE TABLE `transactions` (
+CREATE TABLE IF NOT EXISTS `transactions` (
   `id` int(11) NOT NULL,
   `tenant_id` int(11) NOT NULL DEFAULT 1,
   `shop_id` int(11) DEFAULT NULL,
@@ -745,6 +745,8 @@ CREATE TABLE `transactions` (
   `customer_address` text DEFAULT NULL,
   `total_amount` decimal(20,2) NOT NULL,
   `payment_method` enum('cash','card','transfer','mixed') NOT NULL,
+  `transaction_type` enum('sale','debt_payment') DEFAULT 'sale',
+  `debt_payment_id` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -788,6 +790,44 @@ CREATE TABLE `users` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `reset_token` varchar(64) DEFAULT NULL,
   `reset_token_expires` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `debts`
+--
+
+CREATE TABLE IF NOT EXISTS `debts` (
+  `id` int(11) NOT NULL,
+  `shop_id` int(11) NOT NULL,
+  `transaction_id` int(11) DEFAULT NULL,
+  `customer_name` varchar(255) NOT NULL,
+  `customer_phone` varchar(20) NOT NULL,
+  `customer_address` text DEFAULT NULL,
+  `total_amount` decimal(20,2) NOT NULL,
+  `paid_amount` decimal(20,2) NOT NULL DEFAULT 0.00,
+  `remaining_balance` decimal(20,2) NOT NULL,
+  `status` enum('unpaid','partially_paid','fully_paid','written_off') DEFAULT 'unpaid',
+  `recorded_by` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `debt_payments`
+--
+
+CREATE TABLE IF NOT EXISTS `debt_payments` (
+  `id` int(11) NOT NULL,
+  `debt_id` int(11) NOT NULL,
+  `amount_paid` decimal(20,2) NOT NULL,
+  `recorded_by` int(11) NOT NULL,
+  `notes` text DEFAULT NULL,
+  `payment_date` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -1685,6 +1725,58 @@ ALTER TABLE `transaction_items`
 ALTER TABLE `users`
   ADD CONSTRAINT `fk_users_shop_id` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_users_tenant` FOREIGN KEY (`tenant_id`) REFERENCES `tenants` (`id`) ON UPDATE CASCADE;
+
+--
+-- Indexes for table `debts`
+--
+ALTER TABLE `debts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_shop_id` (`shop_id`),
+  ADD KEY `idx_transaction_id` (`transaction_id`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `recorded_by` (`recorded_by`);
+
+--
+-- Indexes for table `debt_payments`
+--
+ALTER TABLE `debt_payments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_debt_id` (`debt_id`),
+  ADD KEY `recorded_by` (`recorded_by`);
+
+--
+-- AUTO_INCREMENT for table `debts`
+--
+ALTER TABLE `debts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `debt_payments`
+--
+ALTER TABLE `debt_payments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for table `debts`
+--
+ALTER TABLE `debts`
+  ADD CONSTRAINT `fk_debts_recorded_by` FOREIGN KEY (`recorded_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `fk_debts_shop` FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `debt_payments`
+--
+ALTER TABLE `debt_payments`
+  ADD CONSTRAINT `fk_payments_debt` FOREIGN KEY (`debt_id`) REFERENCES `debts` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_payments_recorded_by` FOREIGN KEY (`recorded_by`) REFERENCES `users` (`id`);
+
+--
+-- Indexes for table `transactions`
+--
+ALTER TABLE `transactions`
+  ADD KEY `idx_transaction_type` (`transaction_type`),
+  ADD KEY `idx_debt_payment_id` (`debt_payment_id`);
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

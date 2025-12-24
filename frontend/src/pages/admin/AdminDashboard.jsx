@@ -131,6 +131,13 @@ const AdminDashboard = () => {
                             icon: TrendingUp,
                             subtitle: 'Monthly performance',
                             color: data.monthly_sales.percentage_change >= 0 ? 'success' : 'danger'
+                        },
+                        {
+                            title: 'Debt Owed',
+                            value: `₦${data.total_outstanding_debt.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                            icon: Receipt,
+                            subtitle: 'Outstanding customer debt',
+                            color: 'warning'
                         }
                     ];
 

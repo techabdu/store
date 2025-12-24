@@ -19,7 +19,8 @@ import {
   MessageCircle,
   ShoppingBag,
   Wallet,
-  User
+  User,
+  Receipt
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -64,6 +65,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
           { icon: Globe, label: 'Marketplace', path: '/marketplace' },
           { icon: ShoppingCart, label: 'POS', path: '/admin/pos' },
           { icon: DollarSign, label: 'Expenses', path: '/expenses' },
+          { icon: Receipt, label: 'Debts', path: '/admin/debts' },
           { icon: Users, label: 'Customers', path: '/admin/customers' },
           { icon: Settings, label: 'Settings', path: '/admin/settings' },
         ];
@@ -73,6 +75,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
           { icon: Package, label: 'Inventory', path: '/user/inventory' },
           { icon: ShoppingCart, label: 'POS', path: '/user/pos' },
           { icon: DollarSign, label: 'Expenses', path: '/expenses' },
+          { icon: Receipt, label: 'Debts', path: '/user/debts' },
           { icon: FileText, label: 'Sales History', path: '/sales-history' },
           { icon: Settings, label: 'Profile', path: '/user/profile' },
         ];
