@@ -98,7 +98,7 @@ const Receipt = () => {
                     <div className="receipt-container">
                         <div className="receipt-actions">
                             <button className="btn-secondary" onClick={() => navigate('/admin/sales-history')}>
-                                ← Back
+                                Cancel
                             </button>
                             <button className="btn-primary" onClick={handlePrint}>
                                 Print Receipt
