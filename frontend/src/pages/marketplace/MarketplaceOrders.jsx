@@ -117,7 +117,7 @@ const MarketplaceOrders = () => {
                             <h1 className="heading-1">My Orders</h1>
                             <p className="text-secondary">Track and manage your marketplace {activeRole === 'buyer' ? 'purchases' : 'sales'}</p>
                         </div>
-                        <div className="orders-role-toggle" style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px' }}>
+                        <div className="orders-role-toggle" style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '8px', gap: '4px' }}>
                             <button
                                 onClick={() => setActiveRole('buyer')}
                                 className={`role-toggle-btn ${activeRole === 'buyer' ? 'active' : ''}`}

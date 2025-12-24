@@ -32,6 +32,8 @@
     --hover-bg: #F1F3F4;
     --disabled-bg: #E8EAED;
     --table-header-bg: #F8F9FA;
+    --primary-color: #4285F4;
+    --bg-secondary: #F1F3F4;
 }
 
 /* Dark Theme */
@@ -49,6 +51,8 @@
     --hover-bg: #3C4043;
     --disabled-bg: #202124;
     --table-header-bg: #252525;
+    --primary-color: #4285F4;
+    --bg-secondary: #3C4043;
 }
 
 a {
