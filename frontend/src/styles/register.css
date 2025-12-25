@@ -1308,3 +1308,28 @@
 .text-error {
     color: #ef4444 !important;
 }
+
+@media (max-width: 768px) {
+    .success-actions {
+        flex-direction: row;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .success-action-content .btn-primary {
+        min-width: 0;
+        flex: 1;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .btn-resend {
+        flex: 1;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+        text-align: center;
+        white-space: normal;
+        /* Allow text to wrap if it's too long (like during timer) */
+    }
+}
