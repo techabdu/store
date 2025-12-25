@@ -595,10 +595,18 @@
     transition: all 0.3s ease;
 }
 
-.continue-button:hover {
+.continue-button:hover:not(:disabled) {
     background-color: var(--lp-primary-hover);
     box-shadow: var(--lp-shadow-medium);
     transform: translateY(-2px);
+}
+
+.continue-button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none;
+    box-shadow: none;
 }
 
 .change-plan-btn {

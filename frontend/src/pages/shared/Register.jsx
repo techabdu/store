@@ -8,7 +8,7 @@ import '../../styles/register.css';
 const Register = () => {
     const [step, setStep] = useState(1); // 1: Plan Selection, 2: Registration Form
     const [formStep, setFormStep] = useState(1); // 1: Owner Info, 2: Shop Info
-    const [selectedPlan, setSelectedPlan] = useState('free_trial');
+    const [selectedPlan, setSelectedPlan] = useState(null);
     const [formData, setFormData] = useState({
         shop_name: '',
         owner_username: '',
@@ -366,8 +366,9 @@ const Register = () => {
                         <button
                             onClick={() => setStep(2)}
                             className="continue-button"
+                            disabled={!selectedPlan}
                         >
-                            Continue with {plans.find(p => p.id === selectedPlan)?.name}
+                            {selectedPlan ? `Continue with ${plans.find(p => p.id === selectedPlan)?.name}` : 'Select a Plan to Continue'}
                         </button>
                         <div className="login-link">
                             Already have an account? <Link to="/login">Sign in here</Link>
