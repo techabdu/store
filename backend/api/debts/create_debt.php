@@ -108,13 +108,15 @@ try {
     try {
         // Insert debt record
         $stmt = $conn->prepare(
-            "INSERT INTO debts (shop_id, transaction_id, customer_name, customer_phone, customer_address, 
+            "INSERT INTO debts (tenant_id, shop_id, transaction_id, customer_name, customer_phone, customer_address, 
              total_amount, paid_amount, remaining_balance, status, recorded_by) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         
+        $tenant_id = $_SESSION['tenant_id'];
         $stmt->bind_param(
-            "iisssddssi",
+            "iiisssddssi",
+            $tenant_id,
             $shop_id,
             $transaction_id,
             $customer_name,
