@@ -801,6 +801,7 @@ CREATE TABLE `users` (
 
 CREATE TABLE IF NOT EXISTS `debts` (
   `id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL,
   `shop_id` int(11) NOT NULL,
   `transaction_id` int(11) DEFAULT NULL,
   `customer_name` varchar(255) NOT NULL,
@@ -826,6 +827,7 @@ CREATE TABLE IF NOT EXISTS `debt_payments` (
   `debt_id` int(11) NOT NULL,
   `amount_paid` decimal(20,2) NOT NULL,
   `recorded_by` int(11) NOT NULL,
+  `payment_method` enum('cash','card','transfer','mixed') DEFAULT 'cash',
   `notes` text DEFAULT NULL,
   `payment_date` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
