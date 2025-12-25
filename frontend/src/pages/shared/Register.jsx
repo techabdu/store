@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaStore, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaEye, FaEyeSlash, FaCheckCircle, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
+import { FaStore, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaEye, FaEyeSlash, FaCheckCircle, FaArrowRight, FaArrowLeft, FaSpinner, FaTimes } from 'react-icons/fa';
 import api from '../../utils/api';
 import ParticlesBackground from '../../components/landing/ParticlesBackground';
 import '../../styles/register.css';
@@ -25,6 +25,8 @@ const Register = () => {
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const [resendTimer, setResendTimer] = useState(60);
     const [resendStatus, setResendStatus] = useState('idle'); // idle, sending, success, error
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [usernameAvailable, setUsernameAvailable] = useState(null); // null, true, false
 
     const navigate = useNavigate();
 
@@ -37,6 +39,33 @@ const Register = () => {
         }
         return () => clearInterval(interval);
     }, [registrationSuccess, resendTimer]);
+
+    // Check username availability
+    useEffect(() => {
+        const checkUsername = async () => {
+            if (formData.owner_username.length < 3) {
+                setUsernameAvailable(null);
+                return;
+            }
+
+            setIsCheckingUsername(true);
+            try {
+                const response = await api.post('/auth/check-username.php', {
+                    username: formData.owner_username
+                });
+                if (response.data.success) {
+                    setUsernameAvailable(response.data.available);
+                }
+            } catch (err) {
+                console.error('Failed to check username');
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        };
+
+        const timeoutId = setTimeout(checkUsername, 500);
+        return () => clearTimeout(timeoutId);
+    }, [formData.owner_username]);
 
     const handleResendEmail = async () => {
         if (resendTimer > 0 || resendStatus === 'sending') return;
@@ -138,6 +167,16 @@ const Register = () => {
     const validateStep1 = () => {
         if (!formData.owner_username.trim()) {
             setError('Username is required');
+            return false;
+        }
+
+        if (usernameAvailable === false) {
+            setError('This username is already taken. Please choose another one.');
+            return false;
+        }
+
+        if (isCheckingUsername) {
+            setError('Checking username availability...');
             return false;
         }
         if (!formData.owner_email.trim()) {
@@ -366,7 +405,7 @@ const Register = () => {
 
                                 <div className="form-group">
                                     <label htmlFor="owner_username">Username *</label>
-                                    <div className="input-wrapper">
+                                    <div className={`input-wrapper ${usernameAvailable === false ? 'input-error' : ''} ${usernameAvailable === true ? 'input-success' : ''}`}>
                                         <FaUser className="input-icon" />
                                         <input
                                             type="text"
@@ -379,8 +418,16 @@ const Register = () => {
                                             autoComplete="username"
                                             required
                                             autoFocus
+                                            className={usernameAvailable === false ? 'error' : usernameAvailable === true ? 'success' : ''}
                                         />
+                                        <div className="input-status-icon">
+                                            {isCheckingUsername && <FaSpinner className="spinner" />}
+                                            {!isCheckingUsername && usernameAvailable === true && <FaCheckCircle className="text-success" title="Username available" />}
+                                            {!isCheckingUsername && usernameAvailable === false && <FaTimes className="text-error" title="Username taken" />}
+                                        </div>
                                     </div>
+                                    {usernameAvailable === false && <small className="field-error">This username is already taken</small>}
+                                    {usernameAvailable === true && <small className="field-success">Username is available!</small>}
                                 </div>
 
                                 <div className="form-group">

@@ -4,6 +4,7 @@ import Login from './pages/shared/Login';
 import Register from './pages/shared/Register';
 import ForgotPassword from './pages/shared/ForgotPassword';
 import ResetPassword from './pages/shared/ResetPassword';
+import VerifyStatus from './pages/shared/VerifyStatus';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccessDenied from './pages/shared/AccessDenied';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
@@ -60,6 +61,7 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/verify-status" element={<VerifyStatus />} />
                         <Route path="/access-denied" element={<AccessDenied />} />
 
                         {/* Documentation Routes */}

@@ -5,31 +5,35 @@ require_once '../../helpers/email_sender.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
-header("Content-Type: application/json; charset=UTF-8"); // Default to JSON, but might redirect
 
 $token = $_GET['token'] ?? null;
 
 if (!$token) {
-    http_response_code(400);
-    echo json_encode(["success" => false, "error" => "Missing verification token"]);
+    header("Location: " . rtrim(FRONTEND_URL, '/') . "/verify-status?status=invalid");
     exit;
 }
 
 try {
     // Find tenant with this token
-    $stmt = $conn->prepare("SELECT id, shop_name, shop_email, status FROM tenants WHERE verification_token = ?");
+    $stmt = $conn->prepare("SELECT id, shop_name, shop_email, status, email_verified FROM tenants WHERE verification_token = ?");
     $stmt->bind_param("s", $token);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        http_response_code(400);
-        echo json_encode(["success" => false, "error" => "Invalid or expired token"]);
+        // Token doesn't exist. It might be already used (set to NULL) or invalid.
+        // We can't easily distinguish without more state, but we can assume common cases.
+        header("Location: " . rtrim(FRONTEND_URL, '/') . "/verify-status?status=invalid");
         exit;
     }
 
     $tenant = $result->fetch_assoc();
     $tenant_id = $tenant['id'];
+
+    if ($tenant['email_verified'] == 1) {
+        header("Location: " . rtrim(FRONTEND_URL, '/') . "/verify-status?status=already_verified");
+        exit;
+    }
 
     // Update tenant status
     // If status was 'pending', move to 'trial'. If already 'trial' or 'active', just verify email.
@@ -39,17 +43,16 @@ try {
     $updateStmt->bind_param("si", $newStatus, $tenant_id);
     
     if ($updateStmt->execute()) {
-        // Send confirmation email? Optional.
-        
         // Redirect to frontend login page with success message
-        header("Location: " . FRONTEND_URL . "/login?verified=true");
+        $redirectUrl = rtrim(FRONTEND_URL, '/') . "/login?verified=true";
+        header("Location: " . $redirectUrl);
         exit;
     } else {
         throw new Exception("Failed to update tenant status");
     }
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(["success" => false, "error" => "Database error: " . $e->getMessage()]);
+    header("Location: " . rtrim(FRONTEND_URL, '/') . "/verify-status?status=invalid");
+    exit;
 }
 ?>

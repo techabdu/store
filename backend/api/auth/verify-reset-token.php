@@ -1,9 +1,11 @@
 <?php
 require_once '../../config/database.php';
 
+// Load config first to define setCorsHeaders()
+require_once '../../config/config.php';
+
 // Set CORS headers using centralized config
 setCorsHeaders();
-require_once '../../config/config.php';
 
 // Set headers
 header("Content-Type: application/json; charset=UTF-8");

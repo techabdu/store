@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -20,6 +20,8 @@ const Login = () => {
 
     const { login, isAuthenticated, getDashboardRoute } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isVerified = new URLSearchParams(location.search).get('verified') === 'true';
 
     useEffect(() => {
         if (isAuthenticated) {
@@ -92,6 +94,12 @@ const Login = () => {
                         <h1>Hello, <br />Welcome Back</h1>
                         <p>please enter your credentials to login</p>
                     </div>
+
+                    {isVerified && !error && (
+                        <div className="success-message">
+                            <p style={{ margin: 0 }}><strong>Email Verified!</strong> You can now sign in to your account.</p>
+                        </div>
+                    )}
 
                     {error && (
                         <div className="error-message">
