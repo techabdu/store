@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar';
 import './POS.css';
 
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
 const POS = () => {
     const navigate = useNavigate();
@@ -294,7 +295,8 @@ const POS = () => {
                 customer_phone: debtData.customer_phone,
                 customer_address: debtData.customer_address,
                 total_amount: debtData.total_amount,
-                paid_amount: debtData.paid_amount
+                paid_amount: debtData.paid_amount,
+                payment_method: paymentMethod
             });
 
             if (debtResponse.data.success) {
@@ -646,191 +648,205 @@ const POS = () => {
                                 </div>
                             </div>
                         ) : view === 'trade-in' ? (
-                            <div className="focus-view-container animate-slide-in">
+                            <div className="focus-view-container">
                                 <div className="focus-view-header">
-                                    <h2 className="heading-2">Add Trade-In Device</h2>
-                                    <button className="back-btn" onClick={() => setView('pos')}>
+                                    <button className="btn-back" onClick={() => setView('pos')}>
+                                        <ArrowLeft size={18} />
                                         <span>Back to POS</span>
                                     </button>
+                                    <h2>Add Trade-In Device</h2>
                                 </div>
 
-                                <div className="dashboard-card focus-view-card">
-                                    <form onSubmit={addTradeIn}>
-                                        <div className="focus-view-body">
-                                            <div className="form-grid">
-                                                <div className="form-group">
-                                                    <label>Brand *</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input"
-                                                        value={tradeInData.brand}
-                                                        onChange={(e) => setTradeInData({ ...tradeInData, brand: e.target.value })}
-                                                        placeholder="e.g., Apple, Samsung"
-                                                        required
-                                                    />
+                                <div className="focus-view-content">
+                                    <div className="focus-view-card">
+                                        <form onSubmit={addTradeIn}>
+                                            <div className="focus-view-body">
+                                                <div className="form-grid-focus">
+                                                    <div className="form-group">
+                                                        <label>Brand *</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={tradeInData.brand}
+                                                            onChange={(e) => setTradeInData({ ...tradeInData, brand: e.target.value })}
+                                                            placeholder="e.g., Apple, Samsung"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Model *</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={tradeInData.model}
+                                                            onChange={(e) => setTradeInData({ ...tradeInData, model: e.target.value })}
+                                                            placeholder="e.g., iPhone 13"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="form-group full-width">
+                                                        <label>IMEI (15 digits) *</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={tradeInData.imei}
+                                                            onChange={(e) => setTradeInData({ ...tradeInData, imei: e.target.value })}
+                                                            pattern="[0-9]{15}"
+                                                            maxLength="15"
+                                                            placeholder="Enter 15-digit IMEI"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Color</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={tradeInData.color}
+                                                            onChange={(e) => setTradeInData({ ...tradeInData, color: e.target.value })}
+                                                            placeholder="e.g., Graphite"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Storage Capacity</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={tradeInData.storage}
+                                                            onChange={(e) => setTradeInData({ ...tradeInData, storage: e.target.value })}
+                                                            placeholder="e.g., 128GB"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group full-width">
+                                                        <label>Trade-In Value (₦) *</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-input highlight-input"
+                                                            step="0.01"
+                                                            min="0"
+                                                            value={tradeInData.trade_in_value}
+                                                            onChange={(e) => setTradeInData({ ...tradeInData, trade_in_value: e.target.value })}
+                                                            placeholder="0.00"
+                                                            required
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="form-group">
-                                                    <label>Model *</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input"
-                                                        value={tradeInData.model}
-                                                        onChange={(e) => setTradeInData({ ...tradeInData, model: e.target.value })}
-                                                        placeholder="e.g., iPhone 13"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="form-group full-width">
-                                                    <label>IMEI (15 digits) *</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input"
-                                                        value={tradeInData.imei}
-                                                        onChange={(e) => setTradeInData({ ...tradeInData, imei: e.target.value })}
-                                                        pattern="[0-9]{15}"
-                                                        maxLength="15"
-                                                        placeholder="Enter 15-digit IMEI"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Color</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input"
-                                                        value={tradeInData.color}
-                                                        onChange={(e) => setTradeInData({ ...tradeInData, color: e.target.value })}
-                                                        placeholder="e.g., Graphite"
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Storage Capacity</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input"
-                                                        value={tradeInData.storage}
-                                                        onChange={(e) => setTradeInData({ ...tradeInData, storage: e.target.value })}
-                                                        placeholder="e.g., 128GB"
-                                                    />
-                                                </div>
-                                                <div className="form-group full-width">
-                                                    <label>Trade-In Value (₦) *</label>
-                                                    <input
-                                                        type="number"
-                                                        className="form-input highlight-input"
-                                                        step="0.01"
-                                                        min="0"
-                                                        value={tradeInData.trade_in_value}
-                                                        onChange={(e) => setTradeInData({ ...tradeInData, trade_in_value: e.target.value })}
-                                                        placeholder="0.00"
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
 
-                                            <div className="focus-view-footer">
-                                                <button type="button" className="btn-secondary" onClick={() => setView('pos')}>
-                                                    Cancel
-                                                </button>
-                                                <button type="submit" className="btn-primary">
-                                                    Add Device to Cart
-                                                </button>
+                                                <div className="focus-view-actions">
+                                                    <div className="secondary-actions">
+                                                        <button type="button" className="btn-cancel" onClick={() => setView('pos')}>
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                    <div className="primary-actions">
+                                                        <button type="submit" className="btn-primary">
+                                                            Add Device to Cart
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         ) : view === 'debt' ? (
-                            <div className="focus-view-container animate-slide-in">
+                            <div className="focus-view-container">
                                 <div className="focus-view-header">
-                                    <h2 className="heading-2">Log Customer Debt</h2>
-                                    <button className="back-btn" onClick={() => setView('pos')}>
+                                    <button className="btn-back" onClick={() => setView('pos')}>
+                                        <ArrowLeft size={18} />
                                         <span>Back to POS</span>
                                     </button>
+                                    <h2>Log Customer Debt</h2>
                                 </div>
 
-                                <div className="dashboard-card focus-view-card">
-                                    <div className="focus-view-body">
-                                        {/* Debt Summary */}
-                                        <div className="debt-summary-section">
-                                            <h3>Transaction Summary</h3>
-                                            <div className="summary-grid">
-                                                <div className="summary-item">
-                                                    <span className="label">Total Amount:</span>
-                                                    <span className="value">₦{debtData.total_amount.toFixed(2)}</span>
-                                                </div>
-                                                <div className="summary-item">
-                                                    <span className="label">Amount Paid:</span>
-                                                    <span className="value paid">₦{debtData.paid_amount.toFixed(2)}</span>
-                                                </div>
-                                                <div className="summary-item highlight">
-                                                    <span className="label">Remaining Balance:</span>
-                                                    <span className="value remaining">₦{(debtData.total_amount - debtData.paid_amount).toFixed(2)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Customer Information Form */}
-                                        <div className="customer-info-section">
-                                            <h3>Customer Information</h3>
-                                            <div className="form-grid">
-                                                <div className="form-group full-width">
-                                                    <label>Customer Name *</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input"
-                                                        value={debtData.customer_name}
-                                                        onChange={(e) => setDebtData({ ...debtData, customer_name: e.target.value })}
-                                                        placeholder="Enter customer full name"
-                                                        required
-                                                    />
-                                                </div>
-
-                                                <div className="form-group full-width">
-                                                    <label>Phone Number *</label>
-                                                    <input
-                                                        type="tel"
-                                                        className="form-input"
-                                                        value={debtData.customer_phone}
-                                                        onChange={(e) => setDebtData({ ...debtData, customer_phone: e.target.value })}
-                                                        placeholder="+234XXXXXXXXXX or 0XXXXXXXXXX"
-                                                        pattern="(\+234|0)[789][01]\d{8}"
-                                                        required
-                                                    />
-                                                    <small className="form-help">Use Nigerian format: +234XXXXXXXXXX or 0XXXXXXXXXX</small>
-                                                </div>
-
-                                                <div className="form-group full-width">
-                                                    <label>Customer Address *</label>
-                                                    <textarea
-                                                        className="form-input"
-                                                        value={debtData.customer_address}
-                                                        onChange={(e) => setDebtData({ ...debtData, customer_address: e.target.value })}
-                                                        placeholder="Enter complete address"
-                                                        rows="3"
-                                                        required
-                                                    />
+                                <div className="focus-view-content">
+                                    <div className="focus-view-card">
+                                        <div className="focus-view-body">
+                                            {/* Debt Summary */}
+                                            <div className="debt-summary-section">
+                                                <h3>Transaction Summary</h3>
+                                                <div className="summary-grid-focus">
+                                                    <div className="summary-item-focus">
+                                                        <span className="label">Total Amount:</span>
+                                                        <span className="value">₦{debtData.total_amount.toFixed(2)}</span>
+                                                    </div>
+                                                    <div className="summary-item-focus">
+                                                        <span className="label">Amount Paid:</span>
+                                                        <span className="value paid">₦{debtData.paid_amount.toFixed(2)}</span>
+                                                    </div>
+                                                    <div className="summary-item-focus highlight">
+                                                        <span className="label">Remaining Balance:</span>
+                                                        <span className="value remaining">₦{(debtData.total_amount - debtData.paid_amount).toFixed(2)}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="focus-view-footer">
-                                            <button
-                                                type="button"
-                                                className="btn-secondary"
-                                                onClick={() => setView('pos')}
-                                                disabled={loading}
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-primary"
-                                                onClick={handleCreateDebt}
-                                                disabled={loading}
-                                            >
-                                                {loading ? 'Creating...' : 'Create Debt Record'}
-                                            </button>
+                                            {/* Customer Information Form */}
+                                            <div className="customer-info-section">
+                                                <h3>Customer Information</h3>
+                                                <div className="form-grid-focus">
+                                                    <div className="form-group full-width">
+                                                        <label>Customer Name *</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={debtData.customer_name}
+                                                            onChange={(e) => setDebtData({ ...debtData, customer_name: e.target.value })}
+                                                            placeholder="Enter customer full name"
+                                                            required
+                                                        />
+                                                    </div>
+
+                                                    <div className="form-group full-width">
+                                                        <label>Phone Number *</label>
+                                                        <input
+                                                            type="tel"
+                                                            className="form-input-focus"
+                                                            value={debtData.customer_phone}
+                                                            onChange={(e) => setDebtData({ ...debtData, customer_phone: e.target.value })}
+                                                            placeholder="+234XXXXXXXXXX or 0XXXXXXXXXX"
+                                                            pattern="(\+234|0)[789][01]\d{8}"
+                                                            required
+                                                        />
+                                                        <small className="form-help">Use Nigerian format: +234XXXXXXXXXX or 0XXXXXXXXXX</small>
+                                                    </div>
+
+                                                    <div className="form-group full-width">
+                                                        <label>Customer Address *</label>
+                                                        <textarea
+                                                            className="form-input-focus"
+                                                            value={debtData.customer_address}
+                                                            onChange={(e) => setDebtData({ ...debtData, customer_address: e.target.value })}
+                                                            placeholder="Enter complete address"
+                                                            rows="3"
+                                                            required
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="focus-view-actions">
+                                                <div className="secondary-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="btn-cancel"
+                                                        onClick={() => setView('pos')}
+                                                        disabled={loading}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                                <div className="primary-actions">
+                                                    <button
+                                                        type="button"
+                                                        className="btn-primary"
+                                                        onClick={handleCreateDebt}
+                                                        disabled={loading}
+                                                    >
+                                                        {loading ? 'Creating...' : 'Create Debt Record'}
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

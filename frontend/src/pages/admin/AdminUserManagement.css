@@ -8,6 +8,21 @@
     gap: 16px;
 }
 
+@media (max-width: 600px) {
+    .user-management-header .btn-text {
+        display: none;
+    }
+
+    .user-management-header .add-user-btn {
+        padding: 0.75rem;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        justify-content: center;
+        gap: 0;
+    }
+}
+
 .user-management-header>div {
     flex: 1;
     min-width: 0;

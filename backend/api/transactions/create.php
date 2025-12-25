@@ -84,7 +84,7 @@ try {
     
     // Validate and categorize items
     foreach ($items as $item) {
-        if (!isset($item['type']) || !in_array($item['type'], ['sale', 'trade_in'])) {
+        if (!isset($item['type']) || !in_array($item['type'], ['sale', 'trade_in', 'manual'])) {
             throw new Exception("Invalid item type");
         }
         
@@ -188,8 +188,26 @@ try {
             ];
             
             $totalAmount -= $tradeInValue;
+        } else if ($item['type'] === 'manual') {
+            // Manual items don't need inventory check
+            $price = isset($item['price']) ? floatval($item['price']) : 0;
+            $description = isset($item['description']) ? trim($item['description']) : 'Manual entry';
+            
+            if ($price <= 0) {
+                // throw new Exception("Manual entry price must be positive"); 
+                // Actually for manual debt, maybe they want to log 0 paid? No, this is the total amount part.
+            }
+
+            $manualItems[] = [
+                'price' => $price,
+                'description' => $description
+            ];
+            $totalAmount += $price;
         }
     }
+    
+    // Initialize manualItems if not set
+    if (!isset($manualItems)) $manualItems = [];
     
     // Insert transaction with shop_id
     $transactionStmt = $conn->prepare(
@@ -218,18 +236,20 @@ try {
     
     // Insert transaction items and update inventory status for sales
     $itemStmt = $conn->prepare(
-            "INSERT INTO transaction_items (transaction_id, inventory_id, price, type, tenant_id, shop_id) VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO transaction_items (transaction_id, inventory_id, price, type, description, tenant_id, shop_id) VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
     
     // Process sale items
     foreach ($saleItems as $saleItem) {
         $type = 'sale';
+        $desc = null;
         $itemStmt->bind_param(
-            "iidsii",
+            "iidssii",
             $transactionId,
             $saleItem['inventory_id'],
             $saleItem['price'],
             $type,
+            $desc,
             $_SESSION['tenant_id'],
             $shopId
         );
@@ -248,18 +268,40 @@ try {
     // Process trade-in items
     foreach ($tradeInItems as $tradeInItem) {
         $type = 'trade_in';
+        $desc = null;
         $itemStmt->bind_param(
-            "iidsii",
+            "iidssii",
             $transactionId,
             $tradeInItem['inventory_id'],
             $tradeInItem['price'],
             $type,
+            $desc,
             $_SESSION['tenant_id'],
             $shopId
         );
         
         if (!$itemStmt->execute()) {
             throw new Exception("Failed to add trade-in item to transaction");
+        }
+    }
+
+    // Process manual items
+    foreach ($manualItems as $manualItem) {
+        $type = 'manual';
+        $inventoryId = null;
+        $itemStmt->bind_param(
+            "iidssii",
+            $transactionId,
+            $inventoryId,
+            $manualItem['price'],
+            $type,
+            $manualItem['description'],
+            $_SESSION['tenant_id'],
+            $shopId
+        );
+        
+        if (!$itemStmt->execute()) {
+            throw new Exception("Failed to add manual item to transaction");
         }
     }
     

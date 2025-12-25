@@ -8,6 +8,30 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.debts-header .btn-primary {
+    background-color: var(--primary) !important;
+}
+
+.debts-header .btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-hover) !important;
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+}
+
+@media (max-width: 600px) {
+    .debts-header .btn-text {
+        display: none;
+    }
+
+    .debts-header .btn-primary {
+        padding: 0.75rem;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        justify-content: center;
+    }
 }
 
 .debts-header h1 {
@@ -352,59 +376,7 @@
     opacity: 0.7;
 }
 
-/* Focus View Layout (Wizard Style) */
-.focus-view-container {
-    animation: slideIn 0.3s ease-out;
-    background: var(--bg-primary);
-    min-height: calc(100vh - 120px);
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.focus-view-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.focus-view-header h2 {
-    font-size: 1.75rem;
-    color: var(--text-primary);
-    margin: 0;
-}
-
-.btn-back {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
-
-.btn-back:hover {
-    color: var(--text-primary);
-    background: var(--hover-bg);
-}
-
+/* Focus View specific styles for Debts (that remain unique) */
 .header-title-actions {
     display: flex;
     align-items: center;
@@ -435,56 +407,6 @@
 
 .btn-print-receipt svg {
     stroke: white;
-}
-
-.focus-view-content {
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.focus-view-card {
-    background: var(--card-bg);
-    border-radius: 20px;
-    padding: 3rem;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-    margin-bottom: 2rem;
-    border: 1px solid var(--border-color);
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    gap: 0.875rem;
-    margin-bottom: 1.5rem;
-}
-
-.section-icon {
-    width: 36px;
-    height: 36px;
-    background: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.section-icon.summary {
-    background: rgba(255, 152, 0, 0.1);
-    color: #ff9800;
-}
-
-.section-icon.history {
-    background: rgba(33, 150, 243, 0.1);
-    color: #2196F3;
-}
-
-.section-header h4 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
 }
 
 /* Customer Info Grid */
@@ -712,174 +634,8 @@
     margin: 2rem 0;
 }
 
-/* Summary Grid in Focus View */
-.summary-grid-focus {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.summary-item-focus {
-    padding: 1.5rem;
-    background: var(--bg-hover);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    transition: transform 0.2s;
-    border: 1px solid transparent;
-}
-
-.summary-item-focus:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-color);
-    background: var(--card-bg);
-}
-
-.summary-item-focus .label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.summary-item-focus .value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.summary-item-focus.paid .value {
-    color: #4CAF50;
-}
-
-.summary-item-focus.remaining .value {
-    color: #ff9800;
-}
-
-.summary-item-focus.highlight {
-    background: rgba(255, 152, 0, 0.05);
-    border: 1px solid rgba(255, 152, 0, 0.2);
-}
-
-/* Payment Form in Focus View */
-.form-group-focus {
-    margin-bottom: 2rem;
-}
-
-.form-group-focus label {
-    display: block;
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.input-with-icon {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-icon {
-    position: absolute;
-    left: 1rem;
-    color: var(--text-secondary);
-    font-weight: 600;
-}
-
-.form-input-focus {
-    width: 100%;
-    padding: 1rem 1rem 1rem 2.5rem;
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    font-size: 1.125rem;
-    background: var(--input-bg);
-    color: var(--text-primary);
-    transition: all 0.2s;
-}
-
-.form-input-focus:focus {
-    outline: none;
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
-}
-
-textarea.form-input-focus {
-    padding: 1rem;
-    resize: vertical;
-    min-height: 120px;
-}
-
-/* Focus View Actions */
-.focus-view-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-}
-
-.primary-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.btn-cancel {
-    padding: 1rem 2rem;
-    background: transparent;
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-cancel:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
 /* Mobile Tweaks */
 @media (max-width: 768px) {
-    .focus-view-card {
-        padding: 1.5rem;
-    }
-
-    .focus-view-actions {
-        flex-direction: column-reverse;
-        align-items: stretch;
-    }
-
-    .primary-actions {
-        flex-direction: column;
-    }
-
-    .btn-cancel,
-    .btn-primary,
-    .btn-danger {
-        width: 100%;
-    }
-
-    .summary-grid-focus {
-        grid-template-columns: 1fr;
-    }
-
-    .focus-view-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .header-title-actions {
-        width: 100%;
-        justify-content: space-between;
-        gap: 0.5rem;
-    }
-
-    .header-title-actions h2 {
-        font-size: 1.5rem;
-    }
-
     .btn-print-receipt span {
         display: none;
     }

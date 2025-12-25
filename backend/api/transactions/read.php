@@ -86,6 +86,7 @@ try {
                 ti.inventory_id,
                 ti.price,
                 ti.type,
+                ti.description,
                 i.brand,
                 i.model,
                 i.imei,

@@ -156,15 +156,17 @@ const MarketplaceOrderDetails = () => {
                     </button>
 
                     <div className="order-details-header">
-                        <div>
-                            <h1 className="heading-1">Order #{order.id}</h1>
+                        <div className="order-header-main">
+                            <div className="order-title-group">
+                                <h1 className="heading-1">Order #{order.id}</h1>
+                                <div className="order-status-badge">
+                                    <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
+                                        {getStatusIcon(order.order_status)}
+                                        <span className="status-text">{order.order_status.toUpperCase()}</span>
+                                    </span>
+                                </div>
+                            </div>
                             <p className="text-secondary">Placed on {formatDate(order.created_at)}</p>
-                        </div>
-                        <div className="order-status-badge">
-                            <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
-                                {getStatusIcon(order.order_status)}
-                                {order.order_status.toUpperCase()}
-                            </span>
                         </div>
                     </div>
 

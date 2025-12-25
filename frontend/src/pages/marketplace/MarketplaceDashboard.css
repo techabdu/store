@@ -59,7 +59,7 @@
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background-color: var(--success);
+    background-color: var(--primary);
     opacity: 0.1;
     display: flex;
     align-items: center;
@@ -81,7 +81,7 @@
 .wallet-balance-value {
     font-size: 32px;
     font-weight: 700;
-    color: var(--success);
+    color: var(--primary);
     overflow-wrap: break-word;
     word-break: break-all;
 }
@@ -93,13 +93,18 @@
 
 .wallet-btn {
     flex: 1;
-    padding: 10px 16px;
-    border-radius: 6px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-radius: 8px;
     border: 1px solid var(--border-color);
     background-color: var(--bg-surface);
     color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -308,7 +313,20 @@
     }
 
     .wallet-actions {
-        flex-direction: column;
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .wallet-btn {
+        padding: 0 10px;
+        font-size: 13px;
+        gap: 4px;
+        height: 40px;
+    }
+
+    .wallet-btn svg {
+        width: 16px;
+        height: 16px;
     }
 
     .alert-banner {
@@ -329,7 +347,6 @@
 
     .stats-grid {
         gap: 8px;
-        /* Slightly tighter on very small screens */
     }
 
     .marketplace-hero {
@@ -354,5 +371,15 @@
 
     .page-header h1 {
         font-size: 24px;
+    }
+
+    .wallet-actions {
+        gap: 6px;
+    }
+
+    .wallet-btn {
+        padding: 0 8px;
+        font-size: 11px;
+        height: 36px;
     }
 }

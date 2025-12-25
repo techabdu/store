@@ -111,8 +111,8 @@ const MarketplaceSelling = () => {
                             className="btn-primary"
                             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                         >
-                            <Plus size={16} />
-                            <span>Create Listing</span>
+                            <Plus size={20} />
+                            <span className="btn-text">Create Listing</span>
                         </button>
                     </div>
 

@@ -20,6 +20,7 @@ import Inventory from './pages/user/Inventory';
 import POS from './pages/user/POS';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
+import './styles/wizard.css';
 
 import Receipt from './pages/user/Receipt';
 import SalesHistory from './pages/user/SalesHistory';

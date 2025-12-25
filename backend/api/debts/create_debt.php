@@ -54,8 +54,17 @@ try {
     $customer_address = trim($input['customer_address']);
     $total_amount = floatval($input['total_amount']);
     $paid_amount = floatval($input['paid_amount']);
+    $payment_method = isset($input['payment_method']) ? $input['payment_method'] : 'cash';
     $recorded_by = $user_data['id'];
     
+    // Validate payment method
+    $allowed_methods = ['cash', 'card', 'transfer', 'mixed'];
+    if (!in_array($payment_method, $allowed_methods)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid payment method']);
+        exit;
+    }
+
     // Validate amounts
     if ($total_amount <= 0) {
         http_response_code(400);
@@ -127,12 +136,12 @@ try {
         // If there's an initial payment, record it in debt_payments
         if ($paid_amount > 0) {
             $payment_stmt = $conn->prepare(
-                "INSERT INTO debt_payments (debt_id, amount_paid, recorded_by, notes) 
-                 VALUES (?, ?, ?, ?)"
+                "INSERT INTO debt_payments (debt_id, amount_paid, payment_method, recorded_by, notes) 
+                 VALUES (?, ?, ?, ?, ?)"
             );
             
             $initial_payment_note = "Initial payment";
-            $payment_stmt->bind_param("idis", $debt_id, $paid_amount, $recorded_by, $initial_payment_note);
+            $payment_stmt->bind_param("idsis", $debt_id, $paid_amount, $payment_method, $recorded_by, $initial_payment_note);
             
             if (!$payment_stmt->execute()) {
                 throw new Exception("Failed to record initial payment");

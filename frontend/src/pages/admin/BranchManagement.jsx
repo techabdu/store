@@ -15,7 +15,8 @@ import {
     Star,
     X,
     AlertTriangle,
-    Check
+    Check,
+    ArrowLeft
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
 import '../../styles/dashboard.css';
@@ -278,9 +279,9 @@ const BranchManagement = () => {
                                 <button className="add-branch-btn" onClick={() => {
                                     setView('add');
                                     resetForm();
-                                }}>
+                                }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Plus size={20} />
-                                    Add Branch
+                                    <span className="btn-text">Add Branch</span>
                                 </button>
                             </div>
 
@@ -386,134 +387,139 @@ const BranchManagement = () => {
                             )}
                         </>
                     ) : (
-                        <div className="focus-view-container animate-slide-in">
+                        <div className="focus-view-container">
                             <div className="focus-view-header">
-                                <h2 className="heading-2">
-                                    {view === 'add' ? 'Add New Branch' : `Edit ${selectedBranch?.shop_name}`}
-                                </h2>
-                                <button className="back-btn" onClick={() => setView('list')}>
-                                    <X size={20} />
+                                <button className="btn-back" onClick={() => setView('list')}>
+                                    <ArrowLeft size={18} />
                                     <span>Back to List</span>
                                 </button>
+                                <h2>
+                                    {view === 'add' ? 'Add New Branch' : `Edit ${selectedBranch?.shop_name}`}
+                                </h2>
                             </div>
 
-                            <div className="dashboard-card focus-view-card">
-                                <div className="wizard-steps">
-                                    <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
-                                        <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
-                                        <div className="step-label">Basic Info</div>
-                                    </div>
-                                    <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
-                                        <div className="step-number">2</div>
-                                        <div className="step-label">Constraints</div>
-                                    </div>
-                                </div>
-
-                                <form onSubmit={view === 'add' ? handleCreateSubmit : handleEditSubmit}>
-                                    <div className="focus-view-body">
-                                        {currentStep === 1 && (
-                                            <div className="form-grid">
-                                                <div className="form-group full-width">
-                                                    <label>Branch Name *</label>
-                                                    <input
-                                                        type="text"
-                                                        name="shop_name"
-                                                        className="form-input"
-                                                        value={formData.shop_name}
-                                                        onChange={handleInputChange}
-                                                        required
-                                                        placeholder="Enter branch name"
-                                                    />
-                                                </div>
-                                                <div className="form-group full-width">
-                                                    <label>Physical Address</label>
-                                                    <input
-                                                        type="text"
-                                                        name="shop_address"
-                                                        className="form-input"
-                                                        value={formData.shop_address}
-                                                        onChange={handleInputChange}
-                                                        placeholder="Street address, City, State"
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Phone Number</label>
-                                                    <input
-                                                        type="tel"
-                                                        name="shop_phone"
-                                                        className="form-input"
-                                                        value={formData.shop_phone}
-                                                        onChange={handleInputChange}
-                                                        placeholder="+234..."
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Email Address</label>
-                                                    <input
-                                                        type="email"
-                                                        name="shop_email"
-                                                        className="form-input"
-                                                        value={formData.shop_email}
-                                                        onChange={handleInputChange}
-                                                        placeholder="branch@example.com"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {currentStep === 2 && (
-                                            <div className="form-grid">
-                                                <div className="form-group">
-                                                    <label>Starting Capital (₦)</label>
-                                                    <input
-                                                        type="number"
-                                                        name="business_capital"
-                                                        className="form-input"
-                                                        value={formData.business_capital}
-                                                        onChange={handleInputChange}
-                                                        min="0"
-                                                        step="0.01"
-                                                        placeholder="0.00"
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Low Stock Alert Threshold</label>
-                                                    <input
-                                                        type="number"
-                                                        name="low_stock_threshold"
-                                                        className="form-input"
-                                                        value={formData.low_stock_threshold}
-                                                        onChange={handleInputChange}
-                                                        min="1"
-                                                        placeholder="5"
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="focus-view-footer">
-                                            {currentStep === 1 ? (
-                                                <>
-                                                    <button type="button" className="btn-secondary" onClick={() => setView('list')}>
-                                                        Cancel
-                                                    </button>
-                                                    <button type="button" className="btn-primary" onClick={handleNext}>
-                                                        Next Step →
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button type="button" className="btn-secondary" onClick={handlePrevious}>
-                                                        ← Previous
-                                                    </button>
-                                                    <button type="submit" className="btn-primary" disabled={submitting}>
-                                                        {submitting ? 'Saving...' : (view === 'add' ? 'Create Branch' : 'Save Changes')}
-                                                    </button>
-                                                </>
-                                            )}
+                            <div className="focus-view-content">
+                                <div className="focus-view-card">
+                                    <div className="wizard-steps">
+                                        <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                            <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
+                                            <div className="step-label">Basic Info</div>
+                                        </div>
+                                        <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                            <div className="step-number">2</div>
+                                            <div className="step-label">Constraints</div>
                                         </div>
                                     </div>
-                                </form>
+
+                                    <form onSubmit={view === 'add' ? handleCreateSubmit : handleEditSubmit}>
+                                        <div className="focus-view-body">
+                                            {currentStep === 1 && (
+                                                <div className="form-grid-focus">
+                                                    <div className="form-group full-width">
+                                                        <label>Branch Name *</label>
+                                                        <input
+                                                            type="text"
+                                                            name="shop_name"
+                                                            className="form-input-focus"
+                                                            value={formData.shop_name}
+                                                            onChange={handleInputChange}
+                                                            required
+                                                            placeholder="Enter branch name"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group full-width">
+                                                        <label>Physical Address</label>
+                                                        <input
+                                                            type="text"
+                                                            name="shop_address"
+                                                            className="form-input-focus"
+                                                            value={formData.shop_address}
+                                                            onChange={handleInputChange}
+                                                            placeholder="Street address, City, State"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Phone Number</label>
+                                                        <input
+                                                            type="tel"
+                                                            name="shop_phone"
+                                                            className="form-input-focus"
+                                                            value={formData.shop_phone}
+                                                            onChange={handleInputChange}
+                                                            placeholder="+234..."
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Email Address</label>
+                                                        <input
+                                                            type="email"
+                                                            name="shop_email"
+                                                            className="form-input-focus"
+                                                            value={formData.shop_email}
+                                                            onChange={handleInputChange}
+                                                            placeholder="branch@example.com"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {currentStep === 2 && (
+                                                <div className="form-grid-focus">
+                                                    <div className="form-group">
+                                                        <label>Starting Capital (₦)</label>
+                                                        <input
+                                                            type="number"
+                                                            name="business_capital"
+                                                            className="form-input-focus"
+                                                            value={formData.business_capital}
+                                                            onChange={handleInputChange}
+                                                            min="0"
+                                                            step="0.01"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Low Stock Alert Threshold</label>
+                                                        <input
+                                                            type="number"
+                                                            name="low_stock_threshold"
+                                                            className="form-input-focus"
+                                                            value={formData.low_stock_threshold}
+                                                            onChange={handleInputChange}
+                                                            min="1"
+                                                            placeholder="5"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="focus-view-actions">
+                                                <div className="secondary-actions">
+                                                    {currentStep === 1 ? (
+                                                        <button type="button" className="btn-cancel" onClick={() => setView('list')}>
+                                                            Cancel
+                                                        </button>
+                                                    ) : (
+                                                        <button type="button" className="btn-cancel" onClick={handlePrevious}>
+                                                            ← Previous
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="primary-actions">
+                                                    {currentStep === 1 ? (
+                                                        <button type="button" className="btn-primary" onClick={handleNext}>
+                                                            Next Step →
+                                                        </button>
+                                                    ) : (
+                                                        <button type="submit" className="btn-primary" disabled={submitting}>
+                                                            {submitting ? 'Saving...' : (view === 'add' ? 'Create Branch' : 'Save Changes')}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     )}

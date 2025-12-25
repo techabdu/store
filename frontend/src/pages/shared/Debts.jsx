@@ -5,6 +5,7 @@ import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import DebtPaymentReceipt from '../../components/DebtPaymentReceipt';
+import { Plus, ArrowLeft } from 'lucide-react';
 import './Debts.css';
 
 const Debts = () => {
@@ -66,6 +67,18 @@ const Debts = () => {
     // Payment form
     const [paymentForm, setPaymentForm] = useState({
         amount_paid: '',
+        payment_method: 'cash',
+        notes: ''
+    });
+
+    const [manualDebtForm, setManualDebtForm] = useState({
+        customer_name: '',
+        customer_phone: '',
+        customer_address: '',
+        description: '',
+        total_amount: '',
+        paid_amount: '0',
+        payment_method: 'cash',
         notes: ''
     });
 
@@ -159,7 +172,7 @@ const Debts = () => {
     // Open payment panel
     const openPaymentPanel = (debt) => {
         setSelectedDebt(debt);
-        setPaymentForm({ amount_paid: '', notes: '' });
+        setPaymentForm({ amount_paid: '', payment_method: 'cash', notes: '' });
         setView('payment');
     };
 
@@ -185,6 +198,7 @@ const Debts = () => {
             const response = await api.post('/debts/record_debt_payment.php', {
                 debt_id: selectedDebt.id,
                 amount_paid: amount,
+                payment_method: paymentForm.payment_method,
                 notes: paymentForm.notes
             });
 
@@ -211,7 +225,7 @@ const Debts = () => {
                         receipt_number: `PMT-${Date.now().toString().slice(-6)}`
                     };
                     setReceiptData(newPayment);
-                    setPaymentForm({ amount_paid: '', notes: '' });
+                    setPaymentForm({ amount_paid: '', payment_method: 'cash', notes: '' });
                     setView('receipt');
                 } else {
                     setView('list');
@@ -232,7 +246,83 @@ const Debts = () => {
         }
     };
 
-    // Write off debt (admin only)
+    // Log manual debt
+    const handleLogManualDebt = async () => {
+        // Validation
+        if (!manualDebtForm.customer_name.trim() || !manualDebtForm.total_amount || !manualDebtForm.description) {
+            setError('Please fill in all required fields');
+            return;
+        }
+
+        const total = parseFloat(manualDebtForm.total_amount);
+        const paid = parseFloat(manualDebtForm.paid_amount) || 0;
+
+        if (paid > total) {
+            setError('Paid amount cannot exceed total amount');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            // 1. Create transaction with manual item
+            const transactionResponse = await api.post('/transactions/create.php', {
+                customer_name: manualDebtForm.customer_name,
+                customer_phone: manualDebtForm.customer_phone,
+                customer_address: manualDebtForm.customer_address,
+                payment_method: manualDebtForm.payment_method,
+                items: [
+                    {
+                        type: 'manual',
+                        price: total,
+                        description: manualDebtForm.description
+                    }
+                ]
+            });
+
+            if (!transactionResponse.data.success) {
+                throw new Error(transactionResponse.data.error || 'Transaction failed');
+            }
+
+            const transactionId = transactionResponse.data.transaction_id;
+
+            // 2. Create debt record
+            const debtResponse = await api.post('/debts/create_debt.php', {
+                transaction_id: transactionId,
+                customer_name: manualDebtForm.customer_name,
+                customer_phone: manualDebtForm.customer_phone,
+                customer_address: manualDebtForm.customer_address,
+                total_amount: total,
+                paid_amount: paid,
+                payment_method: manualDebtForm.payment_method
+            });
+
+            if (debtResponse.data.success) {
+                setSuccess('Manual debt logged successfully!');
+                setView('list');
+                fetchDebts();
+                setManualDebtForm({
+                    customer_name: '',
+                    customer_phone: '',
+                    customer_address: '',
+                    description: '',
+                    total_amount: '',
+                    paid_amount: '0',
+                    payment_method: 'cash',
+                    notes: ''
+                });
+                setTimeout(() => setSuccess(''), 3000);
+            } else {
+                setError(debtResponse.data.error || 'Failed to create debt record');
+            }
+        } catch (err) {
+            console.error('Error logging manual debt:', err);
+            setError(err.response?.data?.error || err.message || 'Failed to process manual debt');
+        } finally {
+            setLoading(false);
+        }
+    };
     const handleWriteOff = async (debtId) => {
         if (!window.confirm('Are you sure you want to write off this debt? This action cannot be undone.')) {
             return;
@@ -317,6 +407,14 @@ const Debts = () => {
                                     <h1>Debt Management</h1>
                                     <p className="text-secondary">Track and manage customer debts</p>
                                 </div>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => setView('manual-debt')}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                >
+                                    <Plus size={20} />
+                                    <span className="btn-text">Log Manual Debt</span>
+                                </button>
                             </div>
 
                             {/* Messages */}
@@ -783,6 +881,21 @@ const Debts = () => {
                                         </div>
 
                                         <div className="form-group-focus">
+                                            <label>Payment Method *</label>
+                                            <select
+                                                value={paymentForm.payment_method}
+                                                onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })}
+                                                className="form-input-focus"
+                                                required
+                                            >
+                                                <option value="cash">Cash</option>
+                                                <option value="card">Card</option>
+                                                <option value="transfer">Transfer</option>
+                                                <option value="mixed">Mixed</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="form-group-focus">
                                             <label>Notes (Optional)</label>
                                             <textarea
                                                 value={paymentForm.notes}
@@ -808,6 +921,131 @@ const Debts = () => {
                             </div>
                         </div>
 
+                    ) : view === 'manual-debt' ? (
+                        <div className="focus-view-container">
+                            <div className="focus-view-header">
+                                <button className="btn-back" onClick={() => setView('list')}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                                    </svg>
+                                    Back to List
+                                </button>
+                                <h2>Log Manual Debt</h2>
+                            </div>
+
+                            <div className="focus-view-content">
+                                <div className="focus-view-card">
+                                    {/* Customer Info */}
+                                    <div className="detail-section">
+                                        <h4>Customer Information</h4>
+                                        <div className="form-grid-focus" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '15px' }}>
+                                            <div className="form-group-focus">
+                                                <label>Customer Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={manualDebtForm.customer_name}
+                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_name: e.target.value })}
+                                                    placeholder="Full Name"
+                                                    className="form-input-focus"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-group-focus">
+                                                <label>Phone Number</label>
+                                                <input
+                                                    type="tel"
+                                                    value={manualDebtForm.customer_phone}
+                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_phone: e.target.value })}
+                                                    placeholder="+234..."
+                                                    className="form-input-focus"
+                                                />
+                                            </div>
+                                            <div className="form-group-focus" style={{ gridColumn: '1 / -1' }}>
+                                                <label>Address</label>
+                                                <input
+                                                    type="text"
+                                                    value={manualDebtForm.customer_address}
+                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_address: e.target.value })}
+                                                    placeholder="Residential address"
+                                                    className="form-input-focus"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr className="divider" />
+
+                                    {/* Debt Details */}
+                                    <div className="detail-section">
+                                        <h4>Debt Details</h4>
+                                        <div className="form-grid-focus" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '15px' }}>
+                                            <div className="form-group-focus" style={{ gridColumn: '1 / -1' }}>
+                                                <label>Description (Reason for Debt) *</label>
+                                                <input
+                                                    type="text"
+                                                    value={manualDebtForm.description}
+                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, description: e.target.value })}
+                                                    placeholder="e.g. Purchase of iPhone 13, Repair service, etc."
+                                                    className="form-input-focus"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-group-focus">
+                                                <label>Total Amount (₦) *</label>
+                                                <div className="input-with-icon">
+                                                    <span className="input-icon">₦</span>
+                                                    <input
+                                                        type="number"
+                                                        value={manualDebtForm.total_amount}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, total_amount: e.target.value })}
+                                                        placeholder="0.00"
+                                                        className="form-input-focus"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="form-group-focus">
+                                                <label>Initial Payment (₦)</label>
+                                                <div className="input-with-icon">
+                                                    <span className="input-icon">₦</span>
+                                                    <input
+                                                        type="number"
+                                                        value={manualDebtForm.paid_amount}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, paid_amount: e.target.value })}
+                                                        placeholder="0.00"
+                                                        className="form-input-focus"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="form-group-focus">
+                                                <label>Payment Method (for Initial Payment)</label>
+                                                <select
+                                                    value={manualDebtForm.payment_method}
+                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, payment_method: e.target.value })}
+                                                    className="form-input-focus"
+                                                >
+                                                    <option value="cash">Cash</option>
+                                                    <option value="card">Card</option>
+                                                    <option value="transfer">Transfer</option>
+                                                    <option value="mixed">Mixed</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="focus-view-actions">
+                                    <button className="btn-cancel" onClick={() => setView('list')} disabled={loading}>Cancel</button>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={handleLogManualDebt}
+                                        disabled={loading}
+                                    >
+                                        {loading ? 'Processing...' : 'Log Debt Record'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     ) : view === 'receipt' && receiptData ? (
                         <div className="focus-view-container">
                             <div className="focus-view-header">

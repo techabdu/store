@@ -14,7 +14,8 @@ import {
     ArrowDown,
     X,
     Check,
-    AlertCircle
+    AlertCircle,
+    ArrowLeft
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
 import '../../styles/dashboard.css';
@@ -245,9 +246,9 @@ const AdminUserManagement = () => {
                                     <h1 className="heading-1">User Management</h1>
                                     <p className="text-secondary">Manage users and their access levels</p>
                                 </div>
-                                <button className="add-user-btn" onClick={() => setView('add')}>
+                                <button className="add-user-btn" onClick={() => setView('add')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <Plus size={20} />
-                                    Add User
+                                    <span className="btn-text">Add User</span>
                                 </button>
                             </div>
 
@@ -346,90 +347,96 @@ const AdminUserManagement = () => {
                             </div>
                         </>
                     ) : (
-                        <div className="focus-view-container animate-slide-in">
+                        <div className="focus-view-container">
                             <div className="focus-view-header">
-                                <h2 className="heading-2">Create New User</h2>
-                                <button className="back-btn" onClick={() => setView('list')}>
-                                    <X size={20} />
+                                <button className="btn-back" onClick={() => setView('list')}>
+                                    <ArrowLeft size={18} />
                                     <span>Back to List</span>
                                 </button>
+                                <h2>Create New User</h2>
                             </div>
 
-                            <div className="dashboard-card focus-view-card">
-                                <form onSubmit={handleSubmit}>
-                                    <div className="focus-view-body">
-                                        <div className="form-grid">
-                                            <div className="form-group">
-                                                <label>Username</label>
-                                                <div className="input-with-icon">
+                            <div className="focus-view-content">
+                                <div className="focus-view-card">
+                                    <form onSubmit={handleSubmit}>
+                                        <div className="focus-view-body">
+                                            <div className="form-grid">
+                                                <div className="form-group">
+                                                    <label>Username</label>
+                                                    <div className="input-with-icon">
+                                                        <input
+                                                            type="text"
+                                                            name="username"
+                                                            className={`form-input-focus ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
+                                                            value={formData.username}
+                                                            onChange={handleInputChange}
+                                                            required
+                                                            placeholder="Enter unique username"
+                                                        />
+                                                        {isCheckingUsername && <div className="spinner-small"></div>}
+                                                    </div>
+                                                    {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
+                                                        <div className={`availability-msg ${usernameAvailable ? 'success' : 'error'}`}>
+                                                            {usernameAvailable ? <><Check size={14} /> Available</> : <><AlertCircle size={14} /> Not Available</>}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>Email Address</label>
                                                     <input
-                                                        type="text"
-                                                        name="username"
-                                                        className={`form-input ${usernameAvailable === false ? 'border-red-500' : ''} ${usernameAvailable === true ? 'border-green-500' : ''}`}
-                                                        value={formData.username}
+                                                        type="email"
+                                                        name="email"
+                                                        className="form-input-focus"
+                                                        value={formData.email}
                                                         onChange={handleInputChange}
                                                         required
-                                                        placeholder="Enter unique username"
+                                                        placeholder="user@example.com"
                                                     />
-                                                    {isCheckingUsername && <div className="spinner-small"></div>}
                                                 </div>
-                                                {formData.username.length >= 3 && !isCheckingUsername && usernameAvailable !== null && (
-                                                    <div className={`availability-msg ${usernameAvailable ? 'success' : 'error'}`}>
-                                                        {usernameAvailable ? <><Check size={14} /> Available</> : <><AlertCircle size={14} /> Not Available</>}
-                                                    </div>
-                                                )}
+
+                                                <div className="form-group">
+                                                    <label>Initial Password</label>
+                                                    <input
+                                                        type="password"
+                                                        name="password"
+                                                        className="form-input-focus"
+                                                        value={formData.password}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                        placeholder="Min. 6 characters"
+                                                        minLength={6}
+                                                    />
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>User Role</label>
+                                                    <select
+                                                        name="role"
+                                                        className="form-input-focus"
+                                                        value={formData.role}
+                                                        onChange={handleInputChange}
+                                                    >
+                                                        <option value="user">Staff / User</option>
+                                                        <option value="admin">Administrator</option>
+                                                    </select>
+                                                </div>
                                             </div>
 
-                                            <div className="form-group">
-                                                <label>Email Address</label>
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    className="form-input"
-                                                    value={formData.email}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                    placeholder="user@example.com"
-                                                />
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label>Initial Password</label>
-                                                <input
-                                                    type="password"
-                                                    name="password"
-                                                    className="form-input"
-                                                    value={formData.password}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                    placeholder="Min. 6 characters"
-                                                    minLength={6}
-                                                />
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label>User Role</label>
-                                                <select
-                                                    name="role"
-                                                    className="form-select"
-                                                    value={formData.role}
-                                                    onChange={handleInputChange}
-                                                >
-                                                    <option value="user">Staff / User</option>
-                                                    <option value="admin">Administrator</option>
-                                                </select>
+                                            <div className="focus-view-actions">
+                                                <div className="secondary-actions">
+                                                    <button type="button" className="btn-cancel" onClick={() => setView('list')}>Cancel</button>
+                                                </div>
+                                                <div className="primary-actions">
+                                                    <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>
+                                                        <Plus size={18} />
+                                                        Create User Account
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <div className="focus-view-footer">
-                                            <button type="button" className="btn-secondary" onClick={() => setView('list')}>Cancel</button>
-                                            <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>
-                                                <Plus size={18} />
-                                                Create User Account
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     )}

@@ -435,7 +435,9 @@
 .btn-trade-in-outline:hover {
     background: #ff9800;
     color: white;
-}/* Highlight input for trade-in value */
+}
+
+/* Highlight input for trade-in value */
 .highlight-input {
     font-size: 1.25rem;
     font-weight: 600;
@@ -516,46 +518,6 @@
     color: var(--text-primary);
 }
 
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.summary-item {
-    padding: 1rem;
-    background: var(--hover-bg);
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.summary-item.highlight {
-    background: rgba(255, 152, 0, 0.1);
-    border: 2px solid #ff9800;
-}
-
-.summary-item .label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.summary-item .value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.summary-item .value.paid {
-    color: #4CAF50;
-}
-
-.summary-item .value.remaining {
-    color: #ff9800;
-}
-
 .form-help {
     display: block;
     margin-top: 0.25rem;
@@ -569,7 +531,7 @@
     .pos-layout {
         grid-template-columns: 1fr;
     }
-    
+
     .summary-grid {
         grid-template-columns: 1fr;
     }

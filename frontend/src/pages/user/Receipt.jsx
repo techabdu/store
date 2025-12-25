@@ -156,15 +156,18 @@ const Receipt = () => {
                                                     <tr key={index}>
                                                         <td>
                                                             <span className="item-main">
-                                                                {item.brand} {item.model}
+                                                                {item.type === 'manual' ? item.description : `${item.brand} ${item.model}`}
                                                                 {item.type === 'trade_in' && <span className="badge badge-warning" style={{ marginLeft: '8px', fontSize: '0.7em' }}>TRADE-IN</span>}
+                                                                {item.type === 'manual' && <span className="badge" style={{ marginLeft: '8px', fontSize: '0.7em', background: '#3b82f6', color: 'white' }}>MANUAL</span>}
                                                             </span>
-                                                            <div className="item-specs">
-                                                                <span>IMEI: {item.imei}</span>
-                                                                {item.storage && <span>{item.storage}</span>}
-                                                                {item.color && <span>{item.color}</span>}
-                                                                {item.condition_status && <span>{item.condition_status}</span>}
-                                                            </div>
+                                                            {item.type !== 'manual' && (
+                                                                <div className="item-specs">
+                                                                    <span>IMEI: {item.imei}</span>
+                                                                    {item.storage && <span>{item.storage}</span>}
+                                                                    {item.color && <span>{item.color}</span>}
+                                                                    {item.condition_status && <span>{item.condition_status}</span>}
+                                                                </div>
+                                                            )}
                                                         </td>
                                                         <td style={{ textAlign: 'right' }}>
                                                             {item.type === 'trade_in' ? '-' : ''}₦{parseFloat(item.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

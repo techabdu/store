@@ -53,12 +53,21 @@ try {
     $debt_id = intval($input['debt_id']);
     $amount_paid = floatval($input['amount_paid']);
     $notes = isset($input['notes']) ? trim($input['notes']) : null;
+    $payment_method = isset($input['payment_method']) ? $input['payment_method'] : 'cash';
     $recorded_by = $user_data['id'];
     
     // Validate amount
     if ($amount_paid <= 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Payment amount must be greater than 0']);
+        exit;
+    }
+
+    // Validate payment method
+    $allowed_methods = ['cash', 'card', 'transfer', 'mixed'];
+    if (!in_array($payment_method, $allowed_methods)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid payment method']);
         exit;
     }
     
@@ -113,11 +122,11 @@ try {
         
         // Insert payment record
         $payment_stmt = $conn->prepare(
-            "INSERT INTO debt_payments (debt_id, amount_paid, recorded_by, notes) 
-             VALUES (?, ?, ?, ?)"
+            "INSERT INTO debt_payments (debt_id, amount_paid, payment_method, recorded_by, notes) 
+             VALUES (?, ?, ?, ?, ?)"
         );
         
-        $payment_stmt->bind_param("idis", $debt_id, $amount_paid, $recorded_by, $notes);
+        $payment_stmt->bind_param("idsis", $debt_id, $amount_paid, $payment_method, $recorded_by, $notes);
         
         if (!$payment_stmt->execute()) {
             throw new Exception("Failed to record payment");
@@ -129,12 +138,12 @@ try {
         // Also record this in transactions table so it reflects in Sales History
         $tx_stmt = $conn->prepare(
             "INSERT INTO transactions (tenant_id, shop_id, user_id, customer_name, customer_phone, customer_address, total_amount, payment_method, transaction_type, debt_payment_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'cash', 'debt_payment', ?)"
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'debt_payment', ?)"
         );
         
         $tenant_id = $_SESSION['tenant_id'];
         $tx_stmt->bind_param(
-            "iiisssdi",
+            "iiisssdsi",
             $tenant_id,
             $shop_id,
             $recorded_by,
@@ -142,6 +151,7 @@ try {
             $debt['customer_phone'],
             $debt['customer_address'],
             $amount_paid,
+            $payment_method,
             $payment_id
         );
         

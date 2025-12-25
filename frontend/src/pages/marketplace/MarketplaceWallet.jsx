@@ -300,38 +300,13 @@ const MarketplaceWallet = () => {
                     )}
 
                     {/* Page Header */}
-                    <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="page-header">
                         <div>
                             <h1 className="heading-1">My Wallet</h1>
                             <p className="text-secondary">
                                 {verifying ? "Verifying your payment, please wait..." : "Manage your funds and transactions"}
                             </p>
                         </div>
-                        <button
-                            className="btn-primary"
-                            onClick={() => {
-                                if (!isVerified) {
-                                    alert("Please verify your account to fund your wallet.");
-                                    navigate('/marketplace/verify');
-                                    return;
-                                }
-                                setShowFunding(true);
-                                // Use timeout to allow React to render the component before scrolling
-                                setTimeout(() => {
-                                    fundingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }, 100);
-                            }}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                opacity: isVerified ? 1 : 0.6,
-                                cursor: isVerified ? 'pointer' : 'not-allowed'
-                            }}
-                        >
-                            <Plus size={16} />
-                            Add Funds
-                        </button>
                     </div>
 
                     {/* Main Wallet Card */}
@@ -340,7 +315,7 @@ const MarketplaceWallet = () => {
                             <div className="wallet-header">
                                 <div className="wallet-title">
                                     <div className="wallet-icon">
-                                        <Wallet size={24} style={{ color: 'var(--success)' }} />
+                                        <Wallet size={24} style={{ color: 'var(--primary)' }} />
                                     </div>
                                     <span>Available Balance</span>
                                 </div>
@@ -352,10 +327,34 @@ const MarketplaceWallet = () => {
                                 <span className="wallet-balance-label">Total available for withdrawal or purchase</span>
                             </div>
                             <div className="wallet-actions">
-                                <button className="wallet-btn wallet-btn-primary" onClick={handleWithdraw}>
-                                    Withdraw Funds
+                                <button
+                                    className="wallet-btn"
+                                    onClick={handleWithdraw}
+                                >
+                                    <ArrowUpCircle size={18} />
+                                    <span>Withdraw</span>
                                 </button>
-                                {/* Add Funds is also in header, but keeping primary action accessible */}
+                                <button
+                                    className="wallet-btn wallet-btn-primary"
+                                    onClick={() => {
+                                        if (!isVerified) {
+                                            alert("Please verify your account to fund your wallet.");
+                                            navigate('/marketplace/verify');
+                                            return;
+                                        }
+                                        setShowFunding(true);
+                                        setTimeout(() => {
+                                            fundingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        }, 100);
+                                    }}
+                                    style={{
+                                        opacity: isVerified ? 1 : 0.6,
+                                        cursor: isVerified ? 'pointer' : 'not-allowed'
+                                    }}
+                                >
+                                    <Plus size={18} />
+                                    <span>Add Money</span>
+                                </button>
                             </div>
                         </div>
                     )}
