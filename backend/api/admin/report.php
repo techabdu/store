@@ -34,7 +34,9 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 switch ($action) {
     case 'stats':
-        getStats($db, $shopId);
+        $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : null;
+        $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : null;
+        getStats($db, $shopId, $startDate, $endDate);
         break;
     case 'create':
         createReport($db, $user_id, $shopId);
@@ -48,7 +50,7 @@ switch ($action) {
         break;
 }
 
-function getStats($conn, $shopId) {
+function getStats($conn, $shopId, $startDate = null, $endDate = null) {
     try {
         // 1. Total Inventory Cost (in_stock) for current shop
         $queryInventory = "SELECT SUM(cost_price) as total_inventory_cost FROM inventory WHERE status = 'in_stock' AND shop_id = ?";
@@ -58,10 +60,34 @@ function getStats($conn, $shopId) {
         $inventoryResult = $stmtInventory->get_result()->fetch_assoc();
         $totalInventoryCost = $inventoryResult['total_inventory_cost'] ?? 0;
 
-        // 2. Total Expenses for current shop
+        // 1.5 Total Sales for current shop (with optional date range)
+        $querySales = "SELECT SUM(total_amount) as total_sales FROM transactions WHERE shop_id = ? AND transaction_type = 'sale'";
+        if ($startDate && $endDate) {
+            $querySales .= " AND DATE(created_at) BETWEEN ? AND ?";
+        }
+        
+        $stmtSales = $conn->prepare($querySales);
+        if ($startDate && $endDate) {
+            $stmtSales->bind_param("iss", $shopId, $startDate, $endDate);
+        } else {
+            $stmtSales->bind_param("i", $shopId);
+        }
+        $stmtSales->execute();
+        $salesResult = $stmtSales->get_result()->fetch_assoc();
+        $totalSales = $salesResult['total_sales'] ?? 0;
+
+        // 2. Total Expenses for current shop (with optional date range)
         $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses WHERE shop_id = ?";
+        if ($startDate && $endDate) {
+            $queryExpenses .= " AND date BETWEEN ? AND ?";
+        }
+        
         $stmtExpenses = $conn->prepare($queryExpenses);
-        $stmtExpenses->bind_param("i", $shopId);
+        if ($startDate && $endDate) {
+            $stmtExpenses->bind_param("iss", $shopId, $startDate, $endDate);
+        } else {
+            $stmtExpenses->bind_param("i", $shopId);
+        }
         $stmtExpenses->execute();
         $expensesResult = $stmtExpenses->get_result()->fetch_assoc();
         $totalExpenses = $expensesResult['total_expenses'] ?? 0;
@@ -86,6 +112,7 @@ function getStats($conn, $shopId) {
             "success" => true,
             "data" => [
                 "inventory_value" => (float)$totalInventoryCost,
+                "total_sales" => (float)$totalSales,
                 "total_expenses" => (float)$totalExpenses,
                 "business_capital" => (float)$businessCapital,
                 "total_outstanding_debt" => (float)$totalOutstandingDebt
@@ -108,17 +135,12 @@ function createReport($conn, $user_id, $shopId) {
 
     $data = json_decode(file_get_contents("php://input"));
 
-    if (!isset($data->cash_in_hand) || !isset($data->total_debt)) {
-        http_response_code(400);
-        echo json_encode(["success" => false, "message" => "Missing required fields"]);
-        return;
-    }
-
-    $cashInHand = $data->cash_in_hand;
-    $totalDebt = $data->total_debt;
+    $cashInHand = isset($data->cash_in_hand) ? (float)$data->cash_in_hand : 0;
+    $startDate = isset($data->start_date) ? $data->start_date : null;
+    $endDate = isset($data->end_date) ? $data->end_date : null;
 
     try {
-        // 1. Total Inventory Cost (in_stock) for current shop
+        // 1. Total Inventory Cost
         $queryInventory = "SELECT SUM(cost_price) as total_inventory_cost FROM inventory WHERE status = 'in_stock' AND shop_id = ?";
         $stmtInventory = $conn->prepare($queryInventory);
         $stmtInventory->bind_param("i", $shopId);
@@ -126,15 +148,37 @@ function createReport($conn, $user_id, $shopId) {
         $inventoryResult = $stmtInventory->get_result()->fetch_assoc();
         $inventoryValue = $inventoryResult['total_inventory_cost'] ?? 0;
 
-        // 2. Total Expenses for current shop
+        // 1.5 Total Sales
+        $querySales = "SELECT SUM(total_amount) as total_sales FROM transactions WHERE shop_id = ? AND transaction_type = 'sale'";
+        if ($startDate && $endDate) {
+            $querySales .= " AND DATE(created_at) BETWEEN ? AND ?";
+        }
+        $stmtSales = $conn->prepare($querySales);
+        if ($startDate && $endDate) {
+            $stmtSales->bind_param("iss", $shopId, $startDate, $endDate);
+        } else {
+            $stmtSales->bind_param("i", $shopId);
+        }
+        $stmtSales->execute();
+        $salesResult = $stmtSales->get_result()->fetch_assoc();
+        $totalSales = $salesResult['total_sales'] ?? 0;
+
+        // 2. Total Expenses (with active filter)
         $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses WHERE shop_id = ?";
+        if ($startDate && $endDate) {
+            $queryExpenses .= " AND date BETWEEN ? AND ?";
+        }
         $stmtExpenses = $conn->prepare($queryExpenses);
-        $stmtExpenses->bind_param("i", $shopId);
+        if ($startDate && $endDate) {
+            $stmtExpenses->bind_param("iss", $shopId, $startDate, $endDate);
+        } else {
+            $stmtExpenses->bind_param("i", $shopId);
+        }
         $stmtExpenses->execute();
         $expensesResult = $stmtExpenses->get_result()->fetch_assoc();
         $totalExpenses = $expensesResult['total_expenses'] ?? 0;
 
-        // 3. Business Capital from shops table
+        // 3. Business Capital
         $queryCapital = "SELECT business_capital FROM shops WHERE id = ?";
         $stmtCapital = $conn->prepare($queryCapital);
         $stmtCapital->bind_param("i", $shopId);
@@ -142,20 +186,28 @@ function createReport($conn, $user_id, $shopId) {
         $capitalResult = $stmtCapital->get_result()->fetch_assoc();
         $businessCapital = $capitalResult['business_capital'] ?? 0;
 
+        // 4. Total Outstanding Debt (Automated)
+        $queryDebts = "SELECT SUM(remaining_balance) as total_outstanding FROM debts WHERE shop_id = ? AND status != 'written_off'";
+        $stmtDebts = $conn->prepare($queryDebts);
+        $stmtDebts->bind_param("i", $shopId);
+        $stmtDebts->execute();
+        $debtsResult = $stmtDebts->get_result()->fetch_assoc();
+        $totalDebt = $debtsResult['total_outstanding'] ?? 0;
+
         // Calculate Net Profit
-        // Formula: (Inventory + Cash + Debt) - Expenses - Capital
+        // (Inventory + Cash + Debt) - Expenses - Capital
         $netProfit = ($inventoryValue + $cashInHand + $totalDebt) - $totalExpenses - $businessCapital;
 
-        // Insert report with shop_id
-        $query = "INSERT INTO reports (generated_by, inventory_value, total_expenses, business_capital, cash_in_hand, total_debt, net_profit, tenant_id, shop_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Insert report
+        $query = "INSERT INTO reports (generated_by, inventory_value, total_sales, total_expenses, business_capital, cash_in_hand, total_debt, net_profit, tenant_id, shop_id, expense_start_date, expense_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("iddddddii", $user_id, $inventoryValue, $totalExpenses, $businessCapital, $cashInHand, $totalDebt, $netProfit, $_SESSION['tenant_id'], $shopId);
+        $stmt->bind_param("idddddddiiss", $user_id, $inventoryValue, $totalSales, $totalExpenses, $businessCapital, $cashInHand, $totalDebt, $netProfit, $_SESSION['tenant_id'], $shopId, $startDate, $endDate);
 
         if ($stmt->execute()) {
             http_response_code(201);
             echo json_encode(["success" => true, "message" => "Report saved successfully"]);
         } else {
-            throw new Exception("Failed to save report");
+            throw new Exception("Failed to save report: " . $stmt->error);
         }
 
     } catch (Exception $e) {
@@ -166,7 +218,6 @@ function createReport($conn, $user_id, $shopId) {
 
 function getHistory($conn, $shopId) {
     try {
-        // Get report history for current shop
         $query = "SELECT r.*, u.username as generated_by_name 
                   FROM reports r 
                   JOIN users u ON r.generated_by = u.id 
