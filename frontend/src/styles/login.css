@@ -123,21 +123,56 @@
     align-items: center;
 }
 
+.input-icon {
+    position: absolute;
+    left: 1.125rem;
+    color: var(--login-text-secondary);
+    font-size: 1.1rem;
+    pointer-events: none;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+/* Vertical Separator for a more premium look */
+.input-icon::after {
+    content: "";
+    width: 1px;
+    height: 1.25rem;
+    background-color: var(--login-border);
+    margin-left: 0.875rem;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
 .input-wrapper input {
     width: 100%;
-    padding: 16px 20px;
+    padding: 1.125rem 1rem 1.125rem 3.75rem !important;
+    /* Generous padding-left for icon + separator */
     border: 1px solid var(--login-border);
     border-radius: 12px;
     font-size: 1rem;
     color: var(--login-text-primary);
     background-color: var(--login-input-bg);
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     outline: none;
 }
 
 .input-wrapper input:focus {
     border-color: #7C3AED;
     box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+/* Dynamic Focus Effects for Icons */
+.input-wrapper:focus-within .input-icon {
+    color: #7C3AED;
+}
+
+.input-wrapper:focus-within .input-icon::after {
+    background-color: #7C3AED;
+    opacity: 0.3;
 }
 
 .input-wrapper input::placeholder {

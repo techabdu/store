@@ -119,6 +119,7 @@ const Login = () => {
                     <form onSubmit={handleSubmit} className="login-form">
                         <div className="form-group">
                             <div className="input-wrapper">
+                                <FaUser className="input-icon" />
                                 <input
                                     type="text"
                                     id="username"
@@ -137,6 +138,7 @@ const Login = () => {
 
                         <div className="form-group">
                             <div className="input-wrapper">
+                                <FaLock className="input-icon" />
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     id="password"

@@ -706,3 +706,50 @@
         width: 100%;
     }
 }
+
+/* Input with Icon Styles for Wizard Views */
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1.25rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 1.125rem;
+    pointer-events: none;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+/* Spacing for the input text/placeholder */
+.input-with-icon .form-input-focus {
+    padding-left: 3rem !important; /* Generous space for the icon + gap */
+}
+
+/* Highlight icon when input is focused */
+.input-with-icon:focus-within .input-icon {
+    color: var(--primary);
+}
+
+/* Optional: Add a subtle separator for a more premium UI */
+.input-icon::after {
+    content: "";
+    width: 1px;
+    height: 1.25rem;
+    background-color: var(--border-color);
+    margin-left: 0.75rem;
+    opacity: 0.6;
+}
+
+.input-with-icon:focus-within .input-icon::after {
+    background-color: var(--primary);
+    opacity: 0.3;
+}
