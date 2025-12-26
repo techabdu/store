@@ -68,8 +68,21 @@ $filename = 'avatar_' . $user_id . '_' . time() . '_' . bin2hex(random_bytes(4))
 $filepath = $upload_dir . $filename;
 
 if (move_uploaded_file($file['tmp_name'], $filepath)) {
-    // URL to access the file: /store/uploads/profile_images/filename
-    $public_url = '/store/uploads/profile_images/' . $filename;
+    // URL to access the file: determine relative to root
+    // Script is in /backend/api/marketplace/profile/
+    // Uploads are in /uploads/
+    
+    // Attempt to determine the base URL path dynamically
+    $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+    // Go up 4 levels from /store/backend/api/marketplace/profile to /store (or / from root)
+    $url_root = dirname(dirname(dirname(dirname($script_dir))));
+    
+    // If we are at root ('/' or '\'), url_root might be just a slash or empty on some systems
+    // Normalize to ensure no trailing slash unless it's just '/'
+    $url_root = rtrim($url_root, '/');
+    if ($url_root === '\\') $url_root = ''; // Windows root fix if needed
+    
+    $public_url = $url_root . '/uploads/profile_images/' . $filename;
 
     try {
         // Update database
