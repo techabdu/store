@@ -42,7 +42,9 @@ switch ($action) {
         createReport($db, $user_id, $shopId);
         break;
     case 'history':
-        getHistory($db, $shopId);
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 15;
+        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+        getHistory($db, $shopId, $limit, $offset);
         break;
     default:
         http_response_code(400);
@@ -75,6 +77,22 @@ function getStats($conn, $shopId, $startDate = null, $endDate = null) {
         $stmtSales->execute();
         $salesResult = $stmtSales->get_result()->fetch_assoc();
         $totalSales = $salesResult['total_sales'] ?? 0;
+
+        // 1.6 Total COGS for current shop (with optional date range)
+        $queryCOGS = "SELECT SUM(total_cogs) as total_cogs FROM transactions WHERE shop_id = ? AND transaction_type = 'sale'";
+        if ($startDate && $endDate) {
+            $queryCOGS .= " AND DATE(created_at) BETWEEN ? AND ?";
+        }
+        
+        $stmtCOGS = $conn->prepare($queryCOGS);
+        if ($startDate && $endDate) {
+            $stmtCOGS->bind_param("iss", $shopId, $startDate, $endDate);
+        } else {
+            $stmtCOGS->bind_param("i", $shopId);
+        }
+        $stmtCOGS->execute();
+        $cogsResult = $stmtCOGS->get_result()->fetch_assoc();
+        $totalCOGS = $cogsResult['total_cogs'] ?? 0;
 
         // 2. Total Expenses for current shop (with optional date range)
         $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses WHERE shop_id = ?";
@@ -113,6 +131,7 @@ function getStats($conn, $shopId, $startDate = null, $endDate = null) {
             "data" => [
                 "inventory_value" => (float)$totalInventoryCost,
                 "total_sales" => (float)$totalSales,
+                "total_cogs" => (float)$totalCOGS,
                 "total_expenses" => (float)$totalExpenses,
                 "business_capital" => (float)$businessCapital,
                 "total_outstanding_debt" => (float)$totalOutstandingDebt
@@ -163,6 +182,21 @@ function createReport($conn, $user_id, $shopId) {
         $salesResult = $stmtSales->get_result()->fetch_assoc();
         $totalSales = $salesResult['total_sales'] ?? 0;
 
+        // 1.6 Total COGS
+        $queryCOGS = "SELECT SUM(total_cogs) as total_cogs FROM transactions WHERE shop_id = ? AND transaction_type = 'sale'";
+        if ($startDate && $endDate) {
+            $queryCOGS .= " AND DATE(created_at) BETWEEN ? AND ?";
+        }
+        $stmtCOGS = $conn->prepare($queryCOGS);
+        if ($startDate && $endDate) {
+            $stmtCOGS->bind_param("iss", $shopId, $startDate, $endDate);
+        } else {
+            $stmtCOGS->bind_param("i", $shopId);
+        }
+        $stmtCOGS->execute();
+        $cogsResult = $stmtCOGS->get_result()->fetch_assoc();
+        $totalCOGS = $cogsResult['total_cogs'] ?? 0;
+
         // 2. Total Expenses (with active filter)
         $queryExpenses = "SELECT SUM(amount) as total_expenses FROM expenses WHERE shop_id = ?";
         if ($startDate && $endDate) {
@@ -194,14 +228,36 @@ function createReport($conn, $user_id, $shopId) {
         $debtsResult = $stmtDebts->get_result()->fetch_assoc();
         $totalDebt = $debtsResult['total_outstanding'] ?? 0;
 
-        // Calculate Net Profit
-        // (Inventory + Cash + Debt) - Expenses - Capital
-        $netProfit = ($inventoryValue + $cashInHand + $totalDebt) - $totalExpenses - $businessCapital;
+        // Calculate Financials
+        // 1. Gross Profit = Sales - COGS
+        $grossProfit = $totalSales - $totalCOGS;
+        
+        // 2. Operating Profit (the new Net Profit) = Gross Profit - Expenses
+        $operatingProfit = $grossProfit - $totalExpenses;
+        
+        // 3. For backward compatibility if needed, but we'll use operatingProfit as the main metric
+        $netProfit = $operatingProfit; 
 
         // Insert report
-        $query = "INSERT INTO reports (generated_by, inventory_value, total_sales, total_expenses, business_capital, cash_in_hand, total_debt, net_profit, tenant_id, shop_id, expense_start_date, expense_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO reports (generated_by, inventory_value, total_sales, total_cogs, total_expenses, business_capital, cash_in_hand, total_debt, gross_profit, operating_profit, net_profit, tenant_id, shop_id, expense_start_date, expense_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("idddddddiiss", $user_id, $inventoryValue, $totalSales, $totalExpenses, $businessCapital, $cashInHand, $totalDebt, $netProfit, $_SESSION['tenant_id'], $shopId, $startDate, $endDate);
+        $stmt->bind_param("iddddddddddiiiss", 
+            $user_id, 
+            $inventoryValue, 
+            $totalSales, 
+            $totalCOGS, 
+            $totalExpenses, 
+            $businessCapital, 
+            $cashInHand, 
+            $totalDebt, 
+            $grossProfit, 
+            $operatingProfit, 
+            $netProfit, 
+            $_SESSION['tenant_id'], 
+            $shopId, 
+            $startDate, 
+            $endDate
+        );
 
         if ($stmt->execute()) {
             http_response_code(201);
@@ -216,16 +272,16 @@ function createReport($conn, $user_id, $shopId) {
     }
 }
 
-function getHistory($conn, $shopId) {
+function getHistory($conn, $shopId, $limit = 15, $offset = 0) {
     try {
         $query = "SELECT r.*, u.username as generated_by_name 
                   FROM reports r 
                   JOIN users u ON r.generated_by = u.id 
                   WHERE r.shop_id = ?
                   ORDER BY r.created_at DESC 
-                  LIMIT 50";
+                  LIMIT ? OFFSET ?";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $shopId);
+        $stmt->bind_param("iii", $shopId, $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();
         

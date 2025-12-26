@@ -127,6 +127,11 @@ try {
         
         // Commit transaction
         $conn->commit();
+
+        // NEW: Update Customer Analytics
+        require_once '../../helpers/customer_analytics.php';
+        updateCustomerAnalytics($conn, $shop_id, $_SESSION['tenant_id'], $debt['customer_phone'], $debt['customer_name'], 0);
+        updateCustomerDebtMetrics($conn, $shop_id, $debt['customer_phone'], 0);
         
         http_response_code(200);
         echo json_encode([

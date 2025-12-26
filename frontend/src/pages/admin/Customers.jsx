@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../../utils/api';
 import { FaSearch, FaPhone, FaCalendarAlt, FaMobileAlt, FaTimes, FaUser, FaPrint } from 'react-icons/fa';
+import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight } from 'lucide-react';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -8,18 +9,21 @@ import './Customers.css';
 
 const Customers = () => {
     const { user } = useAuth();
+    const [view, setView] = useState('list'); // 'list', 'details'
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
     const [customers, setCustomers] = useState([]);
-    const [filteredCustomers, setFilteredCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [customerHistory, setCustomerHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPhone, setSelectedPhone] = useState(null);
-    const [showPhoneModal, setShowPhoneModal] = useState(false);
+
+    // Lazy Loading State for Customer List
+    const [visibleCount, setVisibleCount] = useState(20);
+    const observerTarget = useRef(null);
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -45,19 +49,27 @@ const Customers = () => {
         fetchCustomers();
     }, []);
 
-    // Filter customers when search term changes
+    // Intersection Observer for Lazy Loading
     useEffect(() => {
-        if (searchTerm.trim() === '') {
-            setFilteredCustomers(customers);
-        } else {
-            const lowerTerm = searchTerm.toLowerCase();
-            const filtered = customers.filter(c =>
-                c.customer_name.toLowerCase().includes(lowerTerm) ||
-                (c.customer_phone && c.customer_phone.includes(lowerTerm))
-            );
-            setFilteredCustomers(filtered);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && filteredCustomers.length > visibleCount) {
+                    setVisibleCount(prev => prev + 20);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
         }
-    }, [searchTerm, customers]);
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [customers.length, visibleCount, searchTerm]);
 
     const fetchCustomers = async () => {
         try {
@@ -66,7 +78,6 @@ const Customers = () => {
             });
             if (response.data.success) {
                 setCustomers(response.data.data);
-                setFilteredCustomers(response.data.data);
             }
         } catch (error) {
             console.error('Error fetching customers:', error);
@@ -74,6 +85,21 @@ const Customers = () => {
             setLoading(false);
         }
     };
+
+    // Filtered customers
+    const filteredCustomers = useMemo(() => {
+        if (!searchTerm.trim()) return customers;
+        const lowerTerm = searchTerm.toLowerCase();
+        return customers.filter(c =>
+            c.customer_name.toLowerCase().includes(lowerTerm) ||
+            (c.customer_phone && c.customer_phone.includes(lowerTerm))
+        );
+    }, [searchTerm, customers]);
+
+    // Displayed customers (sliced for lazy loading)
+    const displayedCustomers = useMemo(() => {
+        return filteredCustomers.slice(0, visibleCount);
+    }, [filteredCustomers, visibleCount]);
 
     const handleCustomerClick = async (customer) => {
         setSelectedCustomer(customer);
@@ -98,11 +124,11 @@ const Customers = () => {
 
     const handlePhoneClick = (phone) => {
         setSelectedPhone(phone);
-        setShowPhoneModal(true);
+        setView('phone-details');
     };
 
-    const closePhoneModal = () => {
-        setShowPhoneModal(false);
+    const closePhoneDetails = () => {
+        setView('list');
         setSelectedPhone(null);
     };
 
@@ -136,184 +162,233 @@ const Customers = () => {
 
             <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
                 <div className="content-wrapper">
-                    <div className="page-header">
-                        <div>
-                            <h1 className="heading-1">Customers</h1>
-                            <p className="text-secondary">View and manage customer purchase history</p>
-                        </div>
-                    </div>
-
-                    <div className="customers-container dashboard-card">
-                        {/* Left Panel: Customer List */}
-                        <div className={`customers-list-panel ${selectedCustomer ? 'hidden-mobile' : ''}`}>
-                            <div className="search-bar-container">
-                                <div className="search-input-wrapper">
-                                    <FaSearch className="search-icon" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search customers..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
+                    {view === 'list' ? (
+                        <>
+                            <div className="page-header">
+                                <div>
+                                    <h1 className="heading-1">Customers</h1>
+                                    <p className="text-secondary">View and manage customer purchase history</p>
                                 </div>
                             </div>
 
-                            <div className="customers-list">
-                                {loading ? (
-                                    <div className="loading-state">Loading customers...</div>
-                                ) : filteredCustomers.length === 0 ? (
-                                    <div className="empty-state">No customers found</div>
-                                ) : (
-                                    filteredCustomers.map((customer, index) => (
-                                        <div
-                                            key={index}
-                                            className={`customer-item ${selectedCustomer === customer ? 'active' : ''}`}
-                                            onClick={() => handleCustomerClick(customer)}
-                                        >
-                                            <div
-                                                className="customer-avatar"
-                                                style={{ backgroundColor: getRandomColor(customer.customer_name) }}
-                                            >
-                                                {getInitials(customer.customer_name)}
-                                            </div>
-                                            <div className="customer-info-preview">
-                                                <h3>{customer.customer_name}</h3>
-                                                {customer.customer_phone && (
-                                                    <p> {customer.customer_phone}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Right Panel: Customer Details */}
-                        <div className={`customer-details-panel ${!selectedCustomer ? 'hidden-mobile' : ''}`}>
-                            {selectedCustomer ? (
-                                <>
-                                    <div className="details-header-mobile">
-                                        <button onClick={() => setSelectedCustomer(null)}>Back to List</button>
-                                    </div>
-
-                                    <div className="customer-profile-header">
-                                        <div
-                                            className="large-avatar"
-                                            style={{ backgroundColor: getRandomColor(selectedCustomer.customer_name) }}
-                                        >
-                                            {getInitials(selectedCustomer.customer_name)}
-                                        </div>
-                                        <h2>{selectedCustomer.customer_name}</h2>
-                                        {selectedCustomer.customer_phone && (
-                                            <p className="phone-number">
-                                                <FaPhone /> {selectedCustomer.customer_phone}
-                                            </p>
-                                        )}
-                                        <div className="customer-stats">
-                                            <div className="stat-item">
-                                                <span className="stat-label">Total Purchases</span>
-                                                <span className="stat-value">{selectedCustomer.total_purchases}</span>
-                                            </div>
-                                            <div className="stat-item">
-                                                <span className="stat-label">Total Spent</span>
-                                                <span className="stat-value">₦{parseFloat(selectedCustomer.total_spent).toLocaleString()}</span>
-                                            </div>
+                            <div className="customers-container">
+                                {/* Left Panel: Customer List */}
+                                <div className={`customers-list-panel glass-card ${selectedCustomer ? 'hidden-mobile' : ''}`}>
+                                    <div className="search-bar-container" style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                                        <div className="search-input-wrapper">
+                                            <FaSearch className="search-icon" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search customers..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                style={{ background: 'transparent', border: 'none', color: 'inherit' }}
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="purchase-history-section">
-                                        <h3>Purchase History</h3>
-                                        {loadingHistory ? (
-                                            <div className="loading-state">Loading history...</div>
-                                        ) : customerHistory.length === 0 ? (
-                                            <div className="empty-state">No purchase history</div>
+                                    <div className="customers-list">
+                                        {loading ? (
+                                            <div className="loading-state">Loading customers...</div>
+                                        ) : displayedCustomers.length === 0 ? (
+                                            <div className="empty-state">No customers found</div>
                                         ) : (
-                                            <div className="history-list">
-                                                {customerHistory.map((item) => (
+                                            <>
+                                                {displayedCustomers.map((customer, index) => (
                                                     <div
-                                                        key={item.transaction_id + item.imei}
-                                                        className="history-item"
-                                                        onClick={() => handlePhoneClick(item)}
+                                                        key={index}
+                                                        className={`customer-item ${selectedCustomer === customer ? 'active' : ''}`}
+                                                        onClick={() => handleCustomerClick(customer)}
                                                     >
-                                                        <div className="phone-icon">
-                                                            <FaMobileAlt />
+                                                        <div
+                                                            className="customer-avatar"
+                                                            style={{ backgroundColor: getRandomColor(customer.customer_name) }}
+                                                        >
+                                                            {getInitials(customer.customer_name)}
                                                         </div>
-                                                        <div className="history-details">
-                                                            <h4>{item.brand} {item.model}</h4>
-                                                            <p className="purchase-date">
-                                                                <FaCalendarAlt /> {new Date(item.purchase_date).toLocaleDateString()}
-                                                            </p>
+                                                        <div className="customer-info-preview">
+                                                            <h3>{customer.customer_name}</h3>
+                                                            {customer.customer_phone && (
+                                                                <p> {customer.customer_phone}</p>
+                                                            )}
                                                         </div>
-                                                        <div className="history-arrow">›</div>
                                                     </div>
                                                 ))}
-                                            </div>
+
+                                                {/* Lazy Load Trigger */}
+                                                {filteredCustomers.length > visibleCount && (
+                                                    <div ref={observerTarget} className="lazy-load-trigger">
+                                                        <span className="loading-dots">Loading more customers</span>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
                                     </div>
-                                </>
-                            ) : (
-                                <div className="select-prompt">
-                                    <FaUser className="prompt-icon" />
-                                    <p>Select a customer to view details</p>
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Phone Details Modal */}
-                        {showPhoneModal && selectedPhone && (
-                            <div className="modal-overlay" onClick={closePhoneModal}>
-                                <div className="modal-content" onClick={e => e.stopPropagation()}>
-                                    <div className="modal-header">
-                                        <h3>Phone Details</h3>
-                                        <button className="close-btn" onClick={closePhoneModal}><FaTimes /></button>
+                                {/* Right Panel: Customer Details */}
+                                <div className={`customer-details-panel glass-card ${!selectedCustomer ? 'hidden-mobile' : ''}`}>
+                                    {selectedCustomer ? (
+                                        <>
+                                            <div className="details-header-mobile">
+                                                <button onClick={() => setSelectedCustomer(null)}>Back to List</button>
+                                            </div>
+
+                                            <div className="customer-profile-header">
+                                                <div
+                                                    className="large-avatar"
+                                                    style={{ backgroundColor: getRandomColor(selectedCustomer.customer_name) }}
+                                                >
+                                                    {getInitials(selectedCustomer.customer_name)}
+                                                </div>
+                                                <h2>{selectedCustomer.customer_name}</h2>
+                                                {selectedCustomer.customer_phone && (
+                                                    <p className="phone-number">
+                                                        <FaPhone /> {selectedCustomer.customer_phone}
+                                                    </p>
+                                                )}
+                                                <div className="customer-stats">
+                                                    <div className="stat-item glass-card" style={{ padding: '15px' }}>
+                                                        <span className="stat-label">Total Purchases</span>
+                                                        <span className="stat-value">{selectedCustomer.total_purchases}</span>
+                                                    </div>
+                                                    <div className="stat-item glass-card" style={{ padding: '15px' }}>
+                                                        <span className="stat-label">Total Spent</span>
+                                                        <span className="stat-value">₦{parseFloat(selectedCustomer.total_spent).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="purchase-history-section">
+                                                <h3>Purchase History</h3>
+                                                {loadingHistory ? (
+                                                    <div className="loading-state">Loading history...</div>
+                                                ) : customerHistory.length === 0 ? (
+                                                    <div className="empty-state">No purchase history</div>
+                                                ) : (
+                                                    <div className="history-list">
+                                                        {customerHistory.map((item) => (
+                                                            <div
+                                                                key={item.transaction_id + item.imei}
+                                                                className="history-item glass-card"
+                                                                onClick={() => handlePhoneClick(item)}
+                                                                style={{ marginBottom: '10px', border: 'none' }}
+                                                            >
+                                                                <div className="phone-icon">
+                                                                    <FaMobileAlt />
+                                                                </div>
+                                                                <div className="history-details">
+                                                                    <h4>{item.brand} {item.model}</h4>
+                                                                    <p className="purchase-date" style={{ color: 'var(--text-secondary)' }}>
+                                                                        <FaCalendarAlt /> {new Date(item.purchase_date).toLocaleDateString()}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="history-arrow">›</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="select-prompt">
+                                            <FaUser className="prompt-icon" />
+                                            <p>Select a customer to view details</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="focus-view-container">
+                            <div className="focus-view-header">
+                                <button className="btn-back" onClick={closePhoneDetails}>
+                                    <ArrowLeft size={18} />
+                                    <span>Back to Customer</span>
+                                </button>
+                                <h2>Phone Purchase Details</h2>
+                            </div>
+
+                            <div className="focus-view-content">
+                                <div className="focus-view-card glass-card">
+                                    <div className="detail-section">
+                                        <div className="section-header">
+                                            <div className="section-icon">
+                                                <Package size={20} />
+                                            </div>
+                                            <h4>Device Information</h4>
+                                        </div>
+                                        <div className="summary-grid-focus">
+                                            <div className="summary-item-focus">
+                                                <span className="label">Brand & Model</span>
+                                                <span className="value">{selectedPhone?.brand} {selectedPhone?.model}</span>
+                                            </div>
+                                            <div className="summary-item-focus">
+                                                <span className="label">IMEI</span>
+                                                <span className="value" style={{ fontSize: '1.2rem' }}>{selectedPhone?.imei}</span>
+                                            </div>
+                                            <div className="summary-item-focus">
+                                                <span className="label">Color</span>
+                                                <span className="value">{selectedPhone?.color || 'N/A'}</span>
+                                            </div>
+                                            <div className="summary-item-focus">
+                                                <span className="label">Storage</span>
+                                                <span className="value">{selectedPhone?.storage || 'N/A'}</span>
+                                            </div>
+                                            <div className="summary-item-focus">
+                                                <span className="label">Condition</span>
+                                                <span className="value capitalize">{selectedPhone?.condition_status}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="modal-body">
-                                        <div className="phone-detail-row">
-                                            <span className="label">Device:</span>
-                                            <span className="value">{selectedPhone.brand} {selectedPhone.model}</span>
+
+                                    <div className="divider" />
+
+                                    <div className="detail-section">
+                                        <div className="section-header">
+                                            <div className="section-icon" style={{ background: 'rgba(52, 168, 83, 0.1)', color: '#34a853' }}>
+                                                <FaCalendarAlt size={18} />
+                                            </div>
+                                            <h4>Transaction Details</h4>
                                         </div>
-                                        <div className="phone-detail-row">
-                                            <span className="label">IMEI:</span>
-                                            <span className="value">{selectedPhone.imei}</span>
-                                        </div>
-                                        <div className="phone-detail-row">
-                                            <span className="label">Color:</span>
-                                            <span className="value">{selectedPhone.color || 'N/A'}</span>
-                                        </div>
-                                        <div className="phone-detail-row">
-                                            <span className="label">Storage:</span>
-                                            <span className="value">{selectedPhone.storage || 'N/A'}</span>
-                                        </div>
-                                        <div className="phone-detail-row">
-                                            <span className="label">Condition:</span>
-                                            <span className="value capitalize">{selectedPhone.condition_status}</span>
-                                        </div>
-                                        <div className="phone-detail-row">
-                                            <span className="label">Price Sold:</span>
-                                            <span className="value">₦{parseFloat(selectedPhone.item_price).toLocaleString()}</span>
-                                        </div>
-                                        <div className="phone-detail-row">
-                                            <span className="label">Purchase Date:</span>
-                                            <span className="value">{new Date(selectedPhone.purchase_date).toLocaleString()}</span>
+                                        <div className="summary-grid-focus">
+                                            <div className="summary-item-focus">
+                                                <span className="label">Sold Price</span>
+                                                <span className="value" style={{ color: '#34a853' }}>
+                                                    ₦{parseFloat(selectedPhone?.item_price).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            <div className="summary-item-focus">
+                                                <span className="label">Date Sold</span>
+                                                <span className="value" style={{ fontSize: '1.2rem' }}>
+                                                    {new Date(selectedPhone?.purchase_date).toLocaleString()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="modal-footer" style={{ padding: '20px', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'flex-end' }}>
-                                        <button
-                                            className="btn-primary"
-                                            onClick={() => {
-                                                if (selectedPhone && selectedPhone.transaction_id) {
-                                                    window.open(`/admin/receipt/${selectedPhone.transaction_id}`, '_blank');
-                                                }
-                                            }}
-                                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                                        >
-                                            <FaPrint /> Print Receipt
+
+                                    <div className="focus-view-actions">
+                                        <button className="btn-cancel" onClick={closePhoneDetails}>
+                                            Close View
                                         </button>
+                                        <div className="primary-actions">
+                                            <button
+                                                className="btn-primary"
+                                                onClick={() => {
+                                                    if (selectedPhone && selectedPhone.transaction_id) {
+                                                        window.open(`/admin/receipt/${selectedPhone.transaction_id}`, '_blank');
+                                                    }
+                                                }}
+                                                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.875rem 2.5rem' }}
+                                            >
+                                                <FaPrint /> Print Receipt
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

@@ -128,7 +128,7 @@ const MarketplaceProductDetails = () => {
             <div className="dashboard-container">
                 <TopBar toggleSidebar={() => { }} user={user} />
                 <MarketplaceSidebar />
-                <main className="main-content marketplace-page-main">
+                <main className="main-content marketplace-main">
                     <div className="content-wrapper">
                         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                             <p className="text-secondary">Loading...</p>
@@ -144,7 +144,7 @@ const MarketplaceProductDetails = () => {
             <div className="dashboard-container">
                 <TopBar toggleSidebar={() => { }} user={user} />
                 <MarketplaceSidebar />
-                <main className="main-content marketplace-page-main">
+                <main className="main-content marketplace-main">
                     <div className="content-wrapper">
                         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                             <p className="text-secondary">Listing not found</p>
@@ -166,7 +166,7 @@ const MarketplaceProductDetails = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     <button onClick={() => navigate(-1)} className="back-button">
                         <ArrowLeft size={18} />

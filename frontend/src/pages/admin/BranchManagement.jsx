@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import {
@@ -19,13 +17,11 @@ import {
     ArrowLeft
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
-import '../../styles/dashboard.css';
+import AdminLayout from '../../components/AdminLayout';
 import './BranchManagement.css';
 
 const BranchManagement = () => {
     const { user, isOwner, refreshShops } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
     const [view, setView] = useState('list'); // 'list', 'add', 'edit'
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedBranch, setSelectedBranch] = useState(null);
@@ -36,6 +32,7 @@ const BranchManagement = () => {
     const [error, setError] = useState(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
+    const [visibleRows, setVisibleRows] = useState(6);
 
     const [formData, setFormData] = useState({
         shop_name: '',
@@ -62,28 +59,13 @@ const BranchManagement = () => {
         }
     };
 
+    const loadMore = () => {
+        setVisibleRows(prev => prev + 6);
+    };
+
     useEffect(() => {
         fetchBranches();
     }, []);
-
-    // Responsive Sidebar Logic
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false);
-            }
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -240,297 +222,283 @@ const BranchManagement = () => {
     // Check if user is owner
     if (!isOwner) {
         return (
-            <div className="dashboard-container">
-                <TopBar toggleSidebar={toggleSidebar} user={user} />
-                <Sidebar isOpen={sidebarOpen} isMobile={isMobile} closeSidebar={() => setSidebarOpen(false)} />
-                <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                    <div className="content-wrapper">
-                        <div className="access-denied">
-                            <AlertTriangle size={48} />
-                            <h2>Access Denied</h2>
-                            <p>Only shop owners can manage branches.</p>
-                        </div>
+            <AdminLayout title="Access Denied" subtitle="Unauthorized access">
+                <div className="content-wrapper">
+                    <div className="access-denied">
+                        <AlertTriangle size={48} />
+                        <h2>Access Denied</h2>
+                        <p>Only shop owners can manage branches.</p>
                     </div>
-                </main>
-            </div>
+                </div>
+            </AdminLayout>
         );
     }
 
     return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
+        <AdminLayout
+            title={view === 'list' ? "Branch Management" : (view === 'add' ? "Add New Branch" : "Edit Branch")}
+            subtitle={view === 'list' ? "Manage your store locations and branches" : ""}
+            loading={loading && view === 'list'}
+            error={error}
+        >
+            {view === 'list' ? (
+                <>
+                    {/* Header Action */}
+                    <div className="branch-management-actions mb-24">
+                        <button className="add-branch-btn" onClick={() => {
+                            setView('add');
+                            resetForm();
+                        }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Plus size={20} />
+                            <span className="btn-text">Add Branch</span>
+                        </button>
+                    </div>
 
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-            />
+                    {/* Search Bar */}
+                    <div className="search-bar-container glass-card mb-24">
+                        <div className="search-input-wrapper">
+                            <FaSearch className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search by name or address..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
 
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    {view === 'list' ? (
-                        <>
-                            {/* Page Header */}
-                            <div className="branch-management-header">
-                                <div>
-                                    <h1 className="heading-1">Branch Management</h1>
-                                    <p className="text-secondary">Manage your store locations and branches</p>
-                                </div>
-                                <button className="add-branch-btn" onClick={() => {
-                                    setView('add');
-                                    resetForm();
-                                }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Plus size={20} />
-                                    <span className="btn-text">Add Branch</span>
-                                </button>
-                            </div>
-
-                            {/* Search Bar */}
-                            <div className="search-bar-container">
-                                <div className="search-input-wrapper">
-                                    <FaSearch className="search-icon" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search by name or address..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Branches Grid */}
-                            {loading ? (
-                                <div className="loading-state">Loading branches...</div>
-                            ) : error ? (
-                                <div className="error-state">{error}</div>
-                            ) : (
-                                <div className="branches-grid">
-                                    {filteredBranches.map((branch) => (
-                                        <div key={branch.id} className={`branch-card ${branch.is_main_branch ? 'main-branch' : ''}`}>
-                                            <div className="branch-card-header">
-                                                <div className="branch-icon-container">
-                                                    <div className="branch-icon-box">
-                                                        <Building size={24} />
-                                                    </div>
-                                                </div>
-
-                                                <div className="branch-info-header">
-                                                    <h3 className="branch-name">
-                                                        {branch.shop_name}
-                                                        {branch.is_main_branch && (
-                                                            <span className="main-badge">
-                                                                <Star size={10} /> MAIN
-                                                            </span>
-                                                        )}
-                                                    </h3>
-                                                    <div className="status-badge-container">
-                                                        <span className={`status-badge-pill ${branch.status}`}>
-                                                            {branch.status}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="branch-card-actions">
-                                                    <button
-                                                        className="card-action-btn edit"
-                                                        title="Edit Branch"
-                                                        onClick={() => openEditModal(branch)}
-                                                    >
-                                                        <Edit2 size={18} />
-                                                    </button>
-                                                    {!branch.is_main_branch && (
-                                                        <button
-                                                            className="card-action-btn delete"
-                                                            title="Delete Branch"
-                                                            onClick={() => openDeleteModal(branch)}
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="branch-card-details">
-                                                {branch.shop_address && (
-                                                    <div className="detail-item">
-                                                        <MapPin size={16} />
-                                                        <span>{branch.shop_address}</span>
-                                                    </div>
-                                                )}
-                                                {branch.shop_phone && (
-                                                    <div className="detail-item">
-                                                        <Phone size={16} />
-                                                        <span>{branch.shop_phone}</span>
-                                                    </div>
-                                                )}
-                                                {branch.shop_email && (
-                                                    <div className="detail-item">
-                                                        <Mail size={16} />
-                                                        <span>{branch.shop_email}</span>
-                                                    </div>
-                                                )}
-                                                <div className="detail-item capital">
-                                                    <DollarSign size={16} />
-                                                    <span>Capital: {formatCurrency(branch.business_capital)}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-
-                                    {filteredBranches.length === 0 && (
-                                        <div className="empty-state">
-                                            <Building size={48} />
-                                            <p>No branches found</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <div className="focus-view-container">
-                            <div className="focus-view-header">
-                                <button className="btn-back" onClick={() => setView('list')}>
-                                    <ArrowLeft size={18} />
-                                    <span>Back to List</span>
-                                </button>
-                                <h2>
-                                    {view === 'add' ? 'Add New Branch' : `Edit ${selectedBranch?.shop_name}`}
-                                </h2>
-                            </div>
-
-                            <div className="focus-view-content">
-                                <div className="focus-view-card">
-                                    <div className="wizard-steps">
-                                        <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
-                                            <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
-                                            <div className="step-label">Basic Info</div>
-                                        </div>
-                                        <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
-                                            <div className="step-number">2</div>
-                                            <div className="step-label">Constraints</div>
+                    {/* Branches Grid */}
+                    <div className="branches-grid">
+                        {filteredBranches.slice(0, visibleRows).map((branch) => (
+                            <div key={branch.id} className={`branch-card glass-card ${branch.is_main_branch ? 'main-branch' : ''}`}>
+                                <div className="branch-card-header">
+                                    <div className="branch-icon-container">
+                                        <div className="branch-icon-box">
+                                            <Building size={24} />
                                         </div>
                                     </div>
 
-                                    <form onSubmit={view === 'add' ? handleCreateSubmit : handleEditSubmit}>
-                                        <div className="focus-view-body">
-                                            {currentStep === 1 && (
-                                                <div className="form-grid-focus">
-                                                    <div className="form-group full-width">
-                                                        <label>Branch Name *</label>
-                                                        <input
-                                                            type="text"
-                                                            name="shop_name"
-                                                            className="form-input-focus"
-                                                            value={formData.shop_name}
-                                                            onChange={handleInputChange}
-                                                            required
-                                                            placeholder="Enter branch name"
-                                                        />
-                                                    </div>
-                                                    <div className="form-group full-width">
-                                                        <label>Physical Address</label>
-                                                        <input
-                                                            type="text"
-                                                            name="shop_address"
-                                                            className="form-input-focus"
-                                                            value={formData.shop_address}
-                                                            onChange={handleInputChange}
-                                                            placeholder="Street address, City, State"
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Phone Number</label>
-                                                        <input
-                                                            type="tel"
-                                                            name="shop_phone"
-                                                            className="form-input-focus"
-                                                            value={formData.shop_phone}
-                                                            onChange={handleInputChange}
-                                                            placeholder="+234..."
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Email Address</label>
-                                                        <input
-                                                            type="email"
-                                                            name="shop_email"
-                                                            className="form-input-focus"
-                                                            value={formData.shop_email}
-                                                            onChange={handleInputChange}
-                                                            placeholder="branch@example.com"
-                                                        />
-                                                    </div>
-                                                </div>
+                                    <div className="branch-info-header">
+                                        <h3 className="branch-name">
+                                            {branch.shop_name}
+                                            {branch.is_main_branch && (
+                                                <span className="main-badge">
+                                                    <Star size={10} /> MAIN
+                                                </span>
                                             )}
-
-                                            {currentStep === 2 && (
-                                                <div className="form-grid-focus">
-                                                    <div className="form-group">
-                                                        <label>Starting Capital (₦)</label>
-                                                        <input
-                                                            type="number"
-                                                            name="business_capital"
-                                                            className="form-input-focus"
-                                                            value={formData.business_capital}
-                                                            onChange={handleInputChange}
-                                                            min="0"
-                                                            step="0.01"
-                                                            placeholder="0.00"
-                                                        />
-                                                    </div>
-                                                    <div className="form-group">
-                                                        <label>Low Stock Alert Threshold</label>
-                                                        <input
-                                                            type="number"
-                                                            name="low_stock_threshold"
-                                                            className="form-input-focus"
-                                                            value={formData.low_stock_threshold}
-                                                            onChange={handleInputChange}
-                                                            min="1"
-                                                            placeholder="5"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="focus-view-actions">
-                                                <div className="secondary-actions">
-                                                    {currentStep === 1 ? (
-                                                        <button type="button" className="btn-cancel" onClick={() => setView('list')}>
-                                                            Cancel
-                                                        </button>
-                                                    ) : (
-                                                        <button type="button" className="btn-cancel" onClick={handlePrevious}>
-                                                            ← Previous
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <div className="primary-actions">
-                                                    {currentStep === 1 ? (
-                                                        <button type="button" className="btn-primary" onClick={handleNext}>
-                                                            Next Step →
-                                                        </button>
-                                                    ) : (
-                                                        <button type="submit" className="btn-primary" disabled={submitting}>
-                                                            {submitting ? 'Saving...' : (view === 'add' ? 'Create Branch' : 'Save Changes')}
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
+                                        </h3>
+                                        <div className="status-badge-container">
+                                            <span className={`status-badge-pill ${branch.status}`}>
+                                                {branch.status}
+                                            </span>
                                         </div>
-                                    </form>
+                                    </div>
+
+                                    <div className="branch-card-actions">
+                                        <button
+                                            className="card-action-btn edit"
+                                            title="Edit Branch"
+                                            onClick={() => openEditModal(branch)}
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                        {!branch.is_main_branch && (
+                                            <button
+                                                className="card-action-btn delete"
+                                                title="Delete Branch"
+                                                onClick={() => openDeleteModal(branch)}
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="branch-card-details">
+                                    {branch.shop_address && (
+                                        <div className="detail-item">
+                                            <MapPin size={16} />
+                                            <span>{branch.shop_address}</span>
+                                        </div>
+                                    )}
+                                    {branch.shop_phone && (
+                                        <div className="detail-item">
+                                            <Phone size={16} />
+                                            <span>{branch.shop_phone}</span>
+                                        </div>
+                                    )}
+                                    {branch.shop_email && (
+                                        <div className="detail-item">
+                                            <Mail size={16} />
+                                            <span>{branch.shop_email}</span>
+                                        </div>
+                                    )}
+                                    <div className="detail-item capital">
+                                        <DollarSign size={16} />
+                                        <span>Capital: {formatCurrency(branch.business_capital)}</span>
+                                    </div>
                                 </div>
                             </div>
+                        ))}
+
+                        {filteredBranches.length === 0 && (
+                            <div className="empty-state">
+                                <Building size={48} />
+                                <p>No branches found</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {visibleRows < filteredBranches.length && (
+                        <div className="load-more-container">
+                            <button className="btn-load-more" onClick={loadMore}>
+                                Load More Branches
+                            </button>
                         </div>
                     )}
-                </div>
-            </main>
+                </>
+            ) : (
+                <div className="focus-view-container">
+                    <div className="focus-view-header">
+                        <button className="btn-back" onClick={() => setView('list')}>
+                            <ArrowLeft size={18} />
+                            <span>Back to List</span>
+                        </button>
+                        <h2>
+                            {view === 'add' ? 'Add New Branch' : `Edit ${selectedBranch?.shop_name}`}
+                        </h2>
+                    </div>
 
+                    <div className="focus-view-content">
+                        <div className="focus-view-card glass-card">
+                            <div className="wizard-steps">
+                                <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                    <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
+                                    <div className="step-label">Basic Info</div>
+                                </div>
+                                <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                    <div className="step-number">2</div>
+                                    <div className="step-label">Constraints</div>
+                                </div>
+                            </div>
+
+                            <form onSubmit={view === 'add' ? handleCreateSubmit : handleEditSubmit}>
+                                <div className="focus-view-body">
+                                    {currentStep === 1 && (
+                                        <div className="form-grid-focus">
+                                            <div className="form-group full-width">
+                                                <label>Branch Name *</label>
+                                                <input
+                                                    type="text"
+                                                    name="shop_name"
+                                                    className="form-input-focus"
+                                                    value={formData.shop_name}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    placeholder="Enter branch name"
+                                                />
+                                            </div>
+                                            <div className="form-group full-width">
+                                                <label>Physical Address</label>
+                                                <input
+                                                    type="text"
+                                                    name="shop_address"
+                                                    className="form-input-focus"
+                                                    value={formData.shop_address}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Street address, City, State"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Phone Number</label>
+                                                <input
+                                                    type="tel"
+                                                    name="shop_phone"
+                                                    className="form-input-focus"
+                                                    value={formData.shop_phone}
+                                                    onChange={handleInputChange}
+                                                    placeholder="+234..."
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Email Address</label>
+                                                <input
+                                                    type="email"
+                                                    name="shop_email"
+                                                    className="form-input-focus"
+                                                    value={formData.shop_email}
+                                                    onChange={handleInputChange}
+                                                    placeholder="branch@example.com"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {currentStep === 2 && (
+                                        <div className="form-grid-focus">
+                                            <div className="form-group">
+                                                <label>Starting Capital (₦)</label>
+                                                <input
+                                                    type="number"
+                                                    name="business_capital"
+                                                    className="form-input-focus"
+                                                    value={formData.business_capital}
+                                                    onChange={handleInputChange}
+                                                    min="0"
+                                                    step="0.01"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Low Stock Alert Threshold</label>
+                                                <input
+                                                    type="number"
+                                                    name="low_stock_threshold"
+                                                    className="form-input-focus"
+                                                    value={formData.low_stock_threshold}
+                                                    onChange={handleInputChange}
+                                                    min="1"
+                                                    placeholder="5"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="focus-view-actions">
+                                        <div className="secondary-actions">
+                                            {currentStep === 1 ? (
+                                                <button type="button" className="btn-cancel" onClick={() => setView('list')}>
+                                                    Cancel
+                                                </button>
+                                            ) : (
+                                                <button type="button" className="btn-cancel" onClick={handlePrevious}>
+                                                    ← Previous
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="primary-actions">
+                                            {currentStep === 1 ? (
+                                                <button type="button" className="btn-primary" onClick={handleNext}>
+                                                    Next Step →
+                                                </button>
+                                            ) : (
+                                                <button type="submit" className="btn-primary" disabled={submitting}>
+                                                    {submitting ? 'Saving...' : (view === 'add' ? 'Create Branch' : 'Save Changes')}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-                    <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
+                    <div className="modal-content delete-modal glass-card" onClick={e => e.stopPropagation()}>
                         <div className="modal-header danger">
                             <AlertTriangle size={24} />
                             <h2 className="modal-title">Delete Branch</h2>
@@ -573,7 +541,7 @@ const BranchManagement = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </AdminLayout>
     );
 };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import './ActivityTable.css';
 
-const ActivityTable = ({ title, subtitle, data, footer }) => {
+const ActivityTable = ({ title, subtitle, data, footer, onLoadMore, hasMore, loadingMore }) => {
   return (
     <div className="dashboard-card activity-table-card">
       <div className="table-header">
@@ -23,7 +23,10 @@ const ActivityTable = ({ title, subtitle, data, footer }) => {
               <tr key={index}>
                 <td className="user-cell">
                   <div className="user-avatar-small">{row.username.charAt(0).toUpperCase()}</div>
-                  <span>{row.username}</span>
+                  <div className="user-meta">
+                    <span className="username">{row.username}</span>
+                    <span className="user-role">{row.role}</span>
+                  </div>
                 </td>
                 <td>{row.action}</td>
                 <td className="time-cell">{row.timestamp}</td>
@@ -33,11 +36,21 @@ const ActivityTable = ({ title, subtitle, data, footer }) => {
         </table>
       </div>
 
-      {footer && (
-        <div className="table-footer">
+      <div className="table-footer-actions">
+        {hasMore && onLoadMore && (
+          <button
+            className="btn-load-more"
+            onClick={onLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? 'Loading...' : 'Load More Activity'}
+          </button>
+        )}
+
+        {footer && !hasMore && (
           <a href={footer.link} className="footer-link">{footer.text}</a>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

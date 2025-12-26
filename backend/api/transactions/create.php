@@ -13,6 +13,7 @@ require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/activity_log.php';
 require_once '../../helpers/shop_helper.php';
+require_once '../../helpers/customer_analytics.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -108,6 +109,11 @@ try {
             
             $inventoryItem = $result->fetch_assoc();
             $checkStmt->close();
+
+            // NEW: Prevent selling items already listed on marketplace
+            if ($inventoryItem['is_listed']) {
+                throw new Exception("Item '{$inventoryItem['brand']} {$inventoryItem['model']}' ({$inventoryItem['imei']}) is currently listed on the Marketplace. Please remove the listing before selling in-store.");
+            }
             
             // Use custom price if provided, otherwise use inventory price
             $salePrice = isset($item['customPrice']) && is_numeric($item['customPrice']) 
@@ -119,9 +125,11 @@ try {
                 throw new Exception("Sale price must be greater than zero");
             }
             
+            // Store cost price for later COGS calculation
             $saleItems[] = [
                 'inventory_id' => $inventoryId,
-                'price' => $salePrice
+                'price' => $salePrice,
+                'cost_price' => floatval($inventoryItem['cost_price'])
             ];
             
             $totalAmount += $salePrice;
@@ -157,19 +165,21 @@ try {
             $checkImeiStmt->close();
             
             // Insert trade-in item into inventory with shop_id
+            // FIX: Set cost_price to tradeInValue
             $insertInventoryStmt = $conn->prepare(
                 "INSERT INTO inventory (brand, model, imei, color, storage, condition_status, price, cost_price, status, created_by, tenant_id, shop_id) 
-                 VALUES (?, ?, ?, ?, ?, 'used', ?, 0, 'in_stock', ?, ?, ?)"
+                 VALUES (?, ?, ?, ?, ?, 'used', ?, ?, 'in_stock', ?, ?, ?)"
             );
             
             $insertInventoryStmt->bind_param(
-                "sssssdiii",
+                "sssssddiii",
                 $brand,
                 $model,
                 $imei,
                 $color,
                 $storage,
                 $tradeInValue,
+                $tradeInValue, // cost_price = tradeInValue
                 $userId,
                 $_SESSION['tenant_id'],
                 $shopId
@@ -209,19 +219,36 @@ try {
     // Initialize manualItems if not set
     if (!isset($manualItems)) $manualItems = [];
     
-    // Insert transaction with shop_id
+    // NEW: Calculate COGS and Gross Profit for accounting
+    $totalCOGS = 0;
+    $totalGrossRevenue = 0;
+    
+    foreach ($saleItems as $saleItem) {
+        $totalCOGS += $saleItem['cost_price'];
+        $totalGrossRevenue += $saleItem['price'];
+    }
+    
+    foreach ($manualItems as $manualItem) {
+        $totalGrossRevenue += $manualItem['price'];
+    }
+    
+    $grossProfit = $totalGrossRevenue - $totalCOGS;
+    
+    // Insert transaction with shop_id, including COGS and Profit
     $transactionStmt = $conn->prepare(
-        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, payment_method, tenant_id, shop_id) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO transactions (user_id, customer_name, customer_phone, customer_address, total_amount, total_cogs, gross_profit, payment_method, tenant_id, shop_id) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     
     $transactionStmt->bind_param(
-        "isssdsi" . "i",
+        "isssdddssi",
         $userId,
         $customerName,
         $customerPhone,
         $customerAddress,
         $totalAmount,
+        $totalCOGS,
+        $grossProfit,
         $paymentMethod,
         $_SESSION['tenant_id'],
         $shopId
@@ -322,6 +349,12 @@ try {
     
     // Commit transaction
     $conn->commit();
+
+    // NEW: Update Customer Analytics
+    if ($customerPhone) {
+        updateCustomerAnalytics($conn, $shopId, $_SESSION['tenant_id'], $customerPhone, $customerName, $totalAmount);
+        updateCustomerDebtMetrics($conn, $shopId, $customerPhone, 0); // Recalculate debt metrics to impact LTV
+    }
     
     http_response_code(201);
     echo json_encode([

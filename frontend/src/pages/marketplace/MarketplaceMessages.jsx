@@ -24,6 +24,7 @@ const MarketplaceMessages = () => {
     const [loading, setLoading] = useState(true);
     const [showMessagesOnMobile, setShowMessagesOnMobile] = useState(false);
     const [sending, setSending] = useState(false);
+    const [visibleConversations, setVisibleConversations] = useState(15);
     const autoMessageSentRef = useRef(false);
 
     // Sidebar state for mobile
@@ -88,6 +89,10 @@ const MarketplaceMessages = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const loadMoreConversations = () => {
+        setVisibleConversations(prev => prev + 15);
     };
 
     // Fetch messages for a conversation
@@ -311,7 +316,7 @@ const MarketplaceMessages = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main marketplace-messages-main">
+            <main className="main-content marketplace-main marketplace-messages-main">
                 {/* Inbox Container */}
                 <div className="inbox-container">
                     {/* Conversations List */}
@@ -359,34 +364,47 @@ const MarketplaceMessages = () => {
                                     </p>
                                 </div>
                             ) : (
-                                filteredConversations.map((conversation) => (
-                                    <div
-                                        key={conversation.conversation_id}
-                                        onClick={() => handleSelectConversation(conversation)}
-                                        className={`conversation-card ${selectedConversation?.conversation_id === conversation.conversation_id ? 'active' : ''}`}
-                                    >
-                                        <div className="conversation-avatar">
-                                            {conversation.other_party_image ? (
-                                                <img src={conversation.other_party_image} alt={conversation.other_party_name} className="avatar-img" />
-                                            ) : (
-                                                conversation.other_party_name.charAt(0).toUpperCase()
+                                <>
+                                    {filteredConversations.slice(0, visibleConversations).map((conversation) => (
+                                        <div
+                                            key={conversation.conversation_id}
+                                            onClick={() => handleSelectConversation(conversation)}
+                                            className={`conversation-card ${selectedConversation?.conversation_id === conversation.conversation_id ? 'active' : ''}`}
+                                        >
+                                            <div className="conversation-avatar">
+                                                {conversation.other_party_image ? (
+                                                    <img src={conversation.other_party_image} alt={conversation.other_party_name} className="avatar-img" />
+                                                ) : (
+                                                    conversation.other_party_name.charAt(0).toUpperCase()
+                                                )}
+                                            </div>
+                                            <div className="conversation-info">
+                                                <div className="conversation-header">
+                                                    <h4 className="conversation-name">{conversation.other_party_name}</h4>
+                                                    <span className="conversation-time">
+                                                        {new Date(conversation.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                                <p className="conversation-preview">{conversation.last_message || "No messages yet"}</p>
+                                                <p className="listing-tag">{conversation.listing_title}</p>
+                                            </div>
+                                            {conversation.has_unread && (
+                                                <div className="unread-badge">!</div>
                                             )}
                                         </div>
-                                        <div className="conversation-info">
-                                            <div className="conversation-header">
-                                                <h4 className="conversation-name">{conversation.other_party_name}</h4>
-                                                <span className="conversation-time">
-                                                    {new Date(conversation.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </div>
-                                            <p className="conversation-preview">{conversation.last_message || "No messages yet"}</p>
-                                            <p className="listing-tag">{conversation.listing_title}</p>
+                                    ))}
+                                    {visibleConversations < filteredConversations.length && (
+                                        <div style={{ padding: '16px', textAlign: 'center' }}>
+                                            <button
+                                                onClick={loadMoreConversations}
+                                                className="btn-load-more"
+                                                style={{ width: '100%', padding: '10px' }}
+                                            >
+                                                Load More
+                                            </button>
                                         </div>
-                                        {conversation.has_unread && (
-                                            <div className="unread-badge">!</div>
-                                        )}
-                                    </div>
-                                ))
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

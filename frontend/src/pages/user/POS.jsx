@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
@@ -6,7 +6,7 @@ import Sidebar from '../../components/Sidebar';
 import './POS.css';
 
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PlusCircle, ShoppingCart, User, CreditCard } from 'lucide-react';
 
 const POS = () => {
     const navigate = useNavigate();
@@ -53,6 +53,10 @@ const POS = () => {
         transaction_id: null
     });
 
+    // Lazy Loading State for Search Results
+    const [visibleCount, setVisibleCount] = useState(15);
+    const observerTarget = useRef(null);
+
     // Responsive Sidebar Logic
     useEffect(() => {
         const handleResize = () => {
@@ -75,19 +79,23 @@ const POS = () => {
     // Fetch available inventory
     const fetchInventory = async () => {
         try {
+            setLoading(true);
             const response = await api.get('/inventory/read.php', {
                 params: {
                     status: 'in_stock',
                     search: searchTerm,
-                    limit: 50
+                    limit: 100 // Increased limit for frontend lazy loading
                 }
             });
 
             if (response.data.success) {
                 setInventory(response.data.inventory);
+                setVisibleCount(15);
             }
         } catch (err) {
             console.error('Failed to load inventory', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -102,6 +110,33 @@ const POS = () => {
 
         return () => clearTimeout(debounce);
     }, [searchTerm]);
+
+    // Intersection Observer for Lazy Loading
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && inventory.length > visibleCount) {
+                    setVisibleCount(prev => prev + 15);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [inventory.length, visibleCount]);
+
+    // Slice for lazy loading
+    const displayedInventory = useMemo(() => {
+        return inventory.slice(0, visibleCount);
+    }, [inventory, visibleCount]);
 
     // Add item to cart
     const addToCart = (item) => {
@@ -381,15 +416,17 @@ const POS = () => {
                             <p className="text-secondary">Process sales and manage trade-ins</p>
                         </div>
 
-                        {error && <div className="error-message">{error}</div>}
-                        {success && <div className="success-message">{success}</div>}
+                        {error && <div className="error-message" style={{ margin: '10px 0' }}>{error}</div>}
+                        {success && <div className="success-message" style={{ margin: '10px 0' }}>{success}</div>}
 
                         {view === 'pos' ? (
                             <div className="pos-layout animate-slide-in">
                                 {/* Left Side - Product Search */}
-                                <div className="pos-search-section">
-                                    <div className="section-header">
-                                        <h2>Add Products</h2>
+                                <div className="pos-search-section glass-card" style={{ padding: '20px' }}>
+                                    <div className="section-header" style={{ marginBottom: '15px' }}>
+                                        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <PlusCircle size={20} /> Add Products
+                                        </h2>
                                         <button
                                             className="btn-trade-in-outline"
                                             onClick={() => setView('trade-in')}
@@ -398,50 +435,66 @@ const POS = () => {
                                         </button>
                                     </div>
 
-                                    <input
-                                        type="text"
-                                        placeholder="Search by brand, model, or IMEI..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="search-input"
-                                    />
+                                    <div className="search-bar-wrapper" style={{ position: 'relative', marginBottom: '20px' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Search by brand, model, or IMEI..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="search-input"
+                                            style={{ paddingLeft: '15px', width: '100%', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', color: 'inherit' }}
+                                        />
+                                    </div>
 
-                                    {inventory.length > 0 && (
-                                        <div className="search-results">
-                                            {inventory.map((item) => (
-                                                <div key={item.id} className="search-result-item">
+                                    {displayedInventory.length > 0 && (
+                                        <div className="search-results glass-card" style={{ maxHeight: '500px', overflowY: 'auto', border: 'none', background: 'rgba(255, 255, 255, 0.02)' }}>
+                                            {displayedInventory.map((item) => (
+                                                <div key={item.id} className="search-result-item" style={{ borderBottom: '1px solid var(--border-color)', padding: '15px' }}>
                                                     <div className="item-info">
-                                                        <strong>{item.brand} {item.model}</strong>
-                                                        <span className="item-details">
+                                                        <strong style={{ fontSize: '1.1rem' }}>{item.brand} {item.model}</strong>
+                                                        <span className="item-details" style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                                                             {item.storage} • {item.color} • {item.condition_status}
                                                         </span>
-                                                        <span className="item-imei">IMEI: {item.imei}</span>
+                                                        <span className="item-imei" style={{ fontSize: '0.85rem', color: 'var(--primary)' }}>IMEI: {item.imei}</span>
                                                     </div>
-                                                    <div className="item-price-action">
-                                                        <span className="item-price">₦{parseFloat(item.price).toFixed(2)}</span>
+                                                    <div className="item-price-action" style={{ textAlign: 'right' }}>
+                                                        <span className="item-price" style={{ display: 'block', fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '8px' }}>₦{parseFloat(item.price).toFixed(2)}</span>
                                                         <button
                                                             className="btn-add"
                                                             onClick={() => addToCart(item)}
                                                         >
-                                                            Add
+                                                            Add to Cart
                                                         </button>
                                                     </div>
                                                 </div>
                                             ))}
+
+                                            {/* Lazy Load Trigger */}
+                                            {inventory.length > visibleCount && (
+                                                <div ref={observerTarget} className="lazy-load-trigger" style={{ padding: '20px', textAlign: 'center' }}>
+                                                    <span className="loading-dots">Loading more...</span>
+                                                </div>
+                                            )}
                                         </div>
+                                    )}
+
+                                    {loading && searchTerm && inventory.length === 0 && (
+                                        <div className="loading-state" style={{ textAlign: 'center', padding: '20px' }}>Searching products...</div>
                                     )}
                                 </div>
 
                                 {/* Right Side - Cart & Checkout */}
-                                <div className="pos-cart-section">
-                                    <h2>Cart</h2>
+                                <div className="pos-cart-section glass-card" style={{ padding: '20px' }}>
+                                    <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                                        <ShoppingCart size={20} /> Cart
+                                    </h2>
 
-                                    <div className="cart-items">
+                                    <div className="cart-items" style={{ marginBottom: '20px', maxHeight: '400px', overflowY: 'auto' }}>
                                         {cart.length === 0 ? (
-                                            <div className="empty-cart">Cart is empty</div>
+                                            <div className="empty-cart" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', border: '2px dashed var(--border-color)', borderRadius: '12px' }}>Cart is empty</div>
                                         ) : (
                                             cart.map((item, index) => (
-                                                <div key={index} className={`cart-item ${item.type}`}>
+                                                <div key={index} className={`cart-item ${item.type} glass-card`} style={{ padding: '12px', marginBottom: '10px', border: 'none', background: 'rgba(255, 255, 255, 0.05)' }}>
                                                     <div className="cart-item-info">
                                                         <strong>{item.brand} {item.model}</strong>
                                                         <span className="cart-item-type">
@@ -453,7 +506,6 @@ const POS = () => {
                                                         {item.type === 'sale' ? (
                                                             <div className="price-edit-wrapper">
                                                                 {editingItemIndex === index ? (
-                                                                    // Edit mode
                                                                     <div className="price-edit-mode">
                                                                         <input
                                                                             type="number"
@@ -462,47 +514,22 @@ const POS = () => {
                                                                             className="price-input"
                                                                             value={tempPrice}
                                                                             onChange={(e) => setTempPrice(e.target.value)}
-                                                                            onKeyPress={(e) => {
-                                                                                if (e.key === 'Enter') {
-                                                                                    updateCartItemPrice(index);
-                                                                                } else if (e.key === 'Escape') {
-                                                                                    cancelEditingPrice();
-                                                                                }
-                                                                            }}
+                                                                            style={{ background: 'var(--bg-secondary)', color: 'inherit', border: '1px solid var(--primary)' }}
                                                                             autoFocus
                                                                         />
-                                                                        <button
-                                                                            className="btn-save-price"
-                                                                            onClick={() => updateCartItemPrice(index)}
-                                                                            title="Save price"
-                                                                        >
-                                                                            ✓
-                                                                        </button>
-                                                                        <button
-                                                                            className="btn-cancel-price"
-                                                                            onClick={cancelEditingPrice}
-                                                                            title="Cancel"
-                                                                        >
-                                                                            ✕
-                                                                        </button>
+                                                                        <button onClick={() => updateCartItemPrice(index)}>✓</button>
+                                                                        <button onClick={cancelEditingPrice}>✕</button>
                                                                     </div>
                                                                 ) : (
-                                                                    // Display mode
                                                                     <div className="price-display-mode">
                                                                         <div className="price-info">
                                                                             <span className="cart-item-price">
                                                                                 ₦{(item.customPrice || item.price).toFixed(2)}
                                                                             </span>
-                                                                            {item.customPrice && item.customPrice !== item.originalPrice && (
-                                                                                <span className="original-price">
-                                                                                    ₦{item.originalPrice.toFixed(2)}
-                                                                                </span>
-                                                                            )}
                                                                         </div>
                                                                         <button
                                                                             className="btn-edit-price"
                                                                             onClick={() => startEditingPrice(index, item.customPrice || item.price)}
-                                                                            title="Edit price"
                                                                         >
                                                                             ✎
                                                                         </button>
@@ -510,8 +537,7 @@ const POS = () => {
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            // Trade-in items (non-editable)
-                                                            <span className={`cart-item-price credit`}>
+                                                            <span className="cart-item-price credit">
                                                                 -₦{Math.abs(item.price).toFixed(2)}
                                                             </span>
                                                         )}
@@ -527,120 +553,98 @@ const POS = () => {
                                         )}
                                     </div>
 
-                                    <div className="cart-total">
+                                    <div className="cart-total glass-card" style={{ padding: '15px', marginBottom: '25px', background: 'var(--primary-gradient)', color: 'white' }}>
                                         {(() => {
                                             const total = calculateTotal();
                                             const isNegative = total < 0;
                                             return (
-                                                <>
-                                                    <span>{isNegative ? 'Change Due to Customer:' : 'Total:'}</span>
-                                                    <span className={`total-amount ${isNegative ? 'negative' : ''}`}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ fontSize: '1.1rem', fontWeight: '500' }}>{isNegative ? 'Change Due:' : 'Grand Total:'}</span>
+                                                    <span className="total-amount" style={{ fontSize: '1.8rem', fontWeight: '800' }}>
                                                         ₦{Math.abs(total).toFixed(2)}
                                                     </span>
-                                                </>
+                                                </div>
                                             );
                                         })()}
                                     </div>
 
                                     <div className="checkout-section">
-                                        <h3>Customer Details</h3>
+                                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}><User size={18} /> Customer Info</h3>
 
                                         <div className="form-group">
-                                            <label>Customer Name *</label>
                                             <input
                                                 type="text"
                                                 value={customerName}
                                                 onChange={(e) => setCustomerName(e.target.value)}
-                                                placeholder="Enter customer name"
+                                                placeholder="Customer Name *"
+                                                style={{ borderRadius: '10px', height: '45px' }}
                                             />
                                         </div>
 
-                                        <div className="form-group">
-                                            <label>Phone Number</label>
-                                            <input
-                                                type="tel"
-                                                value={customerPhone}
-                                                onChange={(e) => setCustomerPhone(e.target.value)}
-                                                placeholder="Enter phone number"
-                                            />
+                                        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                            <div className="form-group">
+                                                <input
+                                                    type="tel"
+                                                    value={customerPhone}
+                                                    onChange={(e) => setCustomerPhone(e.target.value)}
+                                                    placeholder="Phone Number"
+                                                    style={{ borderRadius: '10px', height: '45px' }}
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <select
+                                                    value={paymentMethod}
+                                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                                    style={{ borderRadius: '10px', height: '45px' }}
+                                                >
+                                                    <option value="cash">Cash</option>
+                                                    <option value="card">Card</option>
+                                                    <option value="transfer">Transfer</option>
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        <div className="form-group">
-                                            <label>Address</label>
-                                            <input
-                                                type="text"
-                                                value={customerAddress}
-                                                onChange={(e) => setCustomerAddress(e.target.value)}
-                                                placeholder="Enter address"
-                                            />
-                                        </div>
-
-                                        <div className="form-group">
-                                            <label>Payment Method *</label>
-                                            <select
-                                                value={paymentMethod}
-                                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                            >
-                                                <option value="cash">Cash</option>
-                                                <option value="card">Card</option>
-                                                <option value="transfer">Transfer</option>
-                                                <option value="mixed">Mixed</option>
-                                            </select>
-                                        </div>
-
-                                        <div className="form-group">
-                                            <label>Payment Received (₦)</label>
-                                            <p className="text-secondary" style={{ fontSize: '0.85rem', marginBottom: '8px' }}>
-                                                Specify the initial payment received. If less than the total, the remaining balance can be logged as customer debt.
-                                            </p>
+                                        <div className="form-group" style={{ marginTop: '15px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>Payment Received (₦)</label>
+                                                {paymentReceived && (() => {
+                                                    const total = calculateTotal();
+                                                    const payment = parseFloat(paymentReceived);
+                                                    const change = payment - total;
+                                                    return change >= 0 ?
+                                                        <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>Change: ₦{change.toFixed(2)}</span> :
+                                                        <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>Balance: ₦{Math.abs(change).toFixed(2)}</span>;
+                                                })()}
+                                            </div>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 value={paymentReceived}
                                                 onChange={(e) => handlePaymentReceivedChange(e.target.value)}
-                                                placeholder="Enter amount received"
+                                                placeholder="0.00"
+                                                style={{ borderRadius: '10px', height: '50px', fontSize: '1.2rem', fontWeight: 'bold' }}
                                             />
                                         </div>
 
-                                        {paymentReceived && (() => {
-                                            const total = calculateTotal();
-                                            const payment = parseFloat(paymentReceived);
-                                            const change = payment - total;
-
-                                            if (payment >= total) {
-                                                return (
-                                                    <div className="payment-summary">
-                                                        <span className="change-label">Change:</span>
-                                                        <span className="change-amount">₦{change.toFixed(2)}</span>
-                                                    </div>
-                                                );
-                                            } else if (payment > 0) {
-                                                return (
-                                                    <div className="payment-summary debt">
-                                                        <span className="change-label">Remaining Balance:</span>
-                                                        <span className="change-amount">₦{Math.abs(change).toFixed(2)}</span>
-                                                    </div>
-                                                );
-                                            }
-                                        })()}
-
-                                        <div className="checkout-buttons">
+                                        <div className="checkout-buttons" style={{ marginTop: '20px' }}>
                                             {showDebtOption ? (
                                                 <button
                                                     className="btn-debt"
                                                     onClick={openDebtWizard}
                                                     disabled={loading || cart.length === 0}
+                                                    style={{ width: '100%', height: '55px', fontSize: '1.1rem' }}
                                                 >
-                                                    {loading ? 'Processing...' : 'Log as Debt'}
+                                                    {loading ? 'Processing...' : 'Process as Customer Debt'}
                                                 </button>
                                             ) : (
                                                 <button
                                                     className="btn-checkout"
                                                     onClick={handleCheckout}
                                                     disabled={loading || cart.length === 0}
+                                                    style={{ width: '100%', height: '55px', fontSize: '1.1rem' }}
                                                 >
-                                                    {loading ? 'Processing...' : 'Complete Sale'}
+                                                    <CreditCard size={20} /> {loading ? 'Processing...' : 'Complete Payment'}
                                                 </button>
                                             )}
                                         </div>
@@ -658,7 +662,7 @@ const POS = () => {
                                 </div>
 
                                 <div className="focus-view-content">
-                                    <div className="focus-view-card">
+                                    <div className="focus-view-card glass-card">
                                         <form onSubmit={addTradeIn}>
                                             <div className="focus-view-body">
                                                 <div className="form-grid-focus">
@@ -721,13 +725,14 @@ const POS = () => {
                                                         <label>Trade-In Value (₦) *</label>
                                                         <input
                                                             type="number"
-                                                            className="form-input highlight-input"
+                                                            className="form-input-focus highlighted-input"
                                                             step="0.01"
                                                             min="0"
                                                             value={tradeInData.trade_in_value}
                                                             onChange={(e) => setTradeInData({ ...tradeInData, trade_in_value: e.target.value })}
                                                             placeholder="0.00"
                                                             required
+                                                            style={{ fontSize: '1.5rem', height: '60px', fontWeight: 'bold' }}
                                                         />
                                                     </div>
                                                 </div>
@@ -740,7 +745,7 @@ const POS = () => {
                                                     </div>
                                                     <div className="primary-actions">
                                                         <button type="submit" className="btn-primary">
-                                                            Add Device to Cart
+                                                            Add to Cart
                                                         </button>
                                                     </div>
                                                 </div>
@@ -760,11 +765,11 @@ const POS = () => {
                                 </div>
 
                                 <div className="focus-view-content">
-                                    <div className="focus-view-card">
+                                    <div className="focus-view-card glass-card">
                                         <div className="focus-view-body">
                                             {/* Debt Summary */}
-                                            <div className="debt-summary-section">
-                                                <h3>Transaction Summary</h3>
+                                            <div className="debt-summary-section glass-card" style={{ padding: '20px', marginBottom: '25px', background: 'rgba(255, 255, 255, 0.05)', border: 'none' }}>
+                                                <h3 style={{ marginBottom: '15px' }}>Transaction Summary</h3>
                                                 <div className="summary-grid-focus">
                                                     <div className="summary-item-focus">
                                                         <span className="label">Total Amount:</span>
@@ -776,14 +781,14 @@ const POS = () => {
                                                     </div>
                                                     <div className="summary-item-focus highlight">
                                                         <span className="label">Remaining Balance:</span>
-                                                        <span className="value remaining">₦{(debtData.total_amount - debtData.paid_amount).toFixed(2)}</span>
+                                                        <span className="value remaining" style={{ fontSize: '1.4rem' }}>₦{(debtData.total_amount - debtData.paid_amount).toFixed(2)}</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Customer Information Form */}
                                             <div className="customer-info-section">
-                                                <h3>Customer Information</h3>
+                                                <h3 style={{ marginBottom: '15px' }}>Customer Details for Debt Logging</h3>
                                                 <div className="form-grid-focus">
                                                     <div className="form-group full-width">
                                                         <label>Customer Name *</label>
@@ -805,10 +810,8 @@ const POS = () => {
                                                             value={debtData.customer_phone}
                                                             onChange={(e) => setDebtData({ ...debtData, customer_phone: e.target.value })}
                                                             placeholder="+234XXXXXXXXXX or 0XXXXXXXXXX"
-                                                            pattern="(\+234|0)[789][01]\d{8}"
                                                             required
                                                         />
-                                                        <small className="form-help">Use Nigerian format: +234XXXXXXXXXX or 0XXXXXXXXXX</small>
                                                     </div>
 
                                                     <div className="form-group full-width">
@@ -843,7 +846,7 @@ const POS = () => {
                                                         onClick={handleCreateDebt}
                                                         disabled={loading}
                                                     >
-                                                        {loading ? 'Creating...' : 'Create Debt Record'}
+                                                        {loading ? 'Processing...' : 'Complete & Log Debt'}
                                                     </button>
                                                 </div>
                                             </div>

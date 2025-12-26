@@ -110,7 +110,7 @@ const MarketplaceOrderDetails = () => {
             <div className="dashboard-container">
                 <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
                 <MarketplaceSidebar isOpen={sidebarOpen} isMobile={isMobile} closeSidebar={() => setSidebarOpen(false)} />
-                <main className="main-content marketplace-page-main">
+                <main className="main-content marketplace-main">
                     <div className="content-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
                         <p>Loading order details...</p>
                     </div>
@@ -124,7 +124,7 @@ const MarketplaceOrderDetails = () => {
             <div className="dashboard-container">
                 <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
                 <MarketplaceSidebar isOpen={sidebarOpen} isMobile={isMobile} closeSidebar={() => setSidebarOpen(false)} />
-                <main className="main-content marketplace-page-main">
+                <main className="main-content marketplace-main">
                     <div className="content-wrapper">
                         <div className="alert-error" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>
                             <AlertTriangle size={48} style={{ marginBottom: '10px' }} />
@@ -148,151 +148,132 @@ const MarketplaceOrderDetails = () => {
             <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
             <MarketplaceSidebar isOpen={sidebarOpen} isMobile={isMobile} closeSidebar={() => setSidebarOpen(false)} />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
-                    <button onClick={() => navigate('/marketplace/orders')} className="back-btn">
-                        <ArrowLeft size={16} />
-                        Back to Orders
-                    </button>
-
-                    <div className="order-details-header">
-                        <div className="order-header-main">
-                            <div className="order-title-group">
-                                <h1 className="heading-1">Order #{order.id}</h1>
-                                <div className="order-status-badge">
-                                    <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
-                                        {getStatusIcon(order.order_status)}
-                                        <span className="status-text">{order.order_status.toUpperCase()}</span>
-                                    </span>
-                                </div>
-                            </div>
-                            <p className="text-secondary">Placed on {formatDate(order.created_at)}</p>
-                        </div>
+                    <div className="page-header" style={{ marginBottom: '24px' }}>
+                        <button onClick={() => navigate('/marketplace/orders')} className="back-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '12px', padding: '0' }}>
+                            <ArrowLeft size={18} />
+                            <span>Back to Orders</span>
+                        </button>
+                        <h2 className="heading-2">Order Details</h2>
                     </div>
 
-                    <div className="order-info-grid">
-                        <div className="order-main-info">
-                            {/* Order Details */}
-                            <div className="order-card-detail">
-                                <h3>Order Items</h3>
-                                <div className="order-item-display">
-                                    <img
-                                        src={order.listing_image ? (order.listing_image.startsWith('http') ? order.listing_image : `${SERVER_URL}${order.listing_image}`) : '/placeholder-phone.png'}
-                                        alt={order.listing_title}
-                                        className="order-item-img"
-                                    />
-                                    <div className="order-item-txt">
-                                        <h4>{order.listing_title}</h4>
-                                        <p>{order.listing_type} Listing • {order.phone_condition} • {order.phone_storage}</p>
-                                        <p className="text-primary" style={{ fontWeight: '600', marginTop: '5px' }}>₦{Number(order.agreed_price).toLocaleString()}</p>
-                                    </div>
+                    <div className="focus-view-card glass-card animate-slide-in">
+                        <div className="focus-view-body">
+                            {/* Wizard Progress */}
+                            <div className="wizard-steps">
+                                <div className={`step ${order.created_at ? 'completed' : 'active'}`}>
+                                    <div className="step-number">{order.created_at ? <CheckCircle size={14} /> : '1'}</div>
+                                    <div className="step-label">Ordered</div>
+                                </div>
+                                <div className={`step ${order.paid_at ? 'completed' : (order.created_at ? 'active' : '')}`}>
+                                    <div className="step-number">{order.paid_at ? <CheckCircle size={14} /> : '2'}</div>
+                                    <div className="step-label">Paid</div>
+                                </div>
+                                <div className={`step ${order.shipped_at ? 'completed' : (order.paid_at ? 'active' : '')}`}>
+                                    <div className="step-number">{order.shipped_at ? <CheckCircle size={14} /> : '3'}</div>
+                                    <div className="step-label">Shipped</div>
+                                </div>
+                                <div className={`step ${order.delivered_at ? 'completed' : (order.shipped_at ? 'active' : '')}`}>
+                                    <div className="step-number">{order.delivered_at ? <CheckCircle size={14} /> : '4'}</div>
+                                    <div className="step-label">Delivered</div>
                                 </div>
                             </div>
 
-                            {/* Transaction Details */}
-                            <div className="order-card-detail">
-                                <h3>Transaction Information</h3>
-                                <div className="detail-row">
-                                    <span className="detail-label">Reference Number</span>
-                                    <span className="detail-value">{order.order_number}</span>
-                                </div>
-                                <div className="detail-row">
-                                    <span className="detail-label">Payment Method</span>
-                                    <span className="detail-value">{order.payment_method?.toUpperCase()}</span>
-                                </div>
-                                <div className="detail-row">
-                                    <span className="detail-label">Agreed Price</span>
-                                    <span className="detail-value">₦{Number(order.agreed_price).toLocaleString()}</span>
-                                </div>
-                                {order.commission_amount > 0 && (
-                                    <div className="detail-row">
-                                        <span className="detail-label">Platform Fee</span>
-                                        <span className="detail-value">₦{Number(order.commission_amount).toLocaleString()}</span>
+                            <div className="order-info-grid">
+                                <div className="order-main-info">
+                                    {/* Order Item Card */}
+                                    <div className="order-detail-section">
+                                        <h3 className="section-title">Order Item</h3>
+                                        <div className="order-item-display">
+                                            <div className="order-item-img-wrapper">
+                                                <img
+                                                    src={order.listing_image ? (order.listing_image.startsWith('http') ? order.listing_image : `${SERVER_URL}${order.listing_image}`) : '/placeholder-phone.png'}
+                                                    alt={order.listing_title}
+                                                />
+                                            </div>
+                                            <div className="order-item-txt">
+                                                <h4>{order.listing_title}</h4>
+                                                <p className="subtitle">{order.listing_type} Listing • {order.phone_condition}</p>
+                                                <div className="price-tag">
+                                                    ₦{Number(order.agreed_price).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
-                            </div>
 
-                            {/* Party Information */}
-                            <div className="order-card-detail">
-                                <h3>{isBuyer ? 'Seller' : 'Buyer'} Information</h3>
-                                <div className="detail-row">
-                                    <span className="detail-label">Name</span>
-                                    <span className="detail-value">{isBuyer ? order.seller_name : order.buyer_name}</span>
+                                    {/* Transaction Info Card */}
+                                    <div className="order-detail-section">
+                                        <h3 className="section-title">Transaction Details</h3>
+                                        <div className="details-list">
+                                            <div className="detail-row">
+                                                <span className="detail-label">Reference Number</span>
+                                                <span className="detail-value">{order.order_number}</span>
+                                            </div>
+                                            <div className="detail-row">
+                                                <span className="detail-label">Payment Method</span>
+                                                <span className="detail-value text-uppercase">{order.payment_method}</span>
+                                            </div>
+                                            <div className="detail-row">
+                                                <span className="detail-label">Date Placed</span>
+                                                <span className="detail-value">{formatDate(order.created_at)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="order-side-info">
+                                    {/* Status Card */}
+                                    <div className="order-detail-section">
+                                        <h3 className="section-title">Order Status</h3>
+                                        <div className="status-display">
+                                            <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
+                                                {getStatusIcon(order.order_status)}
+                                                {order.order_status.toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <p className="status-note">
+                                            {order.order_status === 'pending' && "Awaiting payment verification to proceed."}
+                                            {order.order_status === 'processing' && "Seller is preparing your item for shipment."}
+                                            {order.order_status === 'shipped' && "Your item is on its way!"}
+                                            {order.order_status === 'delivered' && "Item received and confirmed."}
+                                            {order.order_status === 'cancelled' && `Order cancelled: ${order.cancellation_reason || 'No reason provided'}.`}
+                                        </p>
+                                    </div>
+
+                                    {/* Action Card */}
+                                    <div className="order-detail-section">
+                                        <h3 className="section-title">Actions</h3>
+                                        <div className="actions-list">
+                                            <button
+                                                onClick={() => navigate(`/marketplace/messages?listing_id=${order.listing_id}${!isBuyer ? `&buyer_id=${order.buyer_id}` : ''}`)}
+                                                className="btn-secondary full-width"
+                                            >
+                                                Message {isBuyer ? 'Seller' : 'Buyer'}
+                                            </button>
+                                            {canCancel && (
+                                                <button
+                                                    onClick={() => setShowCancelModal(true)}
+                                                    className="btn-outline-danger full-width"
+                                                >
+                                                    Cancel Order
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="order-side-info">
-                            {/* Actions */}
-                            <div className="order-card-detail">
-                                <h3>Actions</h3>
-                                <div className="order-actions">
-                                    {canCancel && (
-                                        <button onClick={() => setShowCancelModal(true)} className="btn-action btn-cancel">
-                                            <XCircle size={18} />
-                                            Cancel Order
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={() => navigate(`/marketplace/messages?listing_id=${order.listing_id}${!isBuyer ? `&buyer_id=${order.buyer_id}` : ''}`)}
-                                        className="btn-action btn-secondary"
-                                    >
-                                        Message {isBuyer ? 'Seller' : 'Buyer'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Status Timeline */}
-                            <div className="order-card-detail">
-                                <h3>Order Status</h3>
-                                <div className="order-status-timeline">
-                                    <div className={`timeline-item ${order.created_at ? 'active' : ''}`}>
-                                        <div className="timeline-dot"></div>
-                                        <div className="timeline-content">
-                                            <h5>Order Placed</h5>
-                                            <p>{formatDate(order.created_at)}</p>
-                                        </div>
-                                    </div>
-                                    {order.paid_at && (
-                                        <div className="timeline-item active">
-                                            <div className="timeline-dot"></div>
-                                            <div className="timeline-content">
-                                                <h5>Payment Verified</h5>
-                                                <p>{formatDate(order.paid_at)}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {order.shipped_at && (
-                                        <div className="timeline-item active">
-                                            <div className="timeline-dot"></div>
-                                            <div className="timeline-content">
-                                                <h5>Order Shipped</h5>
-                                                <p>{formatDate(order.shipped_at)}</p>
-                                                {order.tracking_number && <p className="text-primary">Tracking: {order.tracking_number}</p>}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {order.delivered_at && (
-                                        <div className="timeline-item active">
-                                            <div className="timeline-dot"></div>
-                                            <div className="timeline-content">
-                                                <h5>Order Delivered</h5>
-                                                <p>{formatDate(order.delivered_at)}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    {order.order_status === 'cancelled' && (
-                                        <div className="timeline-item active">
-                                            <div className="timeline-dot" style={{ backgroundColor: '#ef4444' }}></div>
-                                            <div className="timeline-content">
-                                                <h5 style={{ color: '#ef4444' }}>Order Cancelled</h5>
-                                                <p>{formatDate(order.cancelled_at)}</p>
-                                                {order.cancellation_reason && <p className="text-secondary italic">"{order.cancellation_reason}"</p>}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <div className="focus-view-footer">
+                            <button onClick={() => navigate('/marketplace/orders')} className="btn-secondary">
+                                Back to All Orders
+                            </button>
+                            {isBuyer && order.order_status === 'shipped' && (
+                                <button className="btn-primary">
+                                    Confirm Receipt
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

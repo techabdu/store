@@ -116,9 +116,16 @@ try {
     $order_id = $conn->insert_id;
 
     // 5. Update Listing Status
-    $stmt = $conn->prepare("UPDATE marketplace_listings SET status = 'sold' WHERE id = ?");
+    $stmt = $conn->prepare("UPDATE marketplace_listings SET status = 'sold', sold_at = NOW() WHERE id = ?");
     $stmt->bind_param("i", $listing_id);
     if (!$stmt->execute()) throw new Exception('Failed to update listing status');
+
+    // 5.1 NEW: Update Inventory Status to 'in_transit'
+    // This removes it from 'Inventory Value' report immediately as requested.
+    $inv_id = $listing['inventory_id'];
+    $stmt = $conn->prepare("UPDATE inventory SET status = 'in_transit', is_listed = 0 WHERE id = ?");
+    $stmt->bind_param("i", $inv_id);
+    if (!$stmt->execute()) throw new Exception('Failed to update inventory status');
 
     // 6. Log Transactions
     // Get Updated Buyer Balances for log

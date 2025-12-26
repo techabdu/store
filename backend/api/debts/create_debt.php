@@ -165,9 +165,14 @@ try {
         
         $fetch_stmt->bind_param("i", $debt_id);
         $fetch_stmt->execute();
-        $result = $fetch_stmt->fetch();
+        $result = $fetch_stmt->get_result()->fetch_assoc();
         
         if ($result) {
+            // NEW: Update Customer Analytics
+            require_once '../../helpers/customer_analytics.php';
+            updateCustomerAnalytics($conn, $shop_id, $_SESSION['tenant_id'], $customer_phone, $customer_name, 0); // Updates/creates customer record
+            updateCustomerDebtMetrics($conn, $shop_id, $customer_phone, $paid_amount); // Recalculates debt specific metrics
+
             http_response_code(201);
             echo json_encode([
                 'success' => true,

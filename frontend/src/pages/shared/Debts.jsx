@@ -101,15 +101,38 @@ const Debts = () => {
         setSidebarOpen(!sidebarOpen);
     };
 
+    // Intersection Observer for Lazy Loading
+    const observerTarget = useRef(null);
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && pagination.page < pagination.total_pages && !loading) {
+                    setPagination(prev => ({ ...prev, page: prev.page + 1 }));
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [pagination.page, pagination.total_pages, loading]);
+
     // Fetch debts
-    const fetchDebts = async () => {
+    const fetchDebts = async (isNewFilter = false) => {
         setLoading(true);
         setError('');
 
         try {
             const params = {
                 ...filters,
-                page: pagination.page,
+                page: isNewFilter ? 1 : pagination.page,
                 limit: 20
             };
 
@@ -123,7 +146,17 @@ const Debts = () => {
             const response = await api.get('/debts/get_debts.php', { params });
 
             if (response.data.success) {
-                setDebts(response.data.debts);
+                if (isNewFilter) {
+                    setDebts(response.data.debts);
+                } else {
+                    setDebts(prev => {
+                        // Avoid duplicates if same page is fetched again
+                        const newDebts = response.data.debts.filter(
+                            nd => !prev.some(pd => pd.id === nd.id)
+                        );
+                        return [...prev, ...newDebts];
+                    });
+                }
                 setPagination({
                     page: response.data.page,
                     total_pages: response.data.total_pages,
@@ -357,7 +390,8 @@ const Debts = () => {
     // Handle filter change
     const handleFilterChange = (key, value) => {
         setFilters({ ...filters, [key]: value });
-        setPagination({ ...pagination, page: 1 }); // Reset to page 1
+        setDebts([]); // Clear list for new filters
+        setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1
     };
 
     // Clear filters
@@ -368,12 +402,13 @@ const Debts = () => {
             end_date: '',
             search: ''
         });
-        setPagination({ ...pagination, page: 1 });
+        setDebts([]);
+        setPagination(prev => ({ ...prev, page: 1 }));
     };
 
     // Load debts on mount and filter changes
     useEffect(() => {
-        fetchDebts();
+        fetchDebts(pagination.page === 1);
     }, [filters, pagination.page]);
 
     // Get status badge class
@@ -423,7 +458,7 @@ const Debts = () => {
 
                             {/* Summary Cards */}
                             <div className="summary-cards">
-                                <div className="summary-card">
+                                <div className="summary-card glass-card">
                                     <div className="card-icon outstanding">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -436,7 +471,7 @@ const Debts = () => {
                                     </div>
                                 </div>
 
-                                <div className="summary-card">
+                                <div className="summary-card glass-card">
                                     <div className="card-icon total">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
@@ -450,7 +485,7 @@ const Debts = () => {
                                     </div>
                                 </div>
 
-                                <div className="summary-card">
+                                <div className="summary-card glass-card">
                                     <div className="card-icon paid">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -465,13 +500,14 @@ const Debts = () => {
                             </div>
 
                             {/* Filters */}
-                            <div className="filters-section">
+                            <div className="filters-section glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
                                 <div className="filters-group">
                                     <div className="filter-item">
                                         <label>Status</label>
                                         <select
                                             value={filters.status}
                                             onChange={(e) => handleFilterChange('status', e.target.value)}
+                                            style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'inherit' }}
                                         >
                                             <option value="all">All</option>
                                             <option value="unpaid">Unpaid</option>
@@ -487,6 +523,7 @@ const Debts = () => {
                                             type="date"
                                             value={filters.start_date}
                                             onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                                            style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'inherit' }}
                                         />
                                     </div>
 
@@ -496,6 +533,7 @@ const Debts = () => {
                                             type="date"
                                             value={filters.end_date}
                                             onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                                            style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'inherit' }}
                                         />
                                     </div>
 
@@ -506,6 +544,7 @@ const Debts = () => {
                                             placeholder="Customer name or phone..."
                                             value={filters.search}
                                             onChange={(e) => handleFilterChange('search', e.target.value)}
+                                            style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'inherit' }}
                                         />
                                     </div>
 
@@ -516,7 +555,7 @@ const Debts = () => {
                             </div>
 
                             {/* Debts Table */}
-                            <div className="table-container">
+                            <div className="table-container glass-card">
                                 {loading && debts.length === 0 ? (
                                     <div className="loading-state">Loading debts...</div>
                                 ) : debts.length === 0 ? (
@@ -526,82 +565,73 @@ const Debts = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <table className="debts-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Customer Name</th>
-                                                    <th>Phone</th>
-                                                    <th>Total Amount</th>
-                                                    <th>Paid Amount</th>
-                                                    <th>Remaining</th>
-                                                    <th>Status</th>
-                                                    <th>Created</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {debts.map((debt) => (
-                                                    <tr key={debt.id}>
-                                                        <td className="customer-name">{debt.customer_name}</td>
-                                                        <td className="phone">{debt.customer_phone}</td>
-                                                        <td className="amount">₦{parseFloat(debt.total_amount).toFixed(2)}</td>
-                                                        <td className="amount paid">₦{parseFloat(debt.paid_amount).toFixed(2)}</td>
-                                                        <td className="amount remaining">₦{parseFloat(debt.remaining_balance).toFixed(2)}</td>
-                                                        <td>
-                                                            <span className={`status-badge ${getStatusBadge(debt.status).class}`}>
-                                                                {getStatusBadge(debt.status).label}
-                                                            </span>
-                                                        </td>
-                                                        <td className="date">{new Date(debt.created_at).toLocaleDateString()}</td>
-                                                        <td className="actions">
-                                                            <button
-                                                                className="btn-action view"
-                                                                onClick={() => fetchDebtDetails(debt.id)}
-                                                                title="View Details"
-                                                            >
-                                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                                    <circle cx="12" cy="12" r="3" />
-                                                                </svg>
-                                                            </button>
-                                                            {debt.status !== 'fully_paid' && debt.status !== 'written_off' && (
+                                        <div className="table-responsive">
+                                            <table className="debts-table glass-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Customer Name</th>
+                                                        <th>Phone</th>
+                                                        <th>Total Amount</th>
+                                                        <th>Paid Amount</th>
+                                                        <th>Remaining</th>
+                                                        <th>Status</th>
+                                                        <th>Created</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {debts.map((debt) => (
+                                                        <tr key={debt.id}>
+                                                            <td className="customer-name">{debt.customer_name}</td>
+                                                            <td className="phone">{debt.customer_phone}</td>
+                                                            <td className="amount">₦{parseFloat(debt.total_amount).toFixed(2)}</td>
+                                                            <td className="amount paid">₦{parseFloat(debt.paid_amount).toFixed(2)}</td>
+                                                            <td className="amount remaining">₦{parseFloat(debt.remaining_balance).toFixed(2)}</td>
+                                                            <td>
+                                                                <span className={`status-badge ${getStatusBadge(debt.status).class}`}>
+                                                                    {getStatusBadge(debt.status).label}
+                                                                </span>
+                                                            </td>
+                                                            <td className="date">{new Date(debt.created_at).toLocaleDateString()}</td>
+                                                            <td className="actions">
                                                                 <button
-                                                                    className="btn-action payment"
-                                                                    onClick={() => openPaymentPanel(debt)}
-                                                                    title="Record Payment"
+                                                                    className="btn-action view"
+                                                                    onClick={() => fetchDebtDetails(debt.id)}
+                                                                    title="View Details"
                                                                 >
                                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                                                                        <path d="M7 15h4M2 9.5h20" />
+                                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                                        <circle cx="12" cy="12" r="3" />
                                                                     </svg>
                                                                 </button>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                                {debt.status !== 'fully_paid' && debt.status !== 'written_off' && (
+                                                                    <button
+                                                                        className="btn-action payment"
+                                                                        onClick={() => openPaymentPanel(debt)}
+                                                                        title="Record Payment"
+                                                                    >
+                                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                                                                            <path d="M7 15h4M2 9.5h20" />
+                                                                        </svg>
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
 
-                                        {/* Pagination */}
-                                        {pagination.total_pages > 1 && (
-                                            <div className="pagination">
-                                                <button
-                                                    className="btn-page"
-                                                    onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
-                                                    disabled={pagination.page === 1}
-                                                >
-                                                    Previous
-                                                </button>
-                                                <span className="page-info">
-                                                    Page {pagination.page} of {pagination.total_pages}
-                                                </span>
-                                                <button
-                                                    className="btn-page"
-                                                    onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
-                                                    disabled={pagination.page === pagination.total_pages}
-                                                >
-                                                    Next
-                                                </button>
+                                        {/* Lazy Load Trigger */}
+                                        {pagination.page < pagination.total_pages && (
+                                            <div
+                                                ref={observerTarget}
+                                                className="lazy-load-trigger"
+                                                style={{ cursor: loading ? 'default' : 'pointer' }}
+                                                onClick={() => !loading && setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                                            >
+                                                {loading ? <span className="loading-dots">Loading more debts</span> : <span>Scroll or click to load more</span>}
                                             </div>
                                         )}
                                     </>
@@ -636,7 +666,7 @@ const Debts = () => {
                             </div>
 
                             <div className="focus-view-content">
-                                <div className="focus-view-card">
+                                <div className="focus-view-card glass-card">
                                     {/* Customer Information */}
                                     <div className="detail-section">
                                         <div className="section-header">
@@ -835,7 +865,7 @@ const Debts = () => {
                             </div>
 
                             <div className="focus-view-content">
-                                <div className="focus-view-card">
+                                <div className="focus-view-card glass-card">
                                     {/* Debt Summary */}
                                     <div className="detail-section">
                                         <h4>{selectedDebt.customer_name}</h4>
@@ -934,7 +964,7 @@ const Debts = () => {
                             </div>
 
                             <div className="focus-view-content">
-                                <div className="focus-view-card">
+                                <div className="focus-view-card glass-card">
                                     {/* Customer Info */}
                                     <div className="detail-section">
                                         <h4>Customer Information</h4>

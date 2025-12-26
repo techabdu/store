@@ -188,14 +188,14 @@
 .table-container {
     background: var(--card-bg);
     border-radius: 12px;
-    padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    overflow-x: auto;
+    overflow: hidden;
 }
 
 .debts-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 1000px;
 }
 
 .debts-table thead tr {
@@ -731,7 +731,8 @@
 
 /* Spacing for the input text/placeholder */
 .input-with-icon .form-input-focus {
-    padding-left: 3rem !important; /* Generous space for the icon + gap */
+    padding-left: 3rem !important;
+    /* Generous space for the icon + gap */
 }
 
 /* Highlight icon when input is focused */

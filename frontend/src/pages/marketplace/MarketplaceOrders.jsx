@@ -16,6 +16,7 @@ const MarketplaceOrders = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [activeRole, setActiveRole] = useState('buyer'); // 'buyer' or 'seller'
     const [loading, setLoading] = useState(true);
+    const [visibleRows, setVisibleRows] = useState(10);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,6 +49,10 @@ const MarketplaceOrders = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const loadMore = () => {
+        setVisibleRows(prev => prev + 10);
     };
 
     useEffect(() => {
@@ -109,7 +114,7 @@ const MarketplaceOrders = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     {/* Page Header */}
                     <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -173,29 +178,30 @@ const MarketplaceOrders = () => {
                                 <p className="text-secondary">Loading orders...</p>
                             </div>
                         ) : filteredOrders.length === 0 ? (
-                            <div className="orders-empty-state">
-                                <div className="empty-icon">
-                                    <Package size={64} style={{ opacity: 0.3 }} />
+                            <div className="glass-card" style={{ textAlign: 'center', padding: '80px 40px', maxWidth: '600px', margin: '40px auto' }}>
+                                <div className="empty-icon-wrapper" style={{ marginBottom: '24px' }}>
+                                    <Package size={80} style={{ color: 'var(--primary-color)', opacity: 0.2 }} />
                                 </div>
-                                <h3 className="heading-3">No orders found</h3>
-                                <p className="text-secondary">
+                                <h3 className="heading-3" style={{ marginBottom: '16px' }}>No Orders Found</h3>
+                                <p className="text-secondary" style={{ marginBottom: '32px', fontSize: '1.1rem' }}>
                                     {activeFilter === 'all'
-                                        ? (activeRole === 'buyer' ? "You haven't placed any orders yet" : "You haven't sold any items yet")
-                                        : `No ${activeFilter} orders at the moment`}
+                                        ? (activeRole === 'buyer' ? "You haven't placed any orders yet. Start shopping to see your orders here!" : "You haven't sold any items yet. List your products to start selling!")
+                                        : `You don't have any ${activeFilter} orders at the moment.`}
                                 </p>
                                 {activeRole === 'buyer' && (
                                     <button
                                         onClick={() => navigate('/marketplace/listings')}
-                                        className="btn-browse-products"
+                                        className="btn-primary"
+                                        style={{ padding: '14px 40px' }}
                                     >
-                                        Browse Products
+                                        Start Shopping
                                     </button>
                                 )}
                             </div>
                         ) : (
                             <div className="orders-list">
-                                {filteredOrders.map((order) => (
-                                    <div key={order.id} className="order-card">
+                                {filteredOrders.slice(0, visibleRows).map((order) => (
+                                    <div key={order.id} className="order-card glass-card">
                                         {/* Order Header */}
                                         <div className="order-header">
                                             <div className="order-header-left">
@@ -240,6 +246,14 @@ const MarketplaceOrders = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {!loading && visibleRows < filteredOrders.length && (
+                            <div className="load-more-container">
+                                <button className="btn-load-more" onClick={loadMore}>
+                                    Load More Orders
+                                </button>
                             </div>
                         )}
                     </div>

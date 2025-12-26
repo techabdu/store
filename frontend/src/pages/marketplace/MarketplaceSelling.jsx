@@ -13,6 +13,7 @@ const MarketplaceSelling = () => {
     const navigate = useNavigate();
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [visibleRows, setVisibleRows] = useState(15);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,6 +64,11 @@ const MarketplaceSelling = () => {
         fetchMyListings();
     }, [currentShop]);
 
+    const loadMore = () => {
+        setVisibleRows(prev => prev + 15);
+    };
+
+
     const formatPrice = (price) => {
         return Number(price).toLocaleString('en-NG', {
             style: 'currency',
@@ -98,7 +104,7 @@ const MarketplaceSelling = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     {/* Page Header */}
                     <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -133,7 +139,7 @@ const MarketplaceSelling = () => {
                             </button>
                         </div>
                     ) : (
-                        <div className="dashboard-card table-container" style={{ padding: '0' }}>
+                        <div className="table-container glass-card mb-24">
                             <table className="data-table">
                                 <thead>
                                     <tr>
@@ -146,7 +152,7 @@ const MarketplaceSelling = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {listings.map(item => (
+                                    {listings.slice(0, visibleRows).map(item => (
                                         <tr key={item.id}>
                                             <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -197,6 +203,13 @@ const MarketplaceSelling = () => {
                                     ))}
                                 </tbody>
                             </table>
+                            {visibleRows < listings.length && (
+                                <div className="load-more-container">
+                                    <button className="btn-load-more" onClick={loadMore}>
+                                        Load More Listings
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

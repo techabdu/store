@@ -202,6 +202,9 @@ try {
         // Update profile stats
         $conn->query("UPDATE marketplace_profiles SET total_listings = total_listings + 1 WHERE user_id = $user_id");
         
+        // NEW: Mark inventory item as listed to prevent local sales conflict
+        $conn->query("UPDATE inventory SET is_listed = 1 WHERE id = " . (int)$data->inventory_id);
+        
         echo json_encode(['success' => true, 'message' => 'Listing created successfully', 'listing_id' => $listing_id]);
     } else {
         throw new Exception('Failed to create listing: ' . $conn->error);

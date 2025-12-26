@@ -1,0 +1,363 @@
+/* Glassmorphism Base */
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    border-radius: 16px;
+}
+
+[data-theme='dark'] .glass-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.abc-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.abc-alerts {
+    margin-bottom: 2rem;
+}
+
+.info-card.glass-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    color: var(--text-primary);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.abc-metric-card {
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.abc-metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+}
+
+.abc-metric-card.category-a::before {
+    background: #22c55e;
+}
+
+.abc-metric-card.category-b::before {
+    background: #3b82f6;
+}
+
+.abc-metric-card.category-c::before {
+    background: #f59e0b;
+}
+
+.abc-metric-card:hover {
+    transform: translateY(-8px);
+}
+
+.cat-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+}
+
+.metric-body h3 {
+    margin: 0.5rem 0;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.profit-val {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.share-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.analysis-grid-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.data-section {
+    padding: 2rem;
+    min-width: 0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+}
+
+.section-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin: 0 -1rem;
+    padding: 0 1rem;
+}
+
+.abc-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+.abc-table th {
+    text-align: left;
+    padding: 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.abc-table tr {
+    transition: all 0.2s ease;
+}
+
+.abc-table tbody tr:hover {
+    background: rgba(139, 92, 246, 0.04);
+}
+
+.abc-table td {
+    padding: 1.25rem 1rem;
+    vertical-align: middle;
+    color: var(--text-primary);
+}
+
+.model-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.model {
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.cat-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.cat-a {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.cat-b {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.cat-c {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.margin-indicator {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 120px;
+}
+
+.margin-text {
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.margin-bar {
+    height: 6px;
+    background: var(--bg-body);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.margin-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.load-more-btn-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.load-more-btn {
+    padding: 0.75rem 2.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+}
+
+.load-more-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(66, 133, 244, 0.4);
+}
+
+.load-more-btn:active {
+    transform: translateY(-1px);
+}
+
+.recommendation-card {
+    padding: 2rem;
+}
+
+.rec-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.rec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='dark'] .rec-item {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.rec-badge {
+    align-self: flex-start;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badge-a {
+    background: #22c55e;
+    color: white;
+}
+
+.badge-b {
+    background: #3b82f6;
+    color: white;
+}
+
+.badge-c {
+    background: #f59e0b;
+    color: white;
+}
+
+.rec-content strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.rec-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Responsiveness */
+@media (max-width: 1200px) {
+    .analysis-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 992px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .abc-container {
+        padding: 1rem;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .data-section {
+        padding: 1.25rem;
+    }
+
+    .abc-table td,
+    .abc-table th {
+        padding: 0.75rem;
+    }
+
+    .margin-indicator {
+        width: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .abc-metric-card {
+        padding: 1.25rem;
+    }
+
+    .metric-body h3 {
+        font-size: 1.5rem;
+    }
+}

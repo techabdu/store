@@ -4,7 +4,7 @@ import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import MetricCard from '../../components/MetricCard';
-import { ShoppingBag, Receipt, DollarSign } from 'lucide-react';
+import { ShoppingBag, Receipt, DollarSign, TrendingUp, Activity, BarChart3, PieChart } from 'lucide-react';
 import './Report.css';
 
 const Report = () => {
@@ -22,6 +22,8 @@ const Report = () => {
     // Data states
     const [stats, setStats] = useState({
         inventory_value: 0,
+        total_sales: 0,
+        total_cogs: 0,
         total_expenses: 0,
         business_capital: 0,
         total_outstanding_debt: 0
@@ -31,6 +33,9 @@ const Report = () => {
     });
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [offset, setOffset] = useState(0);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
 
@@ -57,7 +62,9 @@ const Report = () => {
     // Fetch history when tab changes
     useEffect(() => {
         if (activeTab === 'history') {
-            fetchHistory();
+            setOffset(0);
+            setHasMore(true);
+            fetchHistory(0);
         }
     }, [activeTab]);
 
@@ -73,15 +80,35 @@ const Report = () => {
         }
     };
 
-    const fetchHistory = async () => {
+    const fetchHistory = async (newOffset) => {
         try {
-            const response = await api.get('/admin/report.php?action=history');
+            if (newOffset === 0) setLoading(true);
+            else setLoadingMore(true);
+
+            const response = await api.get(`/admin/report.php?action=history&limit=15&offset=${newOffset}`);
             if (response.data.success) {
-                setHistory(response.data.data);
+                if (newOffset === 0) {
+                    setHistory(response.data.data);
+                } else {
+                    setHistory(prev => [...prev, ...response.data.data]);
+                }
+
+                if (response.data.data.length < 15) {
+                    setHasMore(false);
+                }
             }
         } catch (err) {
             console.error('Error fetching history:', err);
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
         }
+    };
+
+    const loadMore = () => {
+        const nextOffset = offset + 15;
+        setOffset(nextOffset);
+        fetchHistory(nextOffset);
     };
 
     const handleInputChange = (e) => {
@@ -101,13 +128,40 @@ const Report = () => {
     };
 
     const calculateNetProfit = () => {
+        const sales = parseFloat(stats.total_sales) || 0;
+        const cogs = parseFloat(stats.total_cogs) || 0;
+        const expenses = parseFloat(stats.total_expenses) || 0;
+
+        return (sales - cogs) - expenses;
+    };
+
+    const calculateGrossProfit = () => {
+        const sales = parseFloat(stats.total_sales) || 0;
+        const cogs = parseFloat(stats.total_cogs) || 0;
+        return sales - cogs;
+    };
+
+    const calculateGrossMargin = () => {
+        const sales = parseFloat(stats.total_sales) || 0;
+        const gp = calculateGrossProfit();
+        if (sales === 0) return 0;
+        return ((gp / sales) * 100).toFixed(1);
+    };
+
+    const calculateNetMargin = () => {
+        const sales = parseFloat(stats.total_sales) || 0;
+        const np = calculateNetProfit();
+        if (sales === 0) return 0;
+        return ((np / sales) * 100).toFixed(1);
+    };
+
+    const calculateEquity = () => {
         const cash = parseFloat(inputs.cash_in_hand) || 0;
         const debt = parseFloat(stats.total_outstanding_debt) || 0;
         const inventory = parseFloat(stats.inventory_value) || 0;
-        const expenses = parseFloat(stats.total_expenses) || 0;
         const capital = parseFloat(stats.business_capital) || 0;
 
-        return (inventory + cash + debt) - expenses - capital;
+        return (inventory + cash + debt) - capital;
     };
 
     const handleSaveReport = async () => {
@@ -173,31 +227,35 @@ const Report = () => {
                             <th>Amount</th>
                         </tr>
                         <tr>
-                            <td>Inventory Value (In Stock)</td>
-                            <td>${formatCurrency(report.inventory_value)}</td>
+                            <td>Total Sales Revenue</td>
+                            <td>${formatCurrency(report.total_sales)}</td>
                         </tr>
                         <tr>
-                            <td>Total Cash (Money in Account)</td>
-                            <td>${formatCurrency(report.cash_in_hand)}</td>
+                            <td>Cost of Goods Sold (COGS)</td>
+                            <td>- ${formatCurrency(report.total_cogs)}</td>
                         </tr>
                         <tr>
-                            <td>Total Outstanding Debt</td>
-                            <td>${formatCurrency(report.total_debt)}</td>
+                            <td><strong>Gross Profit</strong></td>
+                            <td><strong>${formatCurrency(parseFloat(report.total_sales) - parseFloat(report.total_cogs))}</strong></td>
                         </tr>
                         <tr>
-                            <td><strong>Total Assets</strong></td>
-                            <td><strong>${formatCurrency(parseFloat(report.inventory_value) + parseFloat(report.cash_in_hand) + parseFloat(report.total_debt))}</strong></td>
+                            <td>Total Expenses</td>
+                            <td>- ${formatCurrency(report.total_expenses)}</td>
                         </tr>
                         <tr>
                             <td colspan="2" style="background-color: #eee;"></td>
                         </tr>
                         <tr>
-                            <td>Total Expenses (${expensePeriodText})</td>
-                            <td>- ${formatCurrency(report.total_expenses)}</td>
+                            <td>Inventory Value</td>
+                            <td>${formatCurrency(report.inventory_value)}</td>
                         </tr>
                         <tr>
-                            <td>Business Capital</td>
-                            <td>- ${formatCurrency(report.business_capital)}</td>
+                            <td>Cash in Hand</td>
+                            <td>${formatCurrency(report.cash_in_hand)}</td>
+                        </tr>
+                        <tr>
+                            <td>Outstanding Debt</td>
+                            <td>${formatCurrency(report.total_debt)}</td>
                         </tr>
                     </table>
 
@@ -258,11 +316,11 @@ const Report = () => {
                     </div>
 
                     {activeTab === 'new' ? (
-                        <div className="report-card">
+                        <div className="report-card glass-card">
                             {error && <div className="error-message">{error}</div>}
                             {successMsg && <div className="success-message" style={{ color: 'green', marginBottom: '15px' }}>{successMsg}</div>}
 
-                            <div className="period-selector">
+                            <div className="period-selector glass-card">
                                 <h3>Expense Calculation Period</h3>
                                 <div className="period-grid">
                                     <div className="input-group">
@@ -288,32 +346,71 @@ const Report = () => {
 
                             <div className="report-stats-grid">
                                 <MetricCard
-                                    title="Inventory Value (In Stock)"
-                                    value={formatCurrency(stats.inventory_value)}
-                                    icon={ShoppingBag}
-                                    color="info"
-                                    subtitle="Current stock value"
-                                />
-                                <MetricCard
-                                    title={`Sales (${new Date(dateRange.start).toLocaleDateString()} - ${new Date(dateRange.end).toLocaleDateString()})`}
+                                    title={`Sales Revenue`}
                                     value={formatCurrency(stats.total_sales)}
                                     icon={DollarSign}
                                     color="success"
-                                    subtitle="Total sales in period"
+                                    subtitle="Total revenue in period"
+                                    className="glass-card"
                                 />
                                 <MetricCard
-                                    title={`Expenses (${new Date(dateRange.start).toLocaleDateString()} - ${new Date(dateRange.end).toLocaleDateString()})`}
+                                    title="Cost of Goods Sold"
+                                    value={formatCurrency(stats.total_cogs)}
+                                    icon={Activity}
+                                    color="warning"
+                                    subtitle="Cost of items sold"
+                                    className="glass-card"
+                                />
+                                <MetricCard
+                                    title="Operating Expenses"
                                     value={formatCurrency(stats.total_expenses)}
                                     icon={Receipt}
                                     color="danger"
                                     subtitle="Total spending in period"
+                                    className="glass-card"
+                                />
+                                <MetricCard
+                                    title="Gross Margin"
+                                    value={`${calculateGrossMargin()}%`}
+                                    icon={TrendingUp}
+                                    color="info"
+                                    subtitle="Revenue after COGS"
+                                    className="glass-card"
+                                />
+                            </div>
+
+                            <div className="report-stats-grid" style={{ marginTop: '20px' }}>
+                                <MetricCard
+                                    title="Inventory Value"
+                                    value={formatCurrency(stats.inventory_value)}
+                                    icon={ShoppingBag}
+                                    color="info"
+                                    subtitle="Current stock cost"
+                                    className="glass-card"
                                 />
                                 <MetricCard
                                     title="Total Outstanding Debt"
                                     value={formatCurrency(stats.total_outstanding_debt)}
-                                    icon={ShoppingBag}
+                                    icon={BarChart3}
                                     color="warning"
-                                    subtitle="Current money owed to business"
+                                    subtitle="Owed to business"
+                                    className="glass-card"
+                                />
+                                <MetricCard
+                                    title="Net Profit Margin"
+                                    value={`${calculateNetMargin()}%`}
+                                    icon={PieChart}
+                                    color={calculateNetProfit() >= 0 ? "success" : "danger"}
+                                    subtitle="Bottom line efficiency"
+                                    className="glass-card"
+                                />
+                                <MetricCard
+                                    title="Business Equity"
+                                    value={formatCurrency(calculateEquity())}
+                                    icon={Activity}
+                                    color="secondary"
+                                    subtitle="Assets - Invested Capital"
+                                    className="glass-card"
                                 />
                             </div>
 
@@ -334,13 +431,36 @@ const Report = () => {
                                 </div>
                             </div>
 
-                            <div className="result-section">
-                                <h2>Net Profit / Loss</h2>
-                                <p className={`net-profit ${calculateNetProfit() < 0 ? 'negative' : ''}`}>
-                                    {formatCurrency(calculateNetProfit())}
-                                </p>
+                            <div className="result-section glass-card">
+                                <h2>Net Profit Breakdown</h2>
+                                <div className="breakdown-container glass-card">
+                                    <div className="breakdown-item">
+                                        <span>Total Sales</span>
+                                        <span className="val positive">{formatCurrency(stats.total_sales)}</span>
+                                    </div>
+                                    <div className="breakdown-item">
+                                        <span>- Cost of Goods Sold</span>
+                                        <span className="val negative">({formatCurrency(stats.total_cogs)})</span>
+                                    </div>
+                                    <div className="breakdown-divider"></div>
+                                    <div className="breakdown-item subtotal">
+                                        <span>= Gross Profit</span>
+                                        <span className="val">{formatCurrency(calculateGrossProfit())}</span>
+                                    </div>
+                                    <div className="breakdown-item">
+                                        <span>- Operating Expenses</span>
+                                        <span className="val negative">({formatCurrency(stats.total_expenses)})</span>
+                                    </div>
+                                    <div className="breakdown-divider major"></div>
+                                    <div className="breakdown-item final">
+                                        <span>Net Profit / Loss</span>
+                                        <span className={`val large ${calculateNetProfit() < 0 ? 'negative' : 'positive'}`}>
+                                            {formatCurrency(calculateNetProfit())}
+                                        </span>
+                                    </div>
+                                </div>
                                 <p className="formula-hint">
-                                    (Inventory + Cash + Debt) - Expenses - Capital
+                                    Net Profit = (Sales - COGS) - Expenses
                                 </p>
                             </div>
 
@@ -355,62 +475,82 @@ const Report = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="table-container">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Generated By</th>
-                                        <th>Period</th>
-                                        <th>Inventory</th>
-                                        <th>Sales</th>
-                                        <th>Cash</th>
-                                        <th>Debt</th>
-                                        <th>Expenses</th>
-                                        <th>Net Profit</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {history.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No reports found</td>
-                                        </tr>
-                                    ) : (
-                                        history.map(report => (
-                                            <tr key={report.id}>
-                                                <td>{new Date(report.created_at).toLocaleDateString()} {new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                                                <td>{report.generated_by_name}</td>
-                                                <td style={{ fontSize: '0.85rem' }}>
-                                                    {report.expense_start_date ? (
-                                                        <>
-                                                            {new Date(report.expense_start_date).toLocaleDateString()} - <br />
-                                                            {new Date(report.expense_end_date).toLocaleDateString()}
-                                                        </>
-                                                    ) : 'All Time'}
-                                                </td>
-                                                <td>{formatCurrency(report.inventory_value)}</td>
-                                                <td>{formatCurrency(report.total_sales)}</td>
-                                                <td>{formatCurrency(report.cash_in_hand)}</td>
-                                                <td>{formatCurrency(report.total_debt)}</td>
-                                                <td>{formatCurrency(report.total_expenses)}</td>
-                                                <td style={{ fontWeight: 'bold', color: report.net_profit < 0 ? 'red' : 'green' }}>
-                                                    {formatCurrency(report.net_profit)}
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        className="btn-secondary"
-                                                        style={{ padding: '5px 10px', fontSize: '0.8rem' }}
-                                                        onClick={() => handlePrint(report)}
-                                                    >
-                                                        Print
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
+                        <div className="history-section">
+                            <div className="table-container glass-card">
+                                {loading && offset === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '40px' }}>Loading history...</div>
+                                ) : (
+                                    <>
+                                        <table className="data-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Generated By</th>
+                                                    <th>Period</th>
+                                                    <th>Inventory</th>
+                                                    <th>Sales</th>
+                                                    <th>Cash</th>
+                                                    <th>Debt</th>
+                                                    <th>Expenses</th>
+                                                    <th>Net Profit</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {history.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="10" style={{ textAlign: 'center', padding: '20px' }}>No reports found</td>
+                                                    </tr>
+                                                ) : (
+                                                    history.map(report => (
+                                                        <tr key={report.id}>
+                                                            <td>{new Date(report.created_at).toLocaleDateString()} {new Date(report.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                                                            <td>{report.generated_by_name}</td>
+                                                            <td style={{ fontSize: '0.85rem' }}>
+                                                                {report.expense_start_date ? (
+                                                                    <>
+                                                                        {new Date(report.expense_start_date).toLocaleDateString()} - <br />
+                                                                        {new Date(report.expense_end_date).toLocaleDateString()}
+                                                                    </>
+                                                                ) : 'All Time'}
+                                                            </td>
+                                                            <td>{formatCurrency(report.inventory_value)}</td>
+                                                            <td>{formatCurrency(report.total_sales)}</td>
+                                                            <td>{formatCurrency(report.cash_in_hand)}</td>
+                                                            <td>{formatCurrency(report.total_debt)}</td>
+                                                            <td>{formatCurrency(report.total_expenses)}</td>
+                                                            <td style={{ fontWeight: 'bold', color: report.net_profit < 0 ? 'red' : 'green' }}>
+                                                                {formatCurrency(report.net_profit)}
+                                                            </td>
+                                                            <td>
+                                                                <button
+                                                                    className="btn-secondary"
+                                                                    style={{ padding: '5px 10px', fontSize: '0.8rem' }}
+                                                                    onClick={() => handlePrint(report)}
+                                                                >
+                                                                    Print
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+
+                                        {hasMore && history.length > 0 && (
+                                            <div className="load-more-container">
+                                                <button
+                                                    className="btn-load-more"
+                                                    onClick={loadMore}
+                                                    disabled={loadingMore}
+                                                >
+                                                    {loadingMore ? 'Loading...' : 'Load More Reports'}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

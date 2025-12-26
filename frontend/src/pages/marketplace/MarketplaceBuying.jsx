@@ -14,6 +14,7 @@ const MarketplaceBuying = () => {
     const navigate = useNavigate();
     const [interests, setInterests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [visibleRows, setVisibleRows] = useState(10);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,6 +47,10 @@ const MarketplaceBuying = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const loadMore = () => {
+        setVisibleRows(prev => prev + 10);
     };
 
     useEffect(() => {
@@ -85,7 +90,7 @@ const MarketplaceBuying = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     {/* Page Header */}
                     <div className="page-header" style={{ marginBottom: '30px' }}>
@@ -100,18 +105,22 @@ const MarketplaceBuying = () => {
                     ) : (
                         <div className="buying-content">
                             {interests.length === 0 ? (
-                                <div className="dashboard-card" style={{ textAlign: 'center', padding: '60px 40px' }}>
-                                    <Star size={64} style={{ color: 'var(--text-secondary)', opacity: 0.3, margin: '0 auto 20px' }} />
-                                    <h2 className="heading-2" style={{ marginBottom: '12px' }}>No Starred Items</h2>
-                                    <p className="text-secondary" style={{ marginBottom: '24px' }}>
-                                        Star items you're interested in while browsing to see them here.
+                                <div className="glass-card" style={{ textAlign: 'center', padding: '80px 40px', maxWidth: '600px', margin: '40px auto' }}>
+                                    <div className="empty-icon-wrapper" style={{ marginBottom: '24px' }}>
+                                        <Star size={80} style={{ color: 'var(--primary-color)', opacity: 0.2 }} />
+                                    </div>
+                                    <h2 className="heading-2" style={{ marginBottom: '16px' }}>Your Wishlist is Empty</h2>
+                                    <p className="text-secondary" style={{ marginBottom: '32px', fontSize: '1.1rem' }}>
+                                        Save items you're interested in while browsing to keep track of them here.
                                     </p>
-                                    <button onClick={() => navigate('/marketplace/listings')} className="btn-primary">Browse Marketplace</button>
+                                    <button onClick={() => navigate('/marketplace/listings')} className="btn-primary" style={{ padding: '14px 40px' }}>
+                                        Explore Marketplace
+                                    </button>
                                 </div>
                             ) : (
                                 <div className="orders-list">
-                                    {interests.map(item => (
-                                        <div key={item.id} className="order-card">
+                                    {interests.slice(0, visibleRows).map(item => (
+                                        <div key={item.id} className="order-card glass-card">
                                             <div className="order-header">
                                                 <div className="order-header-left">
                                                     <h4 className="order-id">{item.title}</h4>
@@ -145,6 +154,14 @@ const MarketplaceBuying = () => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {!loading && visibleRows < interests.length && (
+                                <div className="load-more-container">
+                                    <button className="btn-load-more" onClick={loadMore}>
+                                        Load More Items
+                                    </button>
                                 </div>
                             )}
                         </div>

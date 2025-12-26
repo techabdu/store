@@ -37,11 +37,14 @@
     border-radius: 3px 3px 0 0;
 }
 
-.report-card {
-    background: white;
-    border-radius: 12px;
+.report-card.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
     padding: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
     margin-bottom: 20px;
 }
 
@@ -282,8 +285,8 @@
 }
 
 [data-theme='dark'] .period-selector {
-    background: #252525 !important;
-    border-color: #444;
+    background: rgba(30, 41, 59, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .period-selector h3 {
@@ -335,8 +338,8 @@
 }
 
 [data-theme='dark'] .result-section {
-    background: #1a2634;
-    border-color: #2d4a63;
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .formula-hint {
@@ -390,4 +393,166 @@
     .period-grid {
         gap: 10px;
     }
+}
+
+/* Profit Breakdown Visualization */
+.breakdown-container {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .breakdown-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 1.1rem;
+    color: #444;
+}
+
+[data-theme='dark'] .breakdown-item {
+    color: #ddd;
+}
+
+.breakdown-item .val {
+    font-weight: 600;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.breakdown-item .val.positive {
+    color: #1b5e20;
+}
+
+.breakdown-item .val.negative {
+    color: #b71c1c;
+}
+
+[data-theme='dark'] .breakdown-item .val.positive {
+    color: #81c784;
+}
+
+[data-theme='dark'] .breakdown-item .val.negative {
+    color: #ef5350;
+}
+
+.breakdown-divider {
+    height: 1px;
+    background: #cbd5e0;
+    margin: 10px 0;
+}
+
+[data-theme='dark'] .breakdown-divider {
+    background: #4a5568;
+}
+
+.breakdown-divider.major {
+    height: 2px;
+    background: #2b6cb0;
+}
+
+[data-theme='dark'] .breakdown-divider.major {
+    background: #4299e1;
+}
+
+.breakdown-item.subtotal {
+    font-weight: 700;
+    color: #2b6cb0;
+}
+
+[data-theme='dark'] .breakdown-item.subtotal {
+    color: #63b3ed;
+}
+
+.breakdown-item.final {
+    margin-top: 15px;
+    align-items: center;
+}
+
+.breakdown-item.final span:first-child {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.breakdown-item.final .val.large {
+    font-size: 2.2rem;
+    letter-spacing: -1px;
+}
+
+@media (max-width: 480px) {
+    .breakdown-container {
+        padding: 15px;
+    }
+
+    .breakdown-item {
+        font-size: 1rem;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .breakdown-item .val {
+        word-break: break-all;
+        text-align: right;
+        flex: 1 1 auto;
+        min-width: 100px;
+    }
+
+    .breakdown-item.final .val.large {
+        font-size: 1.6rem;
+    }
+}
+
+.load-more-container {
+    margin-top: 24px;
+    display: flex;
+    justify-content: center;
+    padding-bottom: 10px;
+}
+
+.btn-load-more {
+    padding: 10px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-load-more:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(66, 133, 244, 0.3);
+}
+
+.btn-load-more:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.table-container.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+[data-theme='dark'] .table-container.glass-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 }

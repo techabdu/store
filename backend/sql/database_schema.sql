@@ -54,7 +54,9 @@ CREATE TABLE `expenses` (
   `date` date NOT NULL,
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  KEY `idx_expenses_date` (`date`),
+  KEY `idx_expenses_shop_date` (`shop_id`,`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -111,7 +113,8 @@ CREATE TABLE `inventory` (
   `condition_status` varchar(50) NOT NULL DEFAULT 'New',
   `price` decimal(20,2) NOT NULL,
   `cost_price` decimal(20,2) NOT NULL,
-  `status` enum('in_stock','sold','returned') NOT NULL DEFAULT 'in_stock',
+  `status` enum('in_stock','sold','returned','in_transit') NOT NULL DEFAULT 'in_stock',
+  `is_listed` tinyint(1) DEFAULT 0,
   `created_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -607,14 +610,40 @@ CREATE TABLE `reports` (
   `id` int(11) NOT NULL,
   `tenant_id` int(11) NOT NULL DEFAULT 1,
   `shop_id` int(11) DEFAULT NULL,
+  `expense_start_date` date DEFAULT NULL,
+  `expense_end_date` date DEFAULT NULL,
   `generated_by` int(11) NOT NULL,
   `inventory_value` decimal(20,2) NOT NULL DEFAULT 0.00,
+  `total_sales` decimal(20,2) NOT NULL DEFAULT 0.00,
+  `total_cogs` decimal(20,2) NOT NULL DEFAULT 0.00,
   `total_expenses` decimal(20,2) NOT NULL DEFAULT 0.00,
   `business_capital` decimal(20,2) NOT NULL DEFAULT 0.00,
   `cash_in_hand` decimal(20,2) NOT NULL DEFAULT 0.00,
   `total_debt` decimal(20,2) NOT NULL DEFAULT 0.00,
+  `gross_profit` decimal(20,2) NOT NULL DEFAULT 0.00,
+  `operating_profit` decimal(20,2) NOT NULL DEFAULT 0.00,
   `net_profit` decimal(20,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `budgets`
+--
+
+CREATE TABLE IF NOT EXISTS `budgets` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `tenant_id` int(11) NOT NULL,
+    `shop_id` int(11) NOT NULL,
+    `budget_month` varchar(7) NOT NULL COMMENT 'Format: YYYY-MM',
+    `target_sales` decimal(15,2) DEFAULT 0.00,
+    `target_profit` decimal(15,2) DEFAULT 0.00,
+    `max_expenses` decimal(15,2) DEFAULT 0.00,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_shop_month` (`shop_id`, `budget_month`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -744,6 +773,8 @@ CREATE TABLE IF NOT EXISTS `transactions` (
   `customer_phone` varchar(20) DEFAULT NULL,
   `customer_address` text DEFAULT NULL,
   `total_amount` decimal(20,2) NOT NULL,
+  `total_cogs` decimal(20,2) DEFAULT 0.00,
+  `gross_profit` decimal(20,2) DEFAULT 0.00,
   `payment_method` enum('cash','card','transfer','mixed') NOT NULL,
   `transaction_type` enum('sale','debt_payment') DEFAULT 'sale',
   `debt_payment_id` int(11) DEFAULT NULL,

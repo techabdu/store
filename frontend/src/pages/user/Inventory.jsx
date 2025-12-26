@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import { FaSearch } from 'react-icons/fa';
-import { Plus, ArrowLeft, Check } from 'lucide-react';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
+import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight } from 'lucide-react';
+import AdminLayout from '../../components/AdminLayout';
 import './Inventory.css';
 
 const Inventory = () => {
@@ -17,9 +16,12 @@ const Inventory = () => {
     const [view, setView] = useState('list'); // 'list', 'add', 'edit'
 
     const [selectedItem, setSelectedItem] = useState(null);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1); // Step 1 or 2 for multi-step modal
+    const [currentStep, setCurrentStep] = useState(1);
+    const [visibleRows, setVisibleRows] = useState(20);
+    const [submitting, setSubmitting] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isSearching, setIsSearching] = useState(false);
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
     // Form state for add/edit
     const [formData, setFormData] = useState({
@@ -35,39 +37,40 @@ const Inventory = () => {
         status: 'in_stock'
     });
 
-    // Responsive Sidebar Logic
+    // Debounce search term
     useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false);
-            }
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
         };
+    }, [searchTerm]);
 
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    // Fetch inventory when filters or debounced search changes
+    useEffect(() => {
+        fetchInventory(isInitialLoad);
+    }, [statusFilter, debouncedSearchTerm]);
 
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
-
-    // Fetch inventory
-    const fetchInventory = async () => {
+    // Fetch inventory function
+    const fetchInventory = async (showGlobalLoading = false) => {
         try {
-            setLoading(true);
+            if (showGlobalLoading) setLoading(true);
+            setIsSearching(true);
+
             const response = await api.get('/inventory/read.php', {
                 params: {
                     status: statusFilter,
-                    search: searchTerm,
-                    limit: 100
+                    search: debouncedSearchTerm,
+                    limit: 200
                 }
             });
 
             if (response.data.success) {
                 setInventory(response.data.inventory);
+                setVisibleRows(20);
+                if (showGlobalLoading) setIsInitialLoad(false);
             } else {
                 setError(response.data.error || 'Failed to load inventory');
             }
@@ -76,16 +79,18 @@ const Inventory = () => {
             console.error(err);
         } finally {
             setLoading(false);
+            setIsSearching(false);
         }
     };
 
-    useEffect(() => {
-        fetchInventory();
-    }, [statusFilter, searchTerm]);
+    const loadMore = () => {
+        setVisibleRows(prev => prev + 20);
+    };
 
     // Handle add item
     const handleAddItem = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
+        setSubmitting(true);
         setError('');
 
         try {
@@ -95,18 +100,22 @@ const Inventory = () => {
                 setView('list');
                 resetForm();
                 fetchInventory();
+                alert('Phone added to inventory successfully!');
             } else {
                 setError(response.data.error || 'Failed to add item');
             }
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to add item');
             console.error(err);
+        } finally {
+            setSubmitting(false);
         }
     };
 
     // Handle edit item
     const handleEditItem = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
+        setSubmitting(true);
         setError('');
 
         try {
@@ -120,18 +129,21 @@ const Inventory = () => {
                 setSelectedItem(null);
                 resetForm();
                 fetchInventory();
+                alert('Item updated successfully!');
             } else {
                 setError(response.data.error || 'Failed to update item');
             }
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to update item');
             console.error(err);
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    // Handle delete item (Admin only)
+    // Handle delete item
     const handleDeleteItem = async (itemId) => {
-        if (!window.confirm('Are you sure you want to delete this item?')) {
+        if (!window.confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
             return;
         }
 
@@ -144,6 +156,7 @@ const Inventory = () => {
 
             if (response.data.success) {
                 fetchInventory();
+                alert('Item deleted successfully.');
             } else {
                 setError(response.data.error || 'Failed to delete item');
             }
@@ -168,8 +181,8 @@ const Inventory = () => {
             cost_price: item.cost_price,
             status: item.status
         });
-        setCurrentStep(1); // Reset to step 1
-        setError(''); // Clear any errors
+        setCurrentStep(1);
+        setError('');
         setView('edit');
     };
 
@@ -182,369 +195,373 @@ const Inventory = () => {
             vendor: '',
             color: '',
             storage: '',
-            color: '',
-            storage: '',
             condition_status: 'New',
-            price: '',
             price: '',
             cost_price: '',
             status: 'in_stock'
         });
-        setCurrentStep(1); // Reset to step 1
+        setCurrentStep(1);
     };
 
-    // Validate Step 1 fields
+    // Validate Step 1
     const validateStep1 = () => {
-        if (!formData) return false;
         return formData.brand?.trim() !== '' &&
             formData.model?.trim() !== '' &&
             formData.imei?.trim() !== '' &&
             formData.imei?.length === 15;
     };
 
-    // Handle Next button
     const handleNext = (e) => {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        if (e) e.preventDefault();
         if (validateStep1()) {
             setCurrentStep(2);
             setError('');
         } else {
-            setError('Please fill in all required fields in Step 1 (Brand, Model, and valid 15-digit IMEI)');
+            setError('Please provide Brand, Model, and a 15-digit IMEI.');
         }
     };
 
-    // Handle Previous button
     const handlePrevious = (e) => {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        if (e) e.preventDefault();
         setCurrentStep(1);
-        setError(''); // Clear any errors when going back
+        setError('');
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-NG', {
+            style: 'currency',
+            currency: 'NGN',
+            minimumFractionDigits: 0
+        }).format(amount || 0);
     };
 
     return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
-
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-            />
-
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    <div className="inventory-container">
-                        <div className="inventory-header">
-                            <div className="header-content">
-                                <h1>Inventory Management</h1>
-                                <p className="text-secondary">View and Manage Inventory</p>
+        <AdminLayout
+            title={view === 'list' ? "Inventory Management" : (view === 'add' ? "Add New Phone" : "Edit Item")}
+            subtitle={view === 'list' ? "Track and manage your mobile device stock" : ""}
+            loading={loading && isInitialLoad && view === 'list'}
+            error={error}
+            headerActions={view === 'list' && (
+                <button className="btn-primary" onClick={() => {
+                    setView('add');
+                    resetForm();
+                }} style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', whiteSpace: 'nowrap' }}>
+                    <Plus size={20} />
+                    <span className="btn-text">Add New Phone</span>
+                </button>
+            )}
+        >
+            <div className="inventory-page-container">
+                {view === 'list' ? (
+                    <>
+                        {/* Unified Toolbar: Search, Add, and Filter */}
+                        <div className="search-filter-section mb-24">
+                            <div className="search-input-wrapper">
+                                {isSearching ? (
+                                    <div className="search-icon-new searching-icon">
+                                        <div className="tiny-spinner"></div>
+                                    </div>
+                                ) : (
+                                    <FaSearch size={18} className="search-icon-new" />
+                                )}
+                                <input
+                                    type="text"
+                                    placeholder="Search brand, model, IMEI, vendor..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input-new"
+                                />
                             </div>
-                            <button className="btn-primary" onClick={() => {
-                                setView('add');
-                                resetForm();
-                            }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Plus size={20} />
-                                <span className="btn-text">Add Phone</span>
-                            </button>
+
+                            <div className="filter-group-new">
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="filter-select-new"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="in_stock">In Stock</option>
+                                    <option value="in_transit">In Transit</option>
+                                    <option value="sold">Sold</option>
+                                    <option value="returned">Returned</option>
+                                </select>
+                            </div>
                         </div>
 
-                        {error && <div className="error-message">{error}</div>}
-
-                        {view === 'list' ? (
-                            <>
-                                <div className="search-bar-container">
-                                    <div className="search-input-wrapper">
-                                        <FaSearch className="search-icon" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search by brand, model, IMEI, vendor, color, or storage..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="status-filter"
-                                    >
-                                        <option value="all">All Status</option>
-                                        <option value="in_stock">In Stock</option>
-                                        <option value="sold">Sold</option>
-                                        <option value="returned">Returned</option>
-                                    </select>
-                                </div>
-
-                                {loading ? (
-                                    <div className="loading">Loading inventory...</div>
-                                ) : (
-                                    <div className="inventory-table-container">
-                                        <table className="inventory-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Brand</th>
-                                                    <th>Model</th>
-                                                    <th>IMEI</th>
-                                                    <th>Vendor</th>
-                                                    <th>Color</th>
-                                                    <th>Storage</th>
-                                                    <th>Condition</th>
-                                                    <th>Price</th>
-                                                    <th>Cost</th>
-                                                    <th>Status</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {inventory.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan="11" className="no-data">No inventory items found</td>
-                                                    </tr>
-                                                ) : (
-                                                    inventory.map((item) => (
-                                                        <tr key={item.id}>
-                                                            <td>{item.brand}</td>
-                                                            <td>{item.model}</td>
-                                                            <td>{item.imei}</td>
-                                                            <td>{item.vendor || '-'}</td>
-                                                            <td>{item.color || '-'}</td>
-                                                            <td>{item.storage || '-'}</td>
-                                                            <td>
-                                                                <span className={`badge badge-${item.condition_status.replace(/\s+/g, '-').toLowerCase()}`}>
-                                                                    {item.condition_status}
-                                                                </span>
-                                                            </td>
-                                                            <td>₦{parseFloat(item.price).toLocaleString()}</td>
-                                                            <td>₦{parseFloat(item.cost_price).toLocaleString()}</td>
-                                                            <td>
-                                                                <span className={`badge badge-${item.status}`}>
-                                                                    {item.status.replace('_', ' ')}
-                                                                </span>
-                                                            </td>
-                                                            <td className="actions">
+                        {/* Inventory Table */}
+                        <div className="table-container glass-card">
+                            <div className="table-responsive">
+                                <table className="inventory-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Device Details</th>
+                                            <th>IMEI / ID</th>
+                                            <th>Vendor</th>
+                                            <th>Condition</th>
+                                            <th>Prices</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {inventory.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" className="empty-row">
+                                                    <div className="empty-state">
+                                                        <Package size={48} />
+                                                        <p>No inventory items matching your filters</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            inventory.slice(0, visibleRows).map((item) => (
+                                                <tr key={item.id}>
+                                                    <td>
+                                                        <div className="device-cell">
+                                                            <div className="device-main">{item.brand} {item.model}</div>
+                                                            <div className="device-sub">{item.color} | {item.storage}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td><span className="imei-badge">{item.imei}</span></td>
+                                                    <td><span className="vendor-text">{item.vendor || 'Direct Purchase'}</span></td>
+                                                    <td>
+                                                        <span className={`condition-badge ${item.condition_status.toLowerCase().replace(' ', '-')}`}>
+                                                            {item.condition_status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div className="price-cell">
+                                                            <div className="price-sell">{formatCurrency(item.price)}</div>
+                                                            <div className="price-cost">Cost: {formatCurrency(item.cost_price)}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`status-pill ${item.status}`}>
+                                                            {item.status.replace('_', ' ')}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div className="action-buttons">
+                                                            <button
+                                                                className="icon-btn edit"
+                                                                onClick={() => openEditModal(item)}
+                                                                title="Edit Item"
+                                                            >
+                                                                <Edit2 size={16} />
+                                                            </button>
+                                                            {(user.role === 'admin' || user.role === 'superadmin') && (
                                                                 <button
-                                                                    className="btn-edit"
-                                                                    onClick={() => openEditModal(item)}
+                                                                    className="icon-btn delete"
+                                                                    onClick={() => handleDeleteItem(item.id)}
+                                                                    title="Delete Item"
                                                                 >
-                                                                    Edit
+                                                                    <Trash2 size={16} />
                                                                 </button>
-                                                                {(user.role === 'admin' || user.role === 'superadmin') && (
-                                                                    <button
-                                                                        className="btn-delete"
-                                                                        onClick={() => handleDeleteItem(item.id)}
-                                                                    >
-                                                                        Delete
-                                                                    </button>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <div className="focus-view-container animate-slide-in">
-                                <div className="focus-view-header">
-                                    <button className="btn-back" onClick={() => setView('list')}>
-                                        <ArrowLeft size={18} />
-                                        <span>Back to List</span>
-                                    </button>
-                                    <h2>
-                                        {view === 'add' ? 'Add New Phone' : `Edit ${selectedItem?.brand} ${selectedItem?.model}`}
-                                    </h2>
-                                </div>
-
-                                <div className="focus-view-content">
-                                    <div className="focus-view-card">
-                                        <div className="wizard-steps">
-                                            <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
-                                                <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
-                                                <div className="step-label">Phone Details</div>
-                                            </div>
-                                            <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
-                                                <div className="step-number">2</div>
-                                                <div className="step-label">Pricing & Status</div>
-                                            </div>
-                                        </div>
-
-                                        <form onSubmit={view === 'add' ? handleAddItem : handleEditItem}>
-                                            <div className="focus-view-body">
-                                                {currentStep === 1 && (
-                                                    <div className="form-grid-focus">
-                                                        <div className="form-group">
-                                                            <label>Brand *</label>
-                                                            <input
-                                                                type="text"
-                                                                className="form-input-focus"
-                                                                value={formData.brand}
-                                                                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                                                                placeholder="e.g., iPhone, Samsung"
-                                                                required
-                                                            />
-                                                        </div>
-                                                        <div className="form-group">
-                                                            <label>Model *</label>
-                                                            <input
-                                                                type="text"
-                                                                className="form-input-focus"
-                                                                value={formData.model}
-                                                                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                                                                placeholder="e.g., 14 Pro Max"
-                                                                required
-                                                            />
-                                                        </div>
-                                                        <div className="form-group full-width">
-                                                            <label>IMEI (15 digits) *</label>
-                                                            <input
-                                                                type="text"
-                                                                className={`form-input-focus ${(user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit') ? 'disabled-input' : ''}`}
-                                                                value={formData.imei}
-                                                                onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
-                                                                pattern="[0-9]{15}"
-                                                                maxLength="15"
-                                                                placeholder="Enter 15-digit IMEI"
-                                                                disabled={user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit'}
-                                                                required
-                                                            />
-                                                            {user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit' && (
-                                                                <small className="help-text">IMEI can only be edited by Admin</small>
                                                             )}
                                                         </div>
-                                                        <div className="form-group">
-                                                            <label>Color</label>
-                                                            <input
-                                                                type="text"
-                                                                className="form-input-focus"
-                                                                value={formData.color}
-                                                                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                                                placeholder="e.g., Space Black"
-                                                            />
-                                                        </div>
-                                                        <div className="form-group">
-                                                            <label>Storage Capacity</label>
-                                                            <input
-                                                                type="text"
-                                                                className="form-input-focus"
-                                                                value={formData.storage}
-                                                                onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
-                                                                placeholder="e.g., 256GB"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                                                {currentStep === 2 && (
-                                                    <div className="form-grid-focus">
-                                                        <div className="form-group">
-                                                            <label>Condition *</label>
-                                                            <select
-                                                                className="form-input-focus"
-                                                                value={formData.condition_status}
-                                                                onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
-                                                                required
-                                                            >
-                                                                <option value="New">New</option>
-                                                                <option value="Open Box">Open Box</option>
-                                                                <option value="UK Used">UK Used</option>
-                                                                <option value="Used">Used</option>
-                                                            </select>
-                                                        </div>
-                                                        <div className="form-group">
-                                                            <label>Inventory Status *</label>
-                                                            <select
-                                                                className="form-input-focus"
-                                                                value={formData.status}
-                                                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                                                required
-                                                            >
-                                                                <option value="in_stock">In Stock</option>
-                                                                <option value="sold" disabled={view === 'add'}>Sold</option>
-                                                                <option value="returned">Returned</option>
-                                                            </select>
-                                                        </div>
-                                                        <div className="form-group">
-                                                            <label>Selling Price (₦) *</label>
-                                                            <input
-                                                                type="number"
-                                                                className="form-input-focus"
-                                                                step="0.01"
-                                                                min="0"
-                                                                value={formData.price}
-                                                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                                                placeholder="0.00"
-                                                                required
-                                                            />
-                                                        </div>
-                                                        <div className="form-group">
-                                                            <label>Cost Price (₦) *</label>
-                                                            <input
-                                                                type="number"
-                                                                className="form-input-focus"
-                                                                step="0.01"
-                                                                min="0"
-                                                                value={formData.cost_price}
-                                                                onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                                                                placeholder="0.00"
-                                                                required
-                                                            />
-                                                        </div>
-                                                        <div className="form-group full-width">
-                                                            <label>Vendor / Supplier</label>
-                                                            <input
-                                                                type="text"
-                                                                className="form-input-focus"
-                                                                value={formData.vendor}
-                                                                onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                                                                placeholder="Who supplied this phone?"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="focus-view-actions">
-                                                    <div className="secondary-actions">
-                                                        {currentStep === 1 ? (
-                                                            <button type="button" className="btn-cancel" onClick={() => setView('list')}>
-                                                                Cancel
-                                                            </button>
-                                                        ) : (
-                                                            <button type="button" className="btn-cancel" onClick={handlePrevious}>
-                                                                ← Previous
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <div className="primary-actions">
-                                                        {currentStep === 1 ? (
-                                                            <button type="button" className="btn-primary" onClick={handleNext}>
-                                                                Next Step →
-                                                            </button>
-                                                        ) : (
-                                                            <button type="submit" className="btn-primary">
-                                                                {view === 'add' ? 'Add Phone to Inventory' : 'Update Item Details'}
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
+                        {visibleRows < inventory.length && (
+                            <div className="load-more-container">
+                                <button className="btn-load-more" onClick={loadMore}>
+                                    Load More Inventory
+                                </button>
                             </div>
                         )}
+                    </>
+                ) : (
+                    <div className="focus-view-container">
+                        <div className="focus-view-header">
+                            <button className="btn-back" onClick={() => setView('list')}>
+                                <ArrowLeft size={18} />
+                                <span>Back to Inventory</span>
+                            </button>
+                            <h2>
+                                {view === 'add' ? 'Add New Phone' : `Update Stock: ${selectedItem?.brand} ${selectedItem?.model}`}
+                            </h2>
+                        </div>
+
+                        <div className="focus-view-content">
+                            <div className="focus-view-card glass-card">
+                                <div className="wizard-steps">
+                                    <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                        <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
+                                        <div className="step-label">Device Info</div>
+                                    </div>
+                                    <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                        <div className="step-number">2</div>
+                                        <div className="step-label">Financials</div>
+                                    </div>
+                                </div>
+
+                                <form onSubmit={view === 'add' ? handleAddItem : handleEditItem}>
+                                    <div className="focus-view-body">
+                                        {currentStep === 1 ? (
+                                            <div className="form-grid-focus">
+                                                <div className="form-group">
+                                                    <label>Brand Name *</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-input-focus"
+                                                        value={formData.brand}
+                                                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                                        placeholder="e.g. Apple"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Model Name *</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-input-focus"
+                                                        value={formData.model}
+                                                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                                                        placeholder="e.g. iPhone 15 Pro"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="form-group full-width">
+                                                    <label>IMEI Number (15 Digits) *</label>
+                                                    <input
+                                                        type="text"
+                                                        className={`form-input-focus ${(user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit') ? 'locked' : ''}`}
+                                                        value={formData.imei}
+                                                        onChange={(e) => setFormData({ ...formData, imei: e.target.value })}
+                                                        pattern="[0-9]{15}"
+                                                        maxLength="15"
+                                                        placeholder="000000000000000"
+                                                        disabled={user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit'}
+                                                        required
+                                                    />
+                                                    {user.role !== 'admin' && user.role !== 'superadmin' && view === 'edit' && (
+                                                        <p className="field-note">IMEI can only be modified by administrators</p>
+                                                    )}
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Color</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-input-focus"
+                                                        value={formData.color}
+                                                        onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                                        placeholder="e.g. Titanium"
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Storage</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-input-focus"
+                                                        value={formData.storage}
+                                                        onChange={(e) => setFormData({ ...formData, storage: e.target.value })}
+                                                        placeholder="e.g. 512GB"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="form-grid-focus">
+                                                <div className="form-group">
+                                                    <label>Device Condition *</label>
+                                                    <select
+                                                        className="form-input-focus"
+                                                        value={formData.condition_status}
+                                                        onChange={(e) => setFormData({ ...formData, condition_status: e.target.value })}
+                                                        required
+                                                    >
+                                                        <option value="New">Brand New</option>
+                                                        <option value="Open Box">Open Box</option>
+                                                        <option value="UK Used">UK Used</option>
+                                                        <option value="Used">Local Used</option>
+                                                    </select>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Inventory Status *</label>
+                                                    <select
+                                                        className="form-input-focus"
+                                                        value={formData.status}
+                                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                                        required
+                                                    >
+                                                        <option value="in_stock">Ready for Sale (In Stock)</option>
+                                                        <option value="in_transit">In Transit</option>
+                                                        <option value="returned">Returned / RMA</option>
+                                                        {view === 'edit' && <option value="sold">Marked as Sold</option>}
+                                                    </select>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Expected Sales Price (₦) *</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-input-focus"
+                                                        value={formData.price}
+                                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                        placeholder="0.00"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label>Purchase Cost (₦) *</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-input-focus"
+                                                        value={formData.cost_price}
+                                                        onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
+                                                        placeholder="0.00"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="form-group full-width">
+                                                    <label>Vendor / Supplier Details</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-input-focus"
+                                                        value={formData.vendor}
+                                                        onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                                                        placeholder="Supplier name or Contact"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="focus-view-actions">
+                                            <div className="secondary-actions">
+                                                {currentStep === 1 ? (
+                                                    <button type="button" className="btn-cancel" onClick={() => setView('list')}>
+                                                        Discard
+                                                    </button>
+                                                ) : (
+                                                    <button type="button" className="btn-cancel" onClick={handlePrevious}>
+                                                        ← Go Back
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="primary-actions">
+                                                {currentStep === 1 ? (
+                                                    <button type="button" className="btn-primary" onClick={handleNext}>
+                                                        Continue to Pricing →
+                                                    </button>
+                                                ) : (
+                                                    <button type="submit" className="btn-primary" disabled={submitting}>
+                                                        {submitting ? 'Processing...' : (view === 'add' ? 'Confirm & Stock In' : 'Save Changes')}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-
-
-                </div>
-            </main>
-        </div>
+                )}
+            </div>
+        </AdminLayout >
     );
 };
 

@@ -2,9 +2,9 @@ import React from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import './MetricCard.css';
 
-const MetricCard = ({ title, value, icon: Icon, trend, trendDirection, subtitle, color }) => {
+const MetricCard = ({ title, value, icon: Icon, trend, trendDirection, subtitle, color, className = '' }) => {
   return (
-    <div className="dashboard-card metric-card">
+    <div className={`dashboard-card metric-card ${className}`}>
       <div className="metric-header">
         <div className="metric-info">
           <h3 className="metric-title">{title}</h3>

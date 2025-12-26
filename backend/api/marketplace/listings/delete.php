@@ -54,18 +54,23 @@ try {
     }
 
     // 2. Perform Deletion (Hard Delete)
-    // Since 'status' column has strict ENUM constraints (likely 'active','sold','pending') and we hit truncation errors with 'deleted',
-    // we will perform a hard delete to remove the listing entirely.
-    
-    // Optional: Delete associated images first if cascade is not set?
-    // Usually cascade is set, but let's be safe or just delete the listing and let DB handle it.
-    
+    // First get inventory_id to reset is_listed flag
+    $get_inv = $conn->prepare("SELECT inventory_id FROM marketplace_listings WHERE id = ?");
+    $get_inv->bind_param("i", $listing_id);
+    $get_inv->execute();
+    $inv_data = $get_inv->get_result()->fetch_assoc();
+    $inventory_id = $inv_data['inventory_id'] ?? null;
+
     $delete_stmt = $conn->prepare("DELETE FROM marketplace_listings WHERE id = ?");
     $delete_stmt->bind_param("i", $listing_id);
     
     if ($delete_stmt->execute()) {
-        // Also remove images from disk if possible? 
-        // For now, database cleanup is priority.
+        // Reset is_listed flag in inventory
+        if ($inventory_id) {
+            $update_inv = $conn->prepare("UPDATE inventory SET is_listed = 0 WHERE id = ?");
+            $update_inv->bind_param("i", $inventory_id);
+            $update_inv->execute();
+        }
         echo json_encode(['success' => true, 'message' => 'Listing deleted successfully']);
     } else {
         throw new Exception("Failed to delete listing: " . $conn->error);

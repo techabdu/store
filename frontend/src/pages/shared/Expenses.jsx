@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import { Plus, Edit2, Trash2, X, Calendar, Tag } from 'lucide-react';
@@ -11,7 +11,6 @@ import './Expenses.css';
 const Expenses = () => {
     const { user } = useAuth();
     const [expenses, setExpenses] = useState([]);
-    const [filteredExpenses, setFilteredExpenses] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,6 +26,10 @@ const Expenses = () => {
     // Layout State
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+
+    // Lazy Loading State
+    const [visibleCount, setVisibleCount] = useState(20);
+    const observerTarget = useRef(null);
 
     const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
@@ -47,34 +50,12 @@ const Expenses = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Filter expenses when search term changes
-    useEffect(() => {
-        if (searchTerm.trim() === '') {
-            setFilteredExpenses(expenses);
-        } else {
-            const lowerTerm = searchTerm.toLowerCase();
-            const filtered = expenses.filter(expense =>
-                expense.description.toLowerCase().includes(lowerTerm) ||
-                expense.category.toLowerCase().includes(lowerTerm) ||
-                expense.amount.toString().includes(lowerTerm) ||
-                expense.date.includes(lowerTerm) ||
-                (expense.created_by_name && expense.created_by_name.toLowerCase().includes(lowerTerm))
-            );
-            setFilteredExpenses(filtered);
-        }
-    }, [searchTerm, expenses]);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
-
     const fetchExpenses = async () => {
         try {
             setLoading(true);
             const response = await api.get('/expenses.php');
             if (response.data.success) {
                 setExpenses(response.data.expenses);
-                setFilteredExpenses(response.data.expenses);
             }
         } catch (err) {
             console.error('Failed to fetch expenses:', err);
@@ -82,6 +63,55 @@ const Expenses = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Filtered expenses
+    const filteredExpenses = useMemo(() => {
+        if (!searchTerm.trim()) return expenses;
+        const lowerTerm = searchTerm.toLowerCase();
+        return expenses.filter(expense =>
+            expense.description.toLowerCase().includes(lowerTerm) ||
+            expense.category.toLowerCase().includes(lowerTerm) ||
+            expense.amount.toString().includes(lowerTerm) ||
+            expense.date.includes(lowerTerm) ||
+            (expense.created_by_name && expense.created_by_name.toLowerCase().includes(lowerTerm))
+        );
+    }, [searchTerm, expenses]);
+
+    // Intersection Observer for Lazy Loading
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && filteredExpenses.length > visibleCount) {
+                    setVisibleCount(prev => prev + 20);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [filteredExpenses.length, visibleCount]);
+
+    // Reset visible count when search changes
+    useEffect(() => {
+        setVisibleCount(20);
+    }, [searchTerm]);
+
+    // Slice for lazy loading
+    const displayedExpenses = useMemo(() => {
+        return filteredExpenses.slice(0, visibleCount);
+    }, [filteredExpenses, visibleCount]);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
     };
 
     const handleInputChange = (e) => {
@@ -192,7 +222,7 @@ const Expenses = () => {
 
                     {error && <div className="error-message" style={{ color: 'var(--error)', marginBottom: '16px' }}>{error}</div>}
 
-                    <div className="search-bar-container">
+                    <div className="search-bar-container glass-card" style={{ marginBottom: '24px', padding: '16px' }}>
                         <div className="search-input-wrapper">
                             <FaSearch className="search-icon" />
                             <input
@@ -200,72 +230,82 @@ const Expenses = () => {
                                 placeholder="Search expenses by description, category, amount, date, or creator..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{ background: 'transparent', border: 'none', color: 'inherit' }}
                             />
                         </div>
                     </div>
 
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                    <th>Created By</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredExpenses.length === 0 ? (
+                    <div className="table-container glass-card">
+                        <div className="table-responsive">
+                            <table className="data-table glass-table">
+                                <thead>
                                     <tr>
-                                        <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>
-                                            {searchTerm ? 'No expenses match your search' : 'No expenses found'}
-                                        </td>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Category</th>
+                                        <th>Amount</th>
+                                        <th>Created By</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ) : (
-                                    filteredExpenses.map(expense => (
-                                        <tr key={expense.id}>
-                                            <td>{expense.date}</td>
-                                            <td>{expense.description}</td>
-                                            <td>
-                                                <span className="category-badge">
-                                                    {expense.category}
-                                                </span>
-                                            </td>
-                                            <td>₦{parseFloat(expense.amount).toFixed(2)}</td>
-                                            <td>{expense.created_by_name || 'Unknown'}</td>
-                                            <td>
-                                                <div className="action-buttons">
-                                                    <button
-                                                        className="edit-btn"
-                                                        onClick={() => openEditModal(expense)}
-                                                        title="Edit"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    {isAdmin && (
-                                                        <button
-                                                            className="delete-btn"
-                                                            onClick={() => handleDelete(expense.id)}
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    )}
-                                                </div>
+                                </thead>
+                                <tbody>
+                                    {displayedExpenses.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>
+                                                {searchTerm ? 'No expenses match your search' : 'No expenses found'}
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        displayedExpenses.map(expense => (
+                                            <tr key={expense.id}>
+                                                <td>{expense.date}</td>
+                                                <td>{expense.description}</td>
+                                                <td>
+                                                    <span className="category-badge">
+                                                        {expense.category ? expense.category.charAt(0).toUpperCase() + expense.category.slice(1) : ''}
+                                                    </span>
+                                                </td>
+                                                <td>₦{parseFloat(expense.amount).toFixed(2)}</td>
+                                                <td>{expense.created_by_name || 'Unknown'}</td>
+                                                <td>
+                                                    <div className="action-buttons">
+                                                        <button
+                                                            className="edit-btn"
+                                                            onClick={() => openEditModal(expense)}
+                                                            title="Edit"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        {isAdmin && (
+                                                            <button
+                                                                className="delete-btn"
+                                                                onClick={() => handleDelete(expense.id)}
+                                                                title="Delete"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Lazy Load Trigger */}
+                        {filteredExpenses.length > visibleCount && (
+                            <div ref={observerTarget} className="lazy-load-trigger">
+                                <span className="loading-dots">Loading more expenses</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Modal */}
                     {isModalOpen && (
                         <div className="modal-overlay">
-                            <div className="modal-content">
+                            <div className="modal-content glass-card" style={{ border: 'none' }}>
                                 <div className="modal-header">
                                     <h2 className="modal-title">
                                         {currentExpense ? 'Edit Expense' : 'Add New Expense'}
@@ -321,13 +361,14 @@ const Expenses = () => {
                                                 required
                                             >
                                                 <option value="">Select Category</option>
-                                                <option value="Utilities">Utilities</option>
-                                                <option value="Rent">Rent</option>
-                                                <option value="Supplies">Supplies</option>
-                                                <option value="Salaries">Salaries</option>
-                                                <option value="Maintenance">Maintenance</option>
-                                                <option value="Marketing">Marketing</option>
-                                                <option value="Other">Other</option>
+                                                <option value="utilities">Utilities</option>
+                                                <option value="rent">Rent</option>
+                                                <option value="supplies">Supplies</option>
+                                                <option value="salaries">Salaries</option>
+                                                <option value="repairs">Repairs & Maintenance</option>
+                                                <option value="marketing">Marketing</option>
+                                                <option value="transportation">Transportation</option>
+                                                <option value="other">Other</option>
                                             </select>
                                         </div>
                                     </div>

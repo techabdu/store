@@ -1,25 +1,20 @@
 .customers-container {
     display: flex;
     flex-direction: row !important;
-    /* Override dashboard-card's column direction */
     height: calc(100vh - 180px);
-    /* Adjust based on topbar + page header + padding */
     min-height: 500px;
-    background-color: var(--bg-surface);
-    overflow: hidden;
-    border-radius: 8px;
-    /* Match dashboard card radius */
-    border: 1px solid var(--border-color);
+    gap: 5px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-/* Left Panel */
 .customers-list-panel {
     width: 350px;
-    background: var(--bg-surface);
-    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .search-bar-container {
@@ -101,7 +96,6 @@
 .customer-details-panel {
     flex: 1;
     overflow-y: auto;
-    background-color: var(--bg-surface);
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -254,26 +248,29 @@
     font-size: 20px;
 }
 
-/* Customer Detail Modal specific styles */
-.phone-detail-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border-color);
+/* Focus View Integration for Customers Page */
+.focus-view-container {
+    padding: 0;
+    margin-top: 20px;
 }
 
-.phone-detail-row:last-child {
+.focus-view-header {
+    margin-bottom: 2rem;
+    padding-bottom: 0px;
     border-bottom: none;
 }
 
-.phone-detail-row .label {
-    color: var(--text-secondary);
-    font-weight: 500;
+.focus-view-card.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
 }
 
-.phone-detail-row .value {
-    color: var(--text-primary);
-    font-weight: 600;
+[data-theme='dark'] .focus-view-card.glass-card {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .capitalize {

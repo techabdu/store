@@ -83,20 +83,49 @@
     font-size: 12px;
 }
 
-.table-footer {
+.user-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: 600;
+}
+
+.user-role {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.table-footer-actions {
     margin-top: 16px;
-    text-align: right;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.footer-link {
-    color: var(--primary);
-    text-decoration: none;
-    font-size: 14px;
+.btn-load-more {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.footer-link:hover {
-    text-decoration: underline;
+.btn-load-more:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.btn-load-more:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Mobile Responsive Adjustments */

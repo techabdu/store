@@ -22,6 +22,7 @@ const MarketplaceWallet = () => {
     const [showFunding, setShowFunding] = useState(false);
     const [amount, setAmount] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [visibleRows, setVisibleRows] = useState(15);
 
     // Withdrawal State
     const [showWithdraw, setShowWithdraw] = useState(false);
@@ -140,6 +141,10 @@ const MarketplaceWallet = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const loadMore = () => {
+        setVisibleRows(prev => prev + 15);
     };
 
     const handleFundWallet = async (e) => {
@@ -269,7 +274,7 @@ const MarketplaceWallet = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     {/* Verification Warning */}
                     {!isVerified && !loading && (
@@ -498,7 +503,7 @@ const MarketplaceWallet = () => {
                     )}
 
                     {/* Transaction History */}
-                    <div className="dashboard-card table-container" style={{ padding: '0' }}>
+                    <div className="table-container glass-card mb-24">
                         <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', gap: '10px', overflowX: 'auto' }}>
                             {filterTabs.map(tab => (
                                 <button
@@ -530,47 +535,58 @@ const MarketplaceWallet = () => {
                                 <p className="text-secondary">Your transaction history will appear here.</p>
                             </div>
                         ) : (
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Type</th>
-                                        <th>Description</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th style={{ textAlign: 'right' }}>Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredTransactions.map(tx => {
-                                        const isCredit = ['fund', 'sale_complete', 'sale_release', 'refund', 'bid_release'].includes(tx.transaction_type);
-                                        return (
-                                            <tr key={tx.id}>
-                                                <td>
-                                                    <span style={{
-                                                        fontWeight: '500',
-                                                        textTransform: 'capitalize',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px'
+                            <div className="table-responsive">
+                                <table className="inventory-table wallet-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th style={{ textAlign: 'right' }}>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredTransactions.slice(0, visibleRows).map(tx => {
+                                            const isCredit = ['fund', 'sale_complete', 'sale_release', 'refund', 'bid_release'].includes(tx.transaction_type);
+                                            return (
+                                                <tr key={tx.id}>
+                                                    <td>
+                                                        <span style={{
+                                                            fontWeight: '500',
+                                                            textTransform: 'capitalize',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px'
+                                                        }}>
+                                                            {tx.transaction_type.replace('_', ' ')}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-secondary" style={{ fontSize: '13px' }}>{tx.description}</td>
+                                                    <td>{formatDate(tx.created_at)}</td>
+                                                    <td>{getStatusBadge(tx.status)}</td>
+                                                    <td style={{
+                                                        textAlign: 'right',
+                                                        fontWeight: '600',
+                                                        color: isCredit ? 'var(--success)' : 'var(--text-primary)'
                                                     }}>
-                                                        {tx.transaction_type.replace('_', ' ')}
-                                                    </span>
-                                                </td>
-                                                <td className="text-secondary" style={{ fontSize: '13px' }}>{tx.description}</td>
-                                                <td>{formatDate(tx.created_at)}</td>
-                                                <td>{getStatusBadge(tx.status)}</td>
-                                                <td style={{
-                                                    textAlign: 'right',
-                                                    fontWeight: '600',
-                                                    color: isCredit ? 'var(--success)' : 'var(--text-primary)'
-                                                }}>
-                                                    {isCredit ? '+' : '-'}{formatPrice(tx.amount)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                                        {isCredit ? '+' : '-'}{formatPrice(tx.amount)}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+
+                        {visibleRows < filteredTransactions.length && (
+                            <div className="load-more-container">
+                                <button className="btn-load-more" onClick={loadMore}>
+                                    Load More Transactions
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

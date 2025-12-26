@@ -34,6 +34,11 @@ import Customers from './pages/admin/Customers';
 import AdminSettings from './pages/admin/AdminSettings';
 import Report from './pages/admin/Report';
 import StockLevels from './pages/admin/StockLevels';
+import CustomerInsights from './pages/admin/CustomerInsights';
+import ABCAnalysis from './pages/admin/ABCAnalysis';
+import BranchComparison from './pages/admin/BranchComparison';
+import CashFlowReport from './pages/admin/CashFlowReport';
+import Budgeting from './pages/admin/Budgeting';
 import DocsLayout from './components/DocsLayout';
 import Docs from './pages/public/Docs';
 import MarketplaceDashboard from './pages/marketplace/MarketplaceDashboard';
@@ -196,6 +201,46 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin']}>
                                     <Report />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/customer-insights"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <CustomerInsights />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/abc-analysis"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <ABCAnalysis />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/branch-comparison"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <BranchComparison />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/cash-flow"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <CashFlowReport />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/admin/budgeting"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <Budgeting />
                                 </ProtectedRoute>
                             }
                         />

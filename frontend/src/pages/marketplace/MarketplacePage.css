@@ -1,20 +1,20 @@
 /* Generic Marketplace Page Styles */
 
 /* Main Content Responsive Margin for generic pages (Buying, Selling) */
-.marketplace-page-main {
+.marketplace-main {
     margin-left: 280px;
     transition: margin-left 0.3s ease;
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .marketplace-page-main {
+    .marketplace-main {
         margin-left: 0;
     }
 }
 
 @media (max-width: 768px) {
-    .marketplace-page-main {
+    .marketplace-main {
         margin-left: 0;
         padding: 16px;
     }
@@ -29,7 +29,7 @@
 }
 
 @media (max-width: 480px) {
-    .marketplace-page-main {
+    .marketplace-main {
         padding: 12px;
     }
 
@@ -55,6 +55,67 @@
         justify-content: center;
         gap: 0 !important;
     }
+}
+
+/* Glassmorphism/Card utility consistent with Report page */
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme='dark'] .glass-card {
+    background: #1e1e1e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+}
+
+
+/* Table Container Glassmorphism */
+.table-container.glass-card {
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+/* Lazy Load / Load More styling */
+.load-more-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+    padding-bottom: 32px;
+}
+
+.btn-load-more {
+    padding: 12px 40px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 15px rgba(var(--primary-rgb), 0.2);
+}
+
+.btn-load-more:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px rgba(var(--primary-rgb), 0.3);
+}
+
+.btn-load-more:active {
+    transform: translateY(-1px);
 }
 
 .btn-primary {

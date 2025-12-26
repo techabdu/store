@@ -4,6 +4,7 @@ import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { Plus, ArrowLeft, Check, ChevronRight } from 'lucide-react';
 import { FaBox, FaMoneyBillWave, FaClock, FaExclamationCircle } from 'react-icons/fa';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
@@ -15,6 +16,7 @@ const MarketplaceCreateListing = () => {
     const [submitting, setSubmitting] = useState(false);
     const [inventory, setInventory] = useState([]);
     const [error, setError] = useState('');
+    const [currentStep, setCurrentStep] = useState(1);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -170,207 +172,250 @@ const MarketplaceCreateListing = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
-                    <div className="page-header">
-                        <h1 className="heading-1">Create New Listing</h1>
-                        <p className="text-secondary">List a phone from your inventory for sale</p>
-                    </div>
+                    <div className="focus-view-container">
+                        <div className="focus-view-header">
+                            <button className="back-btn" onClick={() => navigate('/marketplace/selling')}>
+                                <ArrowLeft size={18} />
+                                <span>Back to Listings</span>
+                            </button>
+                            <h1 className="heading-2">Create New Listing</h1>
+                        </div>
 
-                    <div className="dashboard-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                        {error && (
-                            <div className="alert-banner error" style={{ marginBottom: '20px', backgroundColor: '#fee2e2', color: '#dc2626', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca' }}>
-                                <FaExclamationCircle style={{ marginRight: '8px' }} />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        {loading ? (
-                            <p>Loading inventory...</p>
-                        ) : inventory.length === 0 ? (
-                            <div className="empty-state">
-                                <FaBox size={48} style={{ color: 'var(--text-secondary)', marginBottom: '16px' }} />
-                                <h3>No Items Available</h3>
-                                <p>You verify have any items in stock to sell. Add items to your inventory first.</p>
-                                <button
-                                    onClick={() => navigate(user?.role === 'admin' ? '/admin/inventory' : '/user/inventory')}
-                                    className="btn-primary"
-                                    style={{ marginTop: '16px' }}
-                                >
-                                    Go to Inventory
-                                </button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit}>
-                                {/* Step 1: Select Item */}
-                                <div className="form-group" style={{ marginBottom: '20px' }}>
-                                    <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Select Item to Sell</label>
-                                    <select
-                                        name="inventory_id"
-                                        value={formData.inventory_id}
-                                        onChange={handleChange}
-                                        className="form-control"
-                                        required
-                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                    >
-                                        <option value="">-- Select a phone --</option>
-                                        {inventory.map(item => (
-                                            <option key={item.id} value={item.id}>
-                                                {item.brand} {item.model} ({item.storage}) - {item.color}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <small className="text-secondary">Only 'in stock' items are shown.</small>
+                        <div className="focus-view-card glass-card">
+                            <div className="wizard-steps">
+                                <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                    <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
+                                    <div className="step-label">Product Details</div>
                                 </div>
+                                <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                    <div className="step-number">2</div>
+                                    <div className="step-label">Pricing & Media</div>
+                                </div>
+                            </div>
 
-                                {/* Step 2: Listing Details */}
-                                {formData.inventory_id && (
-                                    <>
-                                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                                            <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Listing Title</label>
-                                            <input
-                                                type="text"
-                                                name="title"
-                                                value={formData.title}
-                                                onChange={handleChange}
-                                                className="form-control"
-                                                required
-                                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                            />
+                            <form onSubmit={handleSubmit}>
+                                <div className="focus-view-body">
+                                    {error && (
+                                        <div className="alert-banner error" style={{ marginBottom: '24px' }}>
+                                            <FaExclamationCircle size={18} />
+                                            <span>{error}</span>
                                         </div>
+                                    )}
 
-                                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                                            <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Description</label>
-                                            <textarea
-                                                name="description"
-                                                value={formData.description}
-                                                onChange={handleChange}
-                                                className="form-control"
-                                                rows="4"
-                                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                            ></textarea>
+                                    {loading ? (
+                                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                                            <div className="spinner-border" style={{ margin: '0 auto 16px' }}></div>
+                                            <p>Loading inventory...</p>
                                         </div>
-
-                                        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                                            <div className="form-group">
-                                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Listing Type</label>
-                                                <select
-                                                    name="listing_type"
-                                                    value={formData.listing_type}
-                                                    onChange={handleChange}
-                                                    className="form-control"
-                                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                                >
-                                                    <option value="fixed_price">Fixed Price</option>
-                                                    <option value="auction">Auction</option>
-                                                </select>
-                                            </div>
-
-                                            <div className="form-group">
-                                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Price (₦)</label>
-                                                <input
-                                                    type="number"
-                                                    name="price"
-                                                    value={formData.price}
-                                                    onChange={handleChange}
-                                                    className="form-control"
-                                                    required
-                                                    min="0"
-                                                    step="0.01"
-                                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                                />
-                                            </div>
+                                    ) : inventory.length === 0 ? (
+                                        <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
+                                            <FaBox size={48} style={{ color: 'var(--text-secondary)', marginBottom: '16px' }} />
+                                            <h3>No Items Available</h3>
+                                            <p>You don't have any items in stock to sell. Add items to your inventory first.</p>
+                                            <button
+                                                onClick={() => navigate(user?.role === 'admin' ? '/admin/inventory' : '/user/inventory')}
+                                                className="btn-primary"
+                                                style={{ marginTop: '24px', marginInline: 'auto' }}
+                                            >
+                                                Go to Inventory
+                                            </button>
                                         </div>
-
-                                        <div className="form-group" style={{ marginBottom: '20px' }}>
-                                            <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Listing Images</label>
-
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-                                                {images.map((url, index) => (
-                                                    <div key={index} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                                        <img src={getImageUrl(url)} alt={`Listing ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeImage(index)}
-                                                            style={{
-                                                                position: 'absolute', top: '2px', right: '2px',
-                                                                background: 'rgba(255,0,0,0.7)', color: 'white',
-                                                                border: 'none', borderRadius: '50%', width: '20px', height: '20px',
-                                                                cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                            }}
+                                    ) : (
+                                        <>
+                                            {currentStep === 1 && (
+                                                <div className="animate-slide-in">
+                                                    <div className="form-group">
+                                                        <label>Select Item to Sell *</label>
+                                                        <select
+                                                            name="inventory_id"
+                                                            value={formData.inventory_id}
+                                                            onChange={handleChange}
+                                                            className="form-input"
+                                                            required
                                                         >
-                                                            &times;
-                                                        </button>
+                                                            <option value="">-- Select a phone from inventory --</option>
+                                                            {inventory.map(item => (
+                                                                <option key={item.id} value={item.id}>
+                                                                    {item.brand} {item.model} ({item.storage}) - {item.color}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        <p className="field-note">Only 'in stock' items are available for listing.</p>
                                                     </div>
-                                                ))}
 
-                                                <label style={{
-                                                    width: '80px', height: '80px', borderRadius: '6px', border: '2px dashed #ddd',
-                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                    cursor: uploading ? 'not-allowed' : 'pointer', backgroundColor: '#f9fafb'
-                                                }}>
-                                                    {uploading ? (
-                                                        <span style={{ fontSize: '10px' }}>Uploading...</span>
-                                                    ) : (
+                                                    {formData.inventory_id && (
                                                         <>
-                                                            <span style={{ fontSize: '24px', color: '#999' }}>+</span>
-                                                            <span style={{ fontSize: '10px', color: '#666' }}>Add</span>
+                                                            <div className="form-group">
+                                                                <label>Listing Title *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    name="title"
+                                                                    value={formData.title}
+                                                                    onChange={handleChange}
+                                                                    className="form-input"
+                                                                    required
+                                                                    placeholder="e.g. Pristine iPhone 15 Pro Max"
+                                                                />
+                                                            </div>
+
+                                                            <div className="form-group">
+                                                                <label>Description</label>
+                                                                <textarea
+                                                                    name="description"
+                                                                    value={formData.description}
+                                                                    onChange={handleChange}
+                                                                    className="form-input"
+                                                                    rows="5"
+                                                                    placeholder="Describe the condition, accessories, and any other details..."
+                                                                ></textarea>
+                                                            </div>
                                                         </>
                                                     )}
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        multiple
-                                                        onChange={handleImageUpload}
-                                                        style={{ display: 'none' }}
-                                                        disabled={uploading}
-                                                    />
-                                                </label>
-                                            </div>
-                                            <small className="text-secondary">Upload up to 5 images. Successive uploads will append.</small>
-                                        </div>
+                                                </div>
+                                            )}
 
-                                        {formData.listing_type === 'auction' && (
-                                            <div className="form-group" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                                                    <FaClock style={{ marginRight: '6px' }} />
-                                                    Auction End Date
-                                                </label>
-                                                <input
-                                                    type="datetime-local"
-                                                    name="auction_ends_at"
-                                                    value={formData.auction_ends_at}
-                                                    onChange={handleChange}
-                                                    className="form-control"
-                                                    required={formData.listing_type === 'auction'}
-                                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                                />
-                                            </div>
-                                        )}
+                                            {currentStep === 2 && (
+                                                <div className="animate-slide-in">
+                                                    <div className="grid-2" style={{ marginBottom: '24px' }}>
+                                                        <div className="form-group">
+                                                            <label>Listing Type</label>
+                                                            <select
+                                                                name="listing_type"
+                                                                value={formData.listing_type}
+                                                                onChange={handleChange}
+                                                                className="form-input"
+                                                            >
+                                                                <option value="fixed_price">Fixed Price</option>
+                                                                <option value="auction">Auction (Bidding)</option>
+                                                            </select>
+                                                        </div>
 
-                                        <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '30px' }}>
+                                                        <div className="form-group">
+                                                            <label>Price (₦) *</label>
+                                                            <input
+                                                                type="number"
+                                                                name="price"
+                                                                value={formData.price}
+                                                                onChange={handleChange}
+                                                                className="form-input"
+                                                                required
+                                                                min="0"
+                                                                step="0.01"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {formData.listing_type === 'auction' && (
+                                                        <div className="form-group alert-banner" style={{ borderLeftColor: 'var(--primary)', marginBottom: '24px', background: 'rgba(66, 133, 244, 0.05)' }}>
+                                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <FaClock />
+                                                                Auction End Date *
+                                                            </label>
+                                                            <input
+                                                                type="datetime-local"
+                                                                name="auction_ends_at"
+                                                                value={formData.auction_ends_at}
+                                                                onChange={handleChange}
+                                                                className="form-input"
+                                                                required={formData.listing_type === 'auction'}
+                                                                style={{ marginTop: '8px' }}
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    <div className="form-group">
+                                                        <label>Listing Images</label>
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px' }}>
+                                                            {images.map((url, index) => (
+                                                                <div key={index} style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                                                    <img src={getImageUrl(url)} alt={`Listing ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeImage(index)}
+                                                                        style={{
+                                                                            position: 'absolute', top: '5px', right: '5px',
+                                                                            background: 'rgba(239, 68, 68, 0.9)', color: 'white',
+                                                                            border: 'none', borderRadius: '50%', width: '24px', height: '24px',
+                                                                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                                        }}
+                                                                    >
+                                                                        &times;
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+
+                                                            {images.length < 5 && (
+                                                                <label style={{
+                                                                    width: '100px', height: '100px', borderRadius: '12px', border: '2px dashed var(--border-color)',
+                                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                                    cursor: uploading ? 'not-allowed' : 'pointer', background: 'var(--bg-background)',
+                                                                    transition: 'all 0.2s'
+                                                                }} className="image-upload-label">
+                                                                    {uploading ? (
+                                                                        <div className="spinner-border spinner-border-sm"></div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Plus size={24} style={{ color: 'var(--text-secondary)' }} />
+                                                                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>Add Photo</span>
+                                                                        </>
+                                                                    )}
+                                                                    <input
+                                                                        type="file"
+                                                                        accept="image/*"
+                                                                        multiple
+                                                                        onChange={handleImageUpload}
+                                                                        style={{ display: 'none' }}
+                                                                        disabled={uploading}
+                                                                    />
+                                                                </label>
+                                                            )}
+                                                        </div>
+                                                        <p className="field-note">Upload up to 5 clear images of the device.</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
+                                <div className="focus-view-footer">
+                                    {currentStep === 1 ? (
+                                        <button
+                                            type="button"
+                                            className="btn-primary"
+                                            onClick={() => setCurrentStep(2)}
+                                            disabled={!formData.inventory_id || !formData.title}
+                                        >
+                                            Next: Pricing & Photos
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    ) : (
+                                        <>
                                             <button
                                                 type="button"
-                                                onClick={() => navigate('/marketplace/listings')}
                                                 className="btn-secondary"
+                                                onClick={() => setCurrentStep(1)}
                                             >
-                                                Cancel
+                                                Back to Details
                                             </button>
                                             <button
                                                 type="submit"
-                                                disabled={submitting}
                                                 className="btn-primary"
+                                                disabled={submitting}
                                             >
-                                                {submitting ? 'Creating...' : 'Create Listing'}
+                                                {submitting ? 'Creating Listing...' : 'Complete Listing'}
                                             </button>
-                                        </div>
-                                    </>
-                                )}
+                                        </>
+                                    )}
+                                </div>
                             </form>
-                        )}
+                        </div>
                     </div>
                 </div>
             </main>
+
         </div>
     );
 };

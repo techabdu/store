@@ -203,7 +203,7 @@ const MarketplaceListings = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     {/* Header Section */}
                     <div className="listings-header">

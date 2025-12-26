@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
+import AdminLayout from '../../components/AdminLayout';
 import MetricCard from '../../components/MetricCard';
 import ChartCard from '../../components/ChartCard';
 import ActivityTable from '../../components/ActivityTable';
@@ -28,28 +27,6 @@ import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-
-    // Responsive Sidebar Logic
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false);
-            }
-        };
-
-        handleResize(); // Initial check
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
-
     // State for dashboard data
     const [metrics, setMetrics] = useState([]);
     const [salesData, setSalesData] = useState([]);
@@ -59,6 +36,9 @@ const AdminDashboard = () => {
     const [expenseData, setExpenseData] = useState({ daily_expenses: 0, monthly_expenses: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activityOffset, setActivityOffset] = useState(0);
+    const [hasMoreActivity, setHasMoreActivity] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     // Fetch Dashboard Data
     useEffect(() => {
@@ -167,90 +147,88 @@ const AdminDashboard = () => {
         fetchDashboardData();
     }, []);
 
+    const loadMoreActivity = async () => {
+        try {
+            setLoadingMore(true);
+            const nextOffset = activityOffset + 10;
+            const response = await api.get(`/activity_logs.php?limit=10&offset=${nextOffset}`);
+
+            if (response.data.success) {
+                const newLogs = response.data.logs.map(log => ({
+                    username: log.username || 'Unknown',
+                    action: log.action,
+                    timestamp: new Date(log.created_at).toLocaleString(),
+                    role: log.user_role
+                }));
+
+                if (newLogs.length < 10) {
+                    setHasMoreActivity(false);
+                }
+
+                setActivityData(prev => [...prev, ...newLogs]);
+                setActivityOffset(nextOffset);
+            }
+        } catch (error) {
+            console.error('Failed to fetch more activity:', error);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
 
     return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
+        <AdminLayout
+            title="Admin Dashboard"
+            subtitle="Overview of store performance and orders"
+            loading={loading}
+            error={error}
+            alertsCount={alerts.length}
+        >
+            {/* Metrics Grid */}
+            <div className="grid-3">
+                {metrics.map((metric, index) => (
+                    <MetricCard key={index} {...metric} />
+                ))}
+            </div>
 
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-                alertCount={alerts.length}
-            />
+            {/* Charts Section */}
+            <div className="grid-2">
+                <ChartCard title="Sales Overview" subtitle="Monthly sales performance">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={salesData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-secondary)' }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-secondary)' }} />
+                            <Tooltip
+                                cursor={{ fill: 'var(--bg-background)' }}
+                                contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
+                            />
+                            <Legend />
+                            <Bar dataKey="sales" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
 
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    {/* Page Header */}
-                    <div className="page-header">
-                        <h1 className="heading-1">Admin Dashboard</h1>
-                        <p className="text-secondary">Overview of store performance and orders</p>
-                    </div>
+                <AlertsList
+                    title="Store Alerts"
+                    subtitle="Inventory and order notifications"
+                    alerts={alerts}
+                    emptyState={{ text: 'No active alerts.' }}
+                />
+            </div>
 
-                    {/* Loading State */}
-                    {loading && (
-                        <div style={{ textAlign: 'center', padding: '2rem' }}>
-                            <p className="text-secondary">Loading dashboard data...</p>
-                        </div>
-                    )}
-
-                    {/* Error State */}
-                    {error && (
-                        <div style={{ textAlign: 'center', padding: '2rem' }}>
-                            <p style={{ color: 'var(--danger)' }}>{error}</p>
-                        </div>
-                    )}
-
-                    {/* Dashboard Content */}
-                    {!loading && !error && (
-                        <>
-                            {/* Metrics Grid */}
-                            <div className="grid-3">
-                                {metrics.map((metric, index) => (
-                                    <MetricCard key={index} {...metric} />
-                                ))}
-                            </div>
-
-                            {/* Charts Section */}
-                            <div className="grid-2">
-                                <ChartCard title="Sales Overview" subtitle="Monthly sales performance">
-                                    <ResponsiveContainer width="100%" height={300}>
-                                        <BarChart data={salesData}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-secondary)' }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-secondary)' }} />
-                                            <Tooltip
-                                                cursor={{ fill: 'var(--bg-background)' }}
-                                                contentStyle={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
-                                            />
-                                            <Legend />
-                                            <Bar dataKey="sales" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </ChartCard>
-
-                                <AlertsList
-                                    title="Store Alerts"
-                                    subtitle="Inventory and order notifications"
-                                    alerts={alerts}
-                                    emptyState={{ text: 'No active alerts.' }}
-                                />
-                            </div>
-
-                            {/* Recent Activity Table */}
-                            <div className="grid-1">
-                                <ActivityTable
-                                    title="Recent Activity"
-                                    subtitle="Latest system actions"
-                                    data={activityData}
-                                    footer={{ text: 'View all activity', link: '/admin/activity' }}
-                                />
-                            </div>
-                        </>
-                    )}
-                </div>
-            </main>
-        </div>
+            {/* Recent Activity Table */}
+            <div className="grid-1">
+                <ActivityTable
+                    title="Recent Activity"
+                    subtitle="Latest system actions"
+                    data={activityData}
+                    onLoadMore={loadMoreActivity}
+                    hasMore={hasMoreActivity}
+                    loadingMore={loadingMore}
+                />
+            </div>
+        </AdminLayout>
     );
 };
 

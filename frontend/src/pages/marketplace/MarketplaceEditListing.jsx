@@ -4,6 +4,7 @@ import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { ArrowLeft, Check, ChevronRight, Plus } from 'lucide-react';
 import { FaBox, FaExclamationCircle, FaClock } from 'react-icons/fa';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
@@ -15,6 +16,7 @@ const MarketplaceEditListing = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [currentStep, setCurrentStep] = useState(1);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -179,188 +181,230 @@ const MarketplaceEditListing = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
-                    <div className="page-header">
-                        <h1 className="heading-1">Edit Listing</h1>
-                        <p className="text-secondary">Update details for your listing</p>
-                    </div>
+                    <div className="focus-view-container">
+                        <div className="focus-view-header">
+                            <button className="back-btn" onClick={() => navigate('/marketplace/selling')}>
+                                <ArrowLeft size={18} />
+                                <span>Back to Listings</span>
+                            </button>
+                            <h1 className="heading-2">Edit Listing</h1>
+                        </div>
 
-                    <div className="dashboard-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
-                        {error && (
-                            <div className="alert-banner error" style={{ marginBottom: '20px', backgroundColor: '#fee2e2', color: '#dc2626', padding: '12px', borderRadius: '8px', border: '1px solid #fecaca' }}>
-                                <FaExclamationCircle style={{ marginRight: '8px' }} />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit}>
-                            {/* Read-only Item Info */}
-                            <div className="form-group" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
-                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Item Details (Cannot be changed)</label>
-                                <p><strong>{listing?.phone_brand} {listing?.phone_model}</strong></p>
-                                <p className="text-secondary">{listing?.phone_storage} - {listing?.phone_color}</p>
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Listing Title</label>
-                                <input
-                                    type="text"
-                                    name="title"
-                                    value={formData.title}
-                                    onChange={handleChange}
-                                    className="form-control"
-                                    required
-                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Description</label>
-                                <textarea
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                    className="form-control"
-                                    rows="4"
-                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                ></textarea>
-                            </div>
-
-                            <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                                <div className="form-group">
-                                    <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Listing Type</label>
-                                    <select
-                                        name="listing_type"
-                                        value={formData.listing_type}
-                                        onChange={handleChange}
-                                        className="form-control"
-                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                    >
-                                        <option value="fixed_price">Fixed Price</option>
-                                        <option value="auction">Auction</option>
-                                    </select>
+                        <div className="focus-view-card glass-card">
+                            <div className="wizard-steps">
+                                <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                    <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
+                                    <div className="step-label">Listing Content</div>
                                 </div>
-
-                                <div className="form-group">
-                                    <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Price (₦)</label>
-                                    <input
-                                        type="number"
-                                        name="price"
-                                        value={formData.price}
-                                        onChange={handleChange}
-                                        className="form-control"
-                                        required
-                                        min="0"
-                                        step="0.01"
-                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                    />
+                                <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                    <div className="step-number">2</div>
+                                    <div className="step-label">Pricing & Photos</div>
                                 </div>
                             </div>
 
-                            <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Condition</label>
-                                <select
-                                    name="phone_condition"
-                                    value={formData.phone_condition}
-                                    onChange={handleChange}
-                                    className="form-control"
-                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                >
-                                    <option value="new">New</option>
-                                    <option value="like_new">Like New</option>
-                                    <option value="good">Good</option>
-                                    <option value="fair">Fair</option>
-                                    <option value="poor">Poor</option>
-                                </select>
-                            </div>
+                            <form onSubmit={handleSubmit}>
+                                <div className="focus-view-body">
+                                    {error && (
+                                        <div className="alert-banner error" style={{ marginBottom: '24px' }}>
+                                            <FaExclamationCircle size={18} />
+                                            <span>{error}</span>
+                                        </div>
+                                    )}
 
-                            {formData.listing_type === 'auction' && (
-                                <div className="form-group" style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                                    <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                                        <FaClock style={{ marginRight: '6px' }} />
-                                        Auction End Date
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        name="auction_ends_at"
-                                        value={formData.auction_ends_at}
-                                        onChange={handleChange}
-                                        className="form-control"
-                                        required={formData.listing_type === 'auction'}
-                                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd' }}
-                                    />
+                                    {currentStep === 1 && (
+                                        <div className="animate-slide-in">
+                                            {/* Read-only Item Info - Styled as a note */}
+                                            <div className="form-group alert-banner" style={{ background: 'rgba(var(--primary-rgb), 0.05)', borderLeftColor: 'var(--primary)', marginBottom: '24px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <FaBox size={24} style={{ color: 'var(--primary)' }} />
+                                                    <div>
+                                                        <h4 style={{ margin: 0, fontSize: '15px' }}>{listing?.phone_brand} {listing?.phone_model}</h4>
+                                                        <p className="text-secondary" style={{ margin: 0, fontSize: '13px' }}>{listing?.phone_storage} • {listing?.phone_color}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label>Listing Title *</label>
+                                                <input
+                                                    type="text"
+                                                    name="title"
+                                                    value={formData.title}
+                                                    onChange={handleChange}
+                                                    className="form-input"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label>Description</label>
+                                                <textarea
+                                                    name="description"
+                                                    value={formData.description}
+                                                    onChange={handleChange}
+                                                    className="form-input"
+                                                    rows="5"
+                                                ></textarea>
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label>Condition</label>
+                                                <select
+                                                    name="phone_condition"
+                                                    value={formData.phone_condition}
+                                                    onChange={handleChange}
+                                                    className="form-input"
+                                                >
+                                                    <option value="new">New</option>
+                                                    <option value="like_new">Like New</option>
+                                                    <option value="good">Good</option>
+                                                    <option value="fair">Fair</option>
+                                                    <option value="poor">Poor</option>
+                                                </select>
+                                                <p className="field-note">Update the physical condition of your item.</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {currentStep === 2 && (
+                                        <div className="animate-slide-in">
+                                            <div className="grid-2" style={{ marginBottom: '24px' }}>
+                                                <div className="form-group">
+                                                    <label>Listing Type</label>
+                                                    <select
+                                                        name="listing_type"
+                                                        value={formData.listing_type}
+                                                        onChange={handleChange}
+                                                        className="form-input"
+                                                    >
+                                                        <option value="fixed_price">Fixed Price</option>
+                                                        <option value="auction">Auction (Bidding)</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>Price (₦) *</label>
+                                                    <input
+                                                        type="number"
+                                                        name="price"
+                                                        value={formData.price}
+                                                        onChange={handleChange}
+                                                        className="form-input"
+                                                        required
+                                                        min="0"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {formData.listing_type === 'auction' && (
+                                                <div className="form-group alert-banner" style={{ borderLeftColor: 'var(--primary)', marginBottom: '24px', background: 'rgba(66, 133, 244, 0.05)' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <FaClock />
+                                                        Auction End Date *
+                                                    </label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        name="auction_ends_at"
+                                                        value={formData.auction_ends_at}
+                                                        onChange={handleChange}
+                                                        className="form-input"
+                                                        required={formData.listing_type === 'auction'}
+                                                        style={{ marginTop: '8px' }}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            <div className="form-group">
+                                                <label>Listing Images</label>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px' }}>
+                                                    {images.map((url, index) => (
+                                                        <div key={index} style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                                            <img src={getImageUrl(url)} alt={`Listing ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeImage(index)}
+                                                                style={{
+                                                                    position: 'absolute', top: '5px', right: '5px',
+                                                                    background: 'rgba(239, 68, 68, 0.9)', color: 'white',
+                                                                    border: 'none', borderRadius: '50%', width: '24px', height: '24px',
+                                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                                }}
+                                                            >
+                                                                &times;
+                                                            </button>
+                                                        </div>
+                                                    ))}
+
+                                                    {images.length < 5 && (
+                                                        <label style={{
+                                                            width: '100px', height: '100px', borderRadius: '12px', border: '2px dashed var(--border-color)',
+                                                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                                            cursor: uploading ? 'not-allowed' : 'pointer', background: 'var(--bg-background)'
+                                                        }}>
+                                                            {uploading ? (
+                                                                <div className="spinner-border spinner-border-sm"></div>
+                                                            ) : (
+                                                                <>
+                                                                    <Plus size={24} style={{ color: 'var(--text-secondary)' }} />
+                                                                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>Add Photo</span>
+                                                                </>
+                                                            )}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                multiple
+                                                                onChange={handleImageUpload}
+                                                                style={{ display: 'none' }}
+                                                                disabled={uploading}
+                                                            />
+                                                        </label>
+                                                    )}
+                                                </div>
+                                                <p className="field-note">You can add or remove images for your listing.</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
 
-                            <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Listing Images</label>
-
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-                                    {images.map((url, index) => (
-                                        <div key={index} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                            <img src={getImageUrl(url)} alt={`Listing ${index}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div className="focus-view-footer">
+                                    {currentStep === 1 ? (
+                                        <button
+                                            type="button"
+                                            className="btn-primary"
+                                            onClick={() => setCurrentStep(2)}
+                                            disabled={!formData.title}
+                                        >
+                                            Next: Pricing & Photos
+                                            <ChevronRight size={18} />
+                                        </button>
+                                    ) : (
+                                        <>
                                             <button
                                                 type="button"
-                                                onClick={() => removeImage(index)}
-                                                style={{
-                                                    position: 'absolute', top: '2px', right: '2px',
-                                                    background: 'rgba(255,0,0,0.7)', color: 'white',
-                                                    border: 'none', borderRadius: '50%', width: '20px', height: '20px',
-                                                    cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                }}
+                                                className="btn-secondary"
+                                                onClick={() => setCurrentStep(1)}
                                             >
-                                                &times;
+                                                Back to Details
                                             </button>
-                                        </div>
-                                    ))}
-
-                                    <label style={{
-                                        width: '80px', height: '80px', borderRadius: '6px', border: '2px dashed #ddd',
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                        cursor: uploading ? 'not-allowed' : 'pointer', backgroundColor: '#f9fafb'
-                                    }}>
-                                        {uploading ? (
-                                            <span style={{ fontSize: '10px' }}>Uploading...</span>
-                                        ) : (
-                                            <>
-                                                <span style={{ fontSize: '24px', color: '#999' }}>+</span>
-                                                <span style={{ fontSize: '10px', color: '#666' }}>Add</span>
-                                            </>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={handleImageUpload}
-                                            style={{ display: 'none' }}
-                                            disabled={uploading}
-                                        />
-                                    </label>
+                                            <button
+                                                type="submit"
+                                                className="btn-primary"
+                                                disabled={submitting}
+                                            >
+                                                {submitting ? 'Updating Listing...' : 'Save Changes'}
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
-                                <small className="text-secondary">Upload up to 5 images. Successive uploads will append.</small>
-                            </div>
-
-                            <div className="form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '30px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/marketplace/selling')}
-                                    className="btn-secondary"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="btn-primary"
-                                >
-                                    {submitting ? 'Updating...' : 'Update Listing'}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </main>
+
         </div>
     );
 };

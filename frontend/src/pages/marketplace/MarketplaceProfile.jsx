@@ -126,7 +126,7 @@ const MarketplaceProfile = () => {
                 closeSidebar={() => setSidebarOpen(false)}
             />
 
-            <main className="main-content marketplace-page-main">
+            <main className="main-content marketplace-main">
                 <div className="content-wrapper">
                     {/* Page Header */}
                     <div className="page-header">
