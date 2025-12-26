@@ -19,3 +19,4 @@ error_log
 
 # OS
 .DS_Store
+!backend/sql/database_schema.sql

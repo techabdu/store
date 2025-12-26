@@ -649,6 +649,40 @@ CREATE TABLE IF NOT EXISTS `budgets` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `customer_analytics`
+--
+
+CREATE TABLE IF NOT EXISTS `customer_analytics` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tenant_id` int(11) NOT NULL DEFAULT 1,
+  `shop_id` int(11) NOT NULL,
+  `customer_phone` varchar(20) NOT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `segment` varchar(50) DEFAULT 'occasional',
+  `first_purchase_date` date DEFAULT NULL,
+  `last_purchase_date` date DEFAULT NULL,
+  `days_since_last_purchase` int(11) DEFAULT 0,
+  `total_transactions` int(11) DEFAULT 0,
+  `total_spent` decimal(20,2) DEFAULT 0.00,
+  `average_purchase_value` decimal(20,2) DEFAULT 0.00,
+  `lifetime_value` decimal(20,2) DEFAULT 0.00,
+  `purchase_frequency_days` decimal(10,2) DEFAULT 0.00,
+  `total_debt_created` decimal(20,2) DEFAULT 0.00,
+  `total_debt_paid` decimal(20,2) DEFAULT 0.00,
+  `current_outstanding_debt` decimal(20,2) DEFAULT 0.00,
+  `last_debt_payment_date` date DEFAULT NULL,
+  `payment_reliability_score` decimal(5,4) DEFAULT 1.0000,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_customer_shop` (`shop_id`,`customer_phone`),
+  KEY `idx_tenant` (`tenant_id`),
+  KEY `idx_segment` (`segment`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `security_logs`
 --
 
@@ -701,6 +735,29 @@ CREATE TABLE `shops` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Physical branch locations under each tenant (business owner)';
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `shop_settings`
+--
+
+CREATE TABLE IF NOT EXISTS `shop_settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `shop_id` int(11) NOT NULL,
+  `tenant_id` int(11) NOT NULL,
+  `vip_min_spend` decimal(20,2) DEFAULT 5000000.00,
+  `vip_min_transactions` int(11) DEFAULT 10,
+  `loyal_min_spend` decimal(20,2) DEFAULT 2000000.00,
+  `loyal_min_transactions` int(11) DEFAULT 5,
+  `at_risk_days` int(11) DEFAULT 60,
+  `lost_days` int(11) DEFAULT 180,
+  `currency_symbol` varchar(10) DEFAULT '₦',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_shop_settings` (`shop_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
