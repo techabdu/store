@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '../../utils/cropImage';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
@@ -44,6 +46,17 @@ const MarketplaceProfile = () => {
         location: '',
         bio: '',
     });
+
+    // Cropping State
+    const [imageSrc, setImageSrc] = useState(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [isCropping, setIsCropping] = useState(false);
+
+    const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    }, []);
 
     useEffect(() => {
         fetchProfile();
@@ -101,23 +114,33 @@ const MarketplaceProfile = () => {
         }
     };
 
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        // Basic validation
-        if (file.size > 5 * 1024 * 1024) {
-            alert("File is too large. Max size is 5MB.");
-            return;
+    const handleFileSelect = async (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            // Basic validation
+            if (file.size > 5 * 1024 * 1024) {
+                alert("File is too large. Max size is 5MB.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.addEventListener('load', () => {
+                setImageSrc(reader.result);
+                setIsCropping(true);
+            });
+            reader.readAsDataURL(file);
+            // Reset input so same file selection triggers change again if needed
+            e.target.value = '';
         }
+    };
 
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        setUploading(true);
+    const handleUploadCroppedImage = async () => {
         try {
-            // using api helper directly might assume JSON, so we handle FormData content-type specifically if needed
-            // but standard axios usually handles it. We'll be explicit to be safe or just pass formData.
+            setUploading(true);
+            const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+
+            const formData = new FormData();
+            formData.append('avatar', croppedImageBlob, 'profile.jpg');
+
             const response = await api.post('/marketplace/profile/update_avatar.php', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -126,6 +149,8 @@ const MarketplaceProfile = () => {
 
             if (response.data.success) {
                 setProfile(prev => ({ ...prev, profile_image: response.data.image_url }));
+                setIsCropping(false);
+                setImageSrc(null);
             }
         } catch (error) {
             console.error("Error uploading image:", error);
@@ -134,6 +159,11 @@ const MarketplaceProfile = () => {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleCancelCrop = () => {
+        setIsCropping(false);
+        setImageSrc(null);
     };
 
     const getVerificationStatus = () => {
@@ -199,7 +229,7 @@ const MarketplaceProfile = () => {
                                             id="avatar-upload"
                                             hidden
                                             accept="image/*"
-                                            onChange={handleImageUpload}
+                                            onChange={handleFileSelect}
                                             disabled={uploading}
                                         />
                                         <label
@@ -394,6 +424,106 @@ const MarketplaceProfile = () => {
                     )}
                 </div>
             </main>
+
+            {/* Cropping Modal */}
+            {isCropping && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        width: '90%',
+                        maxWidth: '500px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        maxHeight: '90vh'
+                    }}>
+                        <div style={{ padding: '16px', borderBottom: '1px solid #efefef', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Crop Profile Picture</h3>
+                            <button onClick={handleCancelCrop} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ position: 'relative', height: '300px', width: '100%', background: '#333' }}>
+                            <Cropper
+                                image={imageSrc}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={1} // Square aspect for profile
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                                showGrid={true}
+                                cropShape="round" // Round for profile picture
+                            />
+                        </div>
+
+                        <div style={{ padding: '24px' }}>
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500', color: '#666' }}>Zoom</label>
+                                <input
+                                    type="range"
+                                    value={zoom}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    aria-labelledby="Zoom"
+                                    onChange={(e) => setZoom(e.target.value)}
+                                    style={{ width: '100%', cursor: 'pointer' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={handleCancelCrop}
+                                    disabled={uploading}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #ddd',
+                                        background: 'white',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleUploadCroppedImage}
+                                    disabled={uploading}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: 'var(--primary)',
+                                        color: 'white',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    {uploading ? 'Uploading...' : 'Save Picture'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
