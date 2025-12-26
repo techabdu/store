@@ -307,12 +307,16 @@ const MarketplaceProductDetails = () => {
                             >
                                 <div className="seller-avatar">
                                     <img
-                                        src={getImageUrl(listing.seller_profile_image) || '/user-avatar.png'}
+                                        src={getImageUrl(listing.seller_image) || '/user-avatar.png'}
                                         alt={listing.seller_name}
                                     />
                                 </div>
                                 <div className="seller-info">
-                                    <h3 className="seller-name">{listing.seller_name}</h3>
+                                    <h3 className="seller-name">
+                                        {(listing.verified_first_name && listing.verified_last_name)
+                                            ? `${listing.verified_first_name} ${listing.verified_last_name}`
+                                            : listing.seller_name}
+                                    </h3>
                                     <div className="seller-rating">
                                         ★ {listing.seller_rating || 'New Seller'}
                                     </div>

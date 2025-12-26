@@ -44,10 +44,13 @@ try {
             p.profile_image as seller_image,
             p.is_verified as seller_verified,
             p.total_sales as seller_sales,
-            p.average_rating as seller_rating
+            p.average_rating as seller_rating,
+            miv.first_name as verified_first_name,
+            miv.last_name as verified_last_name
         FROM marketplace_listings l
         JOIN shops s ON l.shop_id = s.id
         JOIN marketplace_profiles p ON l.user_id = p.user_id
+        LEFT JOIN marketplace_identity_verifications miv ON l.user_id = miv.user_id
         WHERE l.id = ?
     ";
     $stmt = $conn->prepare($query);
