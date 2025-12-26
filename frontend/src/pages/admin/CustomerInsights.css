@@ -111,6 +111,7 @@
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .section-header {
@@ -235,7 +236,7 @@
 
 @media (max-width: 1024px) {
     .insights-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .insight-section.full-width {

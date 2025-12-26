@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { User, MapPin, Phone, Mail, Calendar, Shield, ShieldCheck, ShieldAlert, Camera, Edit2, Save, X, MessageSquare } from 'lucide-react';
-import api from '../../utils/api';
+import { User, MapPin, Phone, Mail, Calendar, Shield, ShieldCheck, ShieldAlert, Camera, Edit2, Save, X, MessageSquare, Edit } from 'lucide-react';
+import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
@@ -16,6 +16,7 @@ const MarketplaceProfile = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const fileInputRef = useRef(null);
+    const [uploading, setUploading] = useState(false);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -100,6 +101,41 @@ const MarketplaceProfile = () => {
         }
     };
 
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Basic validation
+        if (file.size > 5 * 1024 * 1024) {
+            alert("File is too large. Max size is 5MB.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        setUploading(true);
+        try {
+            // using api helper directly might assume JSON, so we handle FormData content-type specifically if needed
+            // but standard axios usually handles it. We'll be explicit to be safe or just pass formData.
+            const response = await api.post('/marketplace/profile/update_avatar.php', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (response.data.success) {
+                setProfile(prev => ({ ...prev, profile_image: response.data.image_url }));
+            }
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            const msg = error.response?.data?.error || "Failed to upload image.";
+            alert(msg);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const getVerificationStatus = () => {
         if (!profile) return { icon: Shield, color: 'default', label: 'Not Verified', description: 'Verify your identity to build trust' };
 
@@ -112,6 +148,12 @@ const MarketplaceProfile = () => {
         };
 
         return statuses[status] || statuses.none;
+    };
+
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        return `${SERVER_URL}${path}`;
     };
 
     const verificationStatus = getVerificationStatus();
@@ -143,8 +185,49 @@ const MarketplaceProfile = () => {
                             {/* Profile Header */}
                             <div className="profile-header-card">
                                 <div className="profile-avatar-section">
-                                    <div className="profile-avatar">
-                                        <User size={48} />
+                                    <div className="profile-avatar" style={{ position: 'relative' }}>
+                                        {profile?.profile_image ? (
+                                            <img src={getImageUrl(profile.profile_image)} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', borderRadius: '50%' }}>
+                                                <User size={48} color="#9ca3af" />
+                                            </div>
+                                        )}
+
+                                        <input
+                                            type="file"
+                                            id="avatar-upload"
+                                            hidden
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={uploading}
+                                        />
+                                        <label
+                                            htmlFor="avatar-upload"
+                                            style={{
+                                                position: 'absolute',
+                                                bottom: '0',
+                                                left: '-10px',
+                                                backgroundColor: 'white',
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                padding: '6px 12px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                cursor: uploading ? 'wait' : 'pointer',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                                fontSize: '13px',
+                                                fontWeight: '500',
+                                                color: '#374151',
+                                                zIndex: 10,
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                            title="Change Profile Picture"
+                                        >
+                                            <Edit size={14} />
+                                            <span>{uploading ? '...' : 'Edit'}</span>
+                                        </label>
                                     </div>
                                     <div className="profile-header-info">
                                         <h2 className="profile-name">{profile?.full_name || user?.username || 'User'}</h2>

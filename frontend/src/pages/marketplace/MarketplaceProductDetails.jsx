@@ -300,10 +300,14 @@ const MarketplaceProductDetails = () => {
                             </div>
 
                             {/* Seller Info Card */}
-                            <div className="seller-card">
+                            <div
+                                className="seller-card"
+                                onClick={() => navigate(`/marketplace/seller/${listing.user_id}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
                                 <div className="seller-avatar">
                                     <img
-                                        src={listing.seller_profile_image || '/user-avatar.png'}
+                                        src={getImageUrl(listing.seller_profile_image) || '/user-avatar.png'}
                                         alt={listing.seller_name}
                                     />
                                 </div>
@@ -313,6 +317,7 @@ const MarketplaceProductDetails = () => {
                                         ★ {listing.seller_rating || 'New Seller'}
                                     </div>
                                     <p className="seller-badge">Verified Seller</p>
+                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Click to view profile</p>
                                 </div>
                             </div>
                         </div>

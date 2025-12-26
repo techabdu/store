@@ -54,6 +54,7 @@ import MarketplaceCreateListing from './pages/marketplace/MarketplaceCreateListi
 import MarketplaceVerification from './pages/marketplace/MarketplaceVerification';
 import MarketplaceEditListing from './pages/marketplace/MarketplaceEditListing';
 import MarketplaceOrderDetails from './pages/marketplace/MarketplaceOrderDetails';
+import MarketplaceSellerProfile from './pages/marketplace/MarketplaceSellerProfile';
 import Debts from './pages/shared/Debts';
 
 function App() {
@@ -427,6 +428,14 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                                     <MarketplaceVerification />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/seller/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceSellerProfile />
                                 </ProtectedRoute>
                             }
                         />
