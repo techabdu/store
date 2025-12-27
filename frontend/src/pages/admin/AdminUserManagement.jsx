@@ -15,10 +15,12 @@ import {
     X,
     Check,
     AlertCircle,
-    ArrowLeft
+    ArrowLeft,
+    Search,
+    UserPlus
 } from 'lucide-react';
-import { FaSearch } from 'react-icons/fa';
 import '../../styles/dashboard.css';
+import '../../styles/wizard.css';
 import './AdminUserManagement.css';
 
 const AdminUserManagement = () => {
@@ -255,7 +257,7 @@ const AdminUserManagement = () => {
                             {/* Search Bar */}
                             <div className="search-bar-container">
                                 <div className="search-input-wrapper">
-                                    <FaSearch className="search-icon" />
+                                    <Search size={18} className="search-icon" />
                                     <input
                                         type="text"
                                         placeholder="Search by username or email..."
@@ -350,18 +352,18 @@ const AdminUserManagement = () => {
                         <div className="focus-view-container">
                             <div className="focus-view-header">
                                 <button className="btn-back" onClick={() => setView('list')}>
-                                    <ArrowLeft size={18} />
-                                    <span>Back to List</span>
+                                    <ArrowLeft size={20} />
+                                    <span>Back to Users</span>
                                 </button>
                                 <h2>Create New User</h2>
                             </div>
 
                             <div className="focus-view-content">
-                                <div className="focus-view-card">
-                                    <form onSubmit={handleSubmit}>
+                                <form onSubmit={handleSubmit}>
+                                    <div className="focus-view-card glass-card">
                                         <div className="focus-view-body">
-                                            <div className="form-grid">
-                                                <div className="form-group">
+                                            <div className="form-grid-focus">
+                                                <div className="form-group-focus">
                                                     <label>Username</label>
                                                     <div className="input-with-icon">
                                                         <input
@@ -382,7 +384,7 @@ const AdminUserManagement = () => {
                                                     )}
                                                 </div>
 
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Email Address</label>
                                                     <input
                                                         type="email"
@@ -395,7 +397,7 @@ const AdminUserManagement = () => {
                                                     />
                                                 </div>
 
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Initial Password</label>
                                                     <input
                                                         type="password"
@@ -409,7 +411,7 @@ const AdminUserManagement = () => {
                                                     />
                                                 </div>
 
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>User Role</label>
                                                     <select
                                                         name="role"
@@ -422,21 +424,17 @@ const AdminUserManagement = () => {
                                                     </select>
                                                 </div>
                                             </div>
-
-                                            <div className="focus-view-actions">
-                                                <div className="secondary-actions">
-                                                    <button type="button" className="btn-cancel" onClick={() => setView('list')}>Cancel</button>
-                                                </div>
-                                                <div className="primary-actions">
-                                                    <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>
-                                                        <Plus size={18} />
-                                                        Create User Account
-                                                    </button>
-                                                </div>
-                                            </div>
                                         </div>
-                                    </form>
-                                </div>
+                                    </div>
+
+                                    <div className="focus-view-actions">
+                                        <button type="button" className="btn-cancel" onClick={() => setView('list')}>Cancel</button>
+                                        <button type="submit" className="btn-primary" disabled={usernameAvailable === false || isCheckingUsername}>
+                                            <UserPlus size={18} />
+                                            Create User Account
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     )}

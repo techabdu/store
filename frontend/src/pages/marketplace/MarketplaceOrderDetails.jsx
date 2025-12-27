@@ -6,6 +6,7 @@ import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTria
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import './MarketplacePage.css';
+import '../../styles/wizard.css';
 import './MarketplaceOrderDetails.css';
 
 const MarketplaceOrderDetails = () => {
@@ -130,7 +131,7 @@ const MarketplaceOrderDetails = () => {
                             <AlertTriangle size={48} style={{ marginBottom: '10px' }} />
                             <h3 className="heading-3">Error</h3>
                             <p>{error || "Order not found"}</p>
-                            <button onClick={() => navigate('/marketplace/orders')} className="btn-primary" style={{ marginTop: '20px' }}>
+                            <button className="btn-back" onClick={() => navigate('/marketplace/orders')} style={{ marginTop: '20px' }}>
                                 Back to Orders
                             </button>
                         </div>
@@ -150,130 +151,134 @@ const MarketplaceOrderDetails = () => {
 
             <main className="main-content marketplace-main">
                 <div className="content-wrapper">
-                    <div className="page-header" style={{ marginBottom: '24px' }}>
-                        <button onClick={() => navigate('/marketplace/orders')} className="back-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: '12px', padding: '0' }}>
-                            <ArrowLeft size={18} />
-                            <span>Back to Orders</span>
-                        </button>
-                        <h2 className="heading-2">Order Details</h2>
-                    </div>
+                    <div className="focus-view-container">
+                        <div className="focus-view-header">
+                            <button onClick={() => navigate('/marketplace/orders')} className="btn-back">
+                                <ArrowLeft size={18} />
+                                <span>Back to Orders</span>
+                            </button>
+                            <h2>Order Details</h2>
+                        </div>
 
-                    <div className="focus-view-card glass-card animate-slide-in">
-                        <div className="focus-view-body">
-                            {/* Wizard Progress */}
-                            <div className="wizard-steps">
-                                <div className={`step ${order.created_at ? 'completed' : 'active'}`}>
-                                    <div className="step-number">{order.created_at ? <CheckCircle size={14} /> : '1'}</div>
-                                    <div className="step-label">Ordered</div>
-                                </div>
-                                <div className={`step ${order.paid_at ? 'completed' : (order.created_at ? 'active' : '')}`}>
-                                    <div className="step-number">{order.paid_at ? <CheckCircle size={14} /> : '2'}</div>
-                                    <div className="step-label">Paid</div>
-                                </div>
-                                <div className={`step ${order.shipped_at ? 'completed' : (order.paid_at ? 'active' : '')}`}>
-                                    <div className="step-number">{order.shipped_at ? <CheckCircle size={14} /> : '3'}</div>
-                                    <div className="step-label">Shipped</div>
-                                </div>
-                                <div className={`step ${order.delivered_at ? 'completed' : (order.shipped_at ? 'active' : '')}`}>
-                                    <div className="step-number">{order.delivered_at ? <CheckCircle size={14} /> : '4'}</div>
-                                    <div className="step-label">Delivered</div>
-                                </div>
-                            </div>
+                        <div className="focus-view-content">
+                            <div className="focus-view-card glass-card animate-slide-in">
+                                <div className="focus-view-body">
+                                    {/* Wizard Progress */}
+                                    <div className="wizard-steps">
+                                        <div className={`step ${order.created_at ? 'completed' : 'active'}`}>
+                                            <div className="step-number">{order.created_at ? <CheckCircle size={14} /> : '1'}</div>
+                                            <div className="step-label">Ordered</div>
+                                        </div>
+                                        <div className={`step ${order.paid_at ? 'completed' : (order.created_at ? 'active' : '')}`}>
+                                            <div className="step-number">{order.paid_at ? <CheckCircle size={14} /> : '2'}</div>
+                                            <div className="step-label">Paid</div>
+                                        </div>
+                                        <div className={`step ${order.shipped_at ? 'completed' : (order.paid_at ? 'active' : '')}`}>
+                                            <div className="step-number">{order.shipped_at ? <CheckCircle size={14} /> : '3'}</div>
+                                            <div className="step-label">Shipped</div>
+                                        </div>
+                                        <div className={`step ${order.delivered_at ? 'completed' : (order.shipped_at ? 'active' : '')}`}>
+                                            <div className="step-number">{order.delivered_at ? <CheckCircle size={14} /> : '4'}</div>
+                                            <div className="step-label">Delivered</div>
+                                        </div>
+                                    </div>
 
-                            <div className="order-info-grid">
-                                <div className="order-main-info">
-                                    {/* Order Item Card */}
-                                    <div className="order-detail-section">
-                                        <h3 className="section-title">Order Item</h3>
-                                        <div className="order-item-display">
-                                            <div className="order-item-img-wrapper">
-                                                <img
-                                                    src={order.listing_image ? (order.listing_image.startsWith('http') ? order.listing_image : `${SERVER_URL}${order.listing_image}`) : '/placeholder-phone.png'}
-                                                    alt={order.listing_title}
-                                                />
+                                    <div className="order-info-grid">
+                                        <div className="order-main-info">
+                                            {/* Order Item Card */}
+                                            <div className="order-detail-section">
+                                                <h3 className="section-title">Order Item</h3>
+                                                <div className="order-item-display">
+                                                    <div className="order-item-img-wrapper">
+                                                        <img
+                                                            src={order.listing_image ? (order.listing_image.startsWith('http') ? order.listing_image : `${SERVER_URL}${order.listing_image}`) : '/placeholder-phone.png'}
+                                                            alt={order.listing_title}
+                                                        />
+                                                    </div>
+                                                    <div className="order-item-txt">
+                                                        <h4>{order.listing_title}</h4>
+                                                        <p className="subtitle">{order.listing_type} Listing • {order.phone_condition}</p>
+                                                        <div className="price-tag">
+                                                            ₦{Number(order.agreed_price).toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="order-item-txt">
-                                                <h4>{order.listing_title}</h4>
-                                                <p className="subtitle">{order.listing_type} Listing • {order.phone_condition}</p>
-                                                <div className="price-tag">
-                                                    ₦{Number(order.agreed_price).toLocaleString()}
+
+                                            {/* Transaction Info Card */}
+                                            <div className="order-detail-section">
+                                                <h3 className="section-title">Transaction Details</h3>
+                                                <div className="details-list">
+                                                    <div className="detail-row">
+                                                        <span className="detail-label">Reference Number</span>
+                                                        <span className="detail-value">{order.order_number}</span>
+                                                    </div>
+                                                    <div className="detail-row">
+                                                        <span className="detail-label">Payment Method</span>
+                                                        <span className="detail-value text-uppercase">{order.payment_method}</span>
+                                                    </div>
+                                                    <div className="detail-row">
+                                                        <span className="detail-label">Date Placed</span>
+                                                        <span className="detail-value">{formatDate(order.created_at)}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="order-side-info">
+                                            {/* Status Card */}
+                                            <div className="order-detail-section">
+                                                <h3 className="section-title">Order Status</h3>
+                                                <div className="status-display">
+                                                    <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
+                                                        {getStatusIcon(order.order_status)}
+                                                        {order.order_status.toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <p className="status-note">
+                                                    {order.order_status === 'pending' && "Awaiting payment verification to proceed."}
+                                                    {order.order_status === 'processing' && "Seller is preparing your item for shipment."}
+                                                    {order.order_status === 'shipped' && "Your item is on its way!"}
+                                                    {order.order_status === 'delivered' && "Item received and confirmed."}
+                                                    {order.order_status === 'cancelled' && `Order cancelled: ${order.cancellation_reason || 'No reason provided'}.`}
+                                                </p>
+                                            </div>
+
+                                            {/* Action Card */}
+                                            <div className="order-detail-section">
+                                                <h3 className="section-title">Actions</h3>
+                                                <div className="actions-list">
+                                                    <button
+                                                        onClick={() => navigate(`/marketplace/messages?listing_id=${order.listing_id}${!isBuyer ? `&buyer_id=${order.buyer_id}` : ''}`)}
+                                                        className="btn-secondary full-width"
+                                                    >
+                                                        Message {isBuyer ? 'Seller' : 'Buyer'}
+                                                    </button>
+                                                    {canCancel && (
+                                                        <button
+                                                            onClick={() => setShowCancelModal(true)}
+                                                            className="btn-outline-danger full-width"
+                                                        >
+                                                            Cancel Order
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Transaction Info Card */}
-                                    <div className="order-detail-section">
-                                        <h3 className="section-title">Transaction Details</h3>
-                                        <div className="details-list">
-                                            <div className="detail-row">
-                                                <span className="detail-label">Reference Number</span>
-                                                <span className="detail-value">{order.order_number}</span>
-                                            </div>
-                                            <div className="detail-row">
-                                                <span className="detail-label">Payment Method</span>
-                                                <span className="detail-value text-uppercase">{order.payment_method}</span>
-                                            </div>
-                                            <div className="detail-row">
-                                                <span className="detail-label">Date Placed</span>
-                                                <span className="detail-value">{formatDate(order.created_at)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
-                                <div className="order-side-info">
-                                    {/* Status Card */}
-                                    <div className="order-detail-section">
-                                        <h3 className="section-title">Order Status</h3>
-                                        <div className="status-display">
-                                            <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
-                                                {getStatusIcon(order.order_status)}
-                                                {order.order_status.toUpperCase()}
-                                            </span>
-                                        </div>
-                                        <p className="status-note">
-                                            {order.order_status === 'pending' && "Awaiting payment verification to proceed."}
-                                            {order.order_status === 'processing' && "Seller is preparing your item for shipment."}
-                                            {order.order_status === 'shipped' && "Your item is on its way!"}
-                                            {order.order_status === 'delivered' && "Item received and confirmed."}
-                                            {order.order_status === 'cancelled' && `Order cancelled: ${order.cancellation_reason || 'No reason provided'}.`}
-                                        </p>
-                                    </div>
-
-                                    {/* Action Card */}
-                                    <div className="order-detail-section">
-                                        <h3 className="section-title">Actions</h3>
-                                        <div className="actions-list">
-                                            <button
-                                                onClick={() => navigate(`/marketplace/messages?listing_id=${order.listing_id}${!isBuyer ? `&buyer_id=${order.buyer_id}` : ''}`)}
-                                                className="btn-secondary full-width"
-                                            >
-                                                Message {isBuyer ? 'Seller' : 'Buyer'}
-                                            </button>
-                                            {canCancel && (
-                                                <button
-                                                    onClick={() => setShowCancelModal(true)}
-                                                    className="btn-outline-danger full-width"
-                                                >
-                                                    Cancel Order
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                                <div className="focus-view-footer">
+                                    <button onClick={() => navigate('/marketplace/orders')} className="btn-secondary">
+                                        Back to All Orders
+                                    </button>
+                                    {isBuyer && order.order_status === 'shipped' && (
+                                        <button className="btn-primary">
+                                            Confirm Receipt
+                                        </button>
+                                    )}
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="focus-view-footer">
-                            <button onClick={() => navigate('/marketplace/orders')} className="btn-secondary">
-                                Back to All Orders
-                            </button>
-                            {isBuyer && order.order_status === 'shipped' && (
-                                <button className="btn-primary">
-                                    Confirm Receipt
-                                </button>
-                            )}
                         </div>
                     </div>
                 </div>

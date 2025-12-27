@@ -65,7 +65,7 @@ const CustomerInsights = () => {
             loading={loading}
             error={error}
         >
-            <div className="metrics-grid">
+            <div className="customer-metrics-grid">
                 <MetricCard
                     title="Total Customers"
                     value={summary?.metrics?.total_customers || 0}

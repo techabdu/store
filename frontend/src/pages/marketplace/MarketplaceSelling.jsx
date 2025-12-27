@@ -140,69 +140,71 @@ const MarketplaceSelling = () => {
                         </div>
                     ) : (
                         <div className="table-container glass-card mb-24">
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Price</th>
-                                        <th>Type</th>
-                                        <th>Date Listed</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {listings.slice(0, visibleRows).map(item => (
-                                        <tr key={item.id}>
-                                            <td>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                    <div style={{
-                                                        width: '40px',
-                                                        height: '40px',
-                                                        borderRadius: '4px',
-                                                        backgroundColor: '#f3f4f6',
-                                                        backgroundImage: `url(${item.thumbnail || '/placeholder-phone.png'})`,
-                                                        backgroundSize: 'cover',
-                                                        backgroundPosition: 'center'
-                                                    }}></div>
-                                                    <div>
-                                                        <div style={{ fontWeight: '500' }}>{item.title}</div>
-                                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{item.phone_model}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>{formatPrice(item.price)}</td>
-                                            <td>
-                                                <span className={`status-badge status-${item.listing_type === 'auction' ? 'warning' : 'info'}`}>
-                                                    {item.listing_type === 'auction' ? 'Auction' : 'Fixed Price'}
-                                                </span>
-                                            </td>
-                                            <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                                            <td>
-                                                <span className="status-badge status-success">Active</span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="icon-btn"
-                                                    onClick={() => navigate(`/marketplace/edit-listing/${item.id}`)}
-                                                    title="Edit"
-                                                    style={{ marginRight: '8px' }}
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    className="icon-btn"
-                                                    onClick={() => handleDelete(item.id)}
-                                                    title="Delete"
-                                                    style={{ color: '#dc2626' }}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </td>
+                            <div className="table-responsive">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Price</th>
+                                            <th>Type</th>
+                                            <th>Date Listed</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {listings.slice(0, visibleRows).map(item => (
+                                            <tr key={item.id}>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{
+                                                            width: '40px',
+                                                            height: '40px',
+                                                            borderRadius: '4px',
+                                                            backgroundColor: '#f3f4f6',
+                                                            backgroundImage: `url(${item.thumbnail || '/placeholder-phone.png'})`,
+                                                            backgroundSize: 'cover',
+                                                            backgroundPosition: 'center'
+                                                        }}></div>
+                                                        <div>
+                                                            <div style={{ fontWeight: '500' }}>{item.title}</div>
+                                                            <div style={{ fontSize: '12px', color: '#6b7280' }}>{item.phone_model}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>{formatPrice(item.price)}</td>
+                                                <td>
+                                                    <span className={`status-badge status-${item.listing_type === 'auction' ? 'warning' : 'info'}`}>
+                                                        {item.listing_type === 'auction' ? 'Auction' : 'Fixed Price'}
+                                                    </span>
+                                                </td>
+                                                <td>{new Date(item.created_at).toLocaleDateString()}</td>
+                                                <td>
+                                                    <span className="status-badge status-success">Active</span>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="icon-btn"
+                                                        onClick={() => navigate(`/marketplace/edit-listing/${item.id}`)}
+                                                        title="Edit"
+                                                        style={{ marginRight: '8px' }}
+                                                    >
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button
+                                                        className="icon-btn"
+                                                        onClick={() => handleDelete(item.id)}
+                                                        title="Delete"
+                                                        style={{ color: '#dc2626' }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                             {visibleRows < listings.length && (
                                 <div className="load-more-container">
                                     <button className="btn-load-more" onClick={loadMore}>

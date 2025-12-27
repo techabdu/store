@@ -56,13 +56,28 @@
 
 .summary-card {
     background: var(--card-bg);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 20px;
+    padding: 2rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    gap: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+@media (max-width: 1024px) {
+    .summary-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-card {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
 }
 
 .summary-card:hover {
@@ -122,10 +137,26 @@
 /* Filters Section */
 .filters-section {
     background: var(--card-bg);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .filters-section {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .filters-section {
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
 }
 
 .filters-group {
@@ -187,9 +218,24 @@
 /* Table Container */
 .table-container {
     background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .table-container {
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-container {
+        border-radius: 12px;
+        border: none;
+        box-shadow: none;
+    }
 }
 
 .debts-table {
@@ -412,30 +458,41 @@
 /* Customer Info Grid */
 .customer-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
 }
 
 .customer-info-item {
     background: var(--bg-hover);
-    padding: 1.25rem;
-    border-radius: 14px;
+    padding: 1.5rem;
+    border-radius: 16px;
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
+    align-items: flex-start;
+    gap: 1.25rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
 
 .customer-info-item:hover {
-    border-color: var(--border-color);
-    transform: translateY(-2px);
+    border-color: var(--primary);
+    transform: translateY(-4px);
     background: var(--card-bg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
 }
 
 .customer-info-item.full-width {
     grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+    .customer-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .customer-info-item {
+        padding: 1.25rem;
+    }
 }
 
 .item-icon {
@@ -448,6 +505,8 @@
     justify-content: center;
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
+    flex-shrink: 0;
+    margin-top: 2px;
 }
 
 .item-content {
@@ -705,52 +764,4 @@
         left: 0;
         width: 100%;
     }
-}
-
-/* Input with Icon Styles for Wizard Views */
-.input-with-icon {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.input-icon {
-    position: absolute;
-    left: 1.25rem;
-    color: var(--text-secondary);
-    font-weight: 700;
-    font-size: 1.125rem;
-    pointer-events: none;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s ease;
-}
-
-/* Spacing for the input text/placeholder */
-.input-with-icon .form-input-focus {
-    padding-left: 3rem !important;
-    /* Generous space for the icon + gap */
-}
-
-/* Highlight icon when input is focused */
-.input-with-icon:focus-within .input-icon {
-    color: var(--primary);
-}
-
-/* Optional: Add a subtle separator for a more premium UI */
-.input-icon::after {
-    content: "";
-    width: 1px;
-    height: 1.25rem;
-    background-color: var(--border-color);
-    margin-left: 0.75rem;
-    opacity: 0.6;
-}
-
-.input-with-icon:focus-within .input-icon::after {
-    background-color: var(--primary);
-    opacity: 0.3;
 }

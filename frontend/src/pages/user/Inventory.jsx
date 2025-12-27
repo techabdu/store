@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
-import { FaSearch } from 'react-icons/fa';
-import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, Search } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import './Inventory.css';
+import '../../styles/wizard.css';
 
 const Inventory = () => {
     const { user } = useAuth();
@@ -262,7 +262,7 @@ const Inventory = () => {
                                         <div className="tiny-spinner"></div>
                                     </div>
                                 ) : (
-                                    <FaSearch size={18} className="search-icon-new" />
+                                    <Search size={18} className="search-icon-new" />
                                 )}
                                 <input
                                     type="text"
@@ -389,23 +389,23 @@ const Inventory = () => {
                         </div>
 
                         <div className="focus-view-content">
-                            <div className="focus-view-card glass-card">
-                                <div className="wizard-steps">
-                                    <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
-                                        <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
-                                        <div className="step-label">Device Info</div>
+                            <form onSubmit={view === 'add' ? handleAddItem : handleEditItem}>
+                                <div className="focus-view-card glass-card">
+                                    <div className="wizard-steps">
+                                        <div className={`step ${currentStep === 1 ? 'active' : 'completed'}`}>
+                                            <div className="step-number">{currentStep > 1 ? <Check size={14} /> : '1'}</div>
+                                            <div className="step-label">Device Info</div>
+                                        </div>
+                                        <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
+                                            <div className="step-number">2</div>
+                                            <div className="step-label">Financials</div>
+                                        </div>
                                     </div>
-                                    <div className={`step ${currentStep === 2 ? 'active' : ''}`}>
-                                        <div className="step-number">2</div>
-                                        <div className="step-label">Financials</div>
-                                    </div>
-                                </div>
 
-                                <form onSubmit={view === 'add' ? handleAddItem : handleEditItem}>
                                     <div className="focus-view-body">
                                         {currentStep === 1 ? (
                                             <div className="form-grid-focus">
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Brand Name *</label>
                                                     <input
                                                         type="text"
@@ -416,7 +416,7 @@ const Inventory = () => {
                                                         required
                                                     />
                                                 </div>
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Model Name *</label>
                                                     <input
                                                         type="text"
@@ -427,7 +427,7 @@ const Inventory = () => {
                                                         required
                                                     />
                                                 </div>
-                                                <div className="form-group full-width">
+                                                <div className="form-group-focus full-width">
                                                     <label>IMEI Number (15 Digits) *</label>
                                                     <input
                                                         type="text"
@@ -444,7 +444,7 @@ const Inventory = () => {
                                                         <p className="field-note">IMEI can only be modified by administrators</p>
                                                     )}
                                                 </div>
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Color</label>
                                                     <input
                                                         type="text"
@@ -454,7 +454,7 @@ const Inventory = () => {
                                                         placeholder="e.g. Titanium"
                                                     />
                                                 </div>
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Storage</label>
                                                     <input
                                                         type="text"
@@ -467,7 +467,7 @@ const Inventory = () => {
                                             </div>
                                         ) : (
                                             <div className="form-grid-focus">
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Device Condition *</label>
                                                     <select
                                                         className="form-input-focus"
@@ -481,7 +481,7 @@ const Inventory = () => {
                                                         <option value="Used">Local Used</option>
                                                     </select>
                                                 </div>
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Inventory Status *</label>
                                                     <select
                                                         className="form-input-focus"
@@ -495,7 +495,7 @@ const Inventory = () => {
                                                         {view === 'edit' && <option value="sold">Marked as Sold</option>}
                                                     </select>
                                                 </div>
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Expected Sales Price (₦) *</label>
                                                     <input
                                                         type="number"
@@ -506,7 +506,7 @@ const Inventory = () => {
                                                         required
                                                     />
                                                 </div>
-                                                <div className="form-group">
+                                                <div className="form-group-focus">
                                                     <label>Purchase Cost (₦) *</label>
                                                     <input
                                                         type="number"
@@ -517,7 +517,7 @@ const Inventory = () => {
                                                         required
                                                     />
                                                 </div>
-                                                <div className="form-group full-width">
+                                                <div className="form-group-focus full-width">
                                                     <label>Vendor / Supplier Details</label>
                                                     <input
                                                         type="text"
@@ -529,34 +529,31 @@ const Inventory = () => {
                                                 </div>
                                             </div>
                                         )}
-
-                                        <div className="focus-view-actions">
-                                            <div className="secondary-actions">
-                                                {currentStep === 1 ? (
-                                                    <button type="button" className="btn-cancel" onClick={() => setView('list')}>
-                                                        Discard
-                                                    </button>
-                                                ) : (
-                                                    <button type="button" className="btn-cancel" onClick={handlePrevious}>
-                                                        ← Go Back
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <div className="primary-actions">
-                                                {currentStep === 1 ? (
-                                                    <button type="button" className="btn-primary" onClick={handleNext}>
-                                                        Continue to Pricing →
-                                                    </button>
-                                                ) : (
-                                                    <button type="submit" className="btn-primary" disabled={submitting}>
-                                                        {submitting ? 'Processing...' : (view === 'add' ? 'Confirm & Stock In' : 'Save Changes')}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
                                     </div>
-                                </form>
-                            </div>
+                                </div>
+
+                                <div className="focus-view-actions">
+                                    {currentStep === 1 ? (
+                                        <button type="button" className="btn-cancel" onClick={() => setView('list')}>
+                                            Discard Changes
+                                        </button>
+                                    ) : (
+                                        <button type="button" className="btn-cancel" onClick={handlePrevious}>
+                                            ← Go Back
+                                        </button>
+                                    )}
+
+                                    {currentStep === 1 ? (
+                                        <button type="button" className="btn-primary" onClick={handleNext}>
+                                            Continue to Pricing →
+                                        </button>
+                                    ) : (
+                                        <button type="submit" className="btn-primary" disabled={submitting}>
+                                            {submitting ? 'Processing...' : (view === 'add' ? 'Confirm & Stock In' : 'Save Changes')}
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
                         </div>
                     </div>
                 )}

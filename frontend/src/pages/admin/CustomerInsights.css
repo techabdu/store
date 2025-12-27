@@ -20,9 +20,9 @@
     margin-top: 0.5rem;
 }
 
-.metrics-grid {
+.customer-metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-bottom: 2.5rem;
 }
@@ -249,10 +249,7 @@
         padding: 1rem;
     }
 
-    .metrics-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
+    /* .metrics-grid removed from here to allow 3 columns on tablet */
 
     .segments-overview {
         padding: 1.25rem;
@@ -283,6 +280,13 @@
     .insights-table td {
         white-space: nowrap;
         padding: 0.875rem 0.75rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .customer-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 }
 

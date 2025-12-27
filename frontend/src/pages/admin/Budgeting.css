@@ -287,6 +287,10 @@
     gap: 2rem;
 }
 
+.variance-grid>.v-card:last-child {
+    grid-column: 1 / -1;
+}
+
 .v-card {
     padding: 2rem;
     border-radius: 16px;

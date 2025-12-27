@@ -166,7 +166,7 @@ const BranchComparison = () => {
                         <ResponsiveContainer width="100%" height={350}>
                             <PieChart>
                                 <Pie
-                                    data={comparisonData}
+                                    data={comparisonData.filter(d => d.net_profit > 0)}
                                     cx="50%"
                                     cy="50%"
                                     innerRadius={80}
@@ -174,9 +174,8 @@ const BranchComparison = () => {
                                     paddingAngle={5}
                                     dataKey="net_profit"
                                     nameKey="shop_name"
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                                 >
-                                    {comparisonData.map((entry, index) => (
+                                    {comparisonData.filter(d => d.net_profit > 0).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>

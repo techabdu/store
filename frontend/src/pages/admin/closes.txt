@@ -1,0 +1,52 @@
+171:                                </div>
+172:                            </div>
+187:                                        </div>
+188:                                    </div>
+192:                                            <div className="loading-state">Loading customers...</div>
+194:                                            <div className="empty-state">No customers found</div>
+208:                                                        </div>
+214:                                                        </div>
+215:                                                    </div>
+222:                                                    </div>
+226:                                    </div>
+227:                                </div>
+235:                                            </div>
+243:                                                </div>
+254:                                                    </div>
+258:                                                    </div>
+259:                                                </div>
+260:                                            </div>
+265:                                                    <div className="loading-state">Loading history...</div>
+267:                                                    <div className="empty-state">No purchase history</div>
+279:                                                                </div>
+285:                                                                </div>
+286:                                                                <div className="history-arrow">›</div>
+287:                                                            </div>
+289:                                                    </div>
+291:                                            </div>
+297:                                        </div>
+299:                                </div>
+300:                            </div>
+310:                            </div>
+318:                                            </div>
+320:                                        </div>
+325:                                            </div>
+329:                                            </div>
+333:                                            </div>
+337:                                            </div>
+341:                                            </div>
+342:                                        </div>
+343:                                    </div>
+351:                                            </div>
+353:                                        </div>
+360:                                            </div>
+366:                                            </div>
+367:                                        </div>
+368:                                    </div>
+386:                                        </div>
+387:                                    </div>
+388:                                </div>
+389:                            </div>
+390:                        </div>
+392:                </div>
+394:        </div>

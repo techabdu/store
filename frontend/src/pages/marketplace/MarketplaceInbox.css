@@ -250,7 +250,6 @@
     text-align: center;
     padding: 40px;
     background-color: var(--bg-surface);
-    border-bottom: 6px solid var(--success);
 }
 
 /* Chat Header */

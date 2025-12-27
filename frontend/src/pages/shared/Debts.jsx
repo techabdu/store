@@ -5,7 +5,7 @@ import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import DebtPaymentReceipt from '../../components/DebtPaymentReceipt';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus, User, Tag, CreditCard, Phone, MapPin } from 'lucide-react';
 import './Debts.css';
 
 const Debts = () => {
@@ -500,7 +500,7 @@ const Debts = () => {
                             </div>
 
                             {/* Filters */}
-                            <div className="filters-section glass-card" style={{ padding: '20px', marginBottom: '24px' }}>
+                            <div className="filters-section glass-card">
                                 <div className="filters-group">
                                     <div className="filter-item">
                                         <label>Status</label>
@@ -667,159 +667,147 @@ const Debts = () => {
 
                             <div className="focus-view-content">
                                 <div className="focus-view-card glass-card">
-                                    {/* Customer Information */}
-                                    <div className="detail-section">
-                                        <div className="section-header">
-                                            <div className="section-icon">
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                                    <circle cx="12" cy="7" r="4" />
-                                                </svg>
+                                    <div className="focus-view-body">
+                                        {/* Customer Information */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <User size={20} />
+                                                </div>
+                                                <h4>Customer Information</h4>
                                             </div>
-                                            <h4>Customer Information</h4>
-                                        </div>
-                                        <div className="customer-info-grid">
-                                            <div className="customer-info-item">
-                                                <div className="item-icon">
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                                        <circle cx="12" cy="7" r="4" />
-                                                    </svg>
+                                            <div className="customer-info-grid">
+                                                <div className="customer-info-item">
+                                                    <div className="item-icon">
+                                                        <User size={18} />
+                                                    </div>
+                                                    <div className="item-content">
+                                                        <span className="label">Name</span>
+                                                        <span className="value">{debtDetails.customer_name}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="item-content">
-                                                    <span className="label">Name</span>
-                                                    <span className="value">{debtDetails.customer_name}</span>
+                                                <div className="customer-info-item">
+                                                    <div className="item-icon">
+                                                        <Phone size={18} />
+                                                    </div>
+                                                    <div className="item-content">
+                                                        <span className="label">Phone</span>
+                                                        <span className="value">{debtDetails.customer_phone}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="customer-info-item">
-                                                <div className="item-icon">
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                                    </svg>
-                                                </div>
-                                                <div className="item-content">
-                                                    <span className="label">Phone</span>
-                                                    <span className="value">{debtDetails.customer_phone}</span>
-                                                </div>
-                                            </div>
-                                            <div className="customer-info-item full-width">
-                                                <div className="item-icon">
-                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                                        <circle cx="12" cy="10" r="3" />
-                                                    </svg>
-                                                </div>
-                                                <div className="item-content">
-                                                    <span className="label">Address</span>
-                                                    <span className="value">{debtDetails.customer_address || 'No address provided'}</span>
+                                                <div className="customer-info-item full-width">
+                                                    <div className="item-icon">
+                                                        <MapPin size={18} />
+                                                    </div>
+                                                    <div className="item-content">
+                                                        <span className="label">Address</span>
+                                                        <span className="value">{debtDetails.customer_address || 'No address provided'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <hr className="divider" />
+                                        <hr className="divider" />
 
-                                    {/* Debt Summary */}
-                                    <div className="detail-section">
-                                        <div className="section-header">
-                                            <div className="section-icon summary">
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <rect x="2" y="4" width="20" height="16" rx="2" />
-                                                    <path d="M7 15h0M2 9.5h20" />
-                                                </svg>
+                                        {/* Debt Summary */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <Tag size={20} />
+                                                </div>
+                                                <h4>Debt Summary</h4>
                                             </div>
-                                            <h4>Debt Summary</h4>
-                                        </div>
-                                        <div className="summary-grid-focus">
-                                            <div className="summary-item-focus">
-                                                <span className="label">Total Amount:</span>
-                                                <span className="value">₦{parseFloat(debtDetails.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="summary-item-focus paid">
-                                                <span className="label">Paid Amount:</span>
-                                                <span className="value">₦{parseFloat(debtDetails.paid_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="summary-item-focus remaining highlight">
-                                                <span className="label">Remaining Balance:</span>
-                                                <span className="value">₦{parseFloat(debtDetails.remaining_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="summary-item-focus">
-                                                <span className="label">Status:</span>
-                                                <span className={`status-badge ${getStatusBadge(debtDetails.status).class}`}>
-                                                    {getStatusBadge(debtDetails.status).label}
-                                                </span>
+                                            <div className="summary-grid-focus">
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Total Amount:</span>
+                                                    <span className="value">₦{parseFloat(debtDetails.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="summary-item-focus paid">
+                                                    <span className="label">Paid Amount:</span>
+                                                    <span className="value">₦{parseFloat(debtDetails.paid_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="summary-item-focus remaining highlight">
+                                                    <span className="label">Remaining Balance:</span>
+                                                    <span className="value">₦{parseFloat(debtDetails.remaining_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Status:</span>
+                                                    <span className={`status-badge ${getStatusBadge(debtDetails.status).class}`}>
+                                                        {getStatusBadge(debtDetails.status).label}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <hr className="divider" />
+                                        <hr className="divider" />
 
-                                    {/* Payment History */}
-                                    <div className="detail-section">
-                                        <div className="section-header">
-                                            <div className="section-icon history">
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
-                                                </svg>
-                                            </div>
-                                            <h4>Payment History</h4>
-                                        </div>
-                                        {paymentHistory.length === 0 ? (
-                                            <div className="empty-payments">
-                                                <div className="empty-icon">
-                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                                        {/* Payment History */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon history">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                         <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
                                                     </svg>
                                                 </div>
-                                                <p>No payments recorded yet</p>
-                                                <small>Payments will appear here as they are recorded</small>
+                                                <h4>Payment History</h4>
                                             </div>
-                                        ) : (
-                                            <div className="payment-timeline">
-                                                {paymentHistory.map((payment) => (
-                                                    <div key={payment.id} className="timeline-item">
-                                                        <div className="timeline-marker">
-                                                            <div className="marker-dot"></div>
-                                                        </div>
-                                                        <div className="timeline-card">
-                                                            <div className="card-top">
-                                                                <div className="payment-amount">
-                                                                    <span className="currency">₦</span>
-                                                                    {parseFloat(payment.amount_paid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                                </div>
-                                                                <div className="payment-badge success">Success</div>
-                                                            </div>
-                                                            <div className="card-middle">
-                                                                <div className="payment-date-info">
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                                                        <line x1="16" y1="2" x2="16" y2="6" />
-                                                                        <line x1="8" y1="2" x2="8" y2="6" />
-                                                                        <line x1="3" y1="10" x2="21" y2="10" />
-                                                                    </svg>
-                                                                    {new Date(payment.payment_date).toLocaleString(undefined, {
-                                                                        dateStyle: 'medium',
-                                                                        timeStyle: 'short'
-                                                                    })}
-                                                                </div>
-                                                                <div className="recorded-by">
-                                                                    <span>Recorded by</span>
-                                                                    <strong>{payment.recorded_by_name}</strong>
-                                                                </div>
-                                                            </div>
-                                                            {payment.notes && (
-                                                                <div className="payment-notes-bubble">
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                                                    </svg>
-                                                                    {payment.notes}
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                            {paymentHistory.length === 0 ? (
+                                                <div className="empty-payments">
+                                                    <div className="empty-icon">
+                                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                                                            <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" />
+                                                        </svg>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                                    <p>No payments recorded yet</p>
+                                                    <small>Payments will appear here as they are recorded</small>
+                                                </div>
+                                            ) : (
+                                                <div className="payment-timeline">
+                                                    {paymentHistory.map((payment) => (
+                                                        <div key={payment.id} className="timeline-item">
+                                                            <div className="timeline-marker">
+                                                                <div className="marker-dot"></div>
+                                                            </div>
+                                                            <div className="timeline-card">
+                                                                <div className="card-top">
+                                                                    <div className="payment-amount">
+                                                                        <span className="currency">₦</span>
+                                                                        {parseFloat(payment.amount_paid).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                                    </div>
+                                                                    <div className="payment-badge success">Success</div>
+                                                                </div>
+                                                                <div className="card-middle">
+                                                                    <div className="payment-date-info">
+                                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                                                            <line x1="16" y1="2" x2="16" y2="6" />
+                                                                            <line x1="8" y1="2" x2="8" y2="6" />
+                                                                            <line x1="3" y1="10" x2="21" y2="10" />
+                                                                        </svg>
+                                                                        {new Date(payment.payment_date).toLocaleString(undefined, {
+                                                                            dateStyle: 'medium',
+                                                                            timeStyle: 'short'
+                                                                        })}
+                                                                    </div>
+                                                                    <div className="recorded-by">
+                                                                        <span>Recorded by</span>
+                                                                        <strong>{payment.recorded_by_name}</strong>
+                                                                    </div>
+                                                                </div>
+                                                                {payment.notes && (
+                                                                    <div className="payment-notes-bubble">
+                                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                                                        </svg>
+                                                                        {payment.notes}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -866,74 +854,89 @@ const Debts = () => {
 
                             <div className="focus-view-content">
                                 <div className="focus-view-card glass-card">
-                                    {/* Debt Summary */}
-                                    <div className="detail-section">
-                                        <h4>{selectedDebt.customer_name}</h4>
-                                        <div className="summary-grid-focus">
-                                            <div className="summary-item-focus">
-                                                <span className="label">Total Amount:</span>
-                                                <span className="value">₦{parseFloat(selectedDebt.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    <div className="focus-view-body">
+                                        {/* Debt Summary */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                        <circle cx="12" cy="7" r="4" />
+                                                    </svg>
+                                                </div>
+                                                <h4>{selectedDebt.customer_name}</h4>
                                             </div>
-                                            <div className="summary-item-focus paid">
-                                                <span className="label">Already Paid:</span>
-                                                <span className="value">₦{parseFloat(selectedDebt.paid_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="summary-item-focus remaining highlight">
-                                                <span className="label">Remaining Balance:</span>
-                                                <span className="value">₦{parseFloat(selectedDebt.remaining_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                            <div className="summary-grid-focus">
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Total Amount:</span>
+                                                    <span className="value">₦{parseFloat(selectedDebt.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="summary-item-focus paid">
+                                                    <span className="label">Already Paid:</span>
+                                                    <span className="value">₦{parseFloat(selectedDebt.paid_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="summary-item-focus remaining highlight">
+                                                    <span className="label">Remaining Balance:</span>
+                                                    <span className="value">₦{parseFloat(selectedDebt.remaining_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <hr className="divider" />
+                                        <hr className="divider" />
 
-                                    {/* Payment Form */}
-                                    <div className="detail-section">
-                                        <h4>Payment Details</h4>
-                                        <div className="form-group-focus">
-                                            <label>Payment Amount (₦) *</label>
-                                            <div className="input-with-icon">
-                                                <span className="input-icon">₦</span>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    max={selectedDebt.remaining_balance}
-                                                    value={paymentForm.amount_paid}
-                                                    onChange={(e) => setPaymentForm({ ...paymentForm, amount_paid: e.target.value })}
-                                                    placeholder="0.00"
+                                        {/* Payment Form */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <CreditCard size={20} />
+                                                </div>
+                                                <h4>Payment Details</h4>
+                                            </div>
+                                            <div className="form-group-focus">
+                                                <label>Payment Amount (₦) *</label>
+                                                <div className="input-with-icon">
+                                                    <span className="input-icon">₦</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        max={selectedDebt.remaining_balance}
+                                                        value={paymentForm.amount_paid}
+                                                        onChange={(e) => setPaymentForm({ ...paymentForm, amount_paid: e.target.value })}
+                                                        placeholder="0.00"
+                                                        className="form-input-focus"
+                                                    />
+                                                </div>
+                                                <small className="form-help">
+                                                    Maximum: ₦{parseFloat(selectedDebt.remaining_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </small>
+                                            </div>
+
+                                            <div className="form-group-focus">
+                                                <label>Payment Method *</label>
+                                                <select
+                                                    value={paymentForm.payment_method}
+                                                    onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })}
+                                                    className="form-input-focus"
+                                                    required
+                                                >
+                                                    <option value="cash">Cash</option>
+                                                    <option value="card">Card</option>
+                                                    <option value="transfer">Transfer</option>
+                                                    <option value="mixed">Mixed</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="form-group-focus">
+                                                <label>Notes (Optional)</label>
+                                                <textarea
+                                                    value={paymentForm.notes}
+                                                    onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
+                                                    placeholder="Add any notes about this payment..."
+                                                    rows="4"
                                                     className="form-input-focus"
                                                 />
                                             </div>
-                                            <small className="form-help">
-                                                Maximum: ₦{parseFloat(selectedDebt.remaining_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                            </small>
-                                        </div>
-
-                                        <div className="form-group-focus">
-                                            <label>Payment Method *</label>
-                                            <select
-                                                value={paymentForm.payment_method}
-                                                onChange={(e) => setPaymentForm({ ...paymentForm, payment_method: e.target.value })}
-                                                className="form-input-focus"
-                                                required
-                                            >
-                                                <option value="cash">Cash</option>
-                                                <option value="card">Card</option>
-                                                <option value="transfer">Transfer</option>
-                                                <option value="mixed">Mixed</option>
-                                            </select>
-                                        </div>
-
-                                        <div className="form-group-focus">
-                                            <label>Notes (Optional)</label>
-                                            <textarea
-                                                value={paymentForm.notes}
-                                                onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })}
-                                                placeholder="Add any notes about this payment..."
-                                                rows="4"
-                                                className="form-input-focus"
-                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -950,7 +953,6 @@ const Debts = () => {
                                 </div>
                             </div>
                         </div>
-
                     ) : view === 'manual-debt' ? (
                         <div className="focus-view-container">
                             <div className="focus-view-header">
@@ -965,100 +967,112 @@ const Debts = () => {
 
                             <div className="focus-view-content">
                                 <div className="focus-view-card glass-card">
-                                    {/* Customer Info */}
-                                    <div className="detail-section">
-                                        <h4>Customer Information</h4>
-                                        <div className="form-grid-focus" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '15px' }}>
-                                            <div className="form-group-focus">
-                                                <label>Customer Name *</label>
-                                                <input
-                                                    type="text"
-                                                    value={manualDebtForm.customer_name}
-                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_name: e.target.value })}
-                                                    placeholder="Full Name"
-                                                    className="form-input-focus"
-                                                    required
-                                                />
+                                    <div className="focus-view-body">
+                                        {/* Customer Info */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <User size={20} />
+                                                </div>
+                                                <h4>Customer Information</h4>
                                             </div>
-                                            <div className="form-group-focus">
-                                                <label>Phone Number</label>
-                                                <input
-                                                    type="tel"
-                                                    value={manualDebtForm.customer_phone}
-                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_phone: e.target.value })}
-                                                    placeholder="+234..."
-                                                    className="form-input-focus"
-                                                />
-                                            </div>
-                                            <div className="form-group-focus" style={{ gridColumn: '1 / -1' }}>
-                                                <label>Address</label>
-                                                <input
-                                                    type="text"
-                                                    value={manualDebtForm.customer_address}
-                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_address: e.target.value })}
-                                                    placeholder="Residential address"
-                                                    className="form-input-focus"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <hr className="divider" />
-
-                                    {/* Debt Details */}
-                                    <div className="detail-section">
-                                        <h4>Debt Details</h4>
-                                        <div className="form-grid-focus" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '15px' }}>
-                                            <div className="form-group-focus" style={{ gridColumn: '1 / -1' }}>
-                                                <label>Description (Reason for Debt) *</label>
-                                                <input
-                                                    type="text"
-                                                    value={manualDebtForm.description}
-                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, description: e.target.value })}
-                                                    placeholder="e.g. Purchase of iPhone 13, Repair service, etc."
-                                                    className="form-input-focus"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="form-group-focus">
-                                                <label>Total Amount (₦) *</label>
-                                                <div className="input-with-icon">
-                                                    <span className="input-icon">₦</span>
+                                            <div className="form-grid-focus">
+                                                <div className="form-group-focus">
+                                                    <label>Customer Name *</label>
                                                     <input
-                                                        type="number"
-                                                        value={manualDebtForm.total_amount}
-                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, total_amount: e.target.value })}
-                                                        placeholder="0.00"
+                                                        type="text"
+                                                        value={manualDebtForm.customer_name}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_name: e.target.value })}
+                                                        placeholder="Full Name"
                                                         className="form-input-focus"
                                                         required
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="form-group-focus">
-                                                <label>Initial Payment (₦)</label>
-                                                <div className="input-with-icon">
-                                                    <span className="input-icon">₦</span>
+                                                <div className="form-group-focus">
+                                                    <label>Phone Number</label>
                                                     <input
-                                                        type="number"
-                                                        value={manualDebtForm.paid_amount}
-                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, paid_amount: e.target.value })}
-                                                        placeholder="0.00"
+                                                        type="tel"
+                                                        value={manualDebtForm.customer_phone}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_phone: e.target.value })}
+                                                        placeholder="+234..."
+                                                        className="form-input-focus"
+                                                    />
+                                                </div>
+                                                <div className="form-group-focus full-width">
+                                                    <label>Address</label>
+                                                    <input
+                                                        type="text"
+                                                        value={manualDebtForm.customer_address}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, customer_address: e.target.value })}
+                                                        placeholder="Residential address"
                                                         className="form-input-focus"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="form-group-focus">
-                                                <label>Payment Method (for Initial Payment)</label>
-                                                <select
-                                                    value={manualDebtForm.payment_method}
-                                                    onChange={(e) => setManualDebtForm({ ...manualDebtForm, payment_method: e.target.value })}
-                                                    className="form-input-focus"
-                                                >
-                                                    <option value="cash">Cash</option>
-                                                    <option value="card">Card</option>
-                                                    <option value="transfer">Transfer</option>
-                                                    <option value="mixed">Mixed</option>
-                                                </select>
+                                        </div>
+
+                                        <hr className="divider" />
+
+                                        {/* Debt Details */}
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <Tag size={20} />
+                                                </div>
+                                                <h4>Debt Details</h4>
+                                            </div>
+                                            <div className="form-grid-focus">
+                                                <div className="form-group-focus full-width">
+                                                    <label>Description (Reason for Debt) *</label>
+                                                    <input
+                                                        type="text"
+                                                        value={manualDebtForm.description}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, description: e.target.value })}
+                                                        placeholder="e.g. Purchase of iPhone 13, Repair service, etc."
+                                                        className="form-input-focus"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="form-group-focus">
+                                                    <label>Total Amount (₦) *</label>
+                                                    <div className="input-with-icon">
+                                                        <span className="input-icon">₦</span>
+                                                        <input
+                                                            type="number"
+                                                            value={manualDebtForm.total_amount}
+                                                            onChange={(e) => setManualDebtForm({ ...manualDebtForm, total_amount: e.target.value })}
+                                                            placeholder="0.00"
+                                                            className="form-input-focus"
+                                                            required
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-group-focus">
+                                                    <label>Initial Payment (₦)</label>
+                                                    <div className="input-with-icon">
+                                                        <span className="input-icon">₦</span>
+                                                        <input
+                                                            type="number"
+                                                            value={manualDebtForm.paid_amount}
+                                                            onChange={(e) => setManualDebtForm({ ...manualDebtForm, paid_amount: e.target.value })}
+                                                            placeholder="0.00"
+                                                            className="form-input-focus"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="form-group-focus">
+                                                    <label>Payment Method (for Initial Payment)</label>
+                                                    <select
+                                                        value={manualDebtForm.payment_method}
+                                                        onChange={(e) => setManualDebtForm({ ...manualDebtForm, payment_method: e.target.value })}
+                                                        className="form-input-focus"
+                                                    >
+                                                        <option value="cash">Cash</option>
+                                                        <option value="card">Card</option>
+                                                        <option value="transfer">Transfer</option>
+                                                        <option value="mixed">Mixed</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1108,6 +1122,7 @@ const Debts = () => {
                             </div>
                         </div>
                     ) : null}
+
                 </div>
             </main >
         </div >

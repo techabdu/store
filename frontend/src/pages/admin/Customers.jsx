@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../../utils/api';
-import { FaSearch, FaPhone, FaCalendarAlt, FaMobileAlt, FaTimes, FaUser, FaPrint } from 'react-icons/fa';
-import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, Search, Phone, Calendar, Smartphone, X, User, Printer, CreditCard } from 'lucide-react';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -174,15 +173,14 @@ const Customers = () => {
                             <div className="customers-container">
                                 {/* Left Panel: Customer List */}
                                 <div className={`customers-list-panel glass-card ${selectedCustomer ? 'hidden-mobile' : ''}`}>
-                                    <div className="search-bar-container" style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                                    <div className="search-bar-container">
                                         <div className="search-input-wrapper">
-                                            <FaSearch className="search-icon" />
+                                            <Search className="search-icon" size={18} />
                                             <input
                                                 type="text"
                                                 placeholder="Search customers..."
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                                style={{ background: 'transparent', border: 'none', color: 'inherit' }}
                                             />
                                         </div>
                                     </div>
@@ -244,15 +242,15 @@ const Customers = () => {
                                                 <h2>{selectedCustomer.customer_name}</h2>
                                                 {selectedCustomer.customer_phone && (
                                                     <p className="phone-number">
-                                                        <FaPhone /> {selectedCustomer.customer_phone}
+                                                        <Phone size={16} /> {selectedCustomer.customer_phone}
                                                     </p>
                                                 )}
                                                 <div className="customer-stats">
-                                                    <div className="stat-item glass-card" style={{ padding: '15px' }}>
+                                                    <div className="stat-item glass-card">
                                                         <span className="stat-label">Total Purchases</span>
                                                         <span className="stat-value">{selectedCustomer.total_purchases}</span>
                                                     </div>
-                                                    <div className="stat-item glass-card" style={{ padding: '15px' }}>
+                                                    <div className="stat-item glass-card">
                                                         <span className="stat-label">Total Spent</span>
                                                         <span className="stat-value">₦{parseFloat(selectedCustomer.total_spent).toLocaleString()}</span>
                                                     </div>
@@ -275,12 +273,12 @@ const Customers = () => {
                                                                 style={{ marginBottom: '10px', border: 'none' }}
                                                             >
                                                                 <div className="phone-icon">
-                                                                    <FaMobileAlt />
+                                                                    <Smartphone size={20} />
                                                                 </div>
                                                                 <div className="history-details">
                                                                     <h4>{item.brand} {item.model}</h4>
-                                                                    <p className="purchase-date" style={{ color: 'var(--text-secondary)' }}>
-                                                                        <FaCalendarAlt /> {new Date(item.purchase_date).toLocaleDateString()}
+                                                                    <p className="purchase-date">
+                                                                        <Calendar size={14} /> {new Date(item.purchase_date).toLocaleDateString()}
                                                                     </p>
                                                                 </div>
                                                                 <div className="history-arrow">›</div>
@@ -292,7 +290,7 @@ const Customers = () => {
                                         </>
                                     ) : (
                                         <div className="select-prompt">
-                                            <FaUser className="prompt-icon" />
+                                            <User className="prompt-icon" size={64} />
                                             <p>Select a customer to view details</p>
                                         </div>
                                     )}
@@ -311,80 +309,79 @@ const Customers = () => {
 
                             <div className="focus-view-content">
                                 <div className="focus-view-card glass-card">
-                                    <div className="detail-section">
-                                        <div className="section-header">
-                                            <div className="section-icon">
-                                                <Package size={20} />
+                                    <div className="focus-view-body">
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <Package size={20} />
+                                                </div>
+                                                <h4>Device Information</h4>
                                             </div>
-                                            <h4>Device Information</h4>
+                                            <div className="summary-grid-focus">
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Brand & Model</span>
+                                                    <span className="value">{selectedPhone?.brand} {selectedPhone?.model}</span>
+                                                </div>
+                                                <div className="summary-item-focus">
+                                                    <span className="label">IMEI</span>
+                                                    <span className="value" style={{ fontSize: '1.2rem' }}>{selectedPhone?.imei}</span>
+                                                </div>
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Color</span>
+                                                    <span className="value">{selectedPhone?.color || 'N/A'}</span>
+                                                </div>
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Storage</span>
+                                                    <span className="value">{selectedPhone?.storage || 'N/A'}</span>
+                                                </div>
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Condition</span>
+                                                    <span className="value capitalize">{selectedPhone?.condition_status}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="summary-grid-focus">
-                                            <div className="summary-item-focus">
-                                                <span className="label">Brand & Model</span>
-                                                <span className="value">{selectedPhone?.brand} {selectedPhone?.model}</span>
+
+                                        <div className="divider"></div>
+
+                                        <div className="detail-section">
+                                            <div className="section-header">
+                                                <div className="section-icon">
+                                                    <CreditCard size={20} />
+                                                </div>
+                                                <h4>Transaction Details</h4>
                                             </div>
-                                            <div className="summary-item-focus">
-                                                <span className="label">IMEI</span>
-                                                <span className="value" style={{ fontSize: '1.2rem' }}>{selectedPhone?.imei}</span>
-                                            </div>
-                                            <div className="summary-item-focus">
-                                                <span className="label">Color</span>
-                                                <span className="value">{selectedPhone?.color || 'N/A'}</span>
-                                            </div>
-                                            <div className="summary-item-focus">
-                                                <span className="label">Storage</span>
-                                                <span className="value">{selectedPhone?.storage || 'N/A'}</span>
-                                            </div>
-                                            <div className="summary-item-focus">
-                                                <span className="label">Condition</span>
-                                                <span className="value capitalize">{selectedPhone?.condition_status}</span>
+                                            <div className="summary-grid-focus">
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Sold Price</span>
+                                                    <span className="value" style={{ color: 'var(--success-color)' }}>
+                                                        ₦{parseFloat(selectedPhone?.item_price).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <div className="summary-item-focus">
+                                                    <span className="label">Date Sold</span>
+                                                    <span className="value" style={{ fontSize: '1.2rem' }}>
+                                                        {new Date(selectedPhone?.purchase_date).toLocaleString()}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="divider" />
-
-                                    <div className="detail-section">
-                                        <div className="section-header">
-                                            <div className="section-icon" style={{ background: 'rgba(52, 168, 83, 0.1)', color: '#34a853' }}>
-                                                <FaCalendarAlt size={18} />
-                                            </div>
-                                            <h4>Transaction Details</h4>
-                                        </div>
-                                        <div className="summary-grid-focus">
-                                            <div className="summary-item-focus">
-                                                <span className="label">Sold Price</span>
-                                                <span className="value" style={{ color: '#34a853' }}>
-                                                    ₦{parseFloat(selectedPhone?.item_price).toLocaleString()}
-                                                </span>
-                                            </div>
-                                            <div className="summary-item-focus">
-                                                <span className="label">Date Sold</span>
-                                                <span className="value" style={{ fontSize: '1.2rem' }}>
-                                                    {new Date(selectedPhone?.purchase_date).toLocaleString()}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="focus-view-actions">
-                                        <button className="btn-cancel" onClick={closePhoneDetails}>
-                                            Close View
-                                        </button>
-                                        <div className="primary-actions">
-                                            <button
-                                                className="btn-primary"
-                                                onClick={() => {
-                                                    if (selectedPhone && selectedPhone.transaction_id) {
-                                                        window.open(`/admin/receipt/${selectedPhone.transaction_id}`, '_blank');
-                                                    }
-                                                }}
-                                                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.875rem 2.5rem' }}
-                                            >
-                                                <FaPrint /> Print Receipt
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div className="focus-view-actions">
+                                    <button className="btn-cancel" onClick={closePhoneDetails}>
+                                        Close View
+                                    </button>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => {
+                                            if (selectedPhone && selectedPhone.transaction_id) {
+                                                window.open(`/admin/receipt/${selectedPhone.transaction_id}`, '_blank');
+                                            }
+                                        }}
+                                    >
+                                        <Printer size={18} /> Print Receipt
+                                    </button>
                                 </div>
                             </div>
                         </div>

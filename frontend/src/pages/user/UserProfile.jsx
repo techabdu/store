@@ -281,7 +281,7 @@ const UserProfile = () => {
                         {/* Left Column */}
                         <div className="profile-column">
                             {/* Personal Information */}
-                            <div className="profile-card">
+                            <div className="profile-card glass-card">
                                 <div className="card-header">
                                     <User size={20} />
                                     <h2>Personal Information</h2>
@@ -296,6 +296,7 @@ const UserProfile = () => {
                                             value={profileData.full_name}
                                             onChange={handleInputChange}
                                             placeholder="Enter your full name"
+                                            className="glass-input"
                                             required
                                         />
                                     </div>
@@ -309,6 +310,7 @@ const UserProfile = () => {
                                             value={profileData.email}
                                             onChange={handleInputChange}
                                             placeholder="Enter your email"
+                                            className="glass-input"
                                             required
                                         />
                                     </div>
@@ -322,13 +324,14 @@ const UserProfile = () => {
                                             value={profileData.phone}
                                             onChange={handleInputChange}
                                             placeholder="Enter your phone number (optional)"
+                                            className="glass-input"
                                         />
                                     </div>
                                 </form>
                             </div>
 
                             {/* Security Section */}
-                            <div className="profile-card">
+                            <div className="profile-card glass-card">
                                 <div className="card-header">
                                     <Lock size={20} />
                                     <h2>Security</h2>
@@ -343,6 +346,7 @@ const UserProfile = () => {
                                             value={passwordData.current_password}
                                             onChange={handlePasswordChange}
                                             placeholder="Enter current password"
+                                            className="glass-input"
                                         />
                                     </div>
 
@@ -355,6 +359,7 @@ const UserProfile = () => {
                                             value={passwordData.new_password}
                                             onChange={handlePasswordChange}
                                             placeholder="Enter new password"
+                                            className="glass-input"
                                         />
                                     </div>
 
@@ -367,6 +372,7 @@ const UserProfile = () => {
                                             value={passwordData.confirm_password}
                                             onChange={handlePasswordChange}
                                             placeholder="Confirm new password"
+                                            className="glass-input"
                                         />
                                     </div>
 
@@ -385,7 +391,7 @@ const UserProfile = () => {
                         {/* Right Column */}
                         <div className="profile-column">
                             {/* Avatar Customization */}
-                            <div className="profile-card">
+                            <div className="profile-card glass-card">
                                 <div className="card-header">
                                     <User size={20} />
                                     <h2>Avatar Customization</h2>
@@ -411,7 +417,7 @@ const UserProfile = () => {
                             </div>
 
                             {/* Account Information */}
-                            <div className="profile-card">
+                            <div className="profile-card glass-card">
                                 <div className="card-header">
                                     <Shield size={20} />
                                     <h2>Account Information</h2>

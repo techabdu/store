@@ -89,7 +89,7 @@ const ABCAnalysis = () => {
                 </div>
             </div>
 
-            <div className="metrics-grid">
+            <div className="abc-metrics-grid">
                 <div className="abc-metric-card category-a glass-card">
                     <div className="cat-tag">Category A</div>
                     <div className="metric-body">

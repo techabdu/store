@@ -8,7 +8,6 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import {
     ShoppingBag,
-    Users,
     DollarSign,
     TrendingUp,
     Receipt
@@ -96,14 +95,6 @@ const AdminDashboard = () => {
                             icon: ShoppingBag,
                             subtitle: `${data.total_inventory} items in stock`,
                             color: 'info'
-                        },
-                        {
-                            title: 'New Customers',
-                            value: data.monthly_customers.total.toString(),
-                            icon: Users,
-                            trend: `${data.monthly_customers.percentage_change >= 0 ? '+' : ''}${data.monthly_customers.percentage_change}% this month`,
-                            trendDirection: data.monthly_customers.percentage_change >= 0 ? 'up' : 'down',
-                            color: 'warning'
                         },
                         {
                             title: 'Growth Rate',
