@@ -10,6 +10,8 @@
 .tab-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex: 1;
     gap: 8px;
     padding: 12px 16px;
     background: none;
@@ -74,5 +76,178 @@
     .tab-btn svg {
         width: 20px;
         height: 20px;
+    }
+}
+
+/* Vendor Management Tables & Badges */
+.status-badge {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-badge.active {
+    background-color: rgba(52, 168, 83, 0.1);
+    color: #34a853;
+}
+
+.status-badge.restricted {
+    background-color: rgba(234, 67, 53, 0.1);
+    color: #ea4335;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+.icon-btn.danger:hover {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--bg-surface);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalSlide 0.3s ease-out;
+}
+
+@keyframes modalSlide {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+}
+
+.close-btn:hover {
+    color: var(--text-primary);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+/* Prevent Flex/Grid Blowout */
+.profile-column,
+.profile-card {
+    min-width: 0;
+}
+
+/* Table Responsiveness - Global */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.table-responsive table {
+    width: 100%;
+    min-width: 800px;
+}
+
+/* Mobile Icon Button Styles */
+@media (max-width: 768px) {
+    .mobile-icon-btn .btn-text {
+        display: none;
+    }
+
+    .mobile-icon-btn {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        min-width: 40px !important;
+    }
+
+    .mobile-icon-btn svg {
+        margin: 0 !important;
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        color: #FFFFFF !important;
     }
 }

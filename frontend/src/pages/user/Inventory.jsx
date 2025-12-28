@@ -53,6 +53,24 @@ const Inventory = () => {
         fetchInventory(isInitialLoad);
     }, [statusFilter, debouncedSearchTerm]);
 
+    // Vendors State
+    const [vendors, setVendors] = useState([]);
+
+    // Fetch vendors for dropdown
+    useEffect(() => {
+        const fetchVendors = async () => {
+            try {
+                const response = await api.get('/admin/vendors.php?status=active');
+                if (response.data.success) {
+                    setVendors(response.data.vendors);
+                }
+            } catch (err) {
+                console.error("Failed to fetch vendors", err);
+            }
+        };
+        fetchVendors();
+    }, []);
+
     // Fetch inventory function
     const fetchInventory = async (showGlobalLoading = false) => {
         try {
@@ -519,13 +537,21 @@ const Inventory = () => {
                                                 </div>
                                                 <div className="form-group-focus full-width">
                                                     <label>Vendor / Supplier Details</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-input-focus"
-                                                        value={formData.vendor}
-                                                        onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                                                        placeholder="Supplier name or Contact"
-                                                    />
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type="text"
+                                                            className="form-input-focus"
+                                                            value={formData.vendor}
+                                                            onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+                                                            placeholder="Select or type supplier name/contact"
+                                                            list="vendor-options"
+                                                        />
+                                                        <datalist id="vendor-options">
+                                                            {vendors.map(v => (
+                                                                <option key={v.id} value={v.name}>{v.contact_info ? ` (${v.contact_info})` : ''}</option>
+                                                            ))}
+                                                        </datalist>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
