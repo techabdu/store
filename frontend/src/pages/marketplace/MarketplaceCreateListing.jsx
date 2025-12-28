@@ -234,7 +234,7 @@ const MarketplaceCreateListing = () => {
                                                                 name="inventory_id"
                                                                 value={formData.inventory_id}
                                                                 onChange={handleChange}
-                                                                className="form-input"
+                                                                className="form-input-focus"
                                                                 required
                                                             >
                                                                 <option value="">-- Select a phone from inventory --</option>
@@ -256,7 +256,7 @@ const MarketplaceCreateListing = () => {
                                                                         name="title"
                                                                         value={formData.title}
                                                                         onChange={handleChange}
-                                                                        className="form-input"
+                                                                        className="form-input-focus"
                                                                         required
                                                                         placeholder="e.g. Pristine iPhone 15 Pro Max"
                                                                     />
@@ -268,7 +268,7 @@ const MarketplaceCreateListing = () => {
                                                                         name="description"
                                                                         value={formData.description}
                                                                         onChange={handleChange}
-                                                                        className="form-input"
+                                                                        className="form-input-focus"
                                                                         rows="5"
                                                                         placeholder="Describe the condition, accessories, and any other details..."
                                                                     ></textarea>
@@ -287,7 +287,7 @@ const MarketplaceCreateListing = () => {
                                                                     name="listing_type"
                                                                     value={formData.listing_type}
                                                                     onChange={handleChange}
-                                                                    className="form-input"
+                                                                    className="form-input-focus"
                                                                 >
                                                                     <option value="fixed_price">Fixed Price</option>
                                                                     <option value="auction">Auction (Bidding)</option>
@@ -301,7 +301,7 @@ const MarketplaceCreateListing = () => {
                                                                     name="price"
                                                                     value={formData.price}
                                                                     onChange={handleChange}
-                                                                    className="form-input"
+                                                                    className="form-input-focus"
                                                                     required
                                                                     min="0"
                                                                     step="0.01"
@@ -320,7 +320,7 @@ const MarketplaceCreateListing = () => {
                                                                     name="auction_ends_at"
                                                                     value={formData.auction_ends_at}
                                                                     onChange={handleChange}
-                                                                    className="form-input"
+                                                                    className="form-input-focus"
                                                                     required={formData.listing_type === 'auction'}
                                                                     style={{ marginTop: '8px' }}
                                                                 />

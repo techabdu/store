@@ -153,7 +153,7 @@
     /* Generous padding-left for icon + separator */
     border: 1px solid var(--login-border);
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 16px !important;
     /* Prevents iOS auto-zoom */
     color: var(--login-text-primary);
     background-color: var(--login-input-bg);

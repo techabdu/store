@@ -104,7 +104,7 @@
     border-radius: 8px;
     background-color: var(--bg-background);
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 16px !important;
     transition: all 0.2s ease;
 }
 
@@ -453,7 +453,7 @@
     border-radius: 8px;
     background-color: var(--bg-background);
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 16px !important;
     max-height: 100px;
 }
 

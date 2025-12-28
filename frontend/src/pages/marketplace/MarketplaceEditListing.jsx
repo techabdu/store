@@ -234,7 +234,7 @@ const MarketplaceEditListing = () => {
                                                     name="title"
                                                     value={formData.title}
                                                     onChange={handleChange}
-                                                    className="form-input"
+                                                    className="form-input-focus"
                                                     required
                                                 />
                                             </div>
@@ -245,7 +245,7 @@ const MarketplaceEditListing = () => {
                                                     name="description"
                                                     value={formData.description}
                                                     onChange={handleChange}
-                                                    className="form-input"
+                                                    className="form-input-focus"
                                                     rows="5"
                                                 ></textarea>
                                             </div>
@@ -256,7 +256,7 @@ const MarketplaceEditListing = () => {
                                                     name="phone_condition"
                                                     value={formData.phone_condition}
                                                     onChange={handleChange}
-                                                    className="form-input"
+                                                    className="form-input-focus"
                                                 >
                                                     <option value="new">New</option>
                                                     <option value="like_new">Like New</option>
@@ -278,7 +278,7 @@ const MarketplaceEditListing = () => {
                                                         name="listing_type"
                                                         value={formData.listing_type}
                                                         onChange={handleChange}
-                                                        className="form-input"
+                                                        className="form-input-focus"
                                                     >
                                                         <option value="fixed_price">Fixed Price</option>
                                                         <option value="auction">Auction (Bidding)</option>
@@ -292,7 +292,7 @@ const MarketplaceEditListing = () => {
                                                         name="price"
                                                         value={formData.price}
                                                         onChange={handleChange}
-                                                        className="form-input"
+                                                        className="form-input-focus"
                                                         required
                                                         min="0"
                                                         step="0.01"
@@ -311,7 +311,7 @@ const MarketplaceEditListing = () => {
                                                         name="auction_ends_at"
                                                         value={formData.auction_ends_at}
                                                         onChange={handleChange}
-                                                        className="form-input"
+                                                        className="form-input-focus"
                                                         required={formData.listing_type === 'auction'}
                                                         style={{ marginTop: '8px' }}
                                                     />

@@ -130,11 +130,16 @@
     padding: 0.875rem 1rem;
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 16px !important;
     /* Prevents auto-zoom */
     background: var(--input-bg);
     color: var(--text-primary);
     transition: all 0.2s ease;
+}
+
+textarea.form-input-focus,
+select.form-input-focus {
+    font-size: 16px !important;
 }
 
 .input-with-icon {

@@ -351,6 +351,15 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.search-input-wrapper input {
+    font-size: 16px !important;
+}
+
+.form-input-focus,
+.form-input {
+    font-size: 16px !important;
+}
+
 /* Branch Card Glassmorphism */
 .branch-card.glass-card {
     background: rgba(255, 255, 255, 0.7);

@@ -70,7 +70,7 @@
     padding: 12px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 16px !important;
     transition: border-color 0.3s;
     background-color: #fff;
     color: #333;
@@ -317,7 +317,7 @@
 }
 
 .cash-input {
-    font-size: 1.25rem !important;
+    font-size: 16px !important;
     padding: 15px !important;
     font-weight: 600;
 }
@@ -555,4 +555,38 @@
     background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.data-table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: rgba(0, 0, 0, 0.02);
+    font-size: 14px;
+}
+
+.data-table td {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+[data-theme='dark'] .data-table th {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] .data-table th,
+[data-theme='dark'] .data-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
 }

@@ -192,7 +192,7 @@
     border-radius: 12px;
     background: var(--bg-body);
     color: var(--text-primary);
-    font-size: 1rem;
+    font-size: 16px !important;
     font-weight: 700;
     transition: all 0.3s ease;
     outline: none;

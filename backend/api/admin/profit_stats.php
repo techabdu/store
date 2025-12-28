@@ -52,14 +52,12 @@ try {
     // Calculate Daily Profit (today) - now filtered by shop_id
     $dailyProfitQuery = "
         SELECT 
-            COALESCE(SUM(t.total_amount), 0) as total_revenue,
-            COALESCE(SUM(i.cost_price), 0) as total_cost
-        FROM transactions t
-        INNER JOIN transaction_items ti ON t.id = ti.transaction_id
-        INNER JOIN inventory i ON ti.inventory_id = i.id
-        WHERE DATE(t.created_at) = CURDATE()
-        AND t.shop_id = ?
-        AND ti.type = 'sale'
+            COALESCE(SUM(total_amount), 0) as total_revenue,
+            COALESCE(SUM(total_cogs), 0) as total_cost
+        FROM transactions
+        WHERE DATE(created_at) = CURDATE()
+        AND shop_id = ?
+        AND transaction_type = 'sale'
     ";
     
     $dailyStmt = $conn->prepare($dailyProfitQuery);
@@ -78,15 +76,13 @@ try {
     // Calculate Monthly Profit (current month) - now filtered by shop_id
     $monthlyProfitQuery = "
         SELECT 
-            COALESCE(SUM(t.total_amount), 0) as total_revenue,
-            COALESCE(SUM(i.cost_price), 0) as total_cost
-        FROM transactions t
-        INNER JOIN transaction_items ti ON t.id = ti.transaction_id
-        INNER JOIN inventory i ON ti.inventory_id = i.id
-        WHERE MONTH(t.created_at) = MONTH(CURRENT_DATE())
-        AND YEAR(t.created_at) = YEAR(CURRENT_DATE())
-        AND t.shop_id = ?
-        AND ti.type = 'sale'
+            COALESCE(SUM(total_amount), 0) as total_revenue,
+            COALESCE(SUM(total_cogs), 0) as total_cost
+        FROM transactions
+        WHERE MONTH(created_at) = MONTH(CURRENT_DATE())
+        AND YEAR(created_at) = YEAR(CURRENT_DATE())
+        AND shop_id = ?
+        AND transaction_type = 'sale'
     ";
     
     $monthlyStmt = $conn->prepare($monthlyProfitQuery);
@@ -105,10 +101,10 @@ try {
     // Store daily profit record - now with shop_id (upsert)
     $today = date('Y-m-d');
     $transactionCountQuery = "
-        SELECT COUNT(DISTINCT t.id) as count
-        FROM transactions t
-        WHERE DATE(t.created_at) = CURDATE()
-        AND t.shop_id = ?
+        SELECT COUNT(id) as count
+        FROM transactions
+        WHERE DATE(created_at) = CURDATE()
+        AND shop_id = ?
     ";
     
     $countStmt = $conn->prepare($transactionCountQuery);

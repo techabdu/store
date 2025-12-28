@@ -65,7 +65,7 @@
     border-radius: 8px;
     background-color: var(--input-bg);
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font-size: 16px !important;
     transition: border-color 0.2s;
 }
 
@@ -498,6 +498,11 @@
     animation: spin 0.8s linear infinite;
     position: absolute;
     right: 12px;
+}
+
+/* Fix for Mobile Zoom on Inputs */
+.form-input {
+    font-size: 16px !important;
 }
 
 @keyframes spin {
