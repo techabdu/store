@@ -241,7 +241,7 @@ function createReport($conn, $user_id, $shopId) {
         // Insert report
         $query = "INSERT INTO reports (generated_by, inventory_value, total_sales, total_cogs, total_expenses, business_capital, cash_in_hand, total_debt, gross_profit, operating_profit, net_profit, tenant_id, shop_id, expense_start_date, expense_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->bind_param("iddddddddddiiiss", 
+        $stmt->bind_param("iddddddddddiiss", 
             $user_id, 
             $inventoryValue, 
             $totalSales, 

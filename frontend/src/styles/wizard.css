@@ -130,7 +130,8 @@
     padding: 0.875rem 1rem;
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    font-size: 1rem;
+    font-size: 16px;
+    /* Prevents auto-zoom */
     background: var(--input-bg);
     color: var(--text-primary);
     transition: all 0.2s ease;
@@ -332,13 +333,13 @@
 
 @media (max-width: 640px) {
     .wizard-steps {
-        padding: 3.5rem 2rem 1rem;
+        padding: 0.50rem 2rem 1rem;
     }
 
     .wizard-steps::before {
         left: 4rem;
         right: 4rem;
-        top: calc(1rem);
+        top: calc(1.3rem);
     }
 
     .step {

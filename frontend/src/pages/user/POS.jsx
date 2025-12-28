@@ -604,6 +604,16 @@ const POS = () => {
                                             </div>
                                         </div>
 
+                                        <div className="form-group" style={{ marginTop: '10px' }}>
+                                            <input
+                                                type="text"
+                                                value={customerAddress}
+                                                onChange={(e) => setCustomerAddress(e.target.value)}
+                                                placeholder="Customer Address (Optional)"
+                                                style={{ borderRadius: '10px', height: '45px' }}
+                                            />
+                                        </div>
+
                                         <div className="form-group" style={{ marginTop: '15px' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                                 <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>Payment Received (₦)</label>

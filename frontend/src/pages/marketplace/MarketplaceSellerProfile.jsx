@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import { User, MapPin, Phone, MessageSquare, Shield, ShieldCheck, Star, ArrowLeft, Package, Edit } from 'lucide-react';
-import api, { SERVER_URL } from '../../utils/api';
+import api, { SERVER_URL, isProduction } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
@@ -107,6 +107,13 @@ const MarketplaceSellerProfile = () => {
     const getImageUrl = (path) => {
         if (!path) return null;
         if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+        // Handle local XAMPP structure only if NOT in production and path doesn't already have /store
+        if (!isProduction && !path.startsWith('/store')) {
+            const cleanPath = path.startsWith('/') ? path : `/${path}`;
+            return `${SERVER_URL}/store${cleanPath}`;
+        }
+
         return `${SERVER_URL}${path}`;
     };
 

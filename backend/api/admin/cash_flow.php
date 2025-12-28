@@ -53,9 +53,10 @@ try {
     // A. Capital (Business Opening Balance)
     // If shop was created BEFORE the start date, it counts towards opening balance.
     // If created DURING the period, it will be added as a flow on that day.
-    $shopQ = "SELECT business_capital, DATE(created_at) as date FROM shops WHERE id = ?";
+    // SECURITY: Enforce tenant isolation
+    $shopQ = "SELECT business_capital, DATE(created_at) as date FROM shops WHERE id = ? AND tenant_id = ?";
     $stmtS = $conn->prepare($shopQ);
-    $stmtS->bind_param("i", $shopId);
+    $stmtS->bind_param("ii", $shopId, $tenantId);
     $stmtS->execute();
     $shopInfo = $stmtS->get_result()->fetch_assoc();
     $stmtS->close();

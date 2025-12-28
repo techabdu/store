@@ -34,8 +34,8 @@ try {
     $lastMonthStart = date('Y-m-01 00:00:00', strtotime('-1 month'));
     $lastMonthEnd = date('Y-m-t 23:59:59', strtotime('-1 month'));
     
-    // Current month sales
-    $queryCurrentSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales 
+    // Current month sales and COGS
+    $queryCurrentSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales, COALESCE(SUM(total_cogs), 0) as total_cogs 
                           FROM transactions 
                           WHERE created_at >= ? AND shop_id = ?";
     $stmtCurrentSales = $db->prepare($queryCurrentSales);
@@ -43,6 +43,7 @@ try {
     $stmtCurrentSales->execute();
     $currentSalesResult = $stmtCurrentSales->get_result()->fetch_assoc();
     $currentMonthSales = (float)$currentSalesResult['total_sales'];
+    $currentMonthCOGS = (float)$currentSalesResult['total_cogs'];
     
     // Last month sales for comparison
     $queryLastSales = "SELECT COALESCE(SUM(total_amount), 0) as total_sales 
@@ -168,11 +169,51 @@ try {
     $totalOutstandingDebt = (float)$debtStatsResult['total_outstanding'];
     $stmtDebtStats->close();
     
+    // 8. Profit Analysis (Daily & Monthly)
+    // Daily Stats
+    $dailySalesQ = "SELECT COALESCE(SUM(total_amount), 0) as sales, COALESCE(SUM(total_cogs), 0) as cogs 
+                    FROM transactions 
+                    WHERE DATE(created_at) = CURRENT_DATE() AND shop_id = ?";
+    $stmtDaily = $db->prepare($dailySalesQ);
+    $stmtDaily->bind_param("i", $shopId);
+    $stmtDaily->execute();
+    $dailyRes = $stmtDaily->get_result()->fetch_assoc();
+    $dailySales = (float)$dailyRes['sales'];
+    $dailyCOGS = (float)$dailyRes['cogs'];
+    $stmtDaily->close();
+
+    $dailyExpQ = "SELECT COALESCE(SUM(amount), 0) as expenses 
+                  FROM expenses 
+                  WHERE DATE(date) = CURRENT_DATE() AND shop_id = ?";
+    $stmtDailyExp = $db->prepare($dailyExpQ);
+    $stmtDailyExp->bind_param("i", $shopId);
+    $stmtDailyExp->execute();
+    $dailyExpenses = (float)$stmtDailyExp->get_result()->fetch_assoc()['expenses'];
+    $stmtDailyExp->close();
+
+    $dailyProfit = ($dailySales - $dailyCOGS) - $dailyExpenses;
+
+    // Monthly Expenses (we already have Monthly Sales & COGS from Step 1)
+    $monthlyExpQ = "SELECT COALESCE(SUM(amount), 0) as expenses 
+                    FROM expenses 
+                    WHERE MONTH(date) = MONTH(CURRENT_DATE()) 
+                    AND YEAR(date) = YEAR(CURRENT_DATE()) 
+                    AND shop_id = ?";
+    $stmtMonthlyExp = $db->prepare($monthlyExpQ);
+    $stmtMonthlyExp->bind_param("i", $shopId);
+    $stmtMonthlyExp->execute();
+    $monthlyExpenses = (float)$stmtMonthlyExp->get_result()->fetch_assoc()['expenses'];
+    $stmtMonthlyExp->close();
+
+    $monthlyProfit = ($currentMonthSales - $currentMonthCOGS) - $monthlyExpenses;
+
     // Return all dashboard stats
     http_response_code(200);
     echo json_encode([
         'success' => true,
         'data' => [
+            'daily_profit' => $dailyProfit,
+            'monthly_profit' => $monthlyProfit,
             'monthly_sales' => [
                 'total' => $currentMonthSales,
                 'percentage_change' => round($salesPercentageChange, 1)

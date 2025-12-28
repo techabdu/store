@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../../utils/api';
-import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, Search, Phone, Calendar, Smartphone, X, User, Printer, CreditCard } from 'lucide-react';
+import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, Search, Phone, MapPin, Calendar, Smartphone, X, User, Printer, CreditCard } from 'lucide-react';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -241,8 +241,13 @@ const Customers = () => {
                                                 </div>
                                                 <h2>{selectedCustomer.customer_name}</h2>
                                                 {selectedCustomer.customer_phone && (
-                                                    <p className="phone-number">
+                                                    <p className="phone-number" style={{ marginBottom: selectedCustomer.customer_address ? '5px' : '20px' }}>
                                                         <Phone size={16} /> {selectedCustomer.customer_phone}
+                                                    </p>
+                                                )}
+                                                {selectedCustomer.customer_address && (
+                                                    <p className="address-text" style={{ fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                                                        <MapPin size={16} /> {selectedCustomer.customer_address}
                                                     </p>
                                                 )}
                                                 <div className="customer-stats">

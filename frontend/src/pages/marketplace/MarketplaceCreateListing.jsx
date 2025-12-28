@@ -181,7 +181,7 @@ const MarketplaceCreateListing = () => {
                                 <ArrowLeft size={18} />
                                 <span>Back to Listings</span>
                             </button>
-                            <h1 className="heading-2">Create New Listing</h1>
+                            <h2 className="heading-2">Create New Listing</h2>
                         </div>
 
                         <div className="focus-view-content">

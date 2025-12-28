@@ -24,6 +24,8 @@ label,
     background-color: var(--input-bg) !important;
     color: var(--text-primary) !important;
     border: 1px solid var(--border-color) !important;
+    font-size: 16px !important;
+    /* Prevents iOS auto-zoom */
 }
 
 .form-control::placeholder,

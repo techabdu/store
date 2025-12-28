@@ -39,66 +39,84 @@ try {
 
     $stats = [
         'inventory_count' => 0,
+        'weekly_sales_count' => 0,
+        'daily_profit' => 0,
+        'monthly_profit' => 0,
         'monthly_sales' => 0,
-        'monthly_expenses' => 0,
-        'weekly_sales_count' => 0
+        'monthly_expenses' => 0
     ];
 
-    // 1. Total Inventory in Stock - filtered by shop_id
+    // 1. Total Inventory - filtered by shop_id
     $inventoryQuery = "SELECT COUNT(*) as count FROM inventory WHERE status = 'in_stock' AND shop_id = ?";
-    $inventoryStmt = $conn->prepare($inventoryQuery);
-    $inventoryStmt->bind_param("i", $shopId);
-    $inventoryStmt->execute();
-    $inventoryResult = $inventoryStmt->get_result();
-    if ($inventoryResult) {
-        $stats['inventory_count'] = $inventoryResult->fetch_assoc()['count'];
-    }
-    $inventoryStmt->close();
+    $stmt = $conn->prepare($inventoryQuery);
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $stats['inventory_count'] = $stmt->get_result()->fetch_assoc()['count'] ?? 0;
+    $stmt->close();
 
-    // 2. Total Monthly Sales - filtered by shop_id
-    // Using current month and year
-    $salesQuery = "SELECT SUM(total_amount) as total FROM transactions 
-                   WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) 
-                   AND YEAR(created_at) = YEAR(CURRENT_DATE())
-                   AND shop_id = ?";
-    $salesStmt = $conn->prepare($salesQuery);
-    $salesStmt->bind_param("i", $shopId);
-    $salesStmt->execute();
-    $salesResult = $salesStmt->get_result();
-    if ($salesResult) {
-        $row = $salesResult->fetch_assoc();
-        $stats['monthly_sales'] = $row['total'] ?? 0;
-    }
-    $salesStmt->close();
+    // 2. Daily Stats (Sales, COGS, Expenses)
+    // Sales & COGS
+    $dailySalesQ = "SELECT COALESCE(SUM(total_amount), 0) as sales, COALESCE(SUM(total_cogs), 0) as cogs 
+                    FROM transactions 
+                    WHERE DATE(created_at) = CURRENT_DATE() AND shop_id = ?";
+    $stmt = $conn->prepare($dailySalesQ);
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $dailySales = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-    // 3. Monthly Expenses Logged - filtered by shop_id
-    $expensesQuery = "SELECT SUM(amount) as total FROM expenses 
-                      WHERE MONTH(date) = MONTH(CURRENT_DATE()) 
-                      AND YEAR(date) = YEAR(CURRENT_DATE())
+    // Expenses
+    $dailyExpQ = "SELECT COALESCE(SUM(amount), 0) as expenses 
+                  FROM expenses 
+                  WHERE DATE(date) = CURRENT_DATE() AND shop_id = ?";
+    $stmt = $conn->prepare($dailyExpQ);
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $dailyExp = $stmt->get_result()->fetch_assoc()['expenses'];
+    $stmt->close();
+
+    // Calculate Daily Profit: (Sales - COGS) - Expenses
+    $stats['daily_profit'] = ($dailySales['sales'] - $dailySales['cogs']) - $dailyExp;
+
+    // 3. Monthly Stats (Sales, COGS, Expenses)
+    // Sales & COGS
+    $monthlySalesQ = "SELECT COALESCE(SUM(total_amount), 0) as sales, COALESCE(SUM(total_cogs), 0) as cogs 
+                      FROM transactions 
+                      WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) 
+                      AND YEAR(created_at) = YEAR(CURRENT_DATE()) 
                       AND shop_id = ?";
-    $expensesStmt = $conn->prepare($expensesQuery);
-    $expensesStmt->bind_param("i", $shopId);
-    $expensesStmt->execute();
-    $expensesResult = $expensesStmt->get_result();
-    if ($expensesResult) {
-        $row = $expensesResult->fetch_assoc();
-        $stats['monthly_expenses'] = $row['total'] ?? 0;
-    }
-    $expensesStmt->close();
+    $stmt = $conn->prepare($monthlySalesQ);
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $monthlySales = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-    // 4. Activity This Week (Number of sales) - filtered by shop_id
-    // YEARWEEK(date, 1) uses Monday as the first day of the week
+    // Expenses
+    $monthlyExpQ = "SELECT COALESCE(SUM(amount), 0) as expenses 
+                    FROM expenses 
+                    WHERE MONTH(date) = MONTH(CURRENT_DATE()) 
+                    AND YEAR(date) = YEAR(CURRENT_DATE()) 
+                    AND shop_id = ?";
+    $stmt = $conn->prepare($monthlyExpQ);
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $monthlyExp = $stmt->get_result()->fetch_assoc()['expenses'];
+    $stmt->close();
+
+    $stats['monthly_sales'] = $monthlySales['sales'];
+    $stats['monthly_expenses'] = $monthlyExp;
+    // Calculate Monthly Profit
+    $stats['monthly_profit'] = ($monthlySales['sales'] - $monthlySales['cogs']) - $monthlyExp;
+
+    // 4. Activity This Week
     $weeklyActivityQuery = "SELECT COUNT(*) as count FROM transactions 
                             WHERE YEARWEEK(created_at, 1) = YEARWEEK(CURRENT_DATE(), 1)
                             AND shop_id = ?";
-    $weeklyActivityStmt = $conn->prepare($weeklyActivityQuery);
-    $weeklyActivityStmt->bind_param("i", $shopId);
-    $weeklyActivityStmt->execute();
-    $weeklyActivityResult = $weeklyActivityStmt->get_result();
-    if ($weeklyActivityResult) {
-        $stats['weekly_sales_count'] = $weeklyActivityResult->fetch_assoc()['count'];
-    }
-    $weeklyActivityStmt->close();
+    $stmt = $conn->prepare($weeklyActivityQuery);
+    $stmt->bind_param("i", $shopId);
+    $stmt->execute();
+    $stats['weekly_sales_count'] = $stmt->get_result()->fetch_assoc()['count'] ?? 0;
+    $stmt->close();
 
     http_response_code(200);
     echo json_encode([

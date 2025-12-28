@@ -8,6 +8,7 @@ import { ArrowLeft, Check, ChevronRight, Plus } from 'lucide-react';
 import { FaBox, FaExclamationCircle, FaClock } from 'react-icons/fa';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
+import '../../styles/wizard.css';
 
 const MarketplaceEditListing = () => {
     const { user } = useAuth();
@@ -185,11 +186,11 @@ const MarketplaceEditListing = () => {
                 <div className="content-wrapper">
                     <div className="focus-view-container">
                         <div className="focus-view-header">
-                            <button className="back-btn" onClick={() => navigate('/marketplace/selling')}>
+                            <button className="btn-back" onClick={() => navigate('/marketplace/selling')}>
                                 <ArrowLeft size={18} />
                                 <span>Back to Listings</span>
                             </button>
-                            <h1 className="heading-2">Edit Listing</h1>
+                            <h2 className="heading-2">Edit Listing</h2>
                         </div>
 
                         <div className="focus-view-card glass-card">
@@ -342,8 +343,9 @@ const MarketplaceEditListing = () => {
                                                         <label style={{
                                                             width: '100px', height: '100px', borderRadius: '12px', border: '2px dashed var(--border-color)',
                                                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                                            cursor: uploading ? 'not-allowed' : 'pointer', background: 'var(--bg-background)'
-                                                        }}>
+                                                            cursor: uploading ? 'not-allowed' : 'pointer', background: 'var(--bg-background)',
+                                                            transition: 'all 0.2s'
+                                                        }} className="image-upload-label">
                                                             {uploading ? (
                                                                 <div className="spinner-border spinner-border-sm"></div>
                                                             ) : (

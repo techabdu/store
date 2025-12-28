@@ -528,8 +528,69 @@
 
 /* Responsive fixes */
 @media (max-width: 768px) {
+    .pos-container {
+        overflow-x: hidden;
+        /* Prevent container overflow */
+    }
+
     .pos-layout {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .pos-search-section,
+    .pos-cart-section {
+        padding: 1rem;
+    }
+
+    /* Stack cart item details on mobile to prevent width overflow */
+    .cart-item,
+    .search-result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .cart-item-info,
+    .item-info {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+
+    .cart-item-price-action,
+    .item-price-action {
+        width: 100%;
+        justify-content: space-between;
+        gap: 0;
+        text-align: left;
+        /* Reset text align for item-price-action */
+    }
+
+    /* Reset specific styles for search result items action container */
+    .item-price-action {
+        display: flex;
+        flex-direction: row;
+        /* Ensure buttons stay in row */
+        align-items: center;
+    }
+
+    .item-price {
+        margin-bottom: 0 !important;
+        /* Override inline style if any */
+    }
+
+    .price-edit-wrapper {
+        flex-grow: 1;
+    }
+
+    .price-display-mode,
+    .price-edit-mode {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .price-info {
+        align-items: flex-start;
     }
 
     .summary-grid {
