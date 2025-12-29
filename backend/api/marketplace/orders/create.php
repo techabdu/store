@@ -129,22 +129,24 @@ try {
 
     // 6. Log Transactions
     // Get Updated Buyer Balances for log
-    $b_bal_stmt = $conn->prepare("SELECT available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $b_bal_stmt = $conn->prepare("SELECT shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $b_bal_stmt->bind_param("i", $buyer_id);
     $b_bal_stmt->execute();
     $b_balances = $b_bal_stmt->get_result()->fetch_assoc();
+    $buyer_wallet_shop_id = $b_balances['shop_id'];
 
     // Buyer Debit Log - Use 'purchase_hold' as funds are in escrow
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, 'purchase_hold', ?, ?, ?, ?, ?, ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, 'purchase_hold', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_buyer = "Purchase of listing #$listing_id";
     $buyer_ref = $order_reference . '_DEBIT';
-    $stmt->bind_param("iiddddss", 
+    $stmt->bind_param("iiiddddss", 
         $buyer_wallet['id'], 
         $buyer_id, 
+        $buyer_wallet_shop_id,
         $price, 
         $b_balances['available_balance'], 
         $b_balances['pending_balance'], 
@@ -156,23 +158,25 @@ try {
 
     // Seller Credit Log (Escrow)
     // Get Updated Seller Balances for log
-    $s_bal_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $s_bal_stmt = $conn->prepare("SELECT id, shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $s_bal_stmt->bind_param("i", $seller_id);
     $s_bal_stmt->execute();
     $s_wallet_data = $s_bal_stmt->get_result()->fetch_assoc();
     $seller_wallet_id = $s_wallet_data['id'];
+    $seller_wallet_shop_id = $s_wallet_data['shop_id'];
 
     // Seller gets funds in pending, so use 'sale_pending'
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, 'sale_pending', ?, ?, ?, ?, ?, ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, 'sale_pending', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_seller = "Sale of listing #$listing_id (Funds held in Escrow)";
     $seller_escrow_ref = $order_reference . '_ESCROW';
-    $stmt->bind_param("iiddddss", 
+    $stmt->bind_param("iiiddddss", 
         $seller_wallet_id, 
         $seller_id, 
+        $seller_wallet_shop_id,
         $price, 
         $s_wallet_data['available_balance'], 
         $s_wallet_data['pending_balance'], 
@@ -182,7 +186,7 @@ try {
     );
     $stmt->execute();
 
-    // 7. Send Automatic Notification to Seller
+    // 7. Send Automatic Notification to Seller with Order Card
     // Fetch buyer's name
     $buyer_name_stmt = $conn->prepare("SELECT display_name FROM marketplace_profiles WHERE user_id = ? LIMIT 1");
     $buyer_name_stmt->bind_param("i", $buyer_id);
@@ -190,11 +194,32 @@ try {
     $buyer_profile = $buyer_name_stmt->get_result()->fetch_assoc();
     $buyer_name = $buyer_profile['display_name'] ?? 'A buyer';
     
+    // Fetch listing image for the order card
+    $img_stmt = $conn->prepare("SELECT image_url FROM marketplace_listing_images WHERE listing_id = ? AND is_primary = 1 LIMIT 1");
+    $img_stmt->bind_param("i", $listing_id);
+    $img_stmt->execute();
+    $img_result = $img_stmt->get_result()->fetch_assoc();
+    $listing_image = $img_result['image_url'] ?? null;
+    
     // Create notification message
     $notification_message = "$buyer_name placed an order for {$listing['title']}";
     
-    // Send system message (buyer is the sender since they initiated the order)
-    sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $notification_message, $buyer_id);
+    // Build order card metadata
+    $order_metadata = [
+        'order_id' => $order_id,
+        'order_number' => $order_reference,
+        'listing_id' => $listing_id,
+        'title' => $listing['title'],
+        'price' => $price,
+        'image_url' => $listing_image,
+        'condition' => $listing['phone_condition'] ?? 'N/A',
+        'brand' => $listing['phone_brand'] ?? '',
+        'model' => $listing['phone_model'] ?? '',
+        'status' => 'pending'
+    ];
+    
+    // Send order card message (buyer is the sender since they initiated the order)
+    sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $notification_message, $buyer_id, 'order_card', $order_metadata);
 
     // 8. Link Order to Conversation
     // Find the conversation for this buyer-seller-listing combination

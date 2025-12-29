@@ -291,3 +291,41 @@
         flex-direction: column;
     }
 }
+
+/* Cancelled Order Banner */
+.cancelled-order-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.cancelled-order-banner svg {
+    color: #ef4444;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.cancelled-order-banner strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ef4444;
+    margin-bottom: 4px;
+}
+
+.cancelled-order-banner p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+[data-theme="dark"] .cancelled-order-banner {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+}

@@ -166,3 +166,12 @@
 [data-theme='dark'] .data-table td {
     border-bottom-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Print Styles for Marketplace Pages */
+@media print {
+    .marketplace-main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+}

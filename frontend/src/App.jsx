@@ -55,6 +55,9 @@ import MarketplaceVerification from './pages/marketplace/MarketplaceVerification
 import MarketplaceEditListing from './pages/marketplace/MarketplaceEditListing';
 import MarketplaceOrderDetails from './pages/marketplace/MarketplaceOrderDetails';
 import MarketplaceSellerProfile from './pages/marketplace/MarketplaceSellerProfile';
+import MarketplaceReceipt from './pages/marketplace/MarketplaceReceipt';
+import MyPurchases from './pages/marketplace/MyPurchases';
+import MySales from './pages/marketplace/MySales';
 import Debts from './pages/shared/Debts';
 
 function App() {
@@ -436,6 +439,30 @@ function App() {
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                                     <MarketplaceSellerProfile />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/receipt/:id"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MarketplaceReceipt />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/my-purchases"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MyPurchases />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/marketplace/my-sales"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                    <MySales />
                                 </ProtectedRoute>
                             }
                         />

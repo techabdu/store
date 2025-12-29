@@ -119,21 +119,23 @@ try {
 
     // 5. Log Transactions
     // Log for Buyer (Refund)
-    $b_bal_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $b_bal_stmt = $conn->prepare("SELECT id, shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $b_bal_stmt->bind_param("i", $buyer_id);
     $b_bal_stmt->execute();
     $b_wallet_data = $b_bal_stmt->get_result()->fetch_assoc();
+    $buyer_wallet_shop_id = $b_wallet_data['shop_id'];
 
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, 'purchase_refund', ?, ?, ?, ?, ?, ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, 'purchase_refund', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_buyer = "Refund for cancelled order #$order_reference";
     $refund_ref_buyer = $order_reference . '_REFUND';
-    $stmt->bind_param("iiddddss", 
+    $stmt->bind_param("iiiddddss", 
         $b_wallet_data['id'], 
         $buyer_id, 
+        $buyer_wallet_shop_id,
         $amount, 
         $b_wallet_data['available_balance'], 
         $b_wallet_data['pending_balance'], 
@@ -144,21 +146,23 @@ try {
     $stmt->execute();
 
     // Log for Seller (Cancellation)
-    $s_bal_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $s_bal_stmt = $conn->prepare("SELECT id, shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $s_bal_stmt->bind_param("i", $seller_id);
     $s_bal_stmt->execute();
     $s_wallet_data = $s_bal_stmt->get_result()->fetch_assoc();
+    $seller_wallet_shop_id = $s_wallet_data['shop_id'];
 
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, 'sale_cancelled', ?, ?, ?, ?, ?, ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, 'sale_cancelled', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_seller = "Sale cancelled for order #$order_reference";
     $refund_ref_seller = $order_reference . '_CANCEL';
-    $stmt->bind_param("iiddddss", 
+    $stmt->bind_param("iiiddddss", 
         $s_wallet_data['id'], 
         $seller_id, 
+        $seller_wallet_shop_id,
         $amount, 
         $s_wallet_data['available_balance'], 
         $s_wallet_data['pending_balance'], 

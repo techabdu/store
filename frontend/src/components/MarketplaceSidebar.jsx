@@ -11,7 +11,9 @@ import {
     LogOut,
     Search,
     ShoppingCart,
-    Tag
+    Tag,
+    Receipt,
+    DollarSign
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -32,6 +34,8 @@ const MarketplaceSidebar = ({ filters, onFilterChange, onApplyFilters, isOpen, i
         { icon: Tag, label: 'Selling', path: '/marketplace/selling' },
         { icon: MessageCircle, label: 'Inbox', path: '/marketplace/messages' },
         { icon: ShoppingBag, label: 'My Orders', path: '/marketplace/orders' },
+        { icon: Receipt, label: 'My Purchases', path: '/marketplace/my-purchases' },
+        { icon: DollarSign, label: 'My Sales', path: '/marketplace/my-sales' },
         { icon: Wallet, label: 'My Wallet', path: '/marketplace/wallet' },
         { icon: User, label: 'My Profile', path: '/marketplace/profile' },
     ];

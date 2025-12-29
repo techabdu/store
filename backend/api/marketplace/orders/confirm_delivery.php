@@ -127,23 +127,25 @@ try {
 
     // Step 4: Create transaction record for buyer (escrow release)
     // Get wallet ID and balances
-    $b_bal_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $b_bal_stmt = $conn->prepare("SELECT id, shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $b_bal_stmt->bind_param("i", $buyer_id);
     $b_bal_stmt->execute();
     $b_wallet_data = $b_bal_stmt->get_result()->fetch_assoc();
     $b_bal_stmt->close();
+    $buyer_wallet_shop_id = $b_wallet_data['shop_id'];
     
     $buyer_description = "Escrow released for order #" . $order_id;
     $buyer_ref = "ORD" . $order_id . "_RELEASE";
     
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
-        VALUES (?, ?, 'purchase_release', ?, ?, ?, ?, ?, ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
+        VALUES (?, ?, ?, 'purchase_release', ?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stmt->bind_param("iiddddss", 
+    $stmt->bind_param("iiiddddss", 
         $b_wallet_data['id'],
         $buyer_id,
+        $buyer_wallet_shop_id,
         $amount,
         $b_wallet_data['available_balance'],
         $b_wallet_data['pending_balance'],
@@ -156,23 +158,25 @@ try {
 
     // Step 5: Create transaction record for seller (fund received)
     // Get wallet ID and balances
-    $s_bal_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $s_bal_stmt = $conn->prepare("SELECT id, shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $s_bal_stmt->bind_param("i", $seller_id);
     $s_bal_stmt->execute();
     $s_wallet_data = $s_bal_stmt->get_result()->fetch_assoc();
     $s_bal_stmt->close();
+    $seller_wallet_shop_id = $s_wallet_data['shop_id'];
     
     $seller_description = "Payment received for order #" . $order_id;
     $seller_ref = "ORD" . $order_id . "_PAYMENT";
     
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
-        VALUES (?, ?, 'sale_complete', ?, ?, ?, ?, ?, ?, NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
+        VALUES (?, ?, ?, 'sale_complete', ?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stmt->bind_param("iiddddss", 
+    $stmt->bind_param("iiiddddss", 
         $s_wallet_data['id'],
         $seller_id,
+        $seller_wallet_shop_id,
         $amount,
         $s_wallet_data['available_balance'],
         $s_wallet_data['pending_balance'],

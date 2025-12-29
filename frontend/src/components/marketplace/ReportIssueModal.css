@@ -1,195 +1,214 @@
-/* Report Issue Modal Styles */
-.report-issue-modal {
-    max-width: 550px;
-    width: 90%;
+/* Report Issue View - Full Page Focused/Wizard Style */
+
+/* Container inherits from wizard.css */
+.report-issue-focused {
+    animation: wizardFadeIn 0.3s ease-out;
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+    min-height: 0;
 }
 
-.report-issue-modal .modal-header {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    padding: 20px 24px;
-    border-radius: 12px 12px 0 0;
+/* Icon Header */
+.report-issue-icon-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
+    padding: 2.5rem 2rem 2rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.header-title {
+.report-icon-wrapper {
+    width: 72px;
+    height: 72px;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger, #ef4444);
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    margin-bottom: 1.25rem;
 }
 
-.header-title h2 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
+.report-issue-icon-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-.report-issue-modal .modal-body {
-    padding: 24px;
-}
-
-.report-intro {
-    margin-bottom: 24px;
-    padding: 16px;
-    background: #e3f2fd;
-    border-left: 4px solid #2196f3;
-    border-radius: 4px;
-}
-
-.report-intro p {
-    margin: 0;
-    font-size: 14px;
+.report-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
     line-height: 1.6;
-    color: #0d47a1;
+    margin: 0;
+    max-width: 450px;
 }
 
-.form-group {
-    margin-bottom: 20px;
+/* Order Summary Card */
+.order-summary-card {
+    background: var(--bg-hover);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
 }
 
-.form-group label {
+.order-summary-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.order-summary-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
-    font-size: 14px;
+}
+
+.order-number {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
+.order-status {
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #333;
+    text-transform: capitalize;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+/* Form Group Enhancements */
+.report-issue-focused .form-group-focus label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .char-count {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 400;
-    color: #666;
+    color: var(--text-secondary);
 }
 
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-    transition: border-color 0.3s ease;
+/* Error State */
+.form-input-focus.error {
+    border-color: var(--danger, #ef4444);
 }
 
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #667eea;
+.form-input-focus.error:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 
-.form-group select.error,
-.form-group textarea.error {
-    border-color: #f5576c;
-}
-
-.form-group textarea {
-    resize: vertical;
-    min-height: 120px;
-}
-
-.error-message {
+.error-text {
     display: block;
-    margin-top: 6px;
-    font-size: 13px;
-    color: #f5576c;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--danger, #ef4444);
 }
 
-.form-note {
-    padding: 12px;
-    background: #fff3cd;
-    border-radius: 6px;
-    margin-bottom: 20px;
-}
-
-.form-note p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #856404;
-}
-
-.form-note strong {
-    color: #654300;
-}
-
-.report-issue-modal .modal-footer {
+/* Note Box */
+.report-note {
     display: flex;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid #eee;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    align-items: flex-start;
 }
 
-.report-issue-modal .btn-cancel,
-.report-issue-modal .btn-submit {
-    flex: 1;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.report-note svg {
+    color: #f59e0b;
+    flex-shrink: 0;
+    margin-top: 2px;
 }
 
-.report-issue-modal .btn-cancel {
-    background: #6c757d;
-    color: white;
+.report-note p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-primary);
 }
 
-.report-issue-modal .btn-cancel:hover:not(:disabled) {
-    background: #5a6268;
+.report-note strong {
+    color: #b45309;
 }
 
-.report-issue-modal .btn-submit {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
+/* Dark mode adjustments */
+[data-theme="dark"] .report-note {
+    background: rgba(245, 158, 11, 0.15);
 }
 
-.report-issue-modal .btn-submit:hover:not(:disabled) {
-    background: linear-gradient(135deg, #e67fe8 0%, #e04356 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+[data-theme="dark"] .report-note strong {
+    color: #fbbf24;
 }
 
-.report-issue-modal .btn-cancel:disabled,
-.report-issue-modal .btn-submit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+[data-theme="dark"] .order-summary-card {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Submit Button with Icon */
+.report-issue-focused .btn-danger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-    .report-issue-modal {
-        width: 95%;
-        max-height: 90vh;
+    .report-issue-focused {
+        padding: 1rem;
     }
 
-    .report-issue-modal .modal-header {
-        padding: 16px;
+    .report-issue-icon-header {
+        padding: 2rem 1.5rem 1.5rem;
     }
 
-    .header-title h2 {
-        font-size: 18px;
+    .report-icon-wrapper {
+        width: 64px;
+        height: 64px;
     }
 
-    .report-issue-modal .modal-body {
-        padding: 16px;
-        max-height: 65vh;
-        overflow-y: auto;
+    .report-icon-wrapper svg {
+        width: 28px;
+        height: 28px;
     }
 
-    .report-issue-modal .modal-footer {
-        flex-direction: column;
-        gap: 8px;
+    .report-issue-icon-header h3 {
+        font-size: 1.125rem;
     }
 
-    .report-issue-modal .btn-cancel,
-    .report-issue-modal .btn-submit {
+    .report-subtitle {
+        font-size: 0.875rem;
+    }
+
+    .report-issue-focused .focus-view-actions {
+        flex-direction: column-reverse;
+    }
+
+    .report-issue-focused .btn-cancel,
+    .report-issue-focused .btn-danger {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-issue-focused {
+        padding: 0.5rem;
+    }
+
+    .report-issue-focused .focus-view-header {
+        padding: 0 0 1rem 0;
     }
 }

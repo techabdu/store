@@ -62,19 +62,22 @@ const MarketplaceOrders = () => {
     const filterTabs = [
         { id: 'all', label: 'All Orders' },
         { id: 'pending', label: 'Pending' },
-        { id: 'processing', label: 'Processing' },
+        { id: 'paid', label: 'Paid' },
         { id: 'shipped', label: 'Shipped' },
         { id: 'delivered', label: 'Delivered' },
+        { id: 'completed', label: 'Completed' },
         { id: 'cancelled', label: 'Cancelled' },
     ];
 
     const getStatusBadge = (status) => {
         const statusConfig = {
             pending: { color: 'warning', icon: Clock, label: 'Pending' },
-            processing: { color: 'info', icon: Package, label: 'Processing' },
+            paid: { color: 'info', icon: Package, label: 'Paid' },
             shipped: { color: 'primary', icon: Truck, label: 'Shipped' },
             delivered: { color: 'success', icon: CheckCircle, label: 'Delivered' },
+            completed: { color: 'success', icon: CheckCircle, label: 'Completed' },
             cancelled: { color: 'error', icon: XCircle, label: 'Cancelled' },
+            disputed: { color: 'error', icon: XCircle, label: 'Disputed' },
         };
 
         const config = statusConfig[status] || statusConfig.pending;
@@ -202,47 +205,28 @@ const MarketplaceOrders = () => {
                             <div className="orders-list">
                                 {filteredOrders.slice(0, visibleRows).map((order) => (
                                     <div key={order.id} className="order-card glass-card">
-                                        {/* Order Header */}
-                                        <div className="order-header">
+                                        <div className="order-card-row">
                                             <div className="order-header-left">
                                                 <h4 className="order-id">Order #{order.id}</h4>
-                                                <span className="order-date">{formatDate(order.created_at)}</span>
-                                            </div>
-                                            <div className="order-header-right">
-                                                {getStatusBadge(order.status)}
-                                            </div>
-                                        </div>
-
-                                        {/* Order Item */}
-                                        <div className="order-items">
-                                            <div className="order-item">
-                                                <img
-                                                    src={order.listing_image ? (order.listing_image.startsWith('http') ? order.listing_image : `${SERVER_URL}${order.listing_image}`) : '/placeholder-phone.png'}
-                                                    alt={order.listing_title}
-                                                    className="order-item-image"
-                                                />
-                                                <div className="order-item-info">
-                                                    <h5 className="order-item-name">{order.listing_title}</h5>
-                                                    <p className="order-item-details">
-                                                        {activeRole === 'buyer' ? 'Seller' : 'Buyer'}: {order.other_party_name || 'Marketplace User'}
-                                                    </p>
+                                                <div className="order-meta">
+                                                    <span className="order-date">{formatDate(order.created_at)}</span>
+                                                    <span className="party-name">• {order.other_party_shop_name || order.other_party_name || 'Marketplace Shop'}</span>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* Order Footer */}
-                                        <div className="order-footer">
-                                            <div className="order-total">
-                                                <span className="order-total-label">{activeRole === 'buyer' ? 'Amount Paid' : 'Amount Earned'}:</span>
-                                                <span className="order-total-amount">₦{formatPrice(order.total_amount)}</span>
+                                            <div className="order-status">
+                                                {getStatusBadge(order.status)}
                                             </div>
-                                            <button
-                                                onClick={() => navigate(`/marketplace/order/${order.id}`)}
-                                                className="btn-view-order"
-                                            >
-                                                <Eye size={16} />
-                                                View Details
-                                            </button>
+
+                                            <div className="order-actions">
+                                                <button
+                                                    onClick={() => navigate(`/marketplace/order/${order.id}`)}
+                                                    className="btn-view-order"
+                                                >
+                                                    <Eye size={16} />
+                                                    View Details
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

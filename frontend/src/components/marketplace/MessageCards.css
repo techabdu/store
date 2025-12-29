@@ -1,0 +1,243 @@
+/* Message Card Styles - Product and Order Cards in Chat */
+
+/* Interest Message Wrapper */
+.interest-message-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 300px;
+}
+
+.interest-message-wrapper.sent {
+    margin-left: auto;
+    align-items: flex-end;
+}
+
+.interest-message-wrapper.received {
+    margin-right: auto;
+    align-items: flex-start;
+}
+
+.interest-text {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 500;
+    padding: 0 4px;
+}
+
+/* Base Message Card */
+.message-card {
+    display: flex;
+    background: var(--bg-surface);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+
+.message-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Product Card Styles */
+.product-card {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+}
+
+.message-card-image {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-hover);
+}
+
+.message-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.message-card-title {
+    margin: 0 0 2px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.message-card-price {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.message-card-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.message-card-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    border-radius: 4px;
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+    text-transform: capitalize;
+}
+
+.message-card-subtitle {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.message-card-action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    padding: 0 4px;
+    flex-shrink: 0;
+}
+
+.message-card:hover .message-card-action-icon {
+    color: var(--primary);
+}
+
+/* Order Card Styles - In Messages */
+.message-card.order-card {
+    flex-direction: column;
+    padding: 0;
+    max-width: 280px;
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-hover);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.order-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.order-card-status {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: capitalize;
+    border-radius: 10px;
+    color: white;
+}
+
+.message-card-body {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    gap: 10px;
+}
+
+.order-card-reference {
+    margin: 0;
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.order-card-footer {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-hover);
+    text-align: center;
+}
+
+.order-card-action {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Sent/Received positioning adjustments for standalone cards */
+.message.sent .message-card:not(.product-card) {
+    margin-left: auto;
+    max-width: 280px;
+}
+
+.message.received .message-card:not(.product-card) {
+    margin-right: auto;
+    max-width: 280px;
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .message-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .message-card:hover {
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] .order-card-header,
+[data-theme='dark'] .order-card-footer {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme='dark'] .message-card-image {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .interest-message-wrapper {
+        max-width: 85%;
+    }
+
+    .message-card-image {
+        width: 48px;
+        height: 48px;
+    }
+
+    .message-card-title {
+        font-size: 12px;
+    }
+
+    .message-card-price {
+        font-size: 13px;
+    }
+
+    .message-card.order-card {
+        max-width: 260px;
+    }
+}

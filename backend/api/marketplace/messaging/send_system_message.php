@@ -14,9 +14,11 @@ require_once '../../../config/db_connect.php';
  * @param int $seller_id Seller user ID
  * @param string $message_text Message content
  * @param int $sender_id ID of the user sending the message (buyer or seller)
+ * @param string $message_type Type of message: 'text', 'product_card', 'order_card', 'system'
+ * @param array|null $metadata Additional data for card messages (will be JSON encoded)
  * @return bool Success status
  */
-function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_text, $sender_id) {
+function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_text, $sender_id, $message_type = 'text', $metadata = null) {
     try {
         // 1. Check if conversation already exists
         $c_stmt = $conn->prepare("SELECT id FROM marketplace_conversations WHERE listing_id = ? AND buyer_id = ?");
@@ -39,18 +41,21 @@ function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_t
         // 3. Determine receiver_id (opposite of sender)
         $receiver_id = ($sender_id === $buyer_id) ? $seller_id : $buyer_id;
         
-        // 4. Send the message
-        $msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, is_read) VALUES (?, ?, ?, ?, 0)");
-        $msg_stmt->bind_param("iiis", $conversation_id, $sender_id, $receiver_id, $message_text);
+        // 4. Encode metadata as JSON if provided
+        $metadata_json = $metadata ? json_encode($metadata) : null;
+        
+        // 5. Send the message with type and metadata
+        $msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, message_type, metadata, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)");
+        $msg_stmt->bind_param("iiisss", $conversation_id, $sender_id, $receiver_id, $message_text, $message_type, $metadata_json);
         
         if (!$msg_stmt->execute()) {
             return false;
         }
         
-        // 5. Update conversation timestamp
+        // 6. Update conversation timestamp
         $conn->query("UPDATE marketplace_conversations SET last_message_at = NOW() WHERE id = $conversation_id");
         
-        // 6. Unarchive for both parties
+        // 7. Unarchive for both parties
         $conn->query("UPDATE marketplace_conversations SET is_archived_by_buyer = 0, is_archived_by_seller = 0 WHERE id = $conversation_id");
         
         return true;

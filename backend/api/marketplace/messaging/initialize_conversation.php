@@ -34,9 +34,10 @@ $listing_id = intval($data->listing_id);
 // Optional: buyer_id (if Seller is initiating from an order)
 $target_buyer_id = isset($data->buyer_id) ? intval($data->buyer_id) : null;
 
-// 1. Fetch listing details
+// 1. Fetch listing details with image
 $stmt = $conn->prepare("
-    SELECT l.user_id as seller_id, l.title
+    SELECT l.user_id as seller_id, l.title, l.price, l.phone_condition, l.phone_brand, l.phone_model,
+           (SELECT image_url FROM marketplace_listing_images WHERE listing_id = l.id AND is_primary = 1 LIMIT 1) as image_url
     FROM marketplace_listings l
     WHERE l.id = ?
 ");
@@ -107,6 +108,15 @@ echo json_encode([
         'name' => $other_party['display_name'] ?? 'User',
         'image' => $other_party['profile_image'] ?? null
     ],
-    'listing_title' => $listing['title']
+    'listing_title' => $listing['title'],
+    'listing' => [
+        'id' => $listing_id,
+        'title' => $listing['title'],
+        'price' => floatval($listing['price']),
+        'condition' => $listing['phone_condition'] ?? 'N/A',
+        'brand' => $listing['phone_brand'] ?? '',
+        'model' => $listing['phone_model'] ?? '',
+        'image_url' => $listing['image_url'] ?? null
+    ]
 ]);
 ?>

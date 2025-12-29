@@ -39,6 +39,8 @@ if (empty($message)) {
 
 $conversation_id = isset($data->conversation_id) ? intval($data->conversation_id) : null;
 $listing_id = isset($data->listing_id) ? intval($data->listing_id) : null;
+$message_type = isset($data->message_type) ? $data->message_type : 'text';
+$metadata = isset($data->metadata) ? json_encode($data->metadata) : null;
 $receiver_id = null;
 
 if ($conversation_id) {
@@ -112,8 +114,8 @@ if ($conversation_id) {
 }
 
 // 3. Send Message
-$msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, is_read) VALUES (?, ?, ?, ?, 0)");
-$msg_stmt->bind_param("iiis", $conversation_id, $user_id, $receiver_id, $message);
+$msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, message_type, metadata, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)");
+$msg_stmt->bind_param("iiisss", $conversation_id, $user_id, $receiver_id, $message, $message_type, $metadata);
 
 if ($msg_stmt->execute()) {
     // Update conversation timestamp

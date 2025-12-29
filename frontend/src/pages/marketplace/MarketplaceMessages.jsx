@@ -3,11 +3,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import { Send, Paperclip, MoreVertical, Search } from 'lucide-react';
-import api from '../../utils/api';
+import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import DeliveryActionBar from '../../components/marketplace/DeliveryActionBar';
 import ConfirmDeliveryModal from '../../components/marketplace/ConfirmDeliveryModal';
-import ReportIssueModal from '../../components/marketplace/ReportIssueModal';
+import ReportIssueView from '../../components/marketplace/ReportIssueModal';
+import ProductCardMessage from '../../components/marketplace/ProductCardMessage';
+import OrderCardMessage from '../../components/marketplace/OrderCardMessage';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceInbox.css';
@@ -36,6 +38,12 @@ const MarketplaceMessages = () => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
     const [modalLoading, setModalLoading] = useState(false);
+
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        return `${SERVER_URL}${path}`;
+    };
 
     const filteredConversations = conversations.filter(conv => {
         if (activeFilter === 'all') return true;
@@ -134,15 +142,48 @@ const MarketplaceMessages = () => {
                     if (response.data.success) {
                         const conversationId = response.data.conversation_id;
 
-                        // If brand and model params exist, send automatic interest message
-                        // Only send if we haven't already sent it (prevent duplicates)
-                        if (brandParam && modelParam && !autoMessageSentRef.current) {
+                        // Check existing messages first to prevent duplicates
+                        let existingMessages = [];
+                        try {
+                            const msgsResponse = await api.get(`/marketplace/messaging/get_messages.php?conversation_id=${conversationId}`);
+                            if (msgsResponse.data.success) {
+                                existingMessages = msgsResponse.data.messages;
+                            }
+                        } catch (msgFetchErr) {
+                            console.error("Error fetching messages during init:", msgFetchErr);
+                        }
+
+                        // If brand and model params exist AND conversation is empty, send automatic interest message with product card
+                        if (brandParam && modelParam && existingMessages.length === 0 && !autoMessageSentRef.current) {
                             autoMessageSentRef.current = true; // Mark as sent
                             const interestMessage = `I am interested in this ${brandParam} ${modelParam}`;
+
+                            // Build product card metadata from listing info if available
+                            const listingInfo = response.data.listing;
+                            const productMetadata = listingInfo ? {
+                                listing_id: listingInfo.id,
+                                title: listingInfo.title,
+                                price: listingInfo.price,
+                                image_url: listingInfo.image_url,
+                                condition: listingInfo.condition,
+                                brand: listingInfo.brand,
+                                model: listingInfo.model
+                            } : null;
+
                             try {
                                 await api.post('/marketplace/messaging/send.php', {
                                     conversation_id: conversationId,
-                                    message: interestMessage
+                                    message: interestMessage,
+                                    message_type: productMetadata ? 'product_card' : 'text',
+                                    metadata: productMetadata
+                                });
+                                // Add this new message to our local list so we don't think it's empty anymore if we re-check
+                                existingMessages.push({
+                                    message: interestMessage,
+                                    message_type: productMetadata ? 'product_card' : 'text',
+                                    metadata: productMetadata,
+                                    is_me: true,
+                                    created_at: new Date().toISOString()
                                 });
                             } catch (msgErr) {
                                 console.error("Error sending interest message:", msgErr);
@@ -150,8 +191,16 @@ const MarketplaceMessages = () => {
                             }
                         }
 
-                        // Fetch conversations and select the new one
+                        // Update messages state immediately to avoid loading flicker
+                        setMessages(existingMessages);
+
+                        // Fetch conversations and select the new one (without refetching messages redundantly if possible, 
+                        // but fetchConversations logic handles selection which triggers message fetch.
+                        // We can optimize fetchConversations later or just let it happen.)
                         fetchConversations(conversationId);
+
+                        // Clean URL to prevent re-triggering on reload/back
+                        navigate('/marketplace/messages', { replace: true });
                     } else {
                         fetchConversations();
                     }
@@ -167,6 +216,7 @@ const MarketplaceMessages = () => {
             }
         };
 
+        // Only run if listingIdParam changes or we haven't initialized yet
         initChat();
     }, [listingIdParam, buyerIdParam, currentShop?.id]);
 
@@ -307,6 +357,17 @@ const MarketplaceMessages = () => {
         }
     };
 
+    // Navigate to other party's profile
+    const handleHeaderClick = () => {
+        if (!selectedConversation || !user) return;
+
+        const otherPartyId = String(selectedConversation.buyer_id) === String(user.id)
+            ? selectedConversation.seller_id
+            : selectedConversation.buyer_id;
+
+        navigate(`/marketplace/seller/${otherPartyId}`);
+    };
+
     return (
         <div className="dashboard-container">
             <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
@@ -373,7 +434,7 @@ const MarketplaceMessages = () => {
                                         >
                                             <div className="conversation-avatar">
                                                 {conversation.other_party_image ? (
-                                                    <img src={conversation.other_party_image} alt={conversation.other_party_name} className="avatar-img" />
+                                                    <img src={getImageUrl(conversation.other_party_image)} alt={conversation.other_party_name} className="avatar-img" />
                                                 ) : (
                                                     conversation.other_party_name.charAt(0).toUpperCase()
                                                 )}
@@ -409,9 +470,18 @@ const MarketplaceMessages = () => {
                         </div>
                     </div>
 
-                    {/* Messages Panel */}
+                    {/* Messages Panel - or Report Issue Focused View */}
                     <div className={`messages-panel ${!showMessagesOnMobile ? 'hide-on-mobile' : ''}`}>
-                        {!selectedConversation ? (
+                        {/* Show Report Issue Focused View */}
+                        {showReportModal && currentOrder ? (
+                            <ReportIssueView
+                                onClose={() => setShowReportModal(false)}
+                                onSubmit={handleSubmitDispute}
+                                order={currentOrder}
+                                isBuyer={currentOrder?.buyer_id === user?.id}
+                                isLoading={modalLoading}
+                            />
+                        ) : !selectedConversation ? (
                             <div className="empty-messages-state">
                                 <Send size={64} style={{ color: 'var(--text-secondary)', opacity: 0.2 }} />
                                 <h3 className="heading-3" style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
@@ -432,10 +502,10 @@ const MarketplaceMessages = () => {
                                     >
                                         ←
                                     </button>
-                                    <div className="chat-user-info">
+                                    <div className="chat-user-info" onClick={handleHeaderClick}>
                                         <div className="conversation-avatar">
                                             {selectedConversation.other_party_image ? (
-                                                <img src={selectedConversation.other_party_image} alt={selectedConversation.other_party_name} className="avatar-img" />
+                                                <img src={getImageUrl(selectedConversation.other_party_image)} alt={selectedConversation.other_party_name} className="avatar-img" />
                                             ) : (
                                                 selectedConversation.other_party_name.charAt(0).toUpperCase()
                                             )}
@@ -473,12 +543,25 @@ const MarketplaceMessages = () => {
                                                 key={message.id || index}
                                                 className={`message ${message.is_me ? 'sent' : 'received'}`}
                                             >
-                                                <div className="message-bubble">
-                                                    <p className="message-text">{message.message}</p>
-                                                    <span className="message-time">
-                                                        {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
+                                                {/* Render different message types */}
+                                                {message.message_type === 'product_card' && message.metadata ? (
+                                                    <ProductCardMessage
+                                                        metadata={message.metadata}
+                                                        isSent={message.is_me}
+                                                    />
+                                                ) : message.message_type === 'order_card' && message.metadata ? (
+                                                    <OrderCardMessage
+                                                        metadata={message.metadata}
+                                                        isSent={message.is_me}
+                                                    />
+                                                ) : (
+                                                    <div className="message-bubble">
+                                                        <p className="message-text">{message.message}</p>
+                                                        <span className="message-time">
+                                                            {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))
                                     )}
@@ -507,21 +590,11 @@ const MarketplaceMessages = () => {
                     </div>
                 </div>
 
-                {/* Modals */}
                 <ConfirmDeliveryModal
                     isOpen={showConfirmModal}
                     onClose={() => setShowConfirmModal(false)}
                     onConfirm={handleProceedConfirmDelivery}
                     order={currentOrder}
-                    isLoading={modalLoading}
-                />
-
-                <ReportIssueModal
-                    isOpen={showReportModal}
-                    onClose={() => setShowReportModal(false)}
-                    onSubmit={handleSubmitDispute}
-                    order={currentOrder}
-                    isBuyer={currentOrder?.buyer_id === user?.id}
                     isLoading={modalLoading}
                 />
             </main>

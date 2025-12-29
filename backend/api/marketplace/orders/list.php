@@ -73,21 +73,30 @@ $query = "
             ELSE p_buyer.display_name
         END as other_party_name,
 
+        CASE 
+            WHEN o.buyer_id = ? THEN s_shop.shop_name
+            ELSE b_shop.shop_name
+        END as other_party_shop_name,
+
         (SELECT image_url FROM marketplace_listing_images WHERE listing_id = l.id ORDER BY is_primary DESC, id ASC LIMIT 1) as listing_image
         
     FROM marketplace_orders o
     JOIN marketplace_listings l ON o.listing_id = l.id
     LEFT JOIN marketplace_profiles p_buyer ON o.buyer_id = p_buyer.user_id AND (o.buyer_shop_id = p_buyer.shop_id OR (o.buyer_shop_id IS NULL AND p_buyer.shop_id IS NULL))
     LEFT JOIN marketplace_profiles p_seller ON o.seller_id = p_seller.user_id AND (o.seller_shop_id = p_seller.shop_id OR (o.seller_shop_id IS NULL AND p_seller.shop_id IS NULL))
+    LEFT JOIN users u_buyer ON o.buyer_id = u_buyer.id
+    LEFT JOIN shops b_shop ON u_buyer.tenant_id = b_shop.tenant_id AND b_shop.is_main_branch = 1
+    LEFT JOIN users u_seller ON o.seller_id = u_seller.id
+    LEFT JOIN shops s_shop ON u_seller.tenant_id = s_shop.tenant_id AND s_shop.is_main_branch = 1
     
     WHERE $where_clause
     ORDER BY o.created_at DESC
     LIMIT ? OFFSET ?
 ";
 
-// Add user_id again for CASE, then limit/offset
-$final_params = array_merge([$user_id], $params, [$limit, $offset]);
-$final_types = "i" . $types . "ii";
+// Add user_id again for CASE statements (two now), then limit/offset
+$final_params = array_merge([$user_id, $user_id], $params, [$limit, $offset]);
+$final_types = "ii" . $types . "ii";
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param($final_types, ...$final_params);

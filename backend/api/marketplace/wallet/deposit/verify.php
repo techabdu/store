@@ -104,21 +104,23 @@ try {
     }
     
     // Get Updated Balances for log
-    $wid_stmt = $conn->prepare("SELECT id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
+    $wid_stmt = $conn->prepare("SELECT id, shop_id, available_balance, pending_balance, held_balance FROM marketplace_wallets WHERE user_id = ?");
     $wid_stmt->bind_param("i", $user_id);
     $wid_stmt->execute();
     $wallet = $wid_stmt->get_result()->fetch_assoc();
     $wallet_id = $wallet['id'];
+    $wallet_shop_id = $wallet['shop_id'];
 
     // Log to Wallet Transaction History
     $log_stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, 'fund', ?, ?, ?, ?, ?, 'Wallet Funding via Kora (Verified)', NOW())
+        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, 'fund', ?, ?, ?, ?, ?, 'Wallet Funding via Kora (Verified)', NOW())
     ");
-    $log_stmt->bind_param("iidddds", 
+    $log_stmt->bind_param("iiidddds", 
         $wallet_id, 
         $user_id, 
+        $wallet_shop_id,
         $amount, 
         $wallet['available_balance'], 
         $wallet['pending_balance'], 

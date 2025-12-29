@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTriangle, Receipt } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import './MarketplacePage.css';
@@ -87,10 +87,12 @@ const MarketplaceOrderDetails = () => {
     const getStatusIcon = (status) => {
         switch (status) {
             case 'pending': return <Clock size={20} className="text-warning" />;
-            case 'processing': return <Package size={20} className="text-info" />;
+            case 'paid': return <Package size={20} className="text-info" />;
             case 'shipped': return <Truck size={20} className="text-primary" />;
             case 'delivered': return <CheckCircle size={20} className="text-success" />;
+            case 'completed': return <CheckCircle size={20} className="text-success" />;
             case 'cancelled': return <XCircle size={20} className="text-error" />;
+            case 'disputed': return <AlertTriangle size={20} className="text-error" />;
             default: return <Info size={20} />;
         }
     };
@@ -142,7 +144,7 @@ const MarketplaceOrderDetails = () => {
     }
 
     const isBuyer = order.buyer_id == user?.id;
-    const canCancel = ['pending', 'processing'].includes(order.order_status);
+    const canCancel = ['pending', 'paid'].includes(order.order_status);
 
     return (
         <div className="dashboard-container">
@@ -163,25 +165,41 @@ const MarketplaceOrderDetails = () => {
                         <div className="focus-view-content">
                             <div className="focus-view-card glass-card animate-slide-in">
                                 <div className="focus-view-body">
-                                    {/* Wizard Progress */}
-                                    <div className="wizard-steps">
-                                        <div className={`step ${order.created_at ? 'completed' : 'active'}`}>
-                                            <div className="step-number">{order.created_at ? <CheckCircle size={14} /> : '1'}</div>
-                                            <div className="step-label">Ordered</div>
+                                    {/* Wizard Progress - Handle cancelled orders differently */}
+                                    {order.order_status === 'cancelled' ? (
+                                        <div className="cancelled-order-banner">
+                                            <XCircle size={24} />
+                                            <div>
+                                                <strong>Order Cancelled</strong>
+                                                <p>{order.cancellation_reason || 'This order has been cancelled.'}</p>
+                                            </div>
                                         </div>
-                                        <div className={`step ${order.paid_at ? 'completed' : (order.created_at ? 'active' : '')}`}>
-                                            <div className="step-number">{order.paid_at ? <CheckCircle size={14} /> : '2'}</div>
-                                            <div className="step-label">Paid</div>
+                                    ) : (
+                                        <div className="wizard-steps">
+                                            <div className={`step completed`}>
+                                                <div className="step-number"><CheckCircle size={14} /></div>
+                                                <div className="step-label">Ordered</div>
+                                            </div>
+                                            <div className={`step ${order.order_status !== 'pending' ? 'completed' : 'active'}`}>
+                                                <div className="step-number">
+                                                    {order.order_status !== 'pending' ? <CheckCircle size={14} /> : '2'}
+                                                </div>
+                                                <div className="step-label">Paid</div>
+                                            </div>
+                                            <div className={`step ${['shipped', 'delivered', 'completed'].includes(order.order_status) || order.delivery_status === 'shipped' || order.delivery_status === 'received' ? 'completed' : (order.order_status === 'paid' ? 'active' : '')}`}>
+                                                <div className="step-number">
+                                                    {['shipped', 'delivered', 'completed'].includes(order.order_status) || order.delivery_status === 'shipped' || order.delivery_status === 'received' ? <CheckCircle size={14} /> : '3'}
+                                                </div>
+                                                <div className="step-label">Shipped</div>
+                                            </div>
+                                            <div className={`step ${['delivered', 'completed'].includes(order.order_status) || order.delivery_status === 'received' ? 'completed' : (['shipped'].includes(order.order_status) || order.delivery_status === 'shipped' ? 'active' : '')}`}>
+                                                <div className="step-number">
+                                                    {['delivered', 'completed'].includes(order.order_status) || order.delivery_status === 'received' ? <CheckCircle size={14} /> : '4'}
+                                                </div>
+                                                <div className="step-label">Completed</div>
+                                            </div>
                                         </div>
-                                        <div className={`step ${order.shipped_at ? 'completed' : (order.paid_at ? 'active' : '')}`}>
-                                            <div className="step-number">{order.shipped_at ? <CheckCircle size={14} /> : '3'}</div>
-                                            <div className="step-label">Shipped</div>
-                                        </div>
-                                        <div className={`step ${order.delivered_at ? 'completed' : (order.shipped_at ? 'active' : '')}`}>
-                                            <div className="step-number">{order.delivered_at ? <CheckCircle size={14} /> : '4'}</div>
-                                            <div className="step-label">Delivered</div>
-                                        </div>
-                                    </div>
+                                    )}
 
                                     <div className="order-info-grid">
                                         <div className="order-main-info">
@@ -230,17 +248,19 @@ const MarketplaceOrderDetails = () => {
                                             <div className="order-detail-section">
                                                 <h3 className="section-title">Order Status</h3>
                                                 <div className="status-display">
-                                                    <span className={`status-badge status-${order.order_status === 'cancelled' ? 'error' : 'primary'}`}>
+                                                    <span className={`status-badge status-${['cancelled', 'disputed'].includes(order.order_status) ? 'error' : (['completed', 'delivered'].includes(order.order_status) ? 'success' : 'primary')}`}>
                                                         {getStatusIcon(order.order_status)}
                                                         {order.order_status.toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <p className="status-note">
                                                     {order.order_status === 'pending' && "Awaiting payment verification to proceed."}
-                                                    {order.order_status === 'processing' && "Seller is preparing your item for shipment."}
+                                                    {order.order_status === 'paid' && "Payment received. Seller is preparing your item for shipment."}
                                                     {order.order_status === 'shipped' && "Your item is on its way!"}
                                                     {order.order_status === 'delivered' && "Item received and confirmed."}
+                                                    {order.order_status === 'completed' && "Transaction completed successfully!"}
                                                     {order.order_status === 'cancelled' && `Order cancelled: ${order.cancellation_reason || 'No reason provided'}.`}
+                                                    {order.order_status === 'disputed' && "This order is under review by our support team."}
                                                 </p>
                                             </div>
 
@@ -260,6 +280,16 @@ const MarketplaceOrderDetails = () => {
                                                             className="btn-outline-danger full-width"
                                                         >
                                                             Cancel Order
+                                                        </button>
+                                                    )}
+                                                    {['completed', 'delivered'].includes(order.order_status) && (
+                                                        <button
+                                                            onClick={() => navigate(`/marketplace/receipt/${id}`)}
+                                                            className="btn-primary full-width"
+                                                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                                        >
+                                                            <Receipt size={16} />
+                                                            View Receipt
                                                         </button>
                                                     )}
                                                 </div>

@@ -53,7 +53,7 @@ $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
 $offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
 
 $query = "
-    SELECT id, sender_id, message, created_at, is_read 
+    SELECT id, sender_id, message, message_type, metadata, created_at, is_read 
     FROM marketplace_messages 
     WHERE conversation_id = ? 
     ORDER BY created_at ASC
@@ -68,6 +68,10 @@ $result = $stmt->get_result();
 $messages = [];
 while ($row = $result->fetch_assoc()) {
     $row['is_me'] = ($row['sender_id'] == $user_id);
+    // Parse metadata JSON if present
+    if (!empty($row['metadata'])) {
+        $row['metadata'] = json_decode($row['metadata'], true);
+    }
     $messages[] = $row;
 }
 

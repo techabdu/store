@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import MetricCard from '../../components/MetricCard';
-import { FaStore, FaWallet, FaCommentDots, FaUserCircle, FaBox, FaShoppingCart } from 'react-icons/fa';
+import { FaStore, FaWallet, FaCommentDots, FaUserCircle, FaBox, FaShoppingCart, FaReceipt, FaHistory } from 'react-icons/fa';
 import { Wallet, Store, MessageSquare, User, TrendingUp, Package } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -126,6 +126,20 @@ const MarketplaceDashboard = () => {
             description: "Buy phones from verified sellers",
             action: () => navigate('/marketplace/listings'),
             colorClass: "blue"
+        },
+        {
+            title: "My Purchases",
+            icon: <FaHistory size={28} style={{ color: '#F44336' }} />,
+            description: "View item purchases and receipts",
+            action: () => navigate('/marketplace/my-purchases'),
+            colorClass: "red"
+        },
+        {
+            title: "My Sales",
+            icon: <FaReceipt size={28} style={{ color: '#4CAF50' }} />,
+            description: "View sold items and sales receipts",
+            action: () => navigate('/marketplace/my-sales'),
+            colorClass: "green"
         },
         {
             title: "Messages",
