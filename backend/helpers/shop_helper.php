@@ -36,6 +36,35 @@ function getCurrentShopId() {
 }
 
 /**
+ * Get the current shop ID or exit with error
+ * 
+ * @return int Shop ID
+ */
+function requireShopContext() {
+    $shopId = getCurrentShopId();
+    if ($shopId === null) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'No shop context found. Please select a shop.']);
+        exit;
+    }
+    return $shopId;
+}
+
+/**
+ * Get the current tenant ID or exit with error
+ * 
+ * @return int Tenant ID
+ */
+function requireTenantContext() {
+    if (!isset($_SESSION['tenant_id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Session expired or invalid tenant. Please log in again.']);
+        exit;
+    }
+    return $_SESSION['tenant_id'];
+}
+
+/**
  * Check if current user is an owner (has access to all shops)
  * 
  * @return bool True if user is owner (admin with shop_id = NULL)
@@ -112,26 +141,6 @@ function verifyShopAccess($shopId) {
     return true;
 }
 
-/**
- * Require shop context for data operations
- * Exits with 400 if no shop context is set
- * 
- * @return int The current shop ID
- */
-function requireShopContext() {
-    $shopId = getCurrentShopId();
-    
-    if ($shopId === null) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false, 
-            'error' => 'No shop context. Please select a branch.'
-        ]);
-        exit;
-    }
-    
-    return $shopId;
-}
 
 /**
  * Get list of shops for current tenant

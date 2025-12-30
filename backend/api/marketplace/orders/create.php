@@ -1,17 +1,15 @@
 <?php
 // backend/api/marketplace/orders/create.php
 
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/database.php';
+
+// Set CORS headers
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+header('Access-Control-Allow-Credentials: true');
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-require_once '../../../config/db_connect.php';
 require_once '../../../includes/encryption.php'; // For reference generation
 require_once '../messaging/send_system_message.php'; // For automatic notifications
 
@@ -80,7 +78,8 @@ try {
     // Fallback for buyer_shop_id if not set in users table (use listing shop or default)
     // Ideally we fetch from marketplace_profiles if using that system.
     // Converting simplistic check to robust one:
-    $buyer_shop_id = $buyer_wallet['user_shop_id'] ?? 1; // Default to 1 (Main Shop) if null
+    require_once '../../../helpers/shop_helper.php';
+    $buyer_shop_id = requireShopContext();
 
     if (!$buyer_wallet) {
          // Should have been created at profile creation, but create if missing?

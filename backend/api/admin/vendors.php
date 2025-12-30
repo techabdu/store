@@ -74,7 +74,7 @@ elseif ($method === 'POST') {
     $contact = trim($data['contact_info'] ?? '');
     $status = 'active';
     
-    $tenantId = $user_data['tenant_id'] ?? 1;
+    $tenantId = requireTenantContext();
     
     $sql = "INSERT INTO vendors (tenant_id, shop_id, name, address, contact_info, status) VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);

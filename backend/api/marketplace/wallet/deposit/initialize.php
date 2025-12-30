@@ -1,17 +1,15 @@
 <?php
 // backend/api/marketplace/wallet/deposit/initialize.php
 
+require_once '../../../../config/config.php';
+require_once '../../../../config/database.php';
+
+// Set CORS headers
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+header('Access-Control-Allow-Credentials: true');
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-require_once '../../../../config/db_connect.php';
 require_once '../../../../includes/kora_api.php';
 require_once '../../../../includes/encryption.php';
 
@@ -77,7 +75,7 @@ try {
         $stmt = $conn->prepare("
             INSERT INTO kora_payment_references 
             (user_id, kora_reference, transaction_type, amount, status, created_at)
-            VALUES (?, ?, 'pay_in', ?, 'pending', NOW())
+            VALUES (?, ?, TRANS_TYPE_DEPOSIT, ?, TRANS_STATUS_PENDING, NOW())
         ");
         
         if (!$stmt) {

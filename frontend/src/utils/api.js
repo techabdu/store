@@ -3,9 +3,7 @@ import axios from 'axios';
 // Detect environment based on hostname
 export const isProduction = window.location.hostname !== 'localhost';
 
-export const SERVER_URL = isProduction
-    ? 'https://prhub.shop'
-    : 'http://localhost';
+export const SERVER_URL = import.meta.env.VITE_API_URL || (isProduction ? 'https://prhub.shop' : 'http://localhost');
 
 // Create axios instance with base configuration
 const api = axios.create({

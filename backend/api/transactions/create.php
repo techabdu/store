@@ -72,12 +72,7 @@ $conn->begin_transaction();
 
 try {
     // Get current shop context
-    $shopId = getCurrentShopId();
-    if ($shopId === null) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
-        exit;
-    }
+    $shopId = requireShopContext();
     
     $totalAmount = 0;
     $saleItems = [];
@@ -181,7 +176,7 @@ try {
                 $tradeInValue,
                 $tradeInValue, // cost_price = tradeInValue
                 $userId,
-                $_SESSION['tenant_id'],
+                requireTenantContext(),
                 $shopId
             );
             
@@ -250,7 +245,7 @@ try {
         $totalCOGS,
         $grossProfit,
         $paymentMethod,
-        $_SESSION['tenant_id'],
+        requireTenantContext(),
         $shopId
     );
     
@@ -277,7 +272,7 @@ try {
             $saleItem['price'],
             $type,
             $desc,
-            $_SESSION['tenant_id'],
+            requireTenantContext(),
             $shopId
         );
         
@@ -303,7 +298,7 @@ try {
             $tradeInItem['price'],
             $type,
             $desc,
-            $_SESSION['tenant_id'],
+            requireTenantContext(),
             $shopId
         );
         
@@ -323,7 +318,7 @@ try {
             $manualItem['price'],
             $type,
             $manualItem['description'],
-            $_SESSION['tenant_id'],
+            requireTenantContext(),
             $shopId
         );
         
@@ -352,7 +347,7 @@ try {
 
     // NEW: Update Customer Analytics
     if ($customerPhone) {
-        updateCustomerAnalytics($conn, $shopId, $_SESSION['tenant_id'], $customerPhone, $customerName, $totalAmount);
+        updateCustomerAnalytics($conn, $shopId, requireTenantContext(), $customerPhone, $customerName, $totalAmount);
         updateCustomerDebtMetrics($conn, $shopId, $customerPhone, 0); // Recalculate debt metrics to impact LTV
     }
     

@@ -1,17 +1,15 @@
 <?php
 // backend/api/marketplace/wallet/get_balance.php
 
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/database.php';
+
+// Set CORS headers
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+header('Access-Control-Allow-Credentials: true');
 header("Access-Control-Allow-Methods: GET");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-require_once '../../../config/db_connect.php';
 
 session_start();
 
@@ -21,8 +19,9 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+require_once '../../../helpers/shop_helper.php';
 $user_id = $_SESSION['user_id'];
-$shop_id = $_SESSION['current_shop_id'] ?? 1; // Default to 1 if not set
+$shop_id = requireShopContext();
 
 // Get wallet details for THIS shop
 $stmt = $conn->prepare("

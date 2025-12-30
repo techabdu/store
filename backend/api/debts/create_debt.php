@@ -24,13 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Check authentication
 $user_data = checkAuth();
-$shop_id = getCurrentShopId();
-
-if ($shop_id === null) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'No shop context. Please select a branch.']);
-    exit;
-}
+$shop_id = requireShopContext();
 
 try {
     // Get and decode request body
@@ -113,7 +107,7 @@ try {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         
-        $tenant_id = $_SESSION['tenant_id'];
+        $tenant_id = requireTenantContext();
         $stmt->bind_param(
             "iiisssddssi",
             $tenant_id,
@@ -170,7 +164,7 @@ try {
         if ($result) {
             // NEW: Update Customer Analytics
             require_once '../../helpers/customer_analytics.php';
-            updateCustomerAnalytics($conn, $shop_id, $_SESSION['tenant_id'], $customer_phone, $customer_name, 0); // Updates/creates customer record
+            updateCustomerAnalytics($conn, $shop_id, requireTenantContext(), $customer_phone, $customer_name, 0); // Updates/creates customer record
             updateCustomerDebtMetrics($conn, $shop_id, $customer_phone, $paid_amount); // Recalculates debt specific metrics
 
             http_response_code(201);

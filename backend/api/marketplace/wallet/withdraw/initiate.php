@@ -1,17 +1,15 @@
 <?php
 // backend/api/marketplace/wallet/withdraw/initiate.php
 
+require_once '../../../../config/config.php';
+require_once '../../../../config/database.php';
+
+// Set CORS headers
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+header('Access-Control-Allow-Credentials: true');
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-require_once '../../../../config/db_connect.php';
 require_once '../../../../includes/kora_api.php';
 require_once '../../../../includes/encryption.php';
 require_once '../../../../includes/security.php';
@@ -24,8 +22,9 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+require_once '../../../../helpers/shop_helper.php';
 $user_id = $_SESSION['user_id'];
-$shop_id = $_SESSION['current_shop_id'] ?? 1;
+$shop_id = requireShopContext();
 $data = json_decode(file_get_contents("php://input"));
 
 // Input Validation
@@ -143,7 +142,7 @@ try {
     $log_stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
         (wallet_id, user_id, shop_id, transaction_type, amount, reference_number, status, description, available_balance_after, pending_balance_after, held_balance_after, created_at) 
-        VALUES (?, ?, ?, 'withdraw', ?, ?, 'pending', ?, ?, ?, ?, NOW())
+        VALUES (?, ?, ?, TRANS_TYPE_WITHDRAWAL, ?, ?, TRANS_STATUS_PENDING, ?, ?, ?, ?, NOW())
     ");
     $log_stmt->bind_param("iiidsdddd", $wallet['id'], $user_id, $shop_id, $amount, $reference, $description, $b_row['available_balance'], $b_row['pending_balance'], $b_row['held_balance']);
     $log_stmt->execute();
