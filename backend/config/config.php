@@ -12,6 +12,7 @@ function loadConfigEnv() {
     $envPath = __DIR__ . '/../.env';
     if (file_exists($envPath)) {
         $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) return;
         foreach ($lines as $line) {
             if (strpos(trim($line), '#') === 0) continue;
             if (strpos($line, '=') !== false) {
@@ -27,6 +28,7 @@ function loadConfigEnv() {
                 if (getenv($name) === false) {
                     putenv(sprintf('%s=%s', $name, $value));
                     $_ENV[$name] = $value;
+                    $_SERVER[$name] = $value;
                 }
             }
         }
@@ -39,7 +41,7 @@ loadConfigEnv();
 $isProduction = !in_array($_SERVER['HTTP_HOST'] ?? 'localhost', ['localhost', '127.0.0.1']);
 
 // Set frontend URL from environment or detect based on production status
-$frontendUrl = getenv('FRONTEND_URL');
+$frontendUrl = getenv('FRONTEND_URL') ?: ($_ENV['FRONTEND_URL'] ?? ($_SERVER['FRONTEND_URL'] ?? null));
 if (!$frontendUrl) {
     if ($isProduction) {
         $httpOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -52,7 +54,7 @@ if (!$frontendUrl) {
 define('FRONTEND_URL', rtrim($frontendUrl, '/'));
 
 // Set backend URL from environment or detect
-$backendUrl = getenv('BACKEND_URL');
+$backendUrl = getenv('BACKEND_URL') ?: ($_ENV['BACKEND_URL'] ?? ($_SERVER['BACKEND_URL'] ?? null));
 if (!$backendUrl) {
     $backendUrl = $isProduction ? 'https://prhub.shop/backend' : 'http://localhost/store/backend';
 }
@@ -83,7 +85,8 @@ function setCorsHeaders() {
     header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token");
     
     // Handle preflight OPTIONS request
-    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    $request_method = $_SERVER['REQUEST_METHOD'] ?? '';
+    if ($request_method === 'OPTIONS') {
         http_response_code(200);
         exit;
     }

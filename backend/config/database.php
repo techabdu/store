@@ -16,10 +16,11 @@ class Database {
         $this->loadEnv();
 
         // Use environment variables or default to empty/null
-        $this->host = getenv('DB_HOST') ?: '127.0.0.1';
-        $this->username = getenv('DB_USER') ?: 'root';
-        $this->password = getenv('DB_PASS') ?: '';
-        $this->db_name = getenv('DB_NAME') ?: 'store';
+        // Use environment variables or default to empty/null
+        $this->host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? '127.0.0.1'));
+        $this->username = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ($_SERVER['DB_USER'] ?? 'root'));
+        $this->password = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? ''));
+        $this->db_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? 'store'));
     }
 
     private function loadEnv() {
@@ -28,6 +29,7 @@ class Database {
         $envPath = __DIR__ . '/../.env';
         if (file_exists($envPath)) {
             $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines === false) return;
             foreach ($lines as $line) {
                 if (strpos(trim($line), '#') === 0) {
                     continue;
@@ -99,4 +101,3 @@ if ($conn === null || $conn->connect_error) {
     echo json_encode(['success' => false, 'message' => 'Internal Server Error']); // Generic message
     exit;
 }
-?>

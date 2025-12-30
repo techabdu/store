@@ -13,9 +13,6 @@ require_once __DIR__ . '/../../../config/database.php';
 // Set CORS headers
 setCorsHeaders();
 header('Content-Type: application/json');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -57,8 +54,13 @@ try {
         LEFT JOIN marketplace_listings l ON o.listing_id = l.id
         WHERE c.id = ? AND (c.buyer_id = ? OR c.seller_id = ?)
     ");
+    if (!$stmt) {
+        throw new Exception("Failed to prepare statement: " . $conn->error);
+    }
     $stmt->bind_param("iii", $conversation_id, $user_id, $user_id);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception("Failed to execute statement: " . $stmt->error);
+    }
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
@@ -97,9 +99,10 @@ try {
         ]
     ]);
 
-} catch (Exception $e) {
+} catch (Throwable $t) {
+    error_log("Order fetch error: " . $t->getMessage() . " in " . $t->getFile() . " on line " . $t->getLine());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Server error: ' . $t->getMessage()]);
 }
 
 $conn->close();
