@@ -47,8 +47,8 @@ const MarketplaceMessages = () => {
 
     const filteredConversations = conversations.filter(conv => {
         if (activeFilter === 'all') return true;
-        if (activeFilter === 'buying') return conv.buyer_id == user?.id;
-        if (activeFilter === 'selling') return conv.seller_id == user?.id;
+        if (activeFilter === 'buying') return String(conv.buyer_id) === String(user?.id);
+        if (activeFilter === 'selling') return String(conv.seller_id) === String(user?.id);
         return true;
     });
 
@@ -89,6 +89,7 @@ const MarketplaceMessages = () => {
                     if (conv) {
                         setSelectedConversation(conv);
                         fetchMessages(conv.conversation_id);
+                        fetchOrderDetails(conv.conversation_id);
                     }
                 }
             }
@@ -478,7 +479,7 @@ const MarketplaceMessages = () => {
                                 onClose={() => setShowReportModal(false)}
                                 onSubmit={handleSubmitDispute}
                                 order={currentOrder}
-                                isBuyer={currentOrder?.buyer_id === user?.id}
+                                isBuyer={String(currentOrder?.buyer_id) === String(user?.id)}
                                 isLoading={modalLoading}
                             />
                         ) : !selectedConversation ? (
