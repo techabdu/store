@@ -80,7 +80,7 @@ try {
     }
 
     // Verify order status is valid (paid/escrowed orders)
-    $valid_statuses = ['pending', 'processing', 'completed'];
+    $valid_statuses = ['pending', 'paid', 'processing', 'completed'];
     if (!in_array($order['status'], $valid_statuses)) {
         $conn->rollback();
         http_response_code(400);

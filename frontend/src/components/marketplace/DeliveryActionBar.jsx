@@ -16,20 +16,24 @@ const DeliveryActionBar = ({
         return null;
     }
 
-    // Show buttons for pending (paid/escrowed) or completed orders
+    // Normalize statuses for robust comparison
+    const orderStatus = String(order.status || '').trim().toLowerCase();
+    const deliveryStatus = String(order.delivery_status || '').trim().toLowerCase();
+
+    // Show buttons for pending (paid/escrowed), paid, processing, shipped, delivered or completed orders
     // Don't show for cancelled orders
-    const validStatuses = ['pending', 'completed', 'processing'];
-    if (!validStatuses.includes(order.status)) {
+    const validStatuses = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'completed'];
+    if (!validStatuses.includes(orderStatus)) {
         return null;
     }
 
     // Don't show if delivery is already confirmed
-    if (order.delivery_status === 'received') {
+    if (deliveryStatus === 'received') {
         return null;
     }
 
-    const isSeller = order.seller_id === currentUserId;
-    const isBuyer = order.buyer_id === currentUserId;
+    const isSeller = String(order.seller_id) === String(currentUserId);
+    const isBuyer = String(order.buyer_id) === String(currentUserId);
 
     const handleMarkShipped = async () => {
         setIsLoading(true);
@@ -57,7 +61,7 @@ const DeliveryActionBar = ({
         <div className="delivery-action-bar">
             <div className="delivery-action-buttons">
                 {/* Seller: Show "Deliver" button when delivery is pending */}
-                {isSeller && order.delivery_status === 'pending' && (
+                {isSeller && deliveryStatus === 'pending' && (
                     <>
                         <button
                             className="delivery-btn deliver-btn"
@@ -79,7 +83,7 @@ const DeliveryActionBar = ({
                 )}
 
                 {/* Buyer: Show "Received" button when delivery is shipped */}
-                {isBuyer && order.delivery_status === 'shipped' && (
+                {isBuyer && deliveryStatus === 'shipped' && (
                     <>
                         <button
                             className="delivery-btn received-btn"
@@ -101,8 +105,8 @@ const DeliveryActionBar = ({
                 )}
 
                 {/* Both parties can report problems during pending/shipped states */}
-                {((isSeller && order.delivery_status === 'shipped') ||
-                    (isBuyer && order.delivery_status === 'pending')) && (
+                {((isSeller && deliveryStatus === 'shipped') ||
+                    (isBuyer && deliveryStatus === 'pending')) && (
                         <button
                             className="delivery-btn report-btn"
                             onClick={handleReportIssue}
