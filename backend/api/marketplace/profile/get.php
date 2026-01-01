@@ -1,30 +1,20 @@
 <?php
 // backend/api/marketplace/profile/get.php
 
+require_once '../../../config/config.php';
+
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// DEBUG: Enable error reporting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once '../../../config/db_connect.php';
 
-session_start();
 
-// DEBUG LOGGING
-$log_file = __DIR__ . '/live_debug.log';
-$debug_shop_id = isset($_GET['shop_id']) ? $_GET['shop_id'] : 'NULL';
-$debug_user_id = $_SESSION['user_id'] ?? 'NULL';
-file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Request - User: $debug_user_id, Shop: $debug_shop_id\n", FILE_APPEND);
+session_start();
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
@@ -66,19 +56,14 @@ if ($target_shop_id) {
     // Optimal: IF user has shops, frontend SHOULD send shop_id.
 }
 
-file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Query: $query\nParams: " . json_encode($params) . "\n", FILE_APPEND);
-
 try {
 $stmt = $conn->prepare($query);
 if (!$stmt) {
-    file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Prepare Failed: " . $conn->error . "\n", FILE_APPEND);
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Database error']);
     exit();
 }
 $stmt->bind_param($types, ...$params);
-
-file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Prepare Success. Executing...\n", FILE_APPEND);
 
 // REMOVED DUPLICATE BIND - The above line was likely the conflict!
 // Analysis: 
@@ -111,10 +96,8 @@ if ($row = $result->fetch_assoc()) {
     }
     $row['verification_status'] = $status;
     
-    file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Profile FOUND ID: {$row['id']} Status: $status\n", FILE_APPEND);
     echo json_encode(['success' => true, 'profile' => $row]);
 } else {
-    file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Profile NOT FOUND. Triggering healing...\n", FILE_APPEND);
     // Self-Healing: Check if user is verified but missing profile record (legacy data fix)
     $healed = false;
     if ($target_user_id === $user_id) {
@@ -143,7 +126,6 @@ if ($row = $result->fetch_assoc()) {
             
             try {
                 if ($ins->execute()) {
-                    file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Healing INSERT SUCCESS\n", FILE_APPEND);
                     // Fetch the newly created profile
                     // Re-run the main fetch query
                     $stmt->execute();
@@ -157,7 +139,6 @@ if ($row = $result->fetch_assoc()) {
                     }
                 }
             } catch (Exception $e) {
-                file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "Healing EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
                 // Ignore key violation if race condition
             }
         }
@@ -175,7 +156,6 @@ if ($row = $result->fetch_assoc()) {
 }
 
 } catch (Exception $e) {
-    file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "FATAL EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Internal Server Error']);
 }

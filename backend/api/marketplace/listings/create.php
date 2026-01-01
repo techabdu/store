@@ -1,10 +1,10 @@
 <?php
 // backend/api/marketplace/listings/create.php
 
+require_once '../../../config/config.php';
+
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -22,11 +22,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$data = json_decode(file_get_contents("php://input"));
 
 // 1. Validate Input
 $json = file_get_contents("php://input");
-error_log("Create Listing Raw Input: " . $json); // DEBUG
 $data = json_decode($json);
 
 if (!isset($data->inventory_id) || !isset($data->price) || !isset($data->title)) {
@@ -177,16 +175,12 @@ try {
         
         // 6. Handle Images (Optional: If passed as array of URLs)
         if (isset($data->images) && is_array($data->images)) {
-            error_log("Processing " . count($data->images) . " images for listing " . $listing_id); // DEBUG
             $img_stmt = $conn->prepare("INSERT INTO marketplace_listing_images (listing_id, image_url, display_order, is_primary) VALUES (?, ?, ?, ?)");
             foreach ($data->images as $index => $url) {
-                error_log("Inserting image: " . $url); // DEBUG
                 $is_primary = ($index === 0) ? 1 : 0;
                 $order = $index;
                 $img_stmt->bind_param("isii", $listing_id, $url, $order, $is_primary);
-                if (!$img_stmt->execute()) {
-                     error_log("Image Insert Failed: " . $img_stmt->error); // DEBUG
-                }
+                $img_stmt->execute();
             }
         }
         

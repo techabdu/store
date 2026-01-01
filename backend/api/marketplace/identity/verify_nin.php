@@ -1,20 +1,15 @@
 <?php
 // backend/api/marketplace/identity/verify_nin.php
 
+require_once '../../../config/config.php';
+
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
-// DEBUG: Enable error reporting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 require_once '../../../config/db_connect.php';
 require_once '../../../vendor/autoload.php';
@@ -42,11 +37,9 @@ $user_id = $_SESSION['user_id'];
 
 try {
     $raw_input = file_get_contents("php://input");
-file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Request Data: " . $raw_input . "\n", FILE_APPEND);
-$data = json_decode($raw_input);
+    $data = json_decode($raw_input);
 
 if (!isset($data->nin) || !isset($data->consent) || !$data->consent) {
-    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Error: Missing fields\n", FILE_APPEND);
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Missing NIN or consent']);
     exit();
@@ -84,7 +77,6 @@ $request_data = [
 ];
 
 $result = $kora->verifyIdentity('identities/ng/nin', $request_data);
-file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Kora Result: " . print_r($result, true) . "\n", FILE_APPEND);
 
 // Log attempt
 $status = $result['success'] ? 'success' : 'failed';
@@ -93,17 +85,13 @@ $cost = $result['cost'] ?? 0;
 $log_stmt = $conn->prepare("INSERT INTO marketplace_verification_attempts (user_id, verification_type, attempt_status, kora_reference, verification_cost, ip_address) VALUES (?, 'nin', ?, ?, ?, ?)");
 $ip = $_SERVER['REMOTE_ADDR'];
 $log_stmt->bind_param("issds", $user_id, $status, $kora_ref, $cost, $ip);
-file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Logging attempt for user $user_id...\n", FILE_APPEND);
 $log_stmt->execute();
-file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Attempt logged. Moving to result processing.\n", FILE_APPEND);
 
 if ($result['success']) {
     $api_data = $result['data'];
     
-    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Success block entered. Encrypting...\n", FILE_APPEND);
     // Encrypt Sensitive Data
     $encrypted_id = encryptSensitiveData($nin);
-    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Encryption done. Preparing Save...\n", FILE_APPEND);
     $verification_data = json_encode($api_data);
     
     // Insert/Update Verification Record
@@ -204,7 +192,6 @@ if ($result['success']) {
     }
 
 } catch (Throwable $e) {
-    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Global Crash: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n", FILE_APPEND);
     error_log("Verification Crash: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'An internal error occurred: ' . $e->getMessage()]);

@@ -1,10 +1,10 @@
 <?php
 // backend/api/marketplace/identity/verify_bvn.php
 
+require_once '../../../config/config.php';
+
+setCorsHeaders();
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -39,7 +39,6 @@ $user_id = $_SESSION['user_id'];
 
 try {
     $raw_input = file_get_contents("php://input");
-    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "BVN Request Data: " . $raw_input . "\n", FILE_APPEND);
     $data = json_decode($raw_input);
 
 if (!isset($data->bvn) || !isset($data->dob) || !isset($data->consent) || !$data->consent) {
@@ -187,7 +186,6 @@ if ($result['success']) {
     }
 
 } catch (Throwable $e) {
-    file_put_contents(__DIR__ . '/debug_verify.log', date('[Y-m-d H:i:s] ') . "Global BVN Crash: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n", FILE_APPEND);
     error_log("BVN Verification Crash: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'An internal error occurred: ' . $e->getMessage()]);
