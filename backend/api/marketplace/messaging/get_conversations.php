@@ -1,6 +1,9 @@
 <?php
 // backend/api/marketplace/messaging/get_conversations.php
 
+// TEMPORARY DEBUG MODE - Remove after fixing the issue
+define('DEBUG_MODE', true);
+
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
 
@@ -24,9 +27,13 @@ try {
 
     // Verify database connection
     if (!isset($conn) || $conn === null || $conn->connect_error) {
-        error_log("get_conversations.php: Database connection not available");
+        $errorMsg = "Database connection not available";
+        if (DEBUG_MODE && isset($conn) && $conn->connect_error) {
+            $errorMsg .= ": " . $conn->connect_error;
+        }
+        error_log("get_conversations.php: " . $errorMsg);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Database connection failed']);
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
         exit();
     }
 
@@ -97,33 +104,49 @@ try {
     // Prepare statement with error handling
     $stmt = $conn->prepare($query);
     if (!$stmt) {
-        error_log("get_conversations.php: Failed to prepare statement - " . $conn->error);
+        $errorMsg = "Failed to prepare query";
+        if (DEBUG_MODE) {
+            $errorMsg .= ": " . $conn->error;
+        }
+        error_log("get_conversations.php: " . $errorMsg);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to prepare query']);
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
         exit();
     }
 
     // Bind parameters with error handling
     if (!$stmt->bind_param($types, ...$params)) {
-        error_log("get_conversations.php: Failed to bind parameters - " . $stmt->error);
+        $errorMsg = "Failed to bind parameters";
+        if (DEBUG_MODE) {
+            $errorMsg .= ": " . $stmt->error;
+        }
+        error_log("get_conversations.php: " . $errorMsg);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to bind parameters']);
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
         exit();
     }
 
     // Execute with error handling
     if (!$stmt->execute()) {
-        error_log("get_conversations.php: Failed to execute query - " . $stmt->error);
+        $errorMsg = "Failed to execute query";
+        if (DEBUG_MODE) {
+            $errorMsg .= ": " . $stmt->error;
+        }
+        error_log("get_conversations.php: " . $errorMsg);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to execute query']);
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
         exit();
     }
 
     $result = $stmt->get_result();
     if (!$result) {
-        error_log("get_conversations.php: Failed to get result - " . $stmt->error);
+        $errorMsg = "Failed to get query results";
+        if (DEBUG_MODE) {
+            $errorMsg .= ": " . $stmt->error;
+        }
+        error_log("get_conversations.php: " . $errorMsg);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to get query results']);
+        echo json_encode(['success' => false, 'error' => $errorMsg]);
         exit();
     }
 
@@ -142,8 +165,9 @@ try {
     // Log the detailed error
     error_log("get_conversations.php: Caught exception - " . $e->getMessage() . " | File: " . $e->getFile() . " | Line: " . $e->getLine());
     
-    // Return generic error to client
+    // Return error to client (with details in debug mode)
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Internal server error']);
+    $errorMsg = DEBUG_MODE ? $e->getMessage() . " (File: " . $e->getFile() . ", Line: " . $e->getLine() . ")" : 'Internal server error';
+    echo json_encode(['success' => false, 'error' => $errorMsg, 'debug_trace' => DEBUG_MODE ? $e->getTraceAsString() : null]);
 }
 ?>
