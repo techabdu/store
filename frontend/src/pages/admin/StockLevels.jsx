@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import { FaSearch } from 'react-icons/fa';
 import { Filter, Package } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
@@ -10,7 +11,7 @@ const StockLevels = () => {
     const { user } = useAuth();
     const [stockLevels, setStockLevels] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { showError } = useNotification();
 
     // Search and Filter states
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,10 +32,10 @@ const StockLevels = () => {
                 if (response.data.success) {
                     setStockLevels(response.data.stock_levels);
                 } else {
-                    setError(response.data.error || 'Failed to load stock levels');
+                    showError(response.data.error || 'Failed to load stock levels');
                 }
             } catch (err) {
-                setError('Failed to load stock levels');
+                showError('Failed to load stock levels');
                 console.error(err);
             } finally {
                 setLoading(false);
@@ -121,7 +122,7 @@ const StockLevels = () => {
             title="Stock Levels"
             subtitle="Real-time overview of available inventory across all models"
             loading={loading}
-            error={error}
+            error={null}
         >
             <div className="inventory-page-container">
                 {/* Search & Filter Bar */}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import { Tag, Plus, Trash2, Edit } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../admin/AdminDashboard.css';
@@ -11,6 +12,7 @@ import './MarketplacePage.css';
 const MarketplaceSelling = () => {
     const { user, currentShop } = useAuth();
     const navigate = useNavigate();
+    const { showError, showSuccess } = useNotification();
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [visibleRows, setVisibleRows] = useState(15);
@@ -56,6 +58,7 @@ const MarketplaceSelling = () => {
                 }
             } catch (error) {
                 console.error("Error fetching my listings:", error);
+                showError("Failed to fetch your listings");
             } finally {
                 setLoading(false);
             }
@@ -86,11 +89,11 @@ const MarketplaceSelling = () => {
             if (response.data.success) {
                 // Remove item from state
                 setListings(prev => prev.filter(item => item.id !== id));
-                alert("Listing deleted successfully.");
+                showSuccess("Listing deleted successfully.");
             }
         } catch (error) {
             console.error("Error deleting listing:", error);
-            alert(error.response?.data?.error || "Failed to delete listing.");
+            showError(error.response?.data?.error || "Failed to delete listing.");
         }
     };
 

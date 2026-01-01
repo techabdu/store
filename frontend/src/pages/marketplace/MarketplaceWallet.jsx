@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import MetricCard from '../../components/MetricCard';
@@ -14,6 +15,7 @@ import './MarketplaceWallet.css';
 const MarketplaceWallet = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { showError, showSuccess } = useNotification();
     const [wallet, setWallet] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -100,6 +102,7 @@ const MarketplaceWallet = () => {
             }
         } catch (error) {
             console.error("Error fetching transactions", error);
+            showError("Failed to fetch transactions");
         }
     };
 
@@ -113,6 +116,7 @@ const MarketplaceWallet = () => {
             }
         } catch (error) {
             console.error("Verification failed", error);
+            showError(error.response?.data?.error || "Payment verification failed");
         } finally {
             setVerifying(false);
             fetchData();
@@ -138,6 +142,7 @@ const MarketplaceWallet = () => {
             }
         } catch (error) {
             console.error("Error fetching wallet data", error);
+            showError("Failed to load wallet data");
         } finally {
             setLoading(false);
         }
@@ -150,7 +155,7 @@ const MarketplaceWallet = () => {
     const handleFundWallet = async (e) => {
         e.preventDefault();
         if (!amount || amount < 100) {
-            alert("Minimum funding amount is ₦100");
+            showError("Minimum funding amount is ₦100");
             return;
         }
 
@@ -160,7 +165,7 @@ const MarketplaceWallet = () => {
                 window.location.href = res.data.checkout_url;
             }
         } catch (error) {
-            alert(error.response?.data?.error || "Funding failed");
+            showError(error.response?.data?.error || "Funding failed");
         }
     };
 
@@ -175,12 +180,12 @@ const MarketplaceWallet = () => {
     const handleWithdrawSubmit = async (e) => {
         e.preventDefault();
         if (!withdrawAmount || !accountNumber || !selectedBank) {
-            alert("Please fill all withdrawal details");
+            showError("Please fill all withdrawal details");
             return;
         }
 
         if (Number(withdrawAmount) > Number(wallet?.available_balance || 0)) {
-            alert("Insufficient balance");
+            showError("Insufficient balance");
             return;
         }
 
@@ -193,7 +198,7 @@ const MarketplaceWallet = () => {
             });
 
             if (res.data.success) {
-                alert(`Withdrawal initiated successfully!\nReference: ${res.data.reference}\n(Save this reference for webhook simulation)`);
+                showSuccess(`Withdrawal initiated successfully!\nReference: ${res.data.reference}`);
                 setShowWithdraw(false);
                 setWithdrawAmount('');
                 setAccountNumber('');
@@ -202,7 +207,7 @@ const MarketplaceWallet = () => {
             }
         } catch (error) {
             console.error("Withdrawal error", error);
-            alert(error.response?.data?.error || "Withdrawal failed. Please try again.");
+            showError(error.response?.data?.error || "Withdrawal failed. Please try again.");
         } finally {
             setWithdrawLoading(false);
         }
@@ -343,7 +348,7 @@ const MarketplaceWallet = () => {
                                     className="wallet-btn wallet-btn-primary"
                                     onClick={() => {
                                         if (!isVerified) {
-                                            alert("Please verify your account to fund your wallet.");
+                                            showError("Please verify your account to fund your wallet.");
                                             navigate('/marketplace/verify');
                                             return;
                                         }

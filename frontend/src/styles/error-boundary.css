@@ -1,0 +1,98 @@
+.error-boundary-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #0a0a0a;
+    color: #f3f4f6;
+    font-family: 'Inter', sans-serif;
+}
+
+.error-boundary-content {
+    max-width: 500px;
+    text-align: center;
+    background: rgba(23, 23, 23, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 48px 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.error-boundary-icon {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.error-boundary-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    background: linear-gradient(to right, #f3f4f6, #9ca3af);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.error-boundary-message {
+    color: #9ca3af;
+    line-height: 1.6;
+    margin-bottom: 32px;
+}
+
+.error-boundary-debug {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    border-radius: 12px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #f43f5e;
+    text-align: left;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.error-boundary-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.btn-refresh,
+.btn-home {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-refresh {
+    background: #f3f4f6;
+    color: #0a0a0a;
+    border: none;
+}
+
+.btn-refresh:hover {
+    background: #ffffff;
+    transform: translateY(-2px);
+}
+
+.btn-home {
+    background: transparent;
+    color: #f3f4f6;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-home:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}

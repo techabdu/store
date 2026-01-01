@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import { Plus, Edit2, Trash2, X, Calendar, Tag, ArrowLeft } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
@@ -22,7 +23,7 @@ const Expenses = () => {
         category: '',
         date: new Date().toISOString().split('T')[0]
     });
-    const [error, setError] = useState('');
+    const { showError, showSuccess } = useNotification();
 
     // Layout State
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,7 +61,7 @@ const Expenses = () => {
             }
         } catch (err) {
             console.error('Failed to fetch expenses:', err);
-            setError('Failed to load expenses');
+            showError('Unable to load the expense list.');
         } finally {
             setLoading(false);
         }
@@ -132,7 +133,6 @@ const Expenses = () => {
             date: new Date().toISOString().split('T')[0]
         });
         setView('add');
-        setError('');
     };
 
     const openEditModal = (expense) => {
@@ -144,18 +144,15 @@ const Expenses = () => {
             date: expense.date
         });
         setView('edit');
-        setError('');
     };
 
     const closeModal = () => {
         setView('list');
         setCurrentExpense(null);
-        setError('');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
 
         try {
             if (currentExpense) {
@@ -165,6 +162,7 @@ const Expenses = () => {
                     ...formData
                 });
                 if (response.data.success) {
+                    showSuccess('The expense record has been successfully updated.');
                     fetchExpenses();
                     closeModal();
                 }
@@ -172,13 +170,14 @@ const Expenses = () => {
                 // Create
                 const response = await api.post('/expenses.php', formData);
                 if (response.data.success) {
+                    showSuccess('The new expense has been successfully recorded.');
                     fetchExpenses();
                     closeModal();
                 }
             }
         } catch (err) {
-            console.error('Operation failed:', err);
-            setError(err.response?.data?.error || 'Operation failed');
+            console.error('Expense operation failed:', err);
+            showError(err.response?.data?.error || 'The action could not be completed.');
         }
     };
 
@@ -188,11 +187,12 @@ const Expenses = () => {
         try {
             const response = await api.delete(`/expenses.php?id=${id}`);
             if (response.data.success) {
+                showSuccess('The expense record has been deleted.');
                 setExpenses(prev => prev.filter(exp => exp.id !== id));
             }
         } catch (err) {
-            console.error('Delete failed:', err);
-            alert(err.response?.data?.error || 'Failed to delete expense');
+            console.error('Expense delete failed:', err);
+            showError(err.response?.data?.error || 'Unable to delete the expense record.');
         }
     };
 
@@ -223,7 +223,6 @@ const Expenses = () => {
                                 </button>
                             </div>
 
-                            {error && <div className="error-message" style={{ color: 'var(--error)', marginBottom: '16px' }}>{error}</div>}
 
                             <div className="search-bar-container glass-card" style={{ marginBottom: '24px', padding: '16px' }}>
                                 <div className="search-input-wrapper">
@@ -394,7 +393,6 @@ const Expenses = () => {
                                                 </div>
                                             </div>
 
-                                            {error && <div className="error-message" style={{ color: 'var(--error)', marginTop: '16px' }}>{error}</div>}
 
                                             <div className="focus-view-actions">
                                                 <div className="secondary-actions">

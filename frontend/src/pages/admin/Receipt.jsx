@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import DebtPaymentReceipt from '../../components/DebtPaymentReceipt';
@@ -15,6 +16,7 @@ const Receipt = () => {
     const [shopSettings, setShopSettings] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const { showError } = useNotification();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -47,6 +49,7 @@ const Receipt = () => {
                 }
             } catch (err) {
                 console.error('Failed to load shop settings:', err);
+                showError('Unable to load receipt settings.');
             }
         };
 
@@ -61,10 +64,12 @@ const Receipt = () => {
                     setTransaction(response.data.transaction);
                 } else {
                     setError('Transaction not found');
+                    showError('The requested transaction could not be found.');
                 }
             } catch (err) {
                 setError('Failed to load transaction details');
-                console.error(err);
+                showError('Unable to load transaction details.');
+                console.error('Fetch transaction error:', err);
             } finally {
                 setLoading(false);
             }

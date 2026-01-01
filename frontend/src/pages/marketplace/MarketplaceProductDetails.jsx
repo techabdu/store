@@ -6,6 +6,7 @@ import TopBar from '../../components/TopBar';
 import api, { SERVER_URL } from '../../utils/api';
 import { ShoppingCart, MessageSquare, ArrowLeft, X, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProductDetails.css';
@@ -21,6 +22,7 @@ const MarketplaceProductDetails = () => {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [starred, setStarred] = useState(false);
+    const { showError, showSuccess, showInfo } = useNotification();
 
     const getImageUrl = (url) => {
         if (!url) return '/placeholder-phone.png';
@@ -73,6 +75,7 @@ const MarketplaceProductDetails = () => {
                 }
             } catch (error) {
                 console.error("Error fetching details:", error);
+                showError("Failed to load product details");
             } finally {
                 setLoading(false);
             }
@@ -86,11 +89,11 @@ const MarketplaceProductDetails = () => {
         try {
             const response = await api.post('/marketplace/orders/create.php', { listing_id: listing.id });
             if (response.data.success) {
-                alert("Order placed successfully! Funds are held in escrow.");
+                showSuccess("Order placed successfully! Funds are held in escrow.");
                 navigate('/marketplace/orders');
             }
         } catch (error) {
-            alert(error.response?.data?.error || "Purchase failed");
+            showError(error.response?.data?.error || "Purchase failed");
         } finally {
             setBuying(false);
         }
@@ -109,7 +112,7 @@ const MarketplaceProductDetails = () => {
 
     const toggleInterest = async () => {
         if (!user) {
-            alert("Please log in to save items to your interests.");
+            showError("Please log in to save items to your interests.");
             navigate('/auth/login');
             return;
         }
@@ -117,9 +120,11 @@ const MarketplaceProductDetails = () => {
             const response = await api.post('/marketplace/interests/toggle.php', { listing_id: listing.id });
             if (response.data.success) {
                 setStarred(response.data.action === 'added');
+                showSuccess(response.data.action === 'added' ? 'Added to interests' : 'Removed from interests');
             }
         } catch (error) {
             console.error("Error toggling interest:", error);
+            showError("Failed to update interests");
         }
     };
 
@@ -214,7 +219,7 @@ const MarketplaceProductDetails = () => {
                                             <button
                                                 onClick={() => {
                                                     if (!isVerified) {
-                                                        alert("Please verify your account to make purchases.");
+                                                        showError("Please verify your account to make purchases.");
                                                         navigate('/marketplace/verify');
                                                         return;
                                                     }
@@ -240,7 +245,7 @@ const MarketplaceProductDetails = () => {
                                     ) : (
                                         <button
                                             className="product-btn product-btn-primary"
-                                            onClick={() => alert("Auction UI coming soon!")}
+                                            onClick={() => showInfo("Auction UI coming soon!")}
                                         >
                                             Place Bid
                                         </button>

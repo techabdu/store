@@ -5,6 +5,7 @@ import TopBar from '../../components/TopBar';
 import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTriangle, Receipt } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import './MarketplacePage.css';
 import '../../styles/wizard.css';
 import './MarketplaceOrderDetails.css';
@@ -19,6 +20,7 @@ const MarketplaceOrderDetails = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelling, setCancelling] = useState(false);
+    const { showError, showSuccess } = useNotification();
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -43,10 +45,13 @@ const MarketplaceOrderDetails = () => {
                 setOrder(response.data.order);
             } else {
                 setError(response.data.error || 'Failed to fetch order details');
+                showError(response.data.error || 'Failed to fetch order details');
             }
         } catch (err) {
             console.error("Error fetching order:", err);
-            setError(err.response?.data?.error || 'An error occurred while fetching order details');
+            const errMsg = err.response?.data?.error || 'An error occurred while fetching order details';
+            setError(errMsg);
+            showError(errMsg);
         } finally {
             setLoading(false);
         }
@@ -58,7 +63,7 @@ const MarketplaceOrderDetails = () => {
 
     const handleCancelOrder = async () => {
         if (!cancelReason.trim()) {
-            alert("Please provide a reason for cancellation");
+            showError("Please provide a reason for cancellation");
             return;
         }
 
@@ -72,13 +77,13 @@ const MarketplaceOrderDetails = () => {
             if (response.data.success) {
                 setShowCancelModal(false);
                 fetchOrderDetails(); // Refresh data
-                alert("Order cancelled successfully. The listing is now back on the marketplace.");
+                showSuccess("Order cancelled successfully. The listing is now back on the marketplace.");
             } else {
-                alert(response.data.error || "Failed to cancel order");
+                showError(response.data.error || "Failed to cancel order");
             }
         } catch (err) {
             console.error("Error cancelling order:", err);
-            alert(err.response?.data?.error || "An error occurred");
+            showError(err.response?.data?.error || "An error occurred");
         } finally {
             setCancelling(false);
         }

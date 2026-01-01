@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { notifyError } from './notificationHelper';
 
 // Detect environment based on hostname
 export const isProduction = window.location.hostname !== 'localhost';
@@ -81,6 +82,24 @@ api.interceptors.response.use(
                 originalRequest.headers['X-CSRF-Token'] = newToken;
                 return api(originalRequest);
             }
+        }
+
+        // Global Error Handling
+        if (error.response) {
+            const status = error.response.status;
+            const errorMsg = error.response.data?.error || error.response.data?.message || 'A server error occurred';
+
+            // Don't show global notification for 401 (handled by AuthContext/ProtectedRoute)
+            // or 403 CSRF (handled by retry logic below)
+            if (status !== 401 && !(status === 403 && error.response.data?.error === 'Invalid CSRF token')) {
+                notifyError(errorMsg);
+            }
+        } else if (error.request) {
+            // Network error
+            notifyError('No response from server. Please check your internet connection.');
+        } else {
+            // Something else went wrong
+            notifyError('An unexpected error occurred.');
         }
 
         return Promise.reject(error);

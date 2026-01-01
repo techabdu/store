@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceHistory.css';
@@ -21,6 +22,7 @@ import './MarketplaceHistory.css';
 const MySales = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { showError } = useNotification();
     const [sales, setSales] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
     const [loading, setLoading] = useState(true);
@@ -74,6 +76,7 @@ const MySales = () => {
             }
         } catch (error) {
             console.error("Error fetching sales:", error);
+            showError("Failed to fetch your sales");
         } finally {
             setLoading(false);
         }

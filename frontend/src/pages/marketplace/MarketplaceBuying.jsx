@@ -5,15 +5,18 @@ import TopBar from '../../components/TopBar';
 import { ShoppingCart, Star, Eye, Trash2 } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceOrders.css';
+import './MarketplaceListings.css';
 
 const MarketplaceBuying = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [interests, setInterests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { showError, showSuccess } = useNotification();
     const [visibleRows, setVisibleRows] = useState(10);
 
     // Sidebar state for mobile
@@ -44,6 +47,7 @@ const MarketplaceBuying = () => {
             }
         } catch (error) {
             console.error("Error fetching interests:", error);
+            showError('Failed to load interests');
         } finally {
             setLoading(false);
         }
@@ -64,9 +68,11 @@ const MarketplaceBuying = () => {
             const response = await api.post('/marketplace/interests/toggle.php', { listing_id: listingId });
             if (response.data.success) {
                 setInterests(interests.filter(item => item.id !== listingId));
+                showSuccess('Item removed from interests');
             }
         } catch (error) {
             console.error("Error removing interest:", error);
+            showError('Failed to remove item from interests');
         }
     };
 
@@ -118,18 +124,32 @@ const MarketplaceBuying = () => {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="orders-list">
+                                <div className="products-grid">
                                     {interests.slice(0, visibleRows).map(item => (
-                                        <div key={item.id} className="order-card glass-card">
-                                            <div className="order-header">
-                                                <div className="order-header-left">
-                                                    <h4 className="order-id">{item.title}</h4>
-                                                    <span className="order-date">Added {new Date(item.starred_at).toLocaleDateString()}</span>
-                                                </div>
-                                                <div className="order-header-right">
+                                        <div
+                                            key={item.id}
+                                            className="product-item-wrapper"
+                                            onClick={() => navigate(`/marketplace/listing/${item.id}`)}
+                                        >
+                                            <div className="product-card glass-card">
+                                                <div className="product-image-container">
+                                                    <img
+                                                        src={getImageUrl(item.image_url)}
+                                                        alt={item.title}
+                                                        className="product-image"
+                                                        onError={(e) => {
+                                                            const placeholder = '/placeholder-phone.png';
+                                                            if (!e.target.src.endsWith(placeholder)) {
+                                                                e.target.src = placeholder;
+                                                            }
+                                                        }}
+                                                    />
                                                     <button
-                                                        onClick={() => toggleInterest(item.id)}
-                                                        className="icon-btn"
+                                                        className="star-button active"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleInterest(item.id);
+                                                        }}
                                                         style={{ color: 'var(--error-color)' }}
                                                         title="Remove from interests"
                                                     >
@@ -137,20 +157,15 @@ const MarketplaceBuying = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="order-items">
-                                                <div className="order-item" onClick={() => navigate(`/marketplace/listing/${item.id}`)} style={{ cursor: 'pointer' }}>
-                                                    <img src={getImageUrl(item.image_url)} alt={item.title} className="order-item-image" />
-                                                    <div className="order-item-info">
-                                                        <h5 className="order-item-name">{item.phone_model} • {item.phone_condition}</h5>
-                                                        <p className="order-item-details">Shop: {item.shop_name}</p>
-                                                        <p className="order-total-amount" style={{ marginTop: '8px', fontSize: '18px', fontWeight: '600' }}>₦{formatPrice(item.price)}</p>
-                                                    </div>
+                                            <div className="product-info">
+                                                <p className="product-price">₦{formatPrice(item.price)}</p>
+                                                <h3 className="product-title">{item.title}</h3>
+                                                <div className="product-location">
+                                                    {item.shop_name} • {item.phone_condition}
                                                 </div>
-                                            </div>
-                                            <div className="order-footer">
-                                                <button onClick={() => navigate(`/marketplace/listing/${item.id}`)} className="btn-view-order" style={{ width: '100%', justifyContent: 'center' }}>
-                                                    View Product Details
-                                                </button>
+                                                <div className="product-date" style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                                    Added {new Date(item.starred_at).toLocaleDateString()}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

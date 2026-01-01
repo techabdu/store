@@ -11,6 +11,7 @@ import {
     Phone,
     User
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 import AdminLayout from '../../components/AdminLayout';
 import './CustomerInsights.css';
 
@@ -20,7 +21,7 @@ const CustomerInsights = () => {
     const [vips, setVips] = useState([]);
     const [atRisk, setAtRisk] = useState([]);
     const [topDebtors, setTopDebtors] = useState([]);
-    const [error, setError] = useState(null);
+    const { showError } = useNotification();
 
     useEffect(() => {
         fetchData();
@@ -40,11 +41,9 @@ const CustomerInsights = () => {
             if (vipsRes.data.success) setVips(vipsRes.data.customers);
             if (atRiskRes.data.success) setAtRisk(atRiskRes.data.customers);
             if (debtorsRes.data.success) setTopDebtors(debtorsRes.data.customers);
-
-            setError(null);
         } catch (err) {
             console.error('Error fetching customer analytics:', err);
-            setError('Failed to load customer insights');
+            showError('Failed to load customer insights');
         } finally {
             setLoading(false);
         }
@@ -63,7 +62,7 @@ const CustomerInsights = () => {
             title="Customer Insights & Segmentation"
             subtitle="Understand your customers and drive targeted growth"
             loading={loading}
-            error={error}
+            error={null}
         >
             <div className="customer-metrics-grid">
                 <MetricCard

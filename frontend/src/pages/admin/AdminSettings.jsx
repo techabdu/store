@@ -4,6 +4,7 @@ import { Save, Lock, User, Shield, Store, DollarSign, Settings, CreditCard, Bell
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import '../user/UserProfile.css';
 import './AdminSettings.css';
@@ -12,9 +13,9 @@ import '../../styles/wizard.css';
 const AdminSettings = () => {
     const navigate = useNavigate();
     const { user, updateUser, updateShopSettings } = useAuth();
+    const { showError, showSuccess } = useNotification();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -115,7 +116,7 @@ const AdminSettings = () => {
             }
 
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to load settings data' });
+            showError('Unable to load settings data.');
             console.error(error);
         } finally {
             setLoading(false);
@@ -130,7 +131,8 @@ const AdminSettings = () => {
                 setVendors(response.data.vendors);
             }
         } catch (error) {
-            console.error("Failed to fetch vendors", error);
+            console.error("Failed to fetch vendors:", error);
+            showError("Unable to load the vendor list.");
         } finally {
             setLoadingVendors(false);
         }
@@ -154,7 +156,6 @@ const AdminSettings = () => {
     const handleSaveAll = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setMessage({ type: '', text: '' });
 
         try {
             // Update Profile if on Personal tab
@@ -162,7 +163,7 @@ const AdminSettings = () => {
                 const profileRes = await api.post('/user/update-profile.php', profileData);
                 if (profileRes.data.success) {
                     updateUser(profileRes.data.user);
-                    setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                    showSuccess('Your profile has been successfully updated.');
                 }
             }
             // Update Shop Data (Common for other tabs)
@@ -170,15 +171,12 @@ const AdminSettings = () => {
                 const settingsRes = await api.post('/admin/update_shop_settings.php', shopSettings);
                 if (settingsRes.data.success) {
                     updateShopSettings(shopSettings);
-                    setMessage({ type: 'success', text: 'Settings updated successfully!' });
+                    showSuccess('The settings have been successfully updated.');
                 }
             }
         } catch (error) {
             console.error("Update failed", error);
-            setMessage({
-                type: 'error',
-                text: error.response?.data?.error || 'Failed to update settings'
-            });
+            showError(error.response?.data?.error || 'Unable to update the settings.');
         } finally {
             setSaving(false);
         }
@@ -187,7 +185,7 @@ const AdminSettings = () => {
     const handleChangePassword = async (e) => {
         e.preventDefault();
         if (passwordData.new_password !== passwordData.confirm_password) {
-            setMessage({ type: 'error', text: 'New passwords do not match' });
+            showError('The new passwords do not match.');
             return;
         }
 
@@ -195,11 +193,11 @@ const AdminSettings = () => {
         try {
             const response = await api.post('/user/change-password.php', passwordData);
             if (response.data.success) {
-                setMessage({ type: 'success', text: 'Password changed successfully!' });
+                showSuccess('Your password has been successfully changed.');
                 setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
             }
         } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to change password' });
+            showError(error.response?.data?.error || 'Unable to change the password.');
         } finally {
             setSaving(false);
         }
@@ -219,7 +217,6 @@ const AdminSettings = () => {
             setVendorForm({ name: '', address: '', contact_info: '' });
         }
         setVendorViewMode('focus');
-        setMessage({ type: '', text: '' });
     };
 
     const closeVendorFocusView = () => {
@@ -244,7 +241,7 @@ const AdminSettings = () => {
                 if (res.data.success) {
                     fetchVendors();
                     closeVendorFocusView();
-                    setMessage({ type: 'success', text: 'Vendor updated' });
+                    showSuccess('The vendor details have been updated.');
                 }
             } else {
                 // Create
@@ -252,11 +249,11 @@ const AdminSettings = () => {
                 if (res.data.success) {
                     fetchVendors();
                     closeVendorFocusView();
-                    setMessage({ type: 'success', text: 'Vendor added' });
+                    showSuccess('The new vendor has been added.');
                 }
             }
         } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.error || 'Failed to save vendor' });
+            showError(error.response?.data?.error || 'Unable to save the vendor details.');
         } finally {
             setSaving(false);
         }
@@ -270,10 +267,10 @@ const AdminSettings = () => {
             const res = await api.put('/admin/vendors.php', { ...vendor, status: newStatus });
             if (res.data.success) {
                 fetchVendors();
-                setMessage({ type: 'success', text: `Vendor marked as ${newStatus}` });
+                showSuccess(`The vendor status has been updated to ${newStatus}.`);
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to update status' });
+            showError('Unable to update the vendor status.');
         }
     };
 
@@ -283,10 +280,10 @@ const AdminSettings = () => {
             const res = await api.delete(`/admin/vendors.php?id=${id}`);
             if (res.data.success) {
                 fetchVendors();
-                setMessage({ type: 'success', text: 'Vendor deleted' });
+                showSuccess('The vendor has been deleted.');
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to delete vendor' });
+            showError('Unable to delete the vendor.');
         }
     };
 
@@ -380,12 +377,6 @@ const AdminSettings = () => {
                             <h1>Settings - {user?.shop_name || 'Admin'}</h1>
                             <p>Manage your account and shop configuration</p>
                         </div>
-
-                        {message.text && (
-                            <div className={`message-banner ${message.type}`}>
-                                {message.text}
-                            </div>
-                        )}
 
                         {/* Tabs Navigation */}
                         <div className="settings-tabs glass-card" style={{ padding: '8px', marginBottom: '25px', display: 'flex', gap: '8px', overflowX: 'auto' }}>

@@ -7,6 +7,7 @@ import TopBar from '../../components/TopBar';
 import { User, MapPin, Phone, Mail, Calendar, Shield, ShieldCheck, ShieldAlert, Camera, Edit2, Save, X, MessageSquare, Edit } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProfile.css';
@@ -19,6 +20,7 @@ const MarketplaceProfile = () => {
     const [loading, setLoading] = useState(true);
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
+    const { showError, showSuccess } = useNotification();
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -86,6 +88,7 @@ const MarketplaceProfile = () => {
             }
         } catch (error) {
             console.error("Error fetching profile", error);
+            showError("Failed to load profile data");
         } finally {
             setLoading(false);
         }
@@ -107,10 +110,10 @@ const MarketplaceProfile = () => {
             if (res.data.success) {
                 setProfile({ ...profile, ...formData });
                 setEditing(false);
-                alert('Profile updated successfully');
+                showSuccess('Profile updated successfully');
             }
         } catch (error) {
-            alert(error.response?.data?.error || 'Failed to update profile');
+            showError(error.response?.data?.error || 'Failed to update profile');
         }
     };
 
@@ -119,7 +122,7 @@ const MarketplaceProfile = () => {
             const file = e.target.files[0];
             // Basic validation
             if (file.size > 5 * 1024 * 1024) {
-                alert("File is too large. Max size is 5MB.");
+                showError("File is too large. Max size is 5MB.");
                 return;
             }
             const reader = new FileReader();
@@ -151,11 +154,12 @@ const MarketplaceProfile = () => {
                 setProfile(prev => ({ ...prev, profile_image: response.data.image_url }));
                 setIsCropping(false);
                 setImageSrc(null);
+                showSuccess("Profile picture updated successfully");
             }
         } catch (error) {
             console.error("Error uploading image:", error);
             const msg = error.response?.data?.error || "Failed to upload image.";
-            alert(msg);
+            showError(msg);
         } finally {
             setUploading(false);
         }

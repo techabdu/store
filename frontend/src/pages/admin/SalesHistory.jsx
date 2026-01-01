@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import { FaSearch } from 'react-icons/fa';
 import { FileText, ChevronRight } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
@@ -14,7 +15,7 @@ const SalesHistory = () => {
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { showError } = useNotification();
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
@@ -63,8 +64,8 @@ const SalesHistory = () => {
                 }
             }
         } catch (err) {
-            setError('Failed to load sales history');
-            console.error(err);
+            showError('Failed to load sales history');
+            console.error('Fetch transactions error:', err);
         } finally {
             setLoading(false);
         }
@@ -79,7 +80,7 @@ const SalesHistory = () => {
             title="Sales History"
             subtitle="View and manage past transactions"
             loading={loading && page === 0}
-            error={error}
+            error={null}
         >
             <div className="sales-history-container">
                 {/* Search Bar */}

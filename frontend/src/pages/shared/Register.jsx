@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaStore, FaUser, FaEnvelope, FaLock, FaPhone, FaMapMarkerAlt, FaEye, FaEyeSlash, FaCheckCircle, FaArrowRight, FaArrowLeft, FaSpinner, FaTimes } from 'react-icons/fa';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import ParticlesBackground from '../../components/landing/ParticlesBackground';
 import '../../styles/register.css';
@@ -20,8 +21,8 @@ const Register = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showError, showSuccess } = useNotification();
     const [registrationSuccess, setRegistrationSuccess] = useState(false);
     const [resendTimer, setResendTimer] = useState(60);
     const [resendStatus, setResendStatus] = useState('idle'); // idle, sending, success, error
@@ -57,7 +58,7 @@ const Register = () => {
                     setUsernameAvailable(response.data.available);
                 }
             } catch (err) {
-                console.error('Failed to check username');
+                console.error('Failed to check username:', err);
             } finally {
                 setIsCheckingUsername(false);
             }
@@ -76,18 +77,16 @@ const Register = () => {
             if (response.data.success) {
                 setResendStatus('success');
                 setResendTimer(60);
-                // Reset status after a few seconds or keep it success until timer runs out?
-                // Let's keep it simple, timer indicates success/wait.
+                showSuccess('A verification email has been sent to your inbox.');
                 setTimeout(() => setResendStatus('idle'), 3000);
             } else {
                 setResendStatus('error');
-                // Show error in a toast or alert? For now, maybe just log or simple alert, 
-                // but the UI doesn't have a dedicated error slot for this action in the design.
-                // We'll revert to idle so they can try again or see the button.
+                showError(response.data.error || 'Unable to send the email.');
                 setTimeout(() => setResendStatus('idle'), 3000);
             }
         } catch (err) {
             setResendStatus('error');
+            showError(err.response?.data?.error || 'An error occurred.');
             setTimeout(() => setResendStatus('idle'), 3000);
         }
     };
@@ -160,43 +159,42 @@ const Register = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        setError('');
     };
 
     // Step 1 is now Owner Info
     const validateStep1 = () => {
         if (!formData.owner_username.trim()) {
-            setError('Username is required');
+            showError('A username is required.');
             return false;
         }
 
         if (usernameAvailable === false) {
-            setError('This username is already taken. Please choose another one.');
+            showError('This username is already taken. Please choose another one.');
             return false;
         }
 
         if (isCheckingUsername) {
-            setError('Checking username availability...');
+            showError('Checking username availability...');
             return false;
         }
         if (!formData.owner_email.trim()) {
-            setError('Email is required');
+            showError('An email address is required.');
             return false;
         }
         if (!/\S+@\S+\.\S+/.test(formData.owner_email)) {
-            setError('Please enter a valid email address');
+            showError('Please enter a valid email address.');
             return false;
         }
         if (!formData.password) {
-            setError('Password is required');
+            showError('A password is required.');
             return false;
         }
         if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters long');
+            showError('The password must be at least 8 characters long.');
             return false;
         }
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            showError('The passwords do not match.');
             return false;
         }
         return true;
@@ -205,11 +203,11 @@ const Register = () => {
     // Step 2 is now Shop Info
     const validateStep2 = () => {
         if (!formData.shop_name.trim()) {
-            setError('Shop name is required');
+            showError('A shop name is required.');
             return false;
         }
         if (!formData.shop_phone.trim()) {
-            setError('Shop phone number is required');
+            showError('A shop phone number is required.');
             return false;
         }
         return true;
@@ -219,7 +217,6 @@ const Register = () => {
         if (formStep === 1) {
             if (validateStep1()) {
                 setFormStep(2);
-                setError('');
             }
         }
     };
@@ -227,7 +224,6 @@ const Register = () => {
     const handlePrevStep = () => {
         if (formStep === 2) {
             setFormStep(1);
-            setError('');
         }
     };
 
@@ -238,7 +234,6 @@ const Register = () => {
             return;
         }
 
-        setError('');
         setIsSubmitting(true);
 
         try {
@@ -253,11 +248,12 @@ const Register = () => {
 
             if (response.data.success) {
                 setRegistrationSuccess(true);
+                showSuccess('Your account has been successfully registered.');
             } else {
-                setError(response.data.error || 'Registration failed');
+                showError(response.data.error || 'Unable to complete the registration.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'An unexpected error occurred');
+            showError(err.response?.data?.error || 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
         }
@@ -395,7 +391,6 @@ const Register = () => {
 
                 {/* Right Side - Form Section */}
                 <div className="register-form-section">
-                    {error && <div className="error-message">{error}</div>}
 
                     <form onSubmit={handleSubmit} className="register-form">
 

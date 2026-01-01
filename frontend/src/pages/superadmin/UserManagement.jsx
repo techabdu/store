@@ -14,6 +14,7 @@ import {
     X
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
+import { useNotification } from '../../context/NotificationContext';
 import '../../styles/dashboard.css';
 import './UserManagement.css';
 
@@ -30,7 +31,7 @@ const UserManagement = () => {
     // Mock Data for Users
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError, showSuccess } = useNotification();
 
     const [formData, setFormData] = useState({
         username: '',
@@ -49,7 +50,7 @@ const UserManagement = () => {
             }
         } catch (err) {
             console.error('Failed to fetch users:', err);
-            setError('Failed to load users');
+            showError('Unable to load the user directory.');
         } finally {
             setLoading(false);
         }
@@ -94,11 +95,11 @@ const UserManagement = () => {
                 setUsers([...users, response.data.user]);
                 setShowModal(false);
                 setFormData({ username: '', email: '', password: '', role: 'admin' });
-                alert('User created successfully');
+                showSuccess('The new user account has been successfully created.');
             }
         } catch (err) {
             console.error('Failed to create user:', err);
-            alert(err.response?.data?.error || 'Failed to create user');
+            showError(err.response?.data?.error || 'Unable to create the new user account.');
         }
     };
 
@@ -108,10 +109,11 @@ const UserManagement = () => {
                 const response = await api.delete(`/users.php?id=${id}`);
                 if (response.data.success) {
                     setUsers(users.filter(u => u.id !== id));
+                    showSuccess('The user account has been deleted.');
                 }
             } catch (err) {
                 console.error('Failed to delete user:', err);
-                alert('Failed to delete user');
+                showError('Unable to delete the user account.');
             }
         }
     };
@@ -127,10 +129,11 @@ const UserManagement = () => {
                     }
                     return u;
                 }));
+                showSuccess(`The user account status has been updated to ${newStatus}.`);
             }
         } catch (err) {
             console.error('Failed to update status:', err);
-            alert('Failed to update status');
+            showError('Unable to update the user account status.');
         }
     };
 
@@ -151,14 +154,14 @@ const UserManagement = () => {
             });
 
             if (response.data.success) {
-                alert('Password reset successfully');
+                showSuccess('The password has been successfully reset.');
                 setShowResetModal(false);
                 setSelectedUser(null);
                 setResetPassword('');
             }
         } catch (err) {
             console.error('Failed to reset password:', err);
-            alert(err.response?.data?.error || 'Failed to reset password');
+            showError(err.response?.data?.error || 'Unable to reset the password.');
         }
     };
 

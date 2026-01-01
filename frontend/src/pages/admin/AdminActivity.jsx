@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import '../user/SalesHistory.css'; // Reusing SalesHistory styles for consistency
@@ -9,7 +10,7 @@ const AdminActivity = () => {
     const { user } = useAuth();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { showError } = useNotification();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [page, setPage] = useState(0);
@@ -55,7 +56,7 @@ const AdminActivity = () => {
                 }
             }
         } catch (err) {
-            setError('Failed to load activity logs');
+            showError('Failed to load activity logs');
             console.error(err);
         } finally {
             setLoading(false);
@@ -85,7 +86,6 @@ const AdminActivity = () => {
                         </div>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
 
                     <div className="table-container">
                         <table className="data-table">

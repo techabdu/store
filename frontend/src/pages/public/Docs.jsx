@@ -3,12 +3,14 @@ import { useParams, useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { docsNavigation } from '../../data/docsNavigation';
+import { useNotification } from '../../context/NotificationContext';
 
 const Docs = () => {
     const { '*': splat } = useParams();
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { showError } = useNotification();
 
     // Helper to find the correct file from the navigation tree based on path
     const findFileByPath = (items, targetPath) => {
@@ -59,6 +61,7 @@ const Docs = () => {
                 }
             } catch (err) {
                 console.error('Error loading docs:', err);
+                showError('Unable to load documentation content.');
                 setError(err.message);
                 setContent('');
             } finally {

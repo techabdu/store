@@ -5,6 +5,7 @@ import TopBar from '../../components/TopBar';
 import { Package, Clock, CheckCircle, XCircle, Truck, Eye } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceOrders.css';
@@ -16,6 +17,7 @@ const MarketplaceOrders = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [activeRole, setActiveRole] = useState('buyer'); // 'buyer' or 'seller'
     const [loading, setLoading] = useState(true);
+    const { showError } = useNotification();
     const [visibleRows, setVisibleRows] = useState(10);
 
     // Sidebar state for mobile
@@ -46,6 +48,7 @@ const MarketplaceOrders = () => {
             }
         } catch (error) {
             console.error("Error fetching orders:", error);
+            showError("Failed to load orders");
         } finally {
             setLoading(false);
         }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import { FaEnvelope, FaCheckCircle } from 'react-icons/fa';
 import '../../styles/login.css';
@@ -7,18 +8,17 @@ import '../../styles/login.css';
 const ForgotPassword = () => {
     const [identifier, setIdentifier] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('');
+    const { showError, showSuccess } = useNotification();
     const [success, setSuccess] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!identifier.trim()) {
-            setError('Please enter your username or email');
+            showError('Please enter your username or email address.');
             return;
         }
 
-        setError('');
         setIsSubmitting(true);
 
         try {
@@ -28,11 +28,12 @@ const ForgotPassword = () => {
 
             if (response.data.success) {
                 setSuccess(true);
+                showSuccess('Password reset instructions have been sent to your email.');
             } else {
-                setError(response.data.error || 'Failed to send reset email');
+                showError(response.data.error || 'Unable to send the password reset email.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'An error occurred. Please try again.');
+            showError(err.response?.data?.error || 'An unexpected error occurred. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -86,7 +87,6 @@ const ForgotPassword = () => {
                         <p>Enter your username or email to reset your password</p>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
 
                     <form onSubmit={handleSubmit} className="login-form">
                         <div className="form-group">
@@ -98,7 +98,6 @@ const ForgotPassword = () => {
                                     value={identifier}
                                     onChange={(e) => {
                                         setIdentifier(e.target.value);
-                                        setError('');
                                     }}
                                     disabled={isSubmitting}
                                     autoFocus

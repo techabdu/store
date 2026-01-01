@@ -18,6 +18,7 @@ import {
     TrendingUp
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
+import { useNotification } from '../../context/NotificationContext';
 import '../../styles/dashboard.css';
 import './TenantManagement.css';
 
@@ -29,6 +30,7 @@ const TenantManagement = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const { showError, showSuccess } = useNotification();
 
     // Fetch tenants
     const fetchTenants = async () => {
@@ -86,11 +88,11 @@ const TenantManagement = () => {
                 setTenants(tenants.map(t =>
                     t.id === tenantId ? { ...t, status: newStatus } : t
                 ));
-                alert(`Shop ${newStatus === 'suspended' ? 'suspended' : 'activated'} successfully`);
+                showSuccess(`The shop has been successfully ${newStatus === 'suspended' ? 'suspended' : 'activated'}.`);
             }
         } catch (err) {
             console.error('Failed to update tenant status:', err);
-            alert('Failed to update shop status');
+            showError('Unable to update the shop status.');
         }
     };
 
@@ -106,7 +108,7 @@ const TenantManagement = () => {
 
         const typedName = prompt(`Type "${shopName}" to confirm deletion:`);
         if (typedName !== shopName) {
-            alert('Shop name does not match. Deletion cancelled.');
+            showError('The shop name does not match. The deletion process has been cancelled.');
             return;
         }
 
@@ -117,11 +119,11 @@ const TenantManagement = () => {
 
             if (response.data.success) {
                 setTenants(tenants.filter(t => t.id !== tenantId));
-                alert('Shop deleted successfully');
+                showSuccess('The shop has been permanently deleted.');
             }
         } catch (err) {
             console.error('Failed to delete tenant:', err);
-            alert('Failed to delete shop');
+            showError('Unable to delete the shop.');
         }
     };
 

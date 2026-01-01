@@ -5,6 +5,7 @@ import TopBar from '../../components/TopBar';
 import { User, MapPin, Phone, MessageSquare, Shield, ShieldCheck, Star, ArrowLeft, Package, Edit } from 'lucide-react';
 import api, { SERVER_URL, isProduction } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProfile.css';
@@ -13,6 +14,7 @@ const MarketplaceSellerProfile = () => {
     const { user } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showError } = useNotification();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,6 +66,7 @@ const MarketplaceSellerProfile = () => {
             }
         } catch (error) {
             console.error("Error fetching listings:", error);
+            showError("Failed to fetch seller listings");
         } finally {
             setListingsLoading(false);
         }
@@ -81,6 +84,7 @@ const MarketplaceSellerProfile = () => {
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
+                showError("Failed to fetch seller profile");
             } finally {
                 setLoading(false);
             }

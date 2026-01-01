@@ -66,6 +66,7 @@ try {
     $seller_id = $order['seller_id'];
     $buyer_id = $order['buyer_id'];
     $amount = $order['agreed_price'];
+    $tenant_id = $order['tenant_id'] ?? 1;
 
     // Update Buyer Wallet: Decrement Held Balance
     $stmt = $conn->prepare("UPDATE marketplace_wallets SET held_balance = held_balance - ? WHERE user_id = ?");
@@ -102,12 +103,13 @@ try {
 
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, ?, 'purchase_release', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, ?, 'purchase_release', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_buyer = "Funds released to seller for order #" . $order['order_reference'];
     $release_ref_buyer = $order['order_reference'] . '_RELEASE_BUYER';
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $tenant_id,
         $b_wallet_data['id'], 
         $buyer_id, 
         $buyer_wallet_shop_id,
@@ -130,12 +132,13 @@ try {
 
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, ?, 'sale_complete', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, ?, 'sale_complete', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_seller = "Funds released for order #" . $order['order_reference'];
     $release_ref_seller = $order['order_reference'] . '_RELEASE';
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $tenant_id,
         $seller_wallet_id, 
         $seller_id, 
         $seller_wallet_shop_id,

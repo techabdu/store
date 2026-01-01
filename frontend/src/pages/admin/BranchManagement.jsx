@@ -12,10 +12,10 @@ import {
     Building,
     Star,
     X,
-    AlertTriangle,
     Check,
     ArrowLeft
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 import { FaSearch } from 'react-icons/fa';
 import AdminLayout from '../../components/AdminLayout';
 import './BranchManagement.css';
@@ -29,7 +29,7 @@ const BranchManagement = () => {
 
     const [branches, setBranches] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError, showSuccess } = useNotification();
     const [currentStep, setCurrentStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [visibleRows, setVisibleRows] = useState(6);
@@ -53,7 +53,7 @@ const BranchManagement = () => {
             }
         } catch (err) {
             console.error('Failed to fetch branches:', err);
-            setError('Failed to load branches');
+            showError('Unable to load the branch list.');
         } finally {
             setLoading(false);
         }
@@ -96,7 +96,7 @@ const BranchManagement = () => {
         if (validateStep1()) {
             setCurrentStep(2);
         } else {
-            alert('Please enter a branch name to proceed.');
+            showError('Please enter a branch name to proceed.');
         }
     };
 
@@ -119,11 +119,11 @@ const BranchManagement = () => {
                 setView('list');
                 resetForm();
                 refreshShops(); // Update AuthContext shops list
-                alert('Branch created successfully!');
+                showSuccess('The new branch has been successfully created.');
             }
         } catch (err) {
             console.error('Failed to create branch:', err);
-            alert(err.response?.data?.error || 'Failed to create branch');
+            showError(err.response?.data?.error || 'Unable to create the new branch.');
         } finally {
             setSubmitting(false);
         }
@@ -165,11 +165,11 @@ const BranchManagement = () => {
                 setSelectedBranch(null);
                 resetForm();
                 refreshShops();
-                alert('Branch updated successfully!');
+                showSuccess('The branch details have been successfully updated.');
             }
         } catch (err) {
             console.error('Failed to update branch:', err);
-            alert(err.response?.data?.error || 'Failed to update branch');
+            showError(err.response?.data?.error || 'Unable to update the branch details.');
         } finally {
             setSubmitting(false);
         }
@@ -196,11 +196,11 @@ const BranchManagement = () => {
                 setShowDeleteModal(false);
                 setSelectedBranch(null);
                 refreshShops();
-                alert('Branch deleted successfully!');
+                showSuccess('The branch has been deleted.');
             }
         } catch (err) {
             console.error('Failed to delete branch:', err);
-            alert(err.response?.data?.error || 'Failed to delete branch');
+            showError(err.response?.data?.error || 'Unable to delete the branch.');
         } finally {
             setSubmitting(false);
         }
@@ -239,7 +239,7 @@ const BranchManagement = () => {
             title={view === 'list' ? "Branch Management" : (view === 'add' ? "Add New Branch" : "Edit Branch")}
             subtitle={view === 'list' ? "Manage your store locations and branches" : ""}
             loading={loading && view === 'list'}
-            error={error}
+            error={null}
         >
             {view === 'list' ? (
                 <>

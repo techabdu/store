@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNotification } from '../../context/NotificationContext';
 import axios from '../../utils/api';
 import {
     Target,
@@ -38,7 +39,7 @@ const Budgeting = () => {
         max_expenses: 0
     });
     const [saving, setSaving] = useState(false);
-    const [msg, setMsg] = useState(null);
+    const { showError, showSuccess } = useNotification();
 
     useEffect(() => {
         fetchShopSettings();
@@ -57,6 +58,7 @@ const Budgeting = () => {
             }
         } catch (err) {
             console.error('Error fetching shop settings:', err);
+            showError('Failed to load shop settings');
         }
     };
 
@@ -74,6 +76,7 @@ const Budgeting = () => {
             }
         } catch (err) {
             console.error('Error fetching budget performance:', err);
+            showError('Failed to load budget performance');
         } finally {
             setLoading(false);
         }
@@ -87,13 +90,13 @@ const Budgeting = () => {
                 ...budgetForm
             });
             if (response.data.success) {
-                setMsg({ type: 'success', text: 'Budget saved!' });
+                showSuccess('Budget saved successfully!');
                 setEditMode(false);
                 fetchPerformance();
-                setTimeout(() => setMsg(null), 3000);
             }
         } catch (err) {
-            setMsg({ type: 'error', text: 'Failed to save budget' });
+            console.error('Error saving budget:', err);
+            showError(err.response?.data?.error || 'Failed to save budget');
         } finally {
             setSaving(false);
         }
@@ -157,7 +160,6 @@ const Budgeting = () => {
                 </div>
             </div>
 
-            {msg && <div className={`alert-toast ${msg.type}`}><CheckCircle2 size={18} /> {msg.text}</div>}
 
             <div className="budget-grid">
                 {/* SET BUDGET FORM */}

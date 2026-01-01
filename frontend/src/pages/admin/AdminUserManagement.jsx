@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import {
     Plus,
@@ -36,7 +37,7 @@ const AdminUserManagement = () => {
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError, showSuccess } = useNotification();
 
     const [formData, setFormData] = useState({
         username: '',
@@ -87,7 +88,7 @@ const AdminUserManagement = () => {
             }
         } catch (err) {
             console.error('Failed to fetch users:', err);
-            setError('Failed to load users');
+            showError('Unable to load the user directory.');
         } finally {
             setLoading(false);
         }
@@ -132,11 +133,11 @@ const AdminUserManagement = () => {
                 setUsers([...users, response.data.user]);
                 setView('list');
                 setFormData({ username: '', email: '', password: '', role: 'user' });
-                alert('User created successfully');
+                showSuccess('The new user account has been successfully created.');
             }
         } catch (err) {
             console.error('Failed to create user:', err);
-            alert(err.response?.data?.error || 'Failed to create user');
+            showError(err.response?.data?.error || 'Unable to create the new user account.');
         }
     };
 
@@ -145,11 +146,12 @@ const AdminUserManagement = () => {
             try {
                 const response = await api.delete(`/admin-users.php?id=${id}`);
                 if (response.data.success) {
+                    showSuccess('The user account has been deleted.');
                     setUsers(users.filter(u => u.id !== id));
                 }
             } catch (err) {
                 console.error('Failed to delete user:', err);
-                alert('Failed to delete user');
+                showError('Unable to delete the user account.');
             }
         }
     };
@@ -165,10 +167,11 @@ const AdminUserManagement = () => {
                     }
                     return u;
                 }));
+                showSuccess(`The user account status has been updated to ${newStatus}.`);
             }
         } catch (err) {
             console.error('Failed to update status:', err);
-            alert('Failed to update status');
+            showError('Unable to update the user account status.');
         }
     };
 
@@ -186,11 +189,11 @@ const AdminUserManagement = () => {
                         }
                         return u;
                     }));
-                    alert(`User ${action}d to ${newRole} successfully`);
+                    showSuccess('The user\'s role has been updated.');
                 }
             } catch (err) {
                 console.error('Failed to update role:', err);
-                alert(err.response?.data?.error || 'Failed to update role');
+                showError(err.response?.data?.error || 'Unable to update the user role.');
             }
         }
     };
@@ -212,14 +215,14 @@ const AdminUserManagement = () => {
             });
 
             if (response.data.success) {
-                alert('Password reset successfully');
+                showSuccess('The password has been successfully reset.');
                 setShowResetModal(false);
                 setSelectedUser(null);
                 setResetPassword('');
             }
         } catch (err) {
             console.error('Failed to reset password:', err);
-            alert(err.response?.data?.error || 'Failed to reset password');
+            showError(err.response?.data?.error || 'Unable to reset the password.');
         }
     };
 

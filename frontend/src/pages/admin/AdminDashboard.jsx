@@ -12,6 +12,7 @@ import {
     TrendingUp,
     Receipt
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 import {
     BarChart,
     Bar,
@@ -34,7 +35,7 @@ const AdminDashboard = () => {
     const [profitData, setProfitData] = useState({ daily_profit: 0, monthly_profit: 0 });
     const [expenseData, setExpenseData] = useState({ daily_expenses: 0, monthly_expenses: 0 });
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const { showError } = useNotification();
     const [activityOffset, setActivityOffset] = useState(0);
     const [hasMoreActivity, setHasMoreActivity] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -130,7 +131,7 @@ const AdminDashboard = () => {
                 setLoading(false);
             } catch (error) {
                 console.error('Failed to fetch admin dashboard data:', error);
-                setError('Failed to load dashboard data');
+                showError('Unable to load dashboard information.');
                 setLoading(false);
             }
         };
@@ -161,6 +162,7 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error('Failed to fetch more activity:', error);
+            showError('Unable to load additional activity logs.');
         } finally {
             setLoadingMore(false);
         }
@@ -172,7 +174,7 @@ const AdminDashboard = () => {
             title="Admin Dashboard"
             subtitle="Overview of store performance and orders"
             loading={loading}
-            error={error}
+            error={null}
             alertsCount={alerts.length}
         >
             {/* Metrics Grid */}

@@ -5,6 +5,7 @@ import MetricCard from '../../components/MetricCard';
 import ActivityTable from '../../components/ActivityTable';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import {
     Package,
     TrendingUp,
@@ -26,6 +27,7 @@ const UserDashboard = () => {
         weekly_sales_count: 0
     });
     const [loading, setLoading] = useState(true);
+    const { showError } = useNotification();
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -86,6 +88,7 @@ const UserDashboard = () => {
                 }
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error);
+                showError('Failed to load dashboard data');
             } finally {
                 setLoading(false);
             }

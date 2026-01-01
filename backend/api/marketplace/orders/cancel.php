@@ -43,6 +43,7 @@ try {
             o.buyer_id, 
             o.seller_id, 
             o.listing_id, 
+            o.tenant_id,
             o.agreed_price as amount, 
             o.order_number as order_reference
         FROM marketplace_orders o 
@@ -62,6 +63,7 @@ try {
     $listing_id = $order['listing_id'];
     $amount = $order['amount'];
     $order_reference = $order['order_reference'];
+    $tenant_id = $order['tenant_id'] ?? 1;
 
     // Only buyer or seller can cancel
     if ($order['buyer_id'] != $user_id && $order['seller_id'] != $user_id) {
@@ -125,12 +127,13 @@ try {
 
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, ?, 'purchase_refund', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, ?, 'purchase_refund', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_buyer = "Refund for cancelled order #$order_reference";
     $refund_ref_buyer = $order_reference . '_REFUND';
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $tenant_id,
         $b_wallet_data['id'], 
         $buyer_id, 
         $buyer_wallet_shop_id,
@@ -152,12 +155,13 @@ try {
 
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, ?, 'sale_cancelled', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, ?, 'sale_cancelled', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_seller = "Sale cancelled for order #$order_reference";
     $refund_ref_seller = $order_reference . '_CANCEL';
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $tenant_id,
         $s_wallet_data['id'], 
         $seller_id, 
         $seller_wallet_shop_id,

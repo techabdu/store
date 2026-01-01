@@ -9,6 +9,7 @@ import {
     Activity,
     Landmark
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 import {
     AreaChart,
     Area,
@@ -43,7 +44,7 @@ const CashFlowReport = () => {
         balance: 0,
         opening: 0
     });
-    const [error, setError] = useState(null);
+    const { showError } = useNotification();
 
     useEffect(() => {
         fetchData();
@@ -138,10 +139,9 @@ const CashFlowReport = () => {
                     });
                 }
             }
-            setError(null);
         } catch (err) {
             console.error('Error fetching cash flow:', err);
-            setError('Failed to load cash flow analysis');
+            showError('Failed to load cash flow analysis');
         } finally {
             setLoading(false);
         }
@@ -164,7 +164,7 @@ const CashFlowReport = () => {
             title="Cash Flow Analysis"
             subtitle="Track your liquidity and movement of funds"
             loading={loading}
-            error={error}
+            error={null}
         >
             <div className="cf-actions mb-24">
                 <div className="filter-group">

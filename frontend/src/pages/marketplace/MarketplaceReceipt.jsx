@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import './MarketplacePage.css';
 import './MarketplaceReceipt.css';
 
@@ -28,6 +29,7 @@ const MarketplaceReceipt = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [canPrint, setCanPrint] = useState(false);
+    const { showError } = useNotification();
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,10 +59,13 @@ const MarketplaceReceipt = () => {
                 setCanPrint(response.data.can_print);
             } else {
                 setError(response.data.error || 'Failed to load receipt');
+                showError(response.data.error || 'Failed to load receipt');
             }
         } catch (err) {
             console.error("Error fetching receipt:", err);
-            setError(err.response?.data?.error || 'An error occurred while loading receipt');
+            const errMsg = err.response?.data?.error || 'An error occurred while loading receipt';
+            setError(errMsg);
+            showError(errMsg);
         } finally {
             setLoading(false);
         }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
@@ -13,8 +14,7 @@ const Debts = () => {
     const navigate = useNavigate();
     const [debts, setDebts] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const { showError, showSuccess } = useNotification();
 
     // Sidebar state
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -59,6 +59,7 @@ const Debts = () => {
                 }
             } catch (err) {
                 console.error('Failed to load shop settings:', err);
+                showError('Unable to retrieve receipt settings.');
             }
         };
         fetchShopSettings();
@@ -127,7 +128,6 @@ const Debts = () => {
     // Fetch debts
     const fetchDebts = async (isNewFilter = false) => {
         setLoading(true);
-        setError('');
 
         try {
             const params = {
@@ -164,11 +164,11 @@ const Debts = () => {
                 });
                 setSummary(response.data.summary);
             } else {
-                setError(response.data.error || 'Failed to load debts');
+                showError(response.data.error || 'Unable to load the debt list.');
             }
         } catch (err) {
             console.error('Error fetching debts:', err);
-            setError('Failed to load debts');
+            showError('Unable to load the list of outstanding payments.');
         } finally {
             setLoading(false);
         }
@@ -177,7 +177,6 @@ const Debts = () => {
     // Fetch debt details
     const fetchDebtDetails = async (debtId, updateView = true) => {
         setLoading(true);
-        setError('');
 
         try {
             const response = await api.get('/debts/get_debt_details.php', {
@@ -190,12 +189,12 @@ const Debts = () => {
                 if (updateView) setView('details');
                 return response.data; // Return data for chaining
             } else {
-                setError(response.data.error || 'Failed to load debt details');
+                showError(response.data.error || 'Unable to get debt details.');
                 return null;
             }
         } catch (err) {
             console.error('Error fetching debt details:', err);
-            setError('Failed to load debt details');
+            showError('Unable to retrieve payment details.');
             return null;
         } finally {
             setLoading(false);
@@ -212,7 +211,7 @@ const Debts = () => {
     // Record payment
     const handleRecordPayment = async () => {
         if (!paymentForm.amount_paid || parseFloat(paymentForm.amount_paid) <= 0) {
-            setError('Please enter a valid payment amount');
+            showError('Please enter a valid payment amount.');
             return;
         }
 
@@ -220,12 +219,11 @@ const Debts = () => {
         const remaining = parseFloat(selectedDebt.remaining_balance);
 
         if (amount > remaining) {
-            setError(`Payment amount cannot exceed remaining balance of ₦${remaining.toFixed(2)}`);
+            showError('The payment amount cannot exceed the remaining balance.');
             return;
         }
 
         setLoading(true);
-        setError('');
 
         try {
             const response = await api.post('/debts/record_debt_payment.php', {
@@ -236,7 +234,7 @@ const Debts = () => {
             });
 
             if (response.data.success) {
-                setSuccess('Payment recorded successfully!');
+                showSuccess('The payment has been successfully recorded.');
 
                 // Fetch updated details to check status
                 const updatedData = await fetchDebtDetails(selectedDebt.id, false);
@@ -265,15 +263,12 @@ const Debts = () => {
                 }
 
                 fetchDebts(); // Refresh the main list logic background
-
-
-                setTimeout(() => setSuccess(''), 3000);
             } else {
-                setError(response.data.error || 'Failed to record payment');
+                showError(response.data.error || 'Unable to record the payment.');
             }
         } catch (err) {
-            console.error('Error recording payment:', err);
-            setError(err.response?.data?.error || 'Failed to record payment');
+            console.error('Record payment error:', err);
+            showError(err.response?.data?.error || 'Unable to record the payment.');
         } finally {
             setLoading(false);
         }
@@ -282,8 +277,12 @@ const Debts = () => {
     // Log manual debt
     const handleLogManualDebt = async () => {
         // Validation
-        if (!manualDebtForm.customer_name.trim() || !manualDebtForm.total_amount || !manualDebtForm.description) {
-            setError('Please fill in all required fields');
+        if (!manualDebtForm.customer_name) {
+            showError('A customer name or description is required.');
+            return;
+        }
+        if (!manualDebtForm.total_amount || parseFloat(manualDebtForm.total_amount) <= 0) {
+            showError('Please specify a valid amount.');
             return;
         }
 
@@ -291,12 +290,11 @@ const Debts = () => {
         const paid = parseFloat(manualDebtForm.paid_amount) || 0;
 
         if (paid > total) {
-            setError('Paid amount cannot exceed total amount');
+            showError('The paid amount cannot exceed the total amount.');
             return;
         }
 
         setLoading(true);
-        setError('');
 
         try {
             // 1. Create transaction with manual item
@@ -332,7 +330,7 @@ const Debts = () => {
             });
 
             if (debtResponse.data.success) {
-                setSuccess('Manual debt logged successfully!');
+                showSuccess('The manual debt has been successfully recorded.');
                 setView('list');
                 fetchDebts();
                 setManualDebtForm({
@@ -345,13 +343,12 @@ const Debts = () => {
                     payment_method: 'cash',
                     notes: ''
                 });
-                setTimeout(() => setSuccess(''), 3000);
             } else {
-                setError(debtResponse.data.error || 'Failed to create debt record');
+                showError(debtResponse.data.error || 'Unable to create the debt record.');
             }
         } catch (err) {
-            console.error('Error logging manual debt:', err);
-            setError(err.response?.data?.error || err.message || 'Failed to process manual debt');
+            console.error('Log manual debt error:', err);
+            showError(err.response?.data?.error || err.message || 'Unable to process the request.');
         } finally {
             setLoading(false);
         }
@@ -362,7 +359,6 @@ const Debts = () => {
         }
 
         setLoading(true);
-        setError('');
 
         try {
             const response = await api.post('/debts/write_off_debt.php', {
@@ -371,17 +367,15 @@ const Debts = () => {
             });
 
             if (response.data.success) {
-                setSuccess('Debt written off successfully!');
+                showSuccess('The debt has been successfully written off.');
                 setView('list');
                 fetchDebts(); // Refresh the list
-
-                setTimeout(() => setSuccess(''), 3000);
             } else {
-                setError(response.data.error || 'Failed to write off debt');
+                showError(response.data.error || 'Unable to write off the debt.');
             }
         } catch (err) {
-            console.error('Error writing off debt:', err);
-            setError(err.response?.data?.error || 'Failed to write off debt');
+            console.error('Write off debt error:', err);
+            showError(err.response?.data?.error || 'Unable to write off the debt.');
         } finally {
             setLoading(false);
         }
@@ -451,10 +445,6 @@ const Debts = () => {
                                     <span className="btn-text">Log Manual Debt</span>
                                 </button>
                             </div>
-
-                            {/* Messages */}
-                            {error && <div className="error-message">{error}</div>}
-                            {success && <div className="success-message">{success}</div>}
 
                             {/* Summary Cards */}
                             <div className="summary-cards">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import { FaLock, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa';
 import '../../styles/login.css';
@@ -14,14 +15,16 @@ const ResetPassword = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState('');
+    const { showError, showSuccess } = useNotification();
+    const [tokenError, setTokenError] = useState(false);
     const [success, setSuccess] = useState(false);
     const [isVerifying, setIsVerifying] = useState(true);
     const [username, setUsername] = useState('');
 
     useEffect(() => {
         if (!token) {
-            setError('Invalid reset link');
+            showError('Invalid reset link.');
+            setTokenError(true);
             setIsVerifying(false);
             return;
         }
@@ -33,10 +36,12 @@ const ResetPassword = () => {
                 if (response.data.success) {
                     setUsername(response.data.username);
                 } else {
-                    setError(response.data.error || 'Invalid or expired reset link');
+                    showError(response.data.error || 'The reset link is invalid or has expired.');
+                    setTokenError(true);
                 }
             } catch (err) {
-                setError(err.response?.data?.error || 'Invalid or expired reset link');
+                showError(err.response?.data?.error || 'The reset link is invalid or has expired.');
+                setTokenError(true);
             } finally {
                 setIsVerifying(false);
             }
@@ -49,21 +54,20 @@ const ResetPassword = () => {
         e.preventDefault();
 
         if (!password || !confirmPassword) {
-            setError('Please fill in all fields');
+            showError('Please fill in all the fields.');
             return;
         }
 
         if (password.length < 8) {
-            setError('Password must be at least 8 characters long');
+            showError('The password must be at least 8 characters long.');
             return;
         }
 
         if (password !== confirmPassword) {
-            setError('Passwords do not match');
+            showError('The passwords do not match.');
             return;
         }
 
-        setError('');
         setIsSubmitting(true);
 
         try {
@@ -74,15 +78,16 @@ const ResetPassword = () => {
 
             if (response.data.success) {
                 setSuccess(true);
+                showSuccess('Your password has been successfully reset.');
                 // Redirect to login after 3 seconds
                 setTimeout(() => {
                     navigate('/login');
                 }, 3000);
             } else {
-                setError(response.data.error || 'Failed to reset password');
+                showError(response.data.error || 'Unable to reset the password.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'An error occurred. Please try again.');
+            showError(err.response?.data?.error || 'An unexpected error occurred. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -135,7 +140,7 @@ const ResetPassword = () => {
         );
     }
 
-    if (error && !token) {
+    if (tokenError) {
         return (
             <div className="login-page">
                 <div className="login-container">
@@ -149,7 +154,6 @@ const ResetPassword = () => {
                             <h1>Invalid Link</h1>
                             <p>This password reset link is invalid</p>
                         </div>
-                        <div className="error-message">{error}</div>
                         <Link to="/forgot-password" className="login-button" style={{ textAlign: 'center', display: 'block', marginTop: '2rem', textDecoration: 'none' }}>
                             Request New Reset Link
                         </Link>
@@ -174,7 +178,6 @@ const ResetPassword = () => {
                         <p>Enter your new password for <strong>{username}</strong></p>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
 
                     <form onSubmit={handleSubmit} className="login-form">
                         <div className="form-group">
@@ -186,7 +189,6 @@ const ResetPassword = () => {
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
-                                        setError('');
                                     }}
                                     disabled={isSubmitting}
                                     autoFocus
@@ -213,7 +215,6 @@ const ResetPassword = () => {
                                     value={confirmPassword}
                                     onChange={(e) => {
                                         setConfirmPassword(e.target.value);
-                                        setError('');
                                     }}
                                     disabled={isSubmitting}
                                 />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api, { SERVER_URL } from '../../utils/api';
@@ -13,10 +14,10 @@ import '../../styles/wizard.css';
 const MarketplaceCreateListing = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { showError, showSuccess } = useNotification();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [inventory, setInventory] = useState([]);
-    const [error, setError] = useState('');
     const [currentStep, setCurrentStep] = useState(1);
 
     // Form State
@@ -63,7 +64,7 @@ const MarketplaceCreateListing = () => {
                 }
             } catch (err) {
                 console.error("Error fetching inventory:", err);
-                setError("Failed to load your inventory. Please try again.");
+                showError("Failed to load your inventory. Please try again.");
             } finally {
                 setLoading(false);
             }
@@ -122,7 +123,7 @@ const MarketplaceCreateListing = () => {
         } catch (err) {
             console.error("Upload error:", err);
             const errorMessage = err.response?.data?.error || "Failed to upload images. Please try again.";
-            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setUploading(false);
         }
@@ -140,7 +141,6 @@ const MarketplaceCreateListing = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setSubmitting(true);
 
         try {
@@ -153,12 +153,12 @@ const MarketplaceCreateListing = () => {
             const response = await api.post('/marketplace/listings/create.php', payload);
 
             if (response.data.success) {
-                alert("Listing created successfully!");
+                showSuccess("Listing created successfully!");
                 navigate('/marketplace/selling');
             }
         } catch (err) {
             console.error("Error creating listing:", err);
-            setError(err.response?.data?.error || "Failed to create listing.");
+            showError(err.response?.data?.error || "Failed to create listing.");
         } finally {
             setSubmitting(false);
         }
@@ -199,12 +199,6 @@ const MarketplaceCreateListing = () => {
 
                                 <form onSubmit={handleSubmit}>
                                     <div className="focus-view-body">
-                                        {error && (
-                                            <div className="alert-banner error" style={{ marginBottom: '24px' }}>
-                                                <FaExclamationCircle size={18} />
-                                                <span>{error}</span>
-                                            </div>
-                                        )}
 
                                         {loading ? (
                                             <div style={{ textAlign: 'center', padding: '40px' }}>

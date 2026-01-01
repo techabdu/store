@@ -4,6 +4,7 @@ import { Save, X, Lock, User, Mail, Phone, Calendar, Shield } from 'lucide-react
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import './UserProfile.css';
 
@@ -12,7 +13,7 @@ const UserProfile = () => {
     const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
+    const { showError, showSuccess } = useNotification();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -104,7 +105,7 @@ const UserProfile = () => {
                 });
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to load profile data' });
+            showError('Unable to load profile data.');
         } finally {
             setLoading(false);
         }
@@ -127,13 +128,12 @@ const UserProfile = () => {
     const handleSaveProfile = async (e) => {
         e.preventDefault();
         setSaving(true);
-        setMessage({ type: '', text: '' });
 
         try {
             const response = await api.post('/user/update-profile.php', profileData);
 
             if (response.data.success) {
-                setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                showSuccess('Your profile has been successfully updated.');
                 setOriginalData(profileData);
 
                 // Update account info with new data
@@ -151,10 +151,7 @@ const UserProfile = () => {
                 }
             }
         } catch (error) {
-            setMessage({
-                type: 'error',
-                text: error.response?.data?.error || 'Failed to update profile'
-            });
+            showError(error.response?.data?.error || 'Unable to update profile.');
         } finally {
             setSaving(false);
         }
@@ -165,23 +162,22 @@ const UserProfile = () => {
 
         // Validation
         if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-            setMessage({ type: 'error', text: 'All password fields are required' });
+            showError('Please complete all password fields.');
             return;
         }
 
         if (passwordData.new_password !== passwordData.confirm_password) {
-            setMessage({ type: 'error', text: 'New passwords do not match' });
+            showError('The new passwords do not match. Please try again.');
             return;
         }
 
         setSaving(true);
-        setMessage({ type: '', text: '' });
 
         try {
             const response = await api.post('/user/change-password.php', passwordData);
 
             if (response.data.success) {
-                setMessage({ type: 'success', text: 'Password changed successfully!' });
+                showSuccess('Your password has been successfully changed.');
                 setPasswordData({
                     current_password: '',
                     new_password: '',
@@ -189,10 +185,7 @@ const UserProfile = () => {
                 });
             }
         } catch (error) {
-            setMessage({
-                type: 'error',
-                text: error.response?.data?.error || 'Failed to change password'
-            });
+            showError(error.response?.data?.error || 'Unable to change password.');
         } finally {
             setSaving(false);
         }
@@ -205,7 +198,6 @@ const UserProfile = () => {
             new_password: '',
             confirm_password: ''
         });
-        setMessage({ type: '', text: '' });
     };
 
     const getUserInitials = () => {
@@ -271,11 +263,6 @@ const UserProfile = () => {
                         <p>Manage your personal information and account settings</p>
                     </div>
 
-                    {message.text && (
-                        <div className={`message-banner ${message.type}`}>
-                            {message.text}
-                        </div>
-                    )}
 
                     <div className="profile-grid">
                         {/* Left Column */}

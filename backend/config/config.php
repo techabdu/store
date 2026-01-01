@@ -6,6 +6,10 @@
  */
 
 require_once __DIR__ . '/constants.php';
+require_once __DIR__ . '/../helpers/ErrorHandler.php';
+
+// Initialize global error handling early
+ErrorHandler::init();
 
 // Load environment variables if not already loaded
 function loadConfigEnv() {

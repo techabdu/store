@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
@@ -11,12 +12,11 @@ import { ArrowLeft, PlusCircle, ShoppingCart, User, CreditCard } from 'lucide-re
 const POS = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { showError, showSuccess } = useNotification();
     const [inventory, setInventory] = useState([]);
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
@@ -94,6 +94,7 @@ const POS = () => {
             }
         } catch (err) {
             console.error('Failed to load inventory', err);
+            showError('Unable to load available inventory.');
         } finally {
             setLoading(false);
         }
@@ -142,7 +143,7 @@ const POS = () => {
     const addToCart = (item) => {
         // Check if item already in cart
         if (cart.find(cartItem => cartItem.type === 'sale' && cartItem.inventory_id === item.id)) {
-            setError('Item already in cart');
+            showError('This item is already in the cart.');
             return;
         }
 
@@ -175,7 +176,6 @@ const POS = () => {
     const startEditingPrice = (index, currentPrice) => {
         setEditingItemIndex(index);
         setTempPrice(currentPrice.toString());
-        setError('');
     };
 
     // Cancel editing price
@@ -190,7 +190,7 @@ const POS = () => {
 
         // Validation
         if (isNaN(newPrice) || newPrice <= 0) {
-            setError('Price must be a positive number');
+            showError('Please enter a valid price greater than zero.');
             return;
         }
 
@@ -204,7 +204,6 @@ const POS = () => {
         setCart(updatedCart);
         setEditingItemIndex(null);
         setTempPrice('');
-        setError('');
     };
 
     // Add trade-in to cart
@@ -213,13 +212,13 @@ const POS = () => {
 
         // Validate IMEI
         if (!tradeInData.imei.match(/^[0-9]{15}$/)) {
-            setError('Invalid IMEI format. Must be 15 digits.');
+            showError('Invalid IMEI format. It must be exactly 15 digits.');
             return;
         }
 
         // Check if IMEI already in cart
         if (cart.find(item => item.imei === tradeInData.imei)) {
-            setError('This IMEI is already in the cart');
+            showError('This IMEI is already in the cart.');
             return;
         }
 
@@ -243,7 +242,6 @@ const POS = () => {
             storage: '',
             trade_in_value: ''
         });
-        setError('');
     };
 
     // Calculate total (uses customPrice for sale items, price for trade-ins)
@@ -290,22 +288,21 @@ const POS = () => {
     const handleCreateDebt = async () => {
         // Validation
         if (!debtData.customer_name.trim()) {
-            setError('Customer name is required');
+            showError('A customer name is required to log a debt.');
             return;
         }
 
         if (!debtData.customer_phone.trim()) {
-            setError('Customer phone number is required');
+            showError('A customer phone number is required to log a debt.');
             return;
         }
 
         if (!debtData.customer_address.trim()) {
-            setError('Customer address is required');
+            showError('A customer address is required to log a debt.');
             return;
         }
 
         setLoading(true);
-        setError('');
 
         try {
             // First, create the transaction
@@ -335,7 +332,7 @@ const POS = () => {
             });
 
             if (debtResponse.data.success) {
-                setSuccess('Debt created successfully!');
+                showSuccess('The debt record has been successfully created.');
 
                 // Redirect to receipt page after short delay
                 setTimeout(() => {
@@ -345,11 +342,11 @@ const POS = () => {
                     navigate(receiptPath);
                 }, 1500);
             } else {
-                setError(debtResponse.data.error || 'Failed to create debt record');
+                showError(debtResponse.data.error || 'Unable to create the debt record.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || err.message || 'Failed to process debt');
-            console.error(err);
+            console.error('Debt process error:', err);
+            showError(err.response?.data?.error || err.message || 'Unable to process the debt request.');
         } finally {
             setLoading(false);
         }
@@ -359,18 +356,16 @@ const POS = () => {
     const handleCheckout = async () => {
         // Validation
         if (cart.length === 0) {
-            setError('Cart is empty');
+            showError('The cart is empty. Please add items before checking out.');
             return;
         }
 
         if (!customerName.trim()) {
-            setError('Customer name is required');
+            showError('A customer name is required for the transaction.');
             return;
         }
 
         setLoading(true);
-        setError('');
-        setSuccess('');
 
         try {
             const response = await api.post('/transactions/create.php', {
@@ -388,11 +383,11 @@ const POS = () => {
                     : `/receipt/${response.data.transaction_id}`;
                 navigate(receiptPath);
             } else {
-                setError(response.data.error || 'Transaction failed');
+                showError(response.data.error || 'The transaction could not be completed.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Transaction failed');
-            console.error(err);
+            console.error('Checkout error:', err);
+            showError(err.response?.data?.error || 'The transaction could not be completed.');
         } finally {
             setLoading(false);
         }
@@ -415,9 +410,6 @@ const POS = () => {
                             <h1>Point of Sale</h1>
                             <p className="text-secondary">Process sales and manage trade-ins</p>
                         </div>
-
-                        {error && <div className="error-message" style={{ margin: '10px 0' }}>{error}</div>}
-                        {success && <div className="success-message" style={{ margin: '10px 0' }}>{success}</div>}
 
                         {view === 'pos' ? (
                             <div className="pos-layout animate-slide-in">

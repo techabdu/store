@@ -10,6 +10,7 @@ import {
     HelpCircle,
     Info
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 import {
     BarChart,
     Bar,
@@ -31,7 +32,7 @@ const ABCAnalysis = () => {
     const [abcData, setAbcData] = useState([]);
     const [summary, setSummary] = useState(null);
     const [totalProfit, setTotalProfit] = useState(0);
-    const [error, setError] = useState(null);
+    const { showError } = useNotification();
     const [visibleRows, setVisibleRows] = useState(15);
 
     useEffect(() => {
@@ -47,10 +48,9 @@ const ABCAnalysis = () => {
                 setSummary(response.data.summary);
                 setTotalProfit(response.data.total_profit);
             }
-            setError(null);
         } catch (err) {
             console.error('Error fetching ABC analysis:', err);
-            setError('Failed to load ABC inventory analysis');
+            showError('Failed to load ABC inventory analysis');
         } finally {
             setLoading(false);
         }
@@ -73,7 +73,7 @@ const ABCAnalysis = () => {
             title="ABC Inventory Analysis"
             subtitle="Identify products that drive 80% of your business profit"
             loading={loading}
-            error={error}
+            error={null}
         >
             <div className="abc-alerts">
                 <div className="info-card glass-card">

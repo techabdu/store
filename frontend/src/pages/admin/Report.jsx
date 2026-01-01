@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNotification } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import TopBar from '../../components/TopBar';
@@ -36,8 +37,7 @@ const Report = () => {
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [offset, setOffset] = useState(0);
-    const [error, setError] = useState('');
-    const [successMsg, setSuccessMsg] = useState('');
+    const { showError, showSuccess } = useNotification();
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -76,7 +76,7 @@ const Report = () => {
             }
         } catch (err) {
             console.error('Error fetching stats:', err);
-            setError('Failed to load financial data');
+            showError('Unable to load financial data.');
         }
     };
 
@@ -166,8 +166,6 @@ const Report = () => {
 
     const handleSaveReport = async () => {
         setLoading(true);
-        setError('');
-        setSuccessMsg('');
 
         try {
             const response = await api.post('/admin/report.php?action=create', {
@@ -177,13 +175,13 @@ const Report = () => {
             });
 
             if (response.data.success) {
-                setSuccessMsg('Report saved successfully!');
+                showSuccess('The report has been successfully saved.');
                 setInputs({ cash_in_hand: '' });
                 fetchStats();
             }
         } catch (err) {
             console.error('Error saving report:', err);
-            setError(err.response?.data?.message || 'Failed to save report');
+            showError(err.response?.data?.message || 'Unable to save the report.');
         } finally {
             setLoading(false);
         }
@@ -317,8 +315,6 @@ const Report = () => {
 
                     {activeTab === 'new' ? (
                         <div className="report-card glass-card">
-                            {error && <div className="error-message">{error}</div>}
-                            {successMsg && <div className="success-message" style={{ color: 'green', marginBottom: '15px' }}>{successMsg}</div>}
 
                             <div className="period-selector glass-card">
                                 <h3>Expense Calculation Period</h3>

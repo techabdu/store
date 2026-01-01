@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
 import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, Search } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
@@ -8,9 +9,10 @@ import '../../styles/wizard.css';
 
 const Inventory = () => {
     const { user } = useAuth();
+    const { showError, showSuccess } = useNotification();
     const [inventory, setInventory] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(''); // Keep this for hard data loading errors
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('in_stock');
     const [view, setView] = useState('list'); // 'list', 'add', 'edit'
@@ -65,7 +67,8 @@ const Inventory = () => {
                     setVendors(response.data.vendors);
                 }
             } catch (err) {
-                console.error("Failed to fetch vendors", err);
+                console.error("Failed to fetch vendors:", err);
+                showError('Unable to load the vendor list.');
             }
         };
         fetchVendors();
@@ -94,7 +97,8 @@ const Inventory = () => {
             }
         } catch (err) {
             setError('Failed to load inventory');
-            console.error(err);
+            console.error('Fetch inventory error:', err);
+            showError('Unable to load the inventory list.');
         } finally {
             setLoading(false);
             setIsSearching(false);
@@ -109,7 +113,6 @@ const Inventory = () => {
     const handleAddItem = async (e) => {
         if (e) e.preventDefault();
         setSubmitting(true);
-        setError('');
 
         try {
             const response = await api.post('/inventory/create.php', formData);
@@ -118,13 +121,13 @@ const Inventory = () => {
                 setView('list');
                 resetForm();
                 fetchInventory();
-                alert('Phone added to inventory successfully!');
+                showSuccess('The new item has been successfully added to the inventory.');
             } else {
-                setError(response.data.error || 'Failed to add item');
+                showError(response.data.error || 'Unable to add the new item.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to add item');
-            console.error(err);
+            showError(err.response?.data?.error || 'Unable to add the new item.');
+            console.error('Add item error:', err);
         } finally {
             setSubmitting(false);
         }
@@ -134,7 +137,6 @@ const Inventory = () => {
     const handleEditItem = async (e) => {
         if (e) e.preventDefault();
         setSubmitting(true);
-        setError('');
 
         try {
             const response = await api.put('/inventory/update.php', {
@@ -147,13 +149,13 @@ const Inventory = () => {
                 setSelectedItem(null);
                 resetForm();
                 fetchInventory();
-                alert('Item updated successfully!');
+                showSuccess('The item has been successfully updated.');
             } else {
-                setError(response.data.error || 'Failed to update item');
+                showError(response.data.error || 'Unable to update the item details.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to update item');
-            console.error(err);
+            showError(err.response?.data?.error || 'Unable to update the item details.');
+            console.error('Update item error:', err);
         } finally {
             setSubmitting(false);
         }
@@ -165,8 +167,6 @@ const Inventory = () => {
             return;
         }
 
-        setError('');
-
         try {
             const response = await api.delete('/inventory/delete.php', {
                 data: { id: itemId }
@@ -174,13 +174,13 @@ const Inventory = () => {
 
             if (response.data.success) {
                 fetchInventory();
-                alert('Item deleted successfully.');
+                showSuccess('The item has been removed from the inventory.');
             } else {
-                setError(response.data.error || 'Failed to delete item');
+                showError(response.data.error || 'Unable to delete the item.');
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to delete item');
-            console.error(err);
+            showError(err.response?.data?.error || 'Unable to delete the item.');
+            console.error('Delete item error:', err);
         }
     };
 
@@ -233,16 +233,14 @@ const Inventory = () => {
         if (e) e.preventDefault();
         if (validateStep1()) {
             setCurrentStep(2);
-            setError('');
         } else {
-            setError('Please provide Brand, Model, and a 15-digit IMEI.');
+            showError('Please provide the brand, model, and a valid 15-digit IMEI.');
         }
     };
 
     const handlePrevious = (e) => {
         if (e) e.preventDefault();
         setCurrentStep(1);
-        setError('');
     };
 
     const formatCurrency = (amount) => {
@@ -258,7 +256,7 @@ const Inventory = () => {
             title={view === 'list' ? "Inventory Management" : (view === 'add' ? "Add New Phone" : "Edit Item")}
             subtitle={view === 'list' ? "Track and manage your mobile device stock" : ""}
             loading={loading && isInitialLoad && view === 'list'}
-            error={error}
+            error={view === 'list' ? error : null}
             headerActions={view === 'list' && (
                 <button className="btn-primary" onClick={() => {
                     setView('add');

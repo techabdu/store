@@ -206,10 +206,10 @@ try {
         $message = "✅ Order completed! The buyer has confirmed delivery. Funds have been released to your account.";
         
         $stmt = $conn->prepare("
-            INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, is_read)
-            VALUES (?, ?, ?, ?, 0)
+            INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, is_read, tenant_id)
+            VALUES (?, ?, ?, ?, 0, ?)
         ");
-        $stmt->bind_param("iiis", $conversation_id, $buyer_id, $seller_id, $message);
+        $stmt->bind_param("iiisi", $conversation_id, $buyer_id, $seller_id, $message, $order['tenant_id']);
         $stmt->execute();
         $stmt->close();
 

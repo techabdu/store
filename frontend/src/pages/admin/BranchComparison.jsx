@@ -9,6 +9,7 @@ import {
     Calendar,
     Filter
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 import {
     BarChart,
     Bar,
@@ -32,7 +33,7 @@ const BranchComparison = () => {
         start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
         end: new Date().toISOString().split('T')[0]
     });
-    const [error, setError] = useState(null);
+    const { showError } = useNotification();
     const [visibleRows, setVisibleRows] = useState(15);
 
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -49,10 +50,9 @@ const BranchComparison = () => {
                 setComparisonData(response.data.data);
                 setVisibleRows(15); // Reset visible rows on new fetch
             }
-            setError(null);
         } catch (err) {
             console.error('Error fetching branch comparison:', err);
-            setError('Failed to load multi-branch comparison');
+            showError('Failed to load multi-branch comparison');
         } finally {
             setLoading(false);
         }
@@ -77,7 +77,7 @@ const BranchComparison = () => {
             title="Multi-Branch Comparison"
             subtitle="Compare performance metrics across all your business locations"
             loading={loading}
-            error={error}
+            error={null}
         >
             <div className="filter-area mb-24 glass-card">
                 <div className="date-inputs">

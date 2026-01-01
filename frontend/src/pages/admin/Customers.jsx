@@ -4,11 +4,13 @@ import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, S
 import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import './Customers.css';
 
 const Customers = () => {
     const { user } = useAuth();
     const [view, setView] = useState('list'); // 'list', 'details'
+    const { showError } = useNotification();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -80,6 +82,7 @@ const Customers = () => {
             }
         } catch (error) {
             console.error('Error fetching customers:', error);
+            showError('Unable to load the customer list.');
         } finally {
             setLoading(false);
         }
@@ -116,6 +119,7 @@ const Customers = () => {
             }
         } catch (error) {
             console.error('Error fetching customer history:', error);
+            showError('Unable to load the customer purchase history.');
         } finally {
             setLoadingHistory(false);
         }

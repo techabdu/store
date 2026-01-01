@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api, { SERVER_URL } from '../../utils/api';
@@ -14,9 +15,9 @@ const MarketplaceEditListing = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
+    const { showError, showSuccess } = useNotification();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState('');
     const [currentStep, setCurrentStep] = useState(1);
 
     // Form State
@@ -61,7 +62,7 @@ const MarketplaceEditListing = () => {
 
                     // Check if user owns this listing
                     if (listing.user_id != user.id) {
-                        setError("You do not have permission to edit this listing.");
+                        showError("You do not have permission to edit this listing.");
                         setLoading(false);
                         return;
                     }
@@ -84,7 +85,7 @@ const MarketplaceEditListing = () => {
                 }
             } catch (err) {
                 console.error("Error fetching listing:", err);
-                setError("Failed to load listing details.");
+                showError("Failed to load listing details.");
             } finally {
                 setLoading(false);
             }
@@ -118,7 +119,7 @@ const MarketplaceEditListing = () => {
         } catch (err) {
             console.error("Upload error:", err);
             const errorMessage = err.response?.data?.error || "Failed to upload images. Please try again.";
-            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setUploading(false);
         }
@@ -146,7 +147,6 @@ const MarketplaceEditListing = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setSubmitting(true);
 
         try {
@@ -160,12 +160,12 @@ const MarketplaceEditListing = () => {
             const response = await api.post('/marketplace/listings/update.php', payload);
 
             if (response.data.success) {
-                alert("Listing updated successfully!");
+                showSuccess("Listing updated successfully!");
                 navigate('/marketplace/selling');
             }
         } catch (err) {
             console.error("Error updating listing:", err);
-            setError(err.response?.data?.error || "Failed to update listing.");
+            showError(err.response?.data?.error || "Failed to update listing.");
         } finally {
             setSubmitting(false);
         }
@@ -207,12 +207,6 @@ const MarketplaceEditListing = () => {
 
                             <form onSubmit={handleSubmit}>
                                 <div className="focus-view-body">
-                                    {error && (
-                                        <div className="alert-banner error" style={{ marginBottom: '24px' }}>
-                                            <FaExclamationCircle size={18} />
-                                            <span>{error}</span>
-                                        </div>
-                                    )}
 
                                     {currentStep === 1 && (
                                         <div className="animate-slide-in">

@@ -7,6 +7,7 @@ import { FaStore, FaWallet, FaCommentDots, FaUserCircle, FaBox, FaShoppingCart, 
 import { Wallet, Store, MessageSquare, User, TrendingUp, Package } from 'lucide-react';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css'; // Reuse admin styles for consistency
 import './MarketplaceDashboard.css'; // Custom marketplace styles
 
@@ -17,6 +18,7 @@ const MarketplaceDashboard = () => {
     const [wallet, setWallet] = useState(null);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { showError } = useNotification();
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,6 +65,7 @@ const MarketplaceDashboard = () => {
                 }
             } catch (error) {
                 console.error("Error fetching marketplace data:", error);
+                showError('Failed to load marketplace dashboard data');
             } finally {
                 setLoading(false);
             }

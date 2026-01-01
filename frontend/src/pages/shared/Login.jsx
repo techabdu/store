@@ -4,6 +4,7 @@ import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdCheckBox, MdCheckBoxOutlineBlank } from 'react-icons/md';
+import { useNotification } from '../../context/NotificationContext';
 import ParticlesBackground from '../../components/landing/ParticlesBackground';
 import '../../styles/login.css';
 
@@ -12,8 +13,8 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showError, showSuccess } = useNotification();
     const [showResendLink, setShowResendLink] = useState(false);
     const [resendStatus, setResendStatus] = useState('idle');
     const [resendMessage, setResendMessage] = useState('');
@@ -24,6 +25,12 @@ const Login = () => {
     const isVerified = new URLSearchParams(location.search).get('verified') === 'true';
 
     useEffect(() => {
+        if (isVerified) {
+            showSuccess('Email Address Verified! You can now sign in to your account.');
+        }
+    }, [isVerified, showSuccess]);
+
+    useEffect(() => {
         if (isAuthenticated) {
             navigate(getDashboardRoute(), { replace: true });
         }
@@ -32,11 +39,10 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!username || !password) {
-            setError('Please enter both username and password');
+            showError('Please enter both your username and password.');
             return;
         }
 
-        setError('');
         setShowResendLink(false);
         setResendMessage('');
         setIsSubmitting(true);
@@ -44,13 +50,13 @@ const Login = () => {
         try {
             const result = await login(username, password);
             if (!result.success) {
-                setError(result.error || 'Login failed');
+                showError(result.error || 'The login attempt failed. Please check your credentials.');
                 if (result.error && result.error.includes('verify your email address')) {
                     setShowResendLink(true);
                 }
             }
         } catch (err) {
-            setError('An unexpected error occurred');
+            showError('An unexpected error occurred. Please try again later.');
         } finally {
             setIsSubmitting(false);
         }
@@ -63,14 +69,14 @@ const Login = () => {
             const response = await api.post('/auth/resend-verification.php', { username });
             if (response.data.success) {
                 setResendStatus('success');
-                setResendMessage('Verification email sent! Please check your inbox.');
+                showSuccess('A verification email has been sent to your inbox.');
             } else {
                 setResendStatus('error');
-                setResendMessage(response.data.error || 'Failed to send email.');
+                showError(response.data.error || 'Unable to send the verification email.');
             }
         } catch (err) {
             setResendStatus('error');
-            setResendMessage(err.response?.data?.error || 'An error occurred.');
+            showError(err.response?.data?.error || 'An unexpected error occurred.');
         }
     };
 
@@ -95,32 +101,17 @@ const Login = () => {
                         <p>please enter your credentials to login</p>
                     </div>
 
-                    {isVerified && !error && (
-                        <div className="success-message">
-                            <p style={{ margin: 0 }}><strong>Email Verified!</strong> You can now sign in to your account.</p>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="error-message">
-                            {error}
-                            {showResendLink && (
-                                <div className="resend-verification-section">
-                                    <button
-                                        type="button"
-                                        className="resend-link-button"
-                                        onClick={handleResendVerification}
-                                        disabled={resendStatus === 'sending' || resendStatus === 'success'}
-                                    >
-                                        {resendStatus === 'sending' ? 'Sending...' : 'Click here to resend verification email'}
-                                    </button>
-                                    {resendMessage && (
-                                        <div className={`resend-message ${resendStatus}`}>
-                                            {resendMessage}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                    {showResendLink && (
+                        <div className="resend-verification-section" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                            <button
+                                type="button"
+                                className="resend-link-button"
+                                onClick={handleResendVerification}
+                                disabled={resendStatus === 'sending' || resendStatus === 'success'}
+                                style={{ color: 'var(--primary-color)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                {resendStatus === 'sending' ? 'Sending...' : 'Click here to resend verification email'}
+                            </button>
                         </div>
                     )}
 
@@ -135,7 +126,6 @@ const Login = () => {
                                     value={username}
                                     onChange={(e) => {
                                         setUsername(e.target.value);
-                                        setError('');
                                     }}
                                     disabled={isSubmitting}
                                     autoFocus
@@ -154,7 +144,6 @@ const Login = () => {
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
-                                        setError('');
                                     }}
                                     disabled={isSubmitting}
                                     autoComplete="current-password"

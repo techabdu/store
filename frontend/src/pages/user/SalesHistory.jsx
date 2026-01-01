@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
+import { useNotification } from '../../context/NotificationContext';
 import { FaSearch } from 'react-icons/fa';
 import { FileText, ChevronRight } from 'lucide-react';
 import TopBar from '../../components/TopBar';
@@ -15,7 +16,7 @@ const SalesHistory = () => {
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const { showError } = useNotification();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [page, setPage] = useState(0);
@@ -84,8 +85,8 @@ const SalesHistory = () => {
                 }
             }
         } catch (err) {
-            setError('Failed to load sales history');
-            console.error(err);
+            showError('Failed to load sales history');
+            console.error('Fetch transactions error:', err);
         } finally {
             setLoading(false);
         }
@@ -114,7 +115,6 @@ const SalesHistory = () => {
                         </div>
                     </div>
 
-                    {error && <div className="error-message">{error}</div>}
 
                     <div className="search-bar-container glass-card mb-24">
                         <div className="search-input-wrapper">

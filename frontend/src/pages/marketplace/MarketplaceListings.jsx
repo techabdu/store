@@ -6,6 +6,7 @@ import api, { SERVER_URL, isProduction } from '../../utils/api';
 import { FaStore, FaPlus } from 'react-icons/fa';
 import { Star } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceListings.css';
@@ -13,9 +14,10 @@ import './MarketplaceListings.css';
 const MarketplaceListings = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [listings, setListings] = useState([]);
     const [interests, setInterests] = useState([]);
+    const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { showError, showSuccess } = useNotification();
     const [filters, setFilters] = useState({
         search: '',
         min_price: '',
@@ -82,6 +84,7 @@ const MarketplaceListings = () => {
             }
         } catch (error) {
             console.error("Error fetching listings:", error);
+            showError('Failed to load listings');
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -96,6 +99,7 @@ const MarketplaceListings = () => {
             }
         } catch (error) {
             console.error("Error fetching interests:", error);
+            showError('Failed to load interests');
         }
     };
 
@@ -138,7 +142,7 @@ const MarketplaceListings = () => {
     const toggleInterest = async (e, listingId) => {
         e.stopPropagation();
         if (!user) {
-            alert("Please log in to save items to your interests.");
+            showError("Please log in to save items to your interests.");
             navigate('/auth/login');
             return;
         }
@@ -147,12 +151,15 @@ const MarketplaceListings = () => {
             if (response.data.success) {
                 if (response.data.action === 'added') {
                     setInterests([...interests, listingId]);
+                    showSuccess('Item added to interests');
                 } else {
                     setInterests(interests.filter(id => id !== listingId));
+                    showSuccess('Item removed from interests');
                 }
             }
         } catch (error) {
             console.error("Error toggling interest:", error);
+            showError('Failed to update interests');
         }
     };
 

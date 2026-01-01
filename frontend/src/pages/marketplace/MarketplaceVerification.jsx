@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../../context/NotificationContext';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import { Shield, ShieldCheck, ShieldAlert, CreditCard, User, AlertCircle, CheckCircle, ArrowLeft, Check, ChevronRight } from 'lucide-react';
@@ -12,6 +13,7 @@ import './MarketplaceProfile.css';
 const MarketplaceVerification = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { showError, showSuccess } = useNotification();
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState(null); // 'not_verified', 'verified', 'pending'
     const [verificationData, setVerificationData] = useState(null);
@@ -26,8 +28,6 @@ const MarketplaceVerification = () => {
         consent: false
     });
     const [formLoading, setFormLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
 
     // Sidebar state for mobile
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,7 +63,7 @@ const MarketplaceVerification = () => {
             }
         } catch (err) {
             console.error("Error fetching status:", err);
-            setError("Failed to load verification status.");
+            showError("Failed to load verification status.");
         } finally {
             setLoading(false);
         }
@@ -79,13 +79,11 @@ const MarketplaceVerification = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError(null);
-        setSuccess(null);
         setFormLoading(true);
 
         // Validation
         if (!formData.consent) {
-            setError("You must provide consent to verify your identity.");
+            showError("You must provide consent to verify your identity.");
             setFormLoading(false);
             return;
         }
@@ -101,7 +99,7 @@ const MarketplaceVerification = () => {
         try {
             const response = await api.post(endpoint, payload);
             if (response.data.success) {
-                setSuccess(response.data.message || "Verification successful!");
+                showSuccess(response.data.message || "Verification successful!");
 
                 // Immediate update using returned data to avoid reload requirement
                 if (response.data.verification_details) {
@@ -118,11 +116,11 @@ const MarketplaceVerification = () => {
                     }, 1000);
                 }
             } else {
-                setError(response.data.error || "Verification failed. Please try again.");
+                showError(response.data.error || "Verification failed. Please try again.");
             }
         } catch (err) {
             console.error("Verification error:", err);
-            setError(err.response?.data?.error || "Verification failed. Please check your details and try again.");
+            showError(err.response?.data?.error || "Verification failed. Please check your details and try again.");
         } finally {
             setFormLoading(false);
         }
@@ -209,19 +207,6 @@ const MarketplaceVerification = () => {
 
                                 <form onSubmit={handleSubmit}>
                                     <div className="focus-view-body">
-                                        {error && (
-                                            <div className="alert-banner error" style={{ marginBottom: '24px' }}>
-                                                <ShieldAlert size={18} />
-                                                <span>{error}</span>
-                                            </div>
-                                        )}
-
-                                        {success && (
-                                            <div className="alert-banner success" style={{ marginBottom: '24px' }}>
-                                                <CheckCircle size={18} />
-                                                <span>{success}</span>
-                                            </div>
-                                        )}
 
                                         {currentStep === 1 && (
                                             <div className="animate-slide-in">

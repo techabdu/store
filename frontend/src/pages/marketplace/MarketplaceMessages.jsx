@@ -5,6 +5,7 @@ import TopBar from '../../components/TopBar';
 import { Send, Paperclip, MoreVertical, Search } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import DeliveryActionBar from '../../components/marketplace/DeliveryActionBar';
 import ConfirmDeliveryModal from '../../components/marketplace/ConfirmDeliveryModal';
 import ReportIssueView from '../../components/marketplace/ReportIssueModal';
@@ -24,6 +25,7 @@ const MarketplaceMessages = () => {
     const [newMessage, setNewMessage] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
     const [loading, setLoading] = useState(true);
+    const { showError, showSuccess } = useNotification();
     const [showMessagesOnMobile, setShowMessagesOnMobile] = useState(false);
     const [sending, setSending] = useState(false);
     const [visibleConversations, setVisibleConversations] = useState(15);
@@ -96,6 +98,7 @@ const MarketplaceMessages = () => {
             }
         } catch (err) {
             console.error("Error fetching conversations:", err);
+            showError("Failed to load conversations");
         } finally {
             setLoading(false);
         }
@@ -114,6 +117,7 @@ const MarketplaceMessages = () => {
             }
         } catch (err) {
             console.error("Error fetching messages:", err);
+            showError("Failed to load messages");
         }
     };
 
@@ -128,7 +132,7 @@ const MarketplaceMessages = () => {
             }
         } catch (err) {
             console.error("Error fetching order details:", err);
-            setCurrentOrder(null);
+            // Don't show error for every polling failure to avoid toast spam
         }
     };
 
@@ -157,6 +161,7 @@ const MarketplaceMessages = () => {
                             }
                         } catch (msgFetchErr) {
                             console.error("Error fetching messages during init:", msgFetchErr);
+                            showError("Failed to verify existing messages");
                         }
 
                         // Send automatic interest message with product card if conversation is empty
@@ -192,6 +197,7 @@ const MarketplaceMessages = () => {
                                 // fetchConversations will trigger messages load
                             } catch (msgErr) {
                                 console.error("Error sending interest message:", msgErr);
+                                showError("Failed to send initial interest message");
                                 autoMessageSentRef.current = false; // Reset on error 
                             }
                         }
@@ -211,9 +217,7 @@ const MarketplaceMessages = () => {
                     }
                 } catch (err) {
                     console.error("Error initializing conversation:", err);
-                    if (err.response?.data?.error) {
-                        alert(err.response.data.error);
-                    }
+                    showError(err.response?.data?.error || "Failed to initialize conversation");
                     fetchConversations();
                 }
             } else if (!selectedConversation) {
@@ -262,7 +266,7 @@ const MarketplaceMessages = () => {
             }
         } catch (err) {
             console.error("Error sending message:", err);
-            alert("Failed to send message. Please try again.");
+            showError(err.response?.data?.error || "Failed to send message. Please try again.");
         } finally {
             setSending(false);
         }
@@ -294,11 +298,11 @@ const MarketplaceMessages = () => {
                 // Refresh order and messages
                 await fetchOrderDetails(selectedConversation.conversation_id);
                 await fetchMessages(selectedConversation.conversation_id);
-                alert('Order marked as shipped successfully!');
+                showSuccess('Order marked as shipped successfully!');
             }
         } catch (err) {
             console.error('Error marking order as shipped:', err);
-            alert(err.response?.data?.error || 'Failed to mark order as shipped');
+            showError(err.response?.data?.error || 'Failed to mark order as shipped');
         }
     };
 
@@ -322,11 +326,11 @@ const MarketplaceMessages = () => {
                 // Refresh order and messages
                 await fetchOrderDetails(selectedConversation.conversation_id);
                 await fetchMessages(selectedConversation.conversation_id);
-                alert('Delivery confirmed! Funds have been released to the seller.');
+                showSuccess('Delivery confirmed! Funds have been released to the seller.');
             }
         } catch (err) {
             console.error('Error confirming delivery:', err);
-            alert(err.response?.data?.error || 'Failed to confirm delivery');
+            showError(err.response?.data?.error || 'Failed to confirm delivery');
         } finally {
             setModalLoading(false);
         }
@@ -352,11 +356,11 @@ const MarketplaceMessages = () => {
                 setShowReportModal(false);
                 // Refresh messages to show the dispute notification
                 await fetchMessages(selectedConversation.conversation_id);
-                alert('Dispute reported successfully. Our support team will review your case.');
+                showSuccess('Dispute reported successfully. Our support team will review your case.');
             }
         } catch (err) {
             console.error('Error reporting dispute:', err);
-            alert(err.response?.data?.error || 'Failed to report dispute');
+            showError(err.response?.data?.error || 'Failed to report dispute');
         } finally {
             setModalLoading(false);
         }

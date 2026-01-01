@@ -2,7 +2,8 @@
 // backend/api/marketplace/messaging/send_system_message.php
 // Helper function to send automatic system messages (not called directly via HTTP)
 
-require_once '../../../config/db_connect.php';
+// Database connection is expected to be provided by the caller
+// require_once dirname(__DIR__, 3) . '/config/database.php';
 
 /**
  * Send an automatic system message in a marketplace conversation
@@ -28,6 +29,11 @@ function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_t
         
         if ($existing) {
             $conversation_id = $existing['id'];
+            // Fetch tenant_id from existing conversation
+            $t_stmt = $conn->prepare("SELECT tenant_id FROM marketplace_conversations WHERE id = ?");
+            $t_stmt->bind_param("i", $conversation_id);
+            $t_stmt->execute();
+            $tenant_id = $t_stmt->get_result()->fetch_assoc()['tenant_id'] ?? 1;
         } else {
             // 2. Create new conversation
             // Get tenant_id from listing
@@ -52,8 +58,9 @@ function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_t
         $metadata_json = $metadata ? json_encode($metadata) : null;
         
         // 5. Send the message with type and metadata
-        $msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, message_type, metadata, is_read) VALUES (?, ?, ?, ?, ?, ?, 0)");
-        $msg_stmt->bind_param("iiisss", $conversation_id, $sender_id, $receiver_id, $message_text, $message_type, $metadata_json);
+        // Including tenant_id in message insert to fix "Field 'tenant_id' doesn't have a default value" error
+        $msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, sender_id, receiver_id, message, message_type, metadata, is_read, tenant_id) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
+        $msg_stmt->bind_param("iiisssi", $conversation_id, $sender_id, $receiver_id, $message_text, $message_type, $metadata_json, $tenant_id);
         
         if (!$msg_stmt->execute()) {
             return false;
