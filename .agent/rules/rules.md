@@ -7,6 +7,7 @@ trigger: always_on
 These rules are **ABSOLUTE** and must be followed without exception:
 
 ### Rule 1: Security is Non-Negotiable
+- ❌ **NEVER** push my code to github ever
 - ❌ **NEVER** store passwords in plain text
 - ❌ **NEVER** use direct SQL queries without prepared statements
 - ❌ **NEVER** trust user input without validation
@@ -290,4 +291,4 @@ function checkRole($allowedRoles) {
 - ✅ **ALWAYS** push to GitHub after each commit
 - ✅ **ALWAYS** verify push was successful
 - ✅ **ALWAYS** push from correct branch
-- ❌ **NEVER** forget to 
+- ❌ **NEVER** forget to

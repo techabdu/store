@@ -55,6 +55,7 @@ const MarketplaceMessages = () => {
     // Get listing_id from URL if present
     const queryParams = new URLSearchParams(location.search);
     const listingIdParam = queryParams.get('listing_id');
+    const recipientIdParam = queryParams.get('recipient_id');
     const buyerIdParam = queryParams.get('buyer_id');
     const brandParam = queryParams.get('brand');
     const modelParam = queryParams.get('model');
@@ -131,13 +132,17 @@ const MarketplaceMessages = () => {
         }
     };
 
-    // Initialize conversation from listing_id
+    // Initialize conversation from listing_id or recipient_id
     useEffect(() => {
         const initChat = async () => {
-            if (listingIdParam) {
+            if (listingIdParam || recipientIdParam) {
+                // Reset this ref when we are intentionally starting a new chat initialization from URL params
+                autoMessageSentRef.current = false;
+
                 try {
                     const response = await api.post('/marketplace/messaging/initialize_conversation.php', {
                         listing_id: listingIdParam,
+                        recipient_id: recipientIdParam,
                         buyer_id: buyerIdParam
                     });
                     if (response.data.success) {
@@ -159,8 +164,8 @@ const MarketplaceMessages = () => {
                             autoMessageSentRef.current = true; // Mark as sent
 
                             // Construct message (fallback to title if brand/model missing)
-                            const brand = brandParam || '';
-                            const model = modelParam || '';
+                            const brand = brandParam || response.data.listing?.brand || '';
+                            const model = modelParam || response.data.listing?.model || '';
                             const interestMessage = (brand || model)
                                 ? `I am interested in this ${brand} ${model}`
                                 : `I am interested in this: ${response.data.listing_title}`;
@@ -178,32 +183,20 @@ const MarketplaceMessages = () => {
                             } : null;
 
                             try {
-                                const sendRes = await api.post('/marketplace/messaging/send.php', {
+                                await api.post('/marketplace/messaging/send.php', {
                                     conversation_id: conversationId,
                                     message: interestMessage,
                                     message_type: productMetadata ? 'product_card' : 'text',
                                     metadata: productMetadata
                                 });
-
-                                if (sendRes.data.success) {
-                                    // Add to local state to reflect message sent
-                                    const newMsg = {
-                                        id: Date.now(), // Temp ID
-                                        message: interestMessage,
-                                        message_type: productMetadata ? 'product_card' : 'text',
-                                        metadata: productMetadata,
-                                        is_me: true,
-                                        created_at: new Date().toISOString()
-                                    };
-                                    setMessages(prev => [...prev, newMsg]);
-                                }
+                                // fetchConversations will trigger messages load
                             } catch (msgErr) {
                                 console.error("Error sending interest message:", msgErr);
-                                autoMessageSentRef.current = false; // Reset on error so user can retry
+                                autoMessageSentRef.current = false; // Reset on error 
                             }
                         }
 
-                        // Update messages state if not already updated by automated message
+                        // Update messages state if messages exist
                         if (existingMessages.length > 0) {
                             setMessages(existingMessages);
                         }
@@ -223,14 +216,14 @@ const MarketplaceMessages = () => {
                     }
                     fetchConversations();
                 }
-            } else {
+            } else if (!selectedConversation) {
+                // Only fetch conversations if nothing is selected yet
                 fetchConversations();
             }
         };
 
-        // Only run if listingIdParam changes or we haven't initialized yet
         initChat();
-    }, [listingIdParam, buyerIdParam, currentShop?.id]);
+    }, [listingIdParam, recipientIdParam, buyerIdParam]);
 
     // Polling for new messages in selected conversation
     useEffect(() => {

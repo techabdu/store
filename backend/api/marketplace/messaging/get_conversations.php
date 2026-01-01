@@ -82,13 +82,9 @@ try {
     ";
 
     // Tenant Isolation:
-    // Strictly restrict conversations to the current tenant context.
-    if (isset($_SESSION['tenant_id'])) {
-        $tenant_id = $_SESSION['tenant_id'];
-        $query .= " AND c.tenant_id = ? ";
-        $params[] = $tenant_id;
-        $types .= "i";
-    }
+    // We allow users to see any conversation they are a participant in (buyer or seller),
+    // regardless of the listing's tenant ID, as they are already restricted by user_id.
+    // This allows cross-tenant marketplace interactions.
 
     $query .= " ORDER BY c.last_message_at DESC LIMIT ? OFFSET ?";
     $params[] = $limit;

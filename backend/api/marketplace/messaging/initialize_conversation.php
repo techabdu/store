@@ -22,13 +22,40 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->listing_id)) {
+$listing_id = isset($data->listing_id) ? intval($data->listing_id) : null;
+$recipient_id = isset($data->recipient_id) ? intval($data->recipient_id) : null;
+
+if (!$listing_id && !$recipient_id) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Missing listing_id']);
+    echo json_encode(['success' => false, 'error' => 'Missing listing_id or recipient_id']);
     exit();
 }
 
-$listing_id = intval($data->listing_id);
+// If no listing_id but we have recipient_id, find the latest listing for that recipient
+if (!$listing_id && $recipient_id) {
+    $l_stmt = $conn->prepare("SELECT id FROM marketplace_listings WHERE user_id = ? AND status = 'active' ORDER BY created_at DESC LIMIT 1");
+    $l_stmt->bind_param("i", $recipient_id);
+    $l_stmt->execute();
+    $l_res = $l_stmt->get_result()->fetch_assoc();
+    
+    if ($l_res) {
+        $listing_id = $l_res['id'];
+    } else {
+        // Fallback to any listing even if not active, or error if none
+        $l_stmt = $conn->prepare("SELECT id FROM marketplace_listings WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
+        $l_stmt->bind_param("i", $recipient_id);
+        $l_stmt->execute();
+        $l_res = $l_stmt->get_result()->fetch_assoc();
+        
+        if ($l_res) {
+            $listing_id = $l_res['id'];
+        } else {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'This seller has no listings to message about.']);
+            exit();
+        }
+    }
+}
 // Optional: buyer_id (if Seller is initiating from an order)
 $target_buyer_id = isset($data->buyer_id) ? intval($data->buyer_id) : null;
 

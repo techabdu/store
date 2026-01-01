@@ -111,7 +111,7 @@ try {
         (tenant_id, buyer_id, seller_id, listing_id, seller_shop_id, buyer_shop_id, order_number, agreed_price, order_status, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
     ");
-    $stmt->bind_param("iiiiisid", $tenant_id, $buyer_id, $seller_id, $listing_id, $seller_shop_id, $buyer_shop_id, $order_reference, $price);
+    $stmt->bind_param("iiiiiisd", $tenant_id, $buyer_id, $seller_id, $listing_id, $seller_shop_id, $buyer_shop_id, $order_reference, $price);
     if (!$stmt->execute()) throw new Exception('Failed to create order record: ' . $stmt->error);
     $order_id = $conn->insert_id;
 
