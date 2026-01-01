@@ -75,7 +75,8 @@ try {
     }
 
 } catch (Exception $e) {
+    error_log("get_public_profile.php Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server Error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Internal Server Error']);
 }
 ?>

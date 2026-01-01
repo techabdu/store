@@ -103,8 +103,9 @@ if (move_uploaded_file($file['tmp_name'], $filepath)) {
         if (file_exists($filepath)) {
             unlink($filepath);
         }
+        error_log("update_avatar.php Error: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'error' => 'Failed to update profile picture.']);
     }
 
 } else {

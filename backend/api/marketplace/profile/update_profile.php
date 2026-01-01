@@ -22,10 +22,6 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"));
 
-// DEBUG LOGGING
-$log_file = __DIR__ . '/debug_update.log';
-file_put_contents($log_file, date('[Y-m-d H:i:s] ') . "User: $user_id, Payload: " . json_encode($data) . "\n", FILE_APPEND);
-
 if (!isset($data->shop_id)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Shop ID is required']);
@@ -137,7 +133,8 @@ try {
 
 } catch (Exception $e) {
     $conn->rollback();
+    error_log("update_profile.php Error: " . $e->getMessage() . " | " . $e->getTraceAsString());
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'An internal server error occurred. Please try again later.']);
 }
 ?>
