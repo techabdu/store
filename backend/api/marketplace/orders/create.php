@@ -105,12 +105,13 @@ try {
 
     // 4. Create Order Record
     $order_reference = generateSecureReference('ORD');
+    $tenant_id = $_SESSION['tenant_id'] ?? 1;
     $stmt = $conn->prepare("
         INSERT INTO marketplace_orders 
-        (buyer_id, seller_id, listing_id, seller_shop_id, buyer_shop_id, order_number, agreed_price, order_status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+        (tenant_id, buyer_id, seller_id, listing_id, seller_shop_id, buyer_shop_id, order_number, agreed_price, order_status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
     ");
-    $stmt->bind_param("iiiiisd", $buyer_id, $seller_id, $listing_id, $seller_shop_id, $buyer_shop_id, $order_reference, $price);
+    $stmt->bind_param("iiiiisid", $tenant_id, $buyer_id, $seller_id, $listing_id, $seller_shop_id, $buyer_shop_id, $order_reference, $price);
     if (!$stmt->execute()) throw new Exception('Failed to create order record: ' . $stmt->error);
     $order_id = $conn->insert_id;
 
@@ -137,12 +138,13 @@ try {
     // Buyer Debit Log - Use 'purchase_hold' as funds are in escrow
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, ?, 'purchase_hold', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, ?, 'purchase_hold', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_buyer = "Purchase of listing #$listing_id";
     $buyer_ref = $order_reference . '_DEBIT';
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $tenant_id,
         $buyer_wallet['id'], 
         $buyer_id, 
         $buyer_wallet_shop_id,
@@ -164,15 +166,15 @@ try {
     $seller_wallet_id = $s_wallet_data['id'];
     $seller_wallet_shop_id = $s_wallet_data['shop_id'];
 
-    // Seller gets funds in pending, so use 'sale_pending'
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
-        VALUES (?, ?, ?, 'sale_pending', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at) 
+        VALUES (?, ?, ?, ?, 'sale_pending', ?, ?, ?, ?, ?, ?, NOW())
     ");
     $desc_seller = "Sale of listing #$listing_id (Funds held in Escrow)";
     $seller_escrow_ref = $order_reference . '_ESCROW';
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $tenant_id,
         $seller_wallet_id, 
         $seller_id, 
         $seller_wallet_shop_id,

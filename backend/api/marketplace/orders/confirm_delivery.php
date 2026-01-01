@@ -51,7 +51,7 @@ try {
 
     // Fetch order details
     $stmt = $conn->prepare("
-        SELECT o.id, o.buyer_id, o.agreed_price as total_amount, o.order_status as status, o.delivery_status,
+        SELECT o.id, o.buyer_id, o.agreed_price as total_amount, o.order_status as status, o.delivery_status, o.tenant_id,
                l.user_id as seller_id, l.title as product_name, l.id as listing_id,
                u.username as seller_name
         FROM marketplace_orders o
@@ -137,10 +137,11 @@ try {
     
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
-        VALUES (?, ?, ?, 'purchase_release', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
+        VALUES (?, ?, ?, ?, 'purchase_release', ?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $order['tenant_id'],
         $b_wallet_data['id'],
         $buyer_id,
         $buyer_wallet_shop_id,
@@ -168,10 +169,11 @@ try {
     
     $stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
-        VALUES (?, ?, ?, 'sale_complete', ?, ?, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, available_balance_after, pending_balance_after, held_balance_after, reference_number, description, created_at)
+        VALUES (?, ?, ?, ?, 'sale_complete', ?, ?, ?, ?, ?, ?, NOW())
     ");
-    $stmt->bind_param("iiiddddss", 
+    $stmt->bind_param("iiiiddddss", 
+        $order['tenant_id'],
         $s_wallet_data['id'],
         $seller_id,
         $seller_wallet_shop_id,

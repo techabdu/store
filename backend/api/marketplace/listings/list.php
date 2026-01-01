@@ -26,8 +26,18 @@ $filters = ["l.status = 'active'"];
 $types = "";
 $params = [];
 
-// Shop Filter
-if (isset($_GET['shop_id']) && !empty($_GET['shop_id'])) {
+// Shop and Tenant Filtering (Optional)
+// Only filter if explicitly requested - User wants general listings to be public/global
+if (isset($_GET['scope']) && $_GET['scope'] === 'shop' && isset($_SESSION['current_shop_id'])) {
+    $filters[] = "l.shop_id = ?";
+    $types .= "i";
+    $params[] = $_SESSION['current_shop_id'];
+} elseif (isset($_GET['scope']) && $_GET['scope'] === 'tenant' && isset($_SESSION['tenant_id'])) {
+    $filters[] = "s.tenant_id = ?";
+    $types .= "i";
+    $params[] = $_SESSION['tenant_id'];
+} elseif (isset($_GET['shop_id']) && !empty($_GET['shop_id'])) {
+    // Explicit shop filter from frontend
     $filters[] = "l.shop_id = ?";
     $types .= "i";
     $params[] = intval($_GET['shop_id']);

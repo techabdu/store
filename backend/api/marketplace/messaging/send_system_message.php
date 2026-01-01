@@ -30,8 +30,15 @@ function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_t
             $conversation_id = $existing['id'];
         } else {
             // 2. Create new conversation
-            $new_stmt = $conn->prepare("INSERT INTO marketplace_conversations (listing_id, buyer_id, seller_id) VALUES (?, ?, ?)");
-            $new_stmt->bind_param("iii", $listing_id, $buyer_id, $seller_id);
+            // Get tenant_id from listing
+            $l_stmt = $conn->prepare("SELECT tenant_id FROM marketplace_listings WHERE id = ?");
+            $l_stmt->bind_param("i", $listing_id);
+            $l_stmt->execute();
+            $l_res = $l_stmt->get_result()->fetch_assoc();
+            $tenant_id = $l_res['tenant_id'] ?? 1;
+
+            $new_stmt = $conn->prepare("INSERT INTO marketplace_conversations (tenant_id, listing_id, buyer_id, seller_id) VALUES (?, ?, ?, ?)");
+            $new_stmt->bind_param("iiii", $tenant_id, $listing_id, $buyer_id, $seller_id);
             if (!$new_stmt->execute()) {
                 return false;
             }

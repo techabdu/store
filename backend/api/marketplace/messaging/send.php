@@ -48,7 +48,7 @@ if ($conversation_id) {
     $c_stmt->execute();
     $conv = $c_stmt->get_result()->fetch_assoc();
     
-    if (!$conv || ($conv['buyer_id'] !== $user_id && $conv['seller_id'] !== $user_id)) {
+    if (!$conv || ($conv['buyer_id'] != $user_id && $conv['seller_id'] != $user_id)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Conversation access denied']);
         exit();
@@ -58,7 +58,7 @@ if ($conversation_id) {
 
 } else if ($listing_id) {
     // New conversation flow (Usually Buyer initiating via Listing)
-    $stmt = $conn->prepare("SELECT user_id, status FROM marketplace_listings WHERE id = ?");
+    $stmt = $conn->prepare("SELECT user_id, tenant_id, status FROM marketplace_listings WHERE id = ?");
     $stmt->bind_param("i", $listing_id);
     $stmt->execute();
     $listing = $stmt->get_result()->fetch_assoc();
@@ -76,6 +76,7 @@ if ($conversation_id) {
     }
     
     $seller_id = $listing['user_id'];
+    $tenant_id = $listing['tenant_id'];
     
     // Prevent messaging yourself
     if ($user_id === $seller_id) {
@@ -94,13 +95,14 @@ if ($conversation_id) {
         $conversation_id = $existing['id'];
     } else {
         // Create new conversation
-        $new_stmt = $conn->prepare("INSERT INTO marketplace_conversations (listing_id, buyer_id, seller_id) VALUES (?, ?, ?)");
-        $new_stmt->bind_param("iii", $listing_id, $user_id, $seller_id);
+        $buyer_shop_id = $_SESSION['current_shop_id'] ?? null;
+        $new_stmt = $conn->prepare("INSERT INTO marketplace_conversations (tenant_id, listing_id, buyer_id, seller_id, buyer_shop_id) VALUES (?, ?, ?, ?, ?)");
+        $new_stmt->bind_param("iiiii", $tenant_id, $listing_id, $user_id, $seller_id, $buyer_shop_id);
         if ($new_stmt->execute()) {
             $conversation_id = $conn->insert_id;
         } else {
             http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'Failed to create conversation']);
+            echo json_encode(['success' => false, 'error' => 'Failed to create conversation: ' . $conn->error]);
             exit();
         }
     }

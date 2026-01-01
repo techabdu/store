@@ -33,19 +33,45 @@ $types = "";
 if ($role === 'seller') {
     $where[] = "o.seller_id = ?";
     $shop_id = $_SESSION['current_shop_id'] ?? null;
-    if ($shop_id) {
+    $tenant_id = $_SESSION['tenant_id'] ?? null;
+    
+    if ($shop_id && $tenant_id) {
         $where[] = "o.seller_shop_id = ?";
-        $types .= "ii";
+        $where[] = "u_seller.tenant_id = ?";
+        $types .= "iii";
         $params[] = $user_id;
         $params[] = $shop_id;
+        $params[] = $tenant_id;
+    } elseif ($tenant_id) {
+        $where[] = "u_seller.tenant_id = ?";
+        $types .= "ii";
+        $params[] = $user_id;
+        $params[] = $tenant_id;
     } else {
         $types .= "i";
         $params[] = $user_id;
     }
 } else {
     $where[] = "o.buyer_id = ?";
-    $types .= "i";
-    $params[] = $user_id;
+    $shop_id = $_SESSION['current_shop_id'] ?? null;
+    $tenant_id = $_SESSION['tenant_id'] ?? null;
+    
+    if ($shop_id && $tenant_id) {
+        $where[] = "o.buyer_shop_id = ?";
+        $where[] = "u_buyer.tenant_id = ?";
+        $types .= "iii";
+        $params[] = $user_id;
+        $params[] = $shop_id;
+        $params[] = $tenant_id;
+    } elseif ($tenant_id) {
+        $where[] = "u_buyer.tenant_id = ?";
+        $types .= "ii";
+        $params[] = $user_id;
+        $params[] = $tenant_id;
+    } else {
+        $types .= "i";
+        $params[] = $user_id;
+    }
 }
 
 if (!empty($status)) {

@@ -27,6 +27,8 @@ if (!isset($_GET['id'])) {
 
 $order_id = intval($_GET['id']);
 $user_id = $_SESSION['user_id'];
+$shop_id = $_SESSION['current_shop_id'] ?? null;
+$tenant_id = $_SESSION['tenant_id'] ?? null;
 
 // Query to get detailed order info
 $query = "
@@ -49,12 +51,17 @@ $query = "
     JOIN marketplace_listings l ON o.listing_id = l.id
     LEFT JOIN marketplace_profiles p_buyer ON o.buyer_id = p_buyer.user_id AND (o.buyer_shop_id = p_buyer.shop_id OR (o.buyer_shop_id IS NULL AND p_buyer.shop_id IS NULL))
     LEFT JOIN marketplace_profiles p_seller ON o.seller_id = p_seller.user_id AND (o.seller_shop_id = p_seller.shop_id OR (o.seller_shop_id IS NULL AND p_seller.shop_id IS NULL))
+    JOIN users u_buyer ON o.buyer_id = u_buyer.id
+    JOIN users u_seller ON o.seller_id = u_seller.id
     
-    WHERE o.id = ? AND (o.buyer_id = ? OR o.seller_id = ?)
+    WHERE o.id = ? AND (
+        (o.buyer_id = ? AND (? IS NULL OR u_buyer.tenant_id = ?)) OR 
+        (o.seller_id = ? AND (? IS NULL OR u_seller.tenant_id = ?))
+    )
 ";
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("iii", $order_id, $user_id, $user_id);
+$stmt->bind_param("iiiiiii", $order_id, $user_id, $tenant_id, $tenant_id, $user_id, $tenant_id, $tenant_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

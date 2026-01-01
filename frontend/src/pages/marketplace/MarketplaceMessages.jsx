@@ -154,12 +154,18 @@ const MarketplaceMessages = () => {
                             console.error("Error fetching messages during init:", msgFetchErr);
                         }
 
-                        // If brand and model params exist AND conversation is empty, send automatic interest message with product card
-                        if (brandParam && modelParam && existingMessages.length === 0 && !autoMessageSentRef.current) {
+                        // Send automatic interest message with product card if conversation is empty
+                        if (!autoMessageSentRef.current && existingMessages.length === 0) {
                             autoMessageSentRef.current = true; // Mark as sent
-                            const interestMessage = `I am interested in this ${brandParam} ${modelParam}`;
 
-                            // Build product card metadata from listing info if available
+                            // Construct message (fallback to title if brand/model missing)
+                            const brand = brandParam || '';
+                            const model = modelParam || '';
+                            const interestMessage = (brand || model)
+                                ? `I am interested in this ${brand} ${model}`
+                                : `I am interested in this: ${response.data.listing_title}`;
+
+                            // Build product card metadata from listing info
                             const listingInfo = response.data.listing;
                             const productMetadata = listingInfo ? {
                                 listing_id: listingInfo.id,
@@ -172,35 +178,40 @@ const MarketplaceMessages = () => {
                             } : null;
 
                             try {
-                                await api.post('/marketplace/messaging/send.php', {
+                                const sendRes = await api.post('/marketplace/messaging/send.php', {
                                     conversation_id: conversationId,
                                     message: interestMessage,
                                     message_type: productMetadata ? 'product_card' : 'text',
                                     metadata: productMetadata
                                 });
-                                // Add this new message to our local list so we don't think it's empty anymore if we re-check
-                                existingMessages.push({
-                                    message: interestMessage,
-                                    message_type: productMetadata ? 'product_card' : 'text',
-                                    metadata: productMetadata,
-                                    is_me: true,
-                                    created_at: new Date().toISOString()
-                                });
+
+                                if (sendRes.data.success) {
+                                    // Add to local state to reflect message sent
+                                    const newMsg = {
+                                        id: Date.now(), // Temp ID
+                                        message: interestMessage,
+                                        message_type: productMetadata ? 'product_card' : 'text',
+                                        metadata: productMetadata,
+                                        is_me: true,
+                                        created_at: new Date().toISOString()
+                                    };
+                                    setMessages(prev => [...prev, newMsg]);
+                                }
                             } catch (msgErr) {
                                 console.error("Error sending interest message:", msgErr);
                                 autoMessageSentRef.current = false; // Reset on error so user can retry
                             }
                         }
 
-                        // Update messages state immediately to avoid loading flicker
-                        setMessages(existingMessages);
+                        // Update messages state if not already updated by automated message
+                        if (existingMessages.length > 0) {
+                            setMessages(existingMessages);
+                        }
 
-                        // Fetch conversations and select the new one (without refetching messages redundantly if possible, 
-                        // but fetchConversations logic handles selection which triggers message fetch.
-                        // We can optimize fetchConversations later or just let it happen.)
-                        fetchConversations(conversationId);
+                        // Fetch conversations and select the new one
+                        await fetchConversations(conversationId);
 
-                        // Clean URL to prevent re-triggering on reload/back
+                        // Clean URL and complete initialization
                         navigate('/marketplace/messages', { replace: true });
                     } else {
                         fetchConversations();

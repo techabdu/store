@@ -53,10 +53,8 @@ if (!$verification_data) {
     exit();
 }
 
-// 3. Get User's Shop ID (Assumes user belongs to a shop)
-// Check `users` table or `shops` table linkage. Assuming `users` table has `shop_id` or similar.
-// Based on previous context, users table usually has shop_id.
-$stmt = $conn->prepare("SELECT shop_id, username FROM users WHERE id = ?");
+// 3. Get User's Shop ID and Tenant ID
+$stmt = $conn->prepare("SELECT shop_id, tenant_id, username FROM users WHERE id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user_data = $stmt->get_result()->fetch_assoc();
@@ -68,6 +66,7 @@ if (!$user_data || !$user_data['shop_id']) {
 }
 
 $shop_id = $user_data['shop_id'];
+$tenant_id = $user_data['tenant_id'];
 $display_name = isset($data->display_name) ? trim($data->display_name) : $user_data['username'];
 $bio = isset($data->bio) ? trim($data->bio) : '';
 $profile_image = isset($data->profile_image) ? trim($data->profile_image) : '';
@@ -75,17 +74,17 @@ $profile_image = isset($data->profile_image) ? trim($data->profile_image) : '';
 // 4. Create Profile
 $stmt = $conn->prepare("
     INSERT INTO marketplace_profiles 
-    (user_id, shop_id, display_name, bio, profile_image, is_verified, verification_level, is_active)
-    VALUES (?, ?, ?, ?, ?, 1, ?, 1)
+    (tenant_id, user_id, shop_id, display_name, bio, profile_image, is_verified, verification_level, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, 1, ?, 1)
 ");
 
 $level = $verification_data['verification_level'];
-$stmt->bind_param("iissss", $user_id, $shop_id, $display_name, $bio, $profile_image, $level);
+$stmt->bind_param("iiissss", $tenant_id, $user_id, $shop_id, $display_name, $bio, $profile_image, $level);
 
 if ($stmt->execute()) {
     // 5. Also Create Wallet if not exists
-    $wallet_stmt = $conn->prepare("INSERT IGNORE INTO marketplace_wallets (user_id, shop_id) VALUES (?, ?)");
-    $wallet_stmt->bind_param("ii", $user_id, $shop_id);
+    $wallet_stmt = $conn->prepare("INSERT IGNORE INTO marketplace_wallets (tenant_id, user_id, shop_id) VALUES (?, ?, ?)");
+    $wallet_stmt->bind_param("iii", $tenant_id, $user_id, $shop_id);
     $wallet_stmt->execute();
     
     echo json_encode(['success' => true, 'message' => 'Marketplace profile created successfully']);

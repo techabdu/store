@@ -52,7 +52,7 @@ if ($amount < $min_withdrawal) {
 $conn->begin_transaction();
 
 try {
-    $stmt = $conn->prepare("SELECT id, available_balance, user_id FROM marketplace_wallets WHERE user_id = ? AND shop_id = ? FOR UPDATE");
+    $stmt = $conn->prepare("SELECT id, tenant_id, available_balance, user_id FROM marketplace_wallets WHERE user_id = ? AND shop_id = ? FOR UPDATE");
     $stmt->bind_param("ii", $user_id, $shop_id);
     $stmt->execute();
     $wallet = $stmt->get_result()->fetch_assoc();
@@ -60,6 +60,8 @@ try {
     if (!$wallet) {
         throw new Exception('Wallet not found');
     }
+    
+    $tenant_id = $wallet['tenant_id'];
 
     if ($wallet['available_balance'] < $amount) {
         throw new Exception('Insufficient available balance');
@@ -141,10 +143,21 @@ try {
 
     $log_stmt = $conn->prepare("
         INSERT INTO marketplace_wallet_transactions 
-        (wallet_id, user_id, shop_id, transaction_type, amount, reference_number, status, description, available_balance_after, pending_balance_after, held_balance_after, created_at) 
-        VALUES (?, ?, ?, TRANS_TYPE_WITHDRAWAL, ?, ?, TRANS_STATUS_PENDING, ?, ?, ?, ?, NOW())
+        (tenant_id, wallet_id, user_id, shop_id, transaction_type, amount, reference_number, status, description, available_balance_after, pending_balance_after, held_balance_after, created_at) 
+        VALUES (?, ?, ?, ?, 'withdraw', ?, ?, 'pending', ?, ?, ?, ?, NOW())
     ");
-    $log_stmt->bind_param("iiidsdddd", $wallet['id'], $user_id, $shop_id, $amount, $reference, $description, $b_row['available_balance'], $b_row['pending_balance'], $b_row['held_balance']);
+    $log_stmt->bind_param("iiiidssddd", 
+        $tenant_id,
+        $wallet['id'], 
+        $user_id, 
+        $shop_id, 
+        $amount, 
+        $reference, 
+        $description, 
+        $b_row['available_balance'], 
+        $b_row['pending_balance'], 
+        $b_row['held_balance']
+    );
     $log_stmt->execute();
 
     // 7. Create Withdrawal Request Record (for Webhook tracking)

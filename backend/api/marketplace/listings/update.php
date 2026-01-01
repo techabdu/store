@@ -31,29 +31,40 @@ if (!isset($data->id)) {
 }
 
 $listing_id = intval($data->id);
+$shop_id = $_SESSION['current_shop_id'] ?? null;
+$tenant_id = $_SESSION['tenant_id'] ?? null;
 
 try {
-    // 1. Verify Ownership
-    $check_stmt = $conn->prepare("SELECT user_id, status FROM marketplace_listings WHERE id = ?");
-    if (!$check_stmt) {
+    // 1. Verify ownership and existence (strictly scoped)
+    $query = "
+        SELECT l.id, l.user_id, l.status 
+        FROM marketplace_listings l
+        JOIN shops s ON l.shop_id = s.id
+        WHERE l.id = ? AND l.user_id = ?
+    ";
+    
+    if ($shop_id) {
+        $query .= " AND l.shop_id = $shop_id";
+    }
+    if ($tenant_id) {
+        $query .= " AND s.tenant_id = $tenant_id";
+    }
+
+    $stmt = $conn->prepare($query);
+    if (!$stmt) {
         throw new Exception("Database error: " . $conn->error);
     }
-    $check_stmt->bind_param("i", $listing_id);
-    $check_stmt->execute();
-    $result = $check_stmt->get_result();
+    $stmt->bind_param("ii", $listing_id, $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Listing not found']);
+        echo json_encode(['success' => false, 'error' => 'Listing not found or access denied. Ensure you are in the correct branch.']);
         exit();
     }
     
     $listing = $result->fetch_assoc();
-    if ($listing['user_id'] != $user_id) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'You do not have permission to edit this listing']);
-        exit();
-    }
 
     // 2. Prepare Update Data
     // Allowed fields to update: title, description, price, listing_type, phone_condition, auction fields

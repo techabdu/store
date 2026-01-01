@@ -35,7 +35,7 @@ $stmt->bind_param("i", $conversation_id);
 $stmt->execute();
 $conv = $stmt->get_result()->fetch_assoc();
 
-if (!$conv || ($conv['buyer_id'] !== $user_id && $conv['seller_id'] !== $user_id)) {
+if (!$conv || ($conv['buyer_id'] != $user_id && $conv['seller_id'] != $user_id)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Access denied']);
     exit();

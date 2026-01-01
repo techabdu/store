@@ -34,7 +34,7 @@ $target_buyer_id = isset($data->buyer_id) ? intval($data->buyer_id) : null;
 
 // 1. Fetch listing details with image
 $stmt = $conn->prepare("
-    SELECT l.user_id as seller_id, l.title, l.price, l.phone_condition, l.phone_brand, l.phone_model,
+    SELECT l.user_id as seller_id, l.tenant_id, l.title, l.price, l.phone_condition, l.phone_brand, l.phone_model,
            (SELECT image_url FROM marketplace_listing_images WHERE listing_id = l.id AND is_primary = 1 LIMIT 1) as image_url
     FROM marketplace_listings l
     WHERE l.id = ?
@@ -50,6 +50,7 @@ if (!$listing) {
 }
 
 $seller_id = $listing['seller_id'];
+$tenant_id = $listing['tenant_id'];
 $buyer_id = null;
 
 if ($user_id == $seller_id) {
@@ -81,13 +82,14 @@ if ($existing) {
     $conversation_id = $existing['id'];
 } else {
     // 3. Create new conversation
-    $new_stmt = $conn->prepare("INSERT INTO marketplace_conversations (listing_id, buyer_id, seller_id) VALUES (?, ?, ?)");
-    $new_stmt->bind_param("iii", $listing_id, $buyer_id, $seller_id);
+    $buyer_shop_id = $_SESSION['current_shop_id'] ?? null;
+    $new_stmt = $conn->prepare("INSERT INTO marketplace_conversations (tenant_id, listing_id, buyer_id, seller_id, buyer_shop_id) VALUES (?, ?, ?, ?, ?)");
+    $new_stmt->bind_param("iiiii", $tenant_id, $listing_id, $buyer_id, $seller_id, $buyer_shop_id);
     if ($new_stmt->execute()) {
         $conversation_id = $conn->insert_id;
     } else {
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to initialize conversation']);
+        echo json_encode(['success' => false, 'error' => 'Failed to initialize conversation: ' . $conn->error]);
         exit();
     }
 }

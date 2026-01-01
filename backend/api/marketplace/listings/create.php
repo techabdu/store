@@ -152,31 +152,22 @@ try {
     $phone_color = $inventory_item['color'];
     
     // 5. Insert Listing
+    $tenant_id = $_SESSION['tenant_id'] ?? 1; // Default to 1 if missing for safety
+    
     $stmt = $conn->prepare("
         INSERT INTO marketplace_listings 
-        (shop_id, user_id, inventory_id, title, description, listing_type, price, original_price, min_offer_price, 
+        (tenant_id, shop_id, user_id, inventory_id, title, description, listing_type, price, original_price, min_offer_price, 
         auction_start_price, auction_reserve_price, auction_ends_at, 
         phone_model, phone_brand, phone_condition, phone_storage, phone_color, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
     ");
     
     if (!$stmt) {
         throw new Exception("Insert Prepare failed: " . $conn->error);
     }
     
-    // Correct types:
-    // i (shop_id), i (user_id), i (inventory_id)
-    // s (title), s (description), s (listing_type - was wrongly 'd')
-    // d (price), d (original_price), d (min_offer_price)
-    // d (auction_start_price), d (auction_reserve_price)
-    // s (auction_ends_at - was wrongly 'd'?)
-    // s (model), s (brand), s (cond), s (storage), s (color)
-    
-    // Old: "iiissddddddssssss"
-    // New: "iiisssdddddssssss"
-    
-    $stmt->bind_param("iiisssdddddssssss", 
-        $shop_id, $user_id, $data->inventory_id, $title, $description, $listing_type, $price, $original_price, $min_offer_price,
+    $stmt->bind_param("iiiisssdddddssssss", 
+        $tenant_id, $shop_id, $user_id, $data->inventory_id, $title, $description, $listing_type, $price, $original_price, $min_offer_price,
         $auction_start_price, $auction_reserve_price, $auction_ends_at,
         $phone_model, $phone_brand, $phone_condition, $phone_storage, $phone_color
     );

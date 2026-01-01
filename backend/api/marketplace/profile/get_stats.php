@@ -22,7 +22,12 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$shop_id = isset($_GET['shop_id']) ? intval($_GET['shop_id']) : null;
+$shop_id = $_SESSION['current_shop_id'] ?? null;
+$tenant_id = $_SESSION['tenant_id'] ?? null;
+
+if (!$shop_id && isset($_GET['shop_id'])) {
+    $shop_id = intval($_GET['shop_id']);
+}
 
 try {
     // 1. Active Listings
@@ -30,8 +35,14 @@ try {
         $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_listings WHERE user_id = ? AND shop_id = ? AND status = 'active'");
         $stmt->bind_param("ii", $user_id, $shop_id);
     } else {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_listings WHERE user_id = ? AND status = 'active'");
-        $stmt->bind_param("i", $user_id);
+        // Fallback to all user listings but still restricted by tenant
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) as count 
+            FROM marketplace_listings l
+            JOIN shops s ON l.shop_id = s.id
+            WHERE l.user_id = ? AND s.tenant_id = ? AND l.status = 'active'
+        ");
+        $stmt->bind_param("ii", $user_id, $tenant_id);
     }
     $stmt->execute();
     $active_listings = $stmt->get_result()->fetch_assoc()['count'];
@@ -41,20 +52,29 @@ try {
         $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_orders WHERE seller_id = ? AND seller_shop_id = ? AND order_status = 'completed'");
         $stmt->bind_param("ii", $user_id, $shop_id);
     } else {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_orders WHERE seller_id = ? AND order_status = 'completed'");
-        $stmt->bind_param("i", $user_id);
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) as count 
+            FROM marketplace_orders o
+            JOIN shops s ON o.seller_shop_id = s.id
+            WHERE o.seller_id = ? AND s.tenant_id = ? AND o.order_status = 'completed'
+        ");
+        $stmt->bind_param("ii", $user_id, $tenant_id);
     }
     $stmt->execute();
     $total_sales = $stmt->get_result()->fetch_assoc()['count'];
 
     // 3. Total Purchases (Completed Orders as Buyer)
-    // Purchases are usually global for the user account, but let's allow shop filtering if we track where they bought from
     if ($shop_id) {
         $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_orders WHERE buyer_id = ? AND buyer_shop_id = ? AND order_status = 'completed'");
         $stmt->bind_param("ii", $user_id, $shop_id);
     } else {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_orders WHERE buyer_id = ? AND order_status = 'completed'");
-        $stmt->bind_param("i", $user_id);
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) as count 
+            FROM marketplace_orders o
+            JOIN shops s ON o.buyer_shop_id = s.id
+            WHERE o.buyer_id = ? AND s.tenant_id = ? AND o.order_status = 'completed'
+        ");
+        $stmt->bind_param("ii", $user_id, $tenant_id);
     }
     $stmt->execute();
     $total_purchases = $stmt->get_result()->fetch_assoc()['count'];
@@ -64,8 +84,13 @@ try {
         $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_orders WHERE seller_id = ? AND seller_shop_id = ? AND order_status = 'pending'");
         $stmt->bind_param("ii", $user_id, $shop_id);
     } else {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM marketplace_orders WHERE seller_id = ? AND order_status = 'pending'");
-        $stmt->bind_param("i", $user_id);
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) as count 
+            FROM marketplace_orders o
+            JOIN shops s ON o.seller_shop_id = s.id
+            WHERE o.seller_id = ? AND s.tenant_id = ? AND o.order_status = 'pending'
+        ");
+        $stmt->bind_param("ii", $user_id, $tenant_id);
     }
     $stmt->execute();
     $pending_orders = $stmt->get_result()->fetch_assoc()['count'];

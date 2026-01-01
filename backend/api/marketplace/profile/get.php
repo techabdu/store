@@ -129,10 +129,17 @@ if ($row = $result->fetch_assoc()) {
             if (empty($disp_name)) $disp_name = "User " . $user_id;
             
             // Check if creating for a specific shop
-            $shop_val = $target_shop_id ? $target_shop_id : null; // Use current shop context if passed
+            $shop_val = $target_shop_id ? $target_shop_id : null; 
             
-            $ins = $conn->prepare("INSERT INTO marketplace_profiles (user_id, shop_id, display_name, is_verified, verification_level, created_at, updated_at) VALUES (?, ?, ?, 1, 'basic', NOW(), NOW())");
-            $ins->bind_param("iis", $user_id, $shop_val, $disp_name);
+            // Fetch tenant_id
+            $t_stmt = $conn->prepare("SELECT tenant_id FROM users WHERE id = ?");
+            $t_stmt->bind_param("i", $user_id);
+            $t_stmt->execute();
+            $t_res = $t_stmt->get_result()->fetch_assoc();
+            $tenant_id = $t_res['tenant_id'] ?? 1;
+
+            $ins = $conn->prepare("INSERT INTO marketplace_profiles (tenant_id, user_id, shop_id, display_name, is_verified, verification_level, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 'basic', NOW(), NOW())");
+            $ins->bind_param("iiis", $tenant_id, $user_id, $shop_val, $disp_name);
             
             try {
                 if ($ins->execute()) {

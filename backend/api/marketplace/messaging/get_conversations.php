@@ -54,26 +54,29 @@ $query = "
 
     FROM marketplace_conversations c
     JOIN marketplace_listings l ON c.listing_id = l.id
-    
-    WHERE (
-        (c.buyer_id = ? AND c.is_archived_by_buyer = 0)
 ";
 
-$params = [$user_id, $user_id, $user_id];
-$types = "iii";
+$params = [$user_id, $user_id, $user_id, $shop_id, $user_id, $shop_id];
+$types = "iiiiii";
 
-if ($shop_id) {
-    $query .= " OR (c.seller_id = ? AND l.shop_id = ? AND c.is_archived_by_seller = 0) ";
-    $params[] = $user_id;
-    $params[] = $shop_id;
-    $types .= "ii";
-} else {
-    $query .= " OR (c.seller_id = ? AND c.is_archived_by_seller = 0) ";
-    $params[] = $user_id;
+$query .= "
+    WHERE (
+        (c.buyer_id = ? AND (c.buyer_shop_id = ? OR c.buyer_shop_id IS NULL))
+        OR
+        (c.seller_id = ? AND l.shop_id = ?)
+    )
+    AND c.is_archived_by_buyer = 0
+    AND c.is_archived_by_seller = 0
+";
+
+// 4. Tenant Isolation:
+// Strictly restrict conversations to the current tenant context.
+if (isset($_SESSION['tenant_id'])) {
+    $tenant_id = $_SESSION['tenant_id'];
+    $query .= " AND c.tenant_id = ? ";
+    $params[] = $tenant_id;
     $types .= "i";
 }
-
-$query .= " ) ";
 
 $query .= " ORDER BY c.last_message_at DESC LIMIT ? OFFSET ?";
 $params[] = $limit;

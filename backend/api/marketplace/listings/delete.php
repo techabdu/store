@@ -31,35 +31,39 @@ if (!isset($data->id)) {
 }
 
 $listing_id = intval($data->id);
+$shop_id = $_SESSION['current_shop_id'] ?? null;
+$tenant_id = $_SESSION['tenant_id'] ?? null;
 
 try {
-    // 1. Verify ownership and existence
-    $stmt = $conn->prepare("SELECT id, user_id, status FROM marketplace_listings WHERE id = ?");
+    // 1. Verify ownership and existence (strictly scoped)
+    $query = "
+        SELECT l.id, l.user_id, l.inventory_id, l.status 
+        FROM marketplace_listings l
+        JOIN shops s ON l.shop_id = s.id
+        WHERE l.id = ? AND l.user_id = ?
+    ";
+    
+    if ($shop_id) {
+        $query .= " AND l.shop_id = $shop_id";
+    }
+    if ($tenant_id) {
+        $query .= " AND s.tenant_id = $tenant_id";
+    }
+
+    $stmt = $conn->prepare($query);
     if (!$stmt) {
         throw new Exception("Prepare failed: " . $conn->error);
     }
-    $stmt->bind_param("i", $listing_id);
+    $stmt->bind_param("ii", $listing_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        throw new Exception("Listing not found");
+        throw new Exception("Listing not found or access denied. Ensure you are in the correct branch.");
     }
 
     $listing = $result->fetch_assoc();
-
-    if ($listing['user_id'] != $user_id) {
-        http_response_code(403);
-        throw new Exception("You are not authorized to delete this listing");
-    }
-
-    // 2. Perform Deletion (Hard Delete)
-    // First get inventory_id to reset is_listed flag
-    $get_inv = $conn->prepare("SELECT inventory_id FROM marketplace_listings WHERE id = ?");
-    $get_inv->bind_param("i", $listing_id);
-    $get_inv->execute();
-    $inv_data = $get_inv->get_result()->fetch_assoc();
-    $inventory_id = $inv_data['inventory_id'] ?? null;
+    $inventory_id = $listing['inventory_id'];
 
     $delete_stmt = $conn->prepare("DELETE FROM marketplace_listings WHERE id = ?");
     $delete_stmt->bind_param("i", $listing_id);
