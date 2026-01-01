@@ -91,12 +91,35 @@ try {
         throw new Exception("Failed to update order status");
     }
 
+
     // 3. Reactivate Listing
     $reactivate_query = "UPDATE marketplace_listings SET status = 'active' WHERE id = ?";
     $stmt = $conn->prepare($reactivate_query);
     $stmt->bind_param("i", $listing_id);
     if (!$stmt->execute()) {
         throw new Exception("Failed to reactivate listing");
+    }
+
+    // 3.1 CRITICAL: Revert Inventory Status from 'in_transit' back to 'in_stock'
+    // This reverses the operation done in create.php (line 126-128)
+    // Fetch inventory_id from listing
+    $inv_stmt = $conn->prepare("SELECT inventory_id FROM marketplace_listings WHERE id = ?");
+    $inv_stmt->bind_param("i", $listing_id);
+    $inv_stmt->execute();
+    $inv_result = $inv_stmt->get_result()->fetch_assoc();
+    $inv_stmt->close();
+
+    if ($inv_result && $inv_result['inventory_id']) {
+        $revert_inv = $conn->prepare("
+            UPDATE inventory 
+            SET status = 'in_stock', is_listed = 1 
+            WHERE id = ?
+        ");
+        $revert_inv->bind_param("i", $inv_result['inventory_id']);
+        if (!$revert_inv->execute()) {
+            throw new Exception('Failed to revert inventory status');
+        }
+        $revert_inv->close();
     }
 
     // 4. Revert Wallet Balances (Refund)
@@ -208,9 +231,15 @@ try {
     $conn->commit();
     echo json_encode(['success' => true, 'message' => 'Order cancelled and listing reactivated successfully']);
 
+
 } catch (Exception $e) {
     $conn->rollback();
+    
+    // Log detailed error for developers
+    error_log("Order cancellation error (Order ID: $order_id, User ID: $user_id): " . $e->getMessage());
+    
+    // Return generic error to user (prevent information disclosure)
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Unable to cancel order. Please try again or contact support.']);
 }
 ?>

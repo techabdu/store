@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../../helpers/validation_helper.php'; // Input validation
 
 // Set CORS headers
 setCorsHeaders();
@@ -24,13 +25,14 @@ if (!isset($_SESSION['user_id'])) {
 $buyer_id = $_SESSION['user_id'];
 $data = json_decode(file_get_contents("php://input"));
 
-if (!isset($data->listing_id)) {
+// Validate listing_id with proper validation
+try {
+    $listing_id = validatePositiveInt($data->listing_id ?? null, 'Listing ID');
+} catch (Exception $e) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Listing ID required']);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     exit();
 }
-
-$listing_id = intval($data->listing_id);
 
 // Start Transaction
 $conn->begin_transaction();

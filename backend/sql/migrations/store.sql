@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Dec 31, 2025 at 07:09 PM
+-- Generation Time: Jan 01, 2026 at 09:50 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -262,6 +262,7 @@ CREATE TABLE `marketplace_conversations` (
   `listing_id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
   `buyer_id` int(11) NOT NULL,
+  `buyer_shop_id` int(11) DEFAULT NULL,
   `seller_id` int(11) NOT NULL,
   `is_archived_by_buyer` tinyint(1) DEFAULT 0,
   `is_archived_by_seller` tinyint(1) DEFAULT 0,
@@ -1075,7 +1076,9 @@ ALTER TABLE `marketplace_conversations`
   ADD UNIQUE KEY `unique_conversation` (`listing_id`,`buyer_id`),
   ADD KEY `idx_buyer` (`buyer_id`),
   ADD KEY `idx_seller` (`seller_id`),
-  ADD KEY `order_id` (`order_id`);
+  ADD KEY `order_id` (`order_id`),
+  ADD KEY `idx_tenant` (`tenant_id`),
+  ADD KEY `idx_buyer_shop` (`buyer_shop_id`);
 
 --
 -- Indexes for table `marketplace_favorites`
@@ -1116,11 +1119,11 @@ ALTER TABLE `marketplace_listings`
   ADD KEY `highest_bidder_id` (`highest_bidder_id`),
   ADD KEY `idx_status` (`status`),
   ADD KEY `idx_shop` (`shop_id`),
-  ADD KEY `idx_tenant` (`tenant_id`),
   ADD KEY `idx_user` (`user_id`),
   ADD KEY `idx_listing_type` (`listing_type`),
   ADD KEY `idx_created` (`created_at`),
-  ADD KEY `idx_price` (`price`);
+  ADD KEY `idx_price` (`price`),
+  ADD KEY `idx_tenant` (`tenant_id`);
 
 --
 -- Indexes for table `marketplace_listing_images`
@@ -1156,13 +1159,13 @@ ALTER TABLE `marketplace_orders`
   ADD KEY `listing_id` (`listing_id`),
   ADD KEY `seller_shop_id` (`seller_shop_id`),
   ADD KEY `buyer_shop_id` (`buyer_shop_id`),
-  ADD KEY `idx_tenant` (`tenant_id`),
   ADD KEY `cancelled_by` (`cancelled_by`),
   ADD KEY `idx_seller` (`seller_id`),
   ADD KEY `idx_buyer` (`buyer_id`),
   ADD KEY `idx_status` (`order_status`),
   ADD KEY `idx_escrow` (`escrow_status`),
-  ADD KEY `idx_created` (`created_at`);
+  ADD KEY `idx_created` (`created_at`),
+  ADD KEY `idx_tenant` (`tenant_id`);
 
 --
 -- Indexes for table `marketplace_order_history`
@@ -1178,10 +1181,10 @@ ALTER TABLE `marketplace_order_history`
 ALTER TABLE `marketplace_profiles`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx_user_shop_unique` (`user_id`,`shop_id`),
-  ADD KEY `idx_tenant` (`tenant_id`),
   ADD KEY `idx_user` (`user_id`),
   ADD KEY `idx_shop` (`shop_id`),
-  ADD KEY `idx_verified` (`is_verified`);
+  ADD KEY `idx_verified` (`is_verified`),
+  ADD KEY `idx_tenant` (`tenant_id`);
 
 --
 -- Indexes for table `marketplace_reports`
@@ -1229,12 +1232,12 @@ ALTER TABLE `marketplace_verification_attempts`
 -- Indexes for table `marketplace_wallets`
 --
 ALTER TABLE `marketplace_wallets`
-  PRIMARY KEY (`id`),
+  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx_user_shop_unique` (`user_id`,`shop_id`),
-  ADD KEY `idx_tenant` (`tenant_id`),
   ADD KEY `idx_user` (`user_id`),
   ADD KEY `idx_wallet_shop` (`shop_id`),
-  ADD KEY `idx_user_shop_wallet` (`user_id`,`shop_id`);
+  ADD KEY `idx_user_shop_wallet` (`user_id`,`shop_id`),
+  ADD KEY `idx_tenant` (`tenant_id`);
 
 --
 -- Indexes for table `marketplace_wallet_transactions`
@@ -1246,7 +1249,8 @@ ALTER TABLE `marketplace_wallet_transactions`
   ADD KEY `idx_user` (`user_id`),
   ADD KEY `idx_type` (`transaction_type`),
   ADD KEY `idx_created` (`created_at`),
-  ADD KEY `idx_trans_shop` (`shop_id`);
+  ADD KEY `idx_trans_shop` (`shop_id`),
+  ADD KEY `idx_tenant` (`tenant_id`);
 
 --
 -- Indexes for table `marketplace_withdrawal_requests`

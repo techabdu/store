@@ -30,9 +30,13 @@ export const AuthProvider = ({ children }) => {
 
     // Check session on mount
     useEffect(() => {
+        const controller = new AbortController();
+
         const checkSession = async () => {
             try {
-                const response = await api.get('/auth/check-session.php');
+                const response = await api.get('/auth/check-session.php', {
+                    signal: controller.signal
+                });
                 if (response.data.success) {
                     setUser(response.data.user);
                     setIsAuthenticated(true);
@@ -49,6 +53,11 @@ export const AuthProvider = ({ children }) => {
                     }
                 }
             } catch (error) {
+                // Ignore abort errors (component unmounted)
+                if (error.name === 'CanceledError' || error.name === 'AbortError') {
+                    return;
+                }
+
                 // Session invalid or expired
                 setUser(null);
                 setIsAuthenticated(false);
@@ -62,6 +71,9 @@ export const AuthProvider = ({ children }) => {
         };
 
         checkSession();
+
+        // Cleanup: abort pending request if component unmounts
+        return () => controller.abort();
     }, [fetchShopSettings]);
 
     const login = async (username, password) => {

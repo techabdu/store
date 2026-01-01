@@ -160,9 +160,15 @@ try {
 
     echo json_encode(['success' => true, 'message' => 'Funds released to seller successfully']);
 
+
 } catch (Exception $e) {
     $conn->rollback();
+    
+    // Log detailed error for developers
+    error_log("Fund release error (Order ID: $order_id, User ID: $user_id): " . $e->getMessage());
+    
+    // Return generic error to user (prevent information disclosure)
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Unable to release funds. Please try again or contact support.']);
 }
 ?>

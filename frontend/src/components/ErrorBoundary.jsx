@@ -31,11 +31,6 @@ class ErrorBoundary extends React.Component {
                         <p className="error-boundary-message">
                             The application encountered an unexpected error. We've been notified and are working on it.
                         </p>
-                        {process.env.NODE_ENV === 'development' && (
-                            <pre className="error-boundary-debug">
-                                {this.state.error?.toString()}
-                            </pre>
-                        )}
                         <div className="error-boundary-actions">
                             <button
                                 onClick={() => window.location.reload()}

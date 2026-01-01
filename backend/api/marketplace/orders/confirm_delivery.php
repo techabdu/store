@@ -243,10 +243,16 @@ try {
         'wallet' => $wallet
     ]);
 
+
 } catch (Exception $e) {
     $conn->rollback();
+    
+    // Log detailed error for developers
+    error_log("Order confirmation error (Order ID: $order_id, User ID: $user_id): " . $e->getMessage());
+    
+    // Return generic error to user (prevent information disclosure)
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => 'Unable to process delivery confirmation. Please try again or contact support.']);
 }
 
 $conn->close();
