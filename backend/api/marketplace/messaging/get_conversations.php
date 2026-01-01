@@ -1,9 +1,6 @@
 <?php
 // backend/api/marketplace/messaging/get_conversations.php
 
-// TEMPORARY DEBUG MODE - Remove after fixing the issue
-define('DEBUG_MODE', true);
-
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
 
@@ -27,13 +24,10 @@ try {
 
     // Verify database connection
     if (!isset($conn) || $conn === null || $conn->connect_error) {
-        $errorMsg = "Database connection not available";
-        if (DEBUG_MODE && isset($conn) && $conn->connect_error) {
-            $errorMsg .= ": " . $conn->connect_error;
-        }
-        error_log("get_conversations.php: " . $errorMsg);
+        $errorDetail = isset($conn) && $conn->connect_error ? $conn->connect_error : 'Connection not established';
+        error_log("get_conversations.php: Database connection not available - " . $errorDetail);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => $errorMsg]);
+        echo json_encode(['success' => false, 'error' => 'Database connection failed']);
         exit();
     }
 
@@ -104,49 +98,33 @@ try {
     // Prepare statement with error handling
     $stmt = $conn->prepare($query);
     if (!$stmt) {
-        $errorMsg = "Failed to prepare query";
-        if (DEBUG_MODE) {
-            $errorMsg .= ": " . $conn->error;
-        }
-        error_log("get_conversations.php: " . $errorMsg);
+        error_log("get_conversations.php: Failed to prepare query - " . $conn->error);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => $errorMsg]);
+        echo json_encode(['success' => false, 'error' => 'Failed to prepare query']);
         exit();
     }
 
     // Bind parameters with error handling
     if (!$stmt->bind_param($types, ...$params)) {
-        $errorMsg = "Failed to bind parameters";
-        if (DEBUG_MODE) {
-            $errorMsg .= ": " . $stmt->error;
-        }
-        error_log("get_conversations.php: " . $errorMsg);
+        error_log("get_conversations.php: Failed to bind parameters - " . $stmt->error);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => $errorMsg]);
+        echo json_encode(['success' => false, 'error' => 'Failed to bind parameters']);
         exit();
     }
 
     // Execute with error handling
     if (!$stmt->execute()) {
-        $errorMsg = "Failed to execute query";
-        if (DEBUG_MODE) {
-            $errorMsg .= ": " . $stmt->error;
-        }
-        error_log("get_conversations.php: " . $errorMsg);
+        error_log("get_conversations.php: Failed to execute query - " . $stmt->error);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => $errorMsg]);
+        echo json_encode(['success' => false, 'error' => 'Failed to execute query']);
         exit();
     }
 
     $result = $stmt->get_result();
     if (!$result) {
-        $errorMsg = "Failed to get query results";
-        if (DEBUG_MODE) {
-            $errorMsg .= ": " . $stmt->error;
-        }
-        error_log("get_conversations.php: " . $errorMsg);
+        error_log("get_conversations.php: Failed to get result - " . $stmt->error);
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => $errorMsg]);
+        echo json_encode(['success' => false, 'error' => 'Failed to get query results']);
         exit();
     }
 
@@ -165,9 +143,8 @@ try {
     // Log the detailed error
     error_log("get_conversations.php: Caught exception - " . $e->getMessage() . " | File: " . $e->getFile() . " | Line: " . $e->getLine());
     
-    // Return error to client (with details in debug mode)
+    // Return generic error to client
     http_response_code(500);
-    $errorMsg = DEBUG_MODE ? $e->getMessage() . " (File: " . $e->getFile() . ", Line: " . $e->getLine() . ")" : 'Internal server error';
-    echo json_encode(['success' => false, 'error' => $errorMsg, 'debug_trace' => DEBUG_MODE ? $e->getTraceAsString() : null]);
+    echo json_encode(['success' => false, 'error' => 'Internal server error']);
 }
 ?>
