@@ -23,7 +23,7 @@
 - [ ] Verify database access (MySQL `store` database)
 - [ ] Verify Git is configured
 - [ ] Create implementation branch: `git checkout -b feature/superadmin-monitoring`
-- [ ] Backup current database: `mysqldump store > backup_pre_monitoring.sql`
+
 
 ---
 
@@ -32,6 +32,7 @@
 ### DAY 1: Environment Setup & Dependencies
 
 #### Backend Dependencies
+- [ ] Backup current database: `mysqldump store > backup_pre_monitoring.sql`
 - [ ] Navigate to backend: `cd /Applications/XAMPP/xamppfiles/htdocs/store/backend`
 - [ ] Install Monolog: `composer require monolog/monolog`
 - [ ] Verify Monolog installed: check `vendor/` directory

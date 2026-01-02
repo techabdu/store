@@ -12,49 +12,14 @@ class Database {
             require_once __DIR__ . '/../vendor/autoload.php';
         }
 
-        // Load environment variables
-        $this->loadEnv();
+        // Load Environment configuration class
+        require_once __DIR__ . '/environment.php';
 
-        // Use environment variables or default to empty/null
-        // Use environment variables or default to empty/null
-        $this->host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ($_SERVER['DB_HOST'] ?? '127.0.0.1'));
-        $this->username = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? ($_SERVER['DB_USER'] ?? 'root'));
-        $this->password = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? ($_SERVER['DB_PASS'] ?? ''));
-        $this->db_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ($_SERVER['DB_NAME'] ?? 'store'));
-    }
-
-    private function loadEnv() {
-        // Only load .env if we are not in a production environment where env vars are already set
-        // Or just try to load it and let existing env vars take precedence
-        $envPath = __DIR__ . '/../.env';
-        if (file_exists($envPath)) {
-            $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if ($lines === false) return;
-            foreach ($lines as $line) {
-                if (strpos(trim($line), '#') === 0) {
-                    continue;
-                }
-                if (strpos($line, '=') !== false) {
-                    list($name, $value) = explode('=', $line, 2);
-                    $name = trim($name);
-                    $value = trim($value);
-                    
-                    // Remove quotes if present
-                    if (preg_match('/^"(.*)"$/', $value, $matches)) {
-                        $value = $matches[1];
-                    } elseif (preg_match("/^'(.*)'$/", $value, $matches)) {
-                        $value = $matches[1];
-                    }
-
-                    // Set environment variable if not already set
-                    if (getenv($name) === false) {
-                        putenv(sprintf('%s=%s', $name, $value));
-                        $_ENV[$name] = $value;
-                        $_SERVER[$name] = $value;
-                    }
-                }
-            }
-        }
+        // Use Environment class for centralized configuration
+        $this->host = Environment::config('db_host', '127.0.0.1');
+        $this->username = Environment::config('db_user', 'root');
+        $this->password = Environment::config('db_pass', '');
+        $this->db_name = Environment::config('db_name', 'store');
     }
 
     public function connect() {
