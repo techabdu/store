@@ -20,3 +20,11 @@ error_log
 # OS
 .DS_Store
 !backend/sql/database_schema.sql
+
+# Local Test Environment
+mysql_data/
+mysql.sock
+mysql.sock.lock
+mysql_error.log
+composer.phar
+backend/composer.phar

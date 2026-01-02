@@ -1,9 +1,16 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+/// <reference types="vitest" />
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/utils/test-setup.js',
+    css: true,
+  },
   base: '/', // Root path for production
   build: {
     outDir: 'dist',
@@ -19,4 +26,4 @@ export default defineConfig({
       }
     }
   }
-})
+});
