@@ -371,7 +371,7 @@ class MetricsAggregationWorker {
 }
 
 // Execute if run directly
-if (php_sapi_name() === 'cli') {
+if (php_sapi_name() === 'cli' && realpath(__FILE__) === realpath($_SERVER['SCRIPT_FILENAME'])) {
     echo "=== Metrics Aggregation Worker ===\n";
     echo "Started at: " . date('Y-m-d H:i:s') . "\n\n";
     
