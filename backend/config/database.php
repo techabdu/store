@@ -1,4 +1,9 @@
 <?php
+// Load error handlers first to catch any errors during initialization
+if (file_exists(__DIR__ . '/../helpers/error_handlers.php')) {
+    require_once __DIR__ . '/../helpers/error_handlers.php';
+}
+
 class Database {
     private $host;
     private $username;
