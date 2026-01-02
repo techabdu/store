@@ -834,95 +834,95 @@
 ### DAY 12: Tenant Management APIs
 
 #### Create Tenants Management API File
-- [ ] Create file: `backend/api/superadmin/tenants_management.php`
-- [ ] Add PHP opening tag
-- [ ] Set CORS headers (using existing setCorsHeaders() function)
-- [ ] Start session
-- [ ] Check role (superadmin only)
-- [ ] Get action parameter
+- [x] Create file: `backend/api/superadmin/tenants_management.php`
+- [x] Add PHP opening tag
+- [x] Set CORS headers (using existing setCorsHeaders() function)
+- [x] Start session
+- [x] Check role (superadmin only)
+- [x] Get action parameter
 
 #### Action: list
-- [ ] Get query parameters: status, plan, page (default 1), per_page (default 50)
-- [ ] Build WHERE clause based on filters
-- [ ] Add search if name/email provided
-- [ ] Prepare SELECT query with pagination
-- [ ] Join with shops and users to get counts
-- [ ] Execute query
-- [ ] Get total count for pagination
-- [ ] Return JSON with:
-  - [ ] success: true
-  - [ ] data.tenants: array of tenant objects
-  - [ ] data.pagination: { page, total, per_page, total_pages }
-  - [ ] data.stats: { total, active, trial, suspended }
+- [x] Get query parameters: status, plan, page (default 1), per_page (default 50)
+- [x] Build WHERE clause based on filters
+- [x] Add search if name/email provided
+- [x] Prepare SELECT query with pagination
+- [x] Join with shops and users to get counts
+- [x] Execute query
+- [x] Get total count for pagination
+- [x] Return JSON with:
+  - [x] success: true
+  - [x] data.tenants: array of tenant objects
+  - [x] data.pagination: { page, total, per_page, total_pages }
+  - [x] data.stats: { total, active, trial, suspended }
 
 #### Action: detail
-- [ ] Get tenant ID from query
-- [ ] Query tenant by ID
-- [ ] Get related data:
-  - [ ] Shop count
-  - [ ] User count
-  - [ ] Recent activity (last 10 actions)
-  - [ ] Latest health score
-  - [ ] Subscription history
-- [ ] Return JSON with full tenant details
+- [x] Get tenant ID from query
+- [x] Query tenant by ID
+- [x] Get related data:
+  - [x] Shop count
+  - [x] User count
+  - [x] Recent activity (last 10 actions)
+  - [x] Latest health score
+  - [x] Subscription history
+- [x] Return JSON with full tenant details
 
 #### Action: update_status
-- [ ] Get tenant ID and new status from POST
-- [ ] Validate status (active, suspended, cancelled)
-- [ ] Update tenants table
-- [ ] If suspending:
-  - [ ] Log action
-  - [ ] Could disable all user sessions
-- [ ] If cancelling:
-  - [ ] Set cancelled_at = NOW()
-  - [ ] Log cancellation_reason if provided
-- [ ] Return success JSON
+- [x] Get tenant ID and new status from POST
+- [x] Validate status (active, suspended, cancelled)
+- [x] Update tenants table
+- [x] If suspending:
+  - [x] Log action
+  - [x] Could disable all user sessions
+- [x] If cancelling:
+  - [x] Set cancelled_at = NOW()
+  - [x] Log cancellation_reason if provided
+- [x] Return success JSON
 
 #### Action: update_plan
-- [ ] Get tenant ID, new plan, new MRR from POST
-- [ ] Get current plan and MRR
-- [ ] Determine change_type (upgrade/downgrade)
-- [ ] Update tenants table (plan and MRR)
-- [ ] INSERT INTO subscription_history
-  - [ ] from_plan, to_plan
-  - [ ] from_mrr, to_mrr
-  - [ ] change_type
-- [ ] Return success JSON
+- [x] Get tenant ID, new plan, new MRR from POST
+- [x] Get current plan and MRR
+- [x] Determine change_type (upgrade/downgrade)
+- [x] Update tenants table (plan and MRR)
+- [x] INSERT INTO subscription_history
+  - [x] from_plan, to_plan
+  - [x] from_mrr, to_mrr
+  - [x] change_type
+- [x] Return success JSON
 
 #### Action: impersonate  
-- [ ] Get tenant ID from POST
-- [ ] Get tenant details
-- [ ] Create impersonation session:
-  - [ ] Store original superadmin session
-  - [ ] Switch session to tenant's first admin user
-  - [ ] Set flag: is_impersonating = true
-  - [ ] Store original_user_id
-- [ ] Return success with redirect URL
-- [ ] (Frontend will redirect to admin dashboard)
+- [x] Get tenant ID from POST
+- [x] Get tenant details
+- [x] Create impersonation session:
+  - [x] Store original superadmin session
+  - [x] Switch session to tenant's first admin user
+  - [x] Set flag: is_impersonating = true
+  - [x] Store original_user_id
+- [x] Return success with redirect URL
+- [x] (Frontend will redirect to admin dashboard)
 
 #### Add Error Handling
-- [ ] Wrap in try-catch
-- [ ] Return appropriate HTTP status codes
-- [ ] Return error messages in JSON
+- [x] Wrap in try-catch
+- [x] Return appropriate HTTP status codes
+- [x] Return error messages in JSON
 
 #### Test All Actions
-- [ ] Test list action with different filters
-- [ ] Test detail action
-- [ ] Test update_status (suspend a test tenant)
-- [ ] Test update_plan (upgrade a test tenant)
-- [ ] Check subscription_history table
-- [ ] Test impersonate (verify session switch)
-- [ ] Revert test changes
+- [x] Test list action with different filters
+- [x] Test detail action
+- [x] Test update_status (suspend a test tenant)
+- [x] Test update_plan (upgrade a test tenant)
+- [x] Check subscription_history table
+- [x] Test impersonate (verify session switch)
+- [x] Revert test changes
 
 #### Day 12 Validation
-- [ ] All 5 actions implemented
-- [ ] Pagination works correctly
-- [ ] Filters work (status, plan)
-- [ ] Subscription history logged
-- [ ] Impersonate creates secure session
-- [ ] Error handling works
-- [ ] Returns proper HTTP status codes
-- [ ] Commit: `git add . && git commit -m "Day 12: Tenant management APIs"`
+- [x] All 5 actions implemented
+- [x] Pagination works correctly
+- [x] Filters work (status, plan)
+- [x] Subscription history logged
+- [x] Impersonate creates secure session
+- [x] Error handling works
+- [x] Returns proper HTTP status codes
+- [x] Commit: `git add . && git commit -m "Day 12: Tenant management APIs"`
 
 ---
 
