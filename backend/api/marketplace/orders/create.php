@@ -255,6 +255,10 @@ try {
     // Commit
     $conn->commit();
 
+    // Track feature usage
+    require_once '../../../helpers/FeatureTracker.php';
+    FeatureTracker::track('marketplace', 'place_order', $buyer_id, $tenant_id, $buyer_shop_id);
+
     echo json_encode([
         'success' => true,
         'message' => 'Order placed successfully. Funds held in escrow.',

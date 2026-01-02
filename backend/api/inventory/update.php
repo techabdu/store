@@ -171,9 +171,12 @@ try {
         // Log activity
         logActivity(
             $_SESSION['user_id'],
-            'inventory_update',
             $logDetails
         );
+
+        // Track feature usage
+        require_once '../../helpers/FeatureTracker.php';
+        FeatureTracker::track('inventory', 'update', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
         
         http_response_code(200);
         echo json_encode([

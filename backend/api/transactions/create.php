@@ -342,6 +342,10 @@ try {
             'trade_in_items' => count($tradeInItems)
         ])
     );
+
+    // Track feature usage
+    require_once '../../helpers/FeatureTracker.php';
+    FeatureTracker::track('pos_sales', 'create', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
     
     // Commit transaction
     $conn->commit();

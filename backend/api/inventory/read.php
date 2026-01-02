@@ -146,6 +146,10 @@ try {
         'offset' => $offset,
         'shop_id' => $shopId
     ]);
+
+    // Track feature usage
+    require_once '../../helpers/FeatureTracker.php';
+    FeatureTracker::track('inventory', 'view', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
     
     $stmt->close();
     $countStmt->close();

@@ -99,6 +99,10 @@ function handlePost($conn, $currentUser) {
         $newId = $conn->insert_id;
         logActivity($currentUser['id'], 'create_expense', "Created expense: $description ($amount)");
         
+        // Track feature usage
+        require_once '../../helpers/FeatureTracker.php';
+        FeatureTracker::track('expenses', 'create', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
+
         // Fetch the created expense to return it
         $sql = "SELECT e.*, u.username as created_by_name 
                 FROM expenses e 
@@ -193,6 +197,11 @@ function handlePut($conn, $currentUser) {
     
     if ($stmt->execute()) {
         logActivity($currentUser['id'], 'update_expense', "Updated expense ID: $id");
+        
+        // Track feature usage
+        require_once '../../helpers/FeatureTracker.php';
+        FeatureTracker::track('expenses', 'update', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
+        
         echo json_encode(['success' => true, 'message' => 'Expense updated successfully']);
     } else {
         http_response_code(500);

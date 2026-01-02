@@ -92,6 +92,10 @@ try {
             'inventory_delete',
             "Deleted inventory: " . $item['brand'] . " " . $item['model'] . " (IMEI: " . $item['imei'] . ")"
         );
+
+        // Track feature usage
+        require_once '../../helpers/FeatureTracker.php';
+        FeatureTracker::track('inventory', 'delete', $_SESSION['user_id'], $_SESSION['tenant_id'], $_SESSION['shop_id']);
         
         http_response_code(200);
         echo json_encode([

@@ -82,6 +82,10 @@ elseif ($method === 'POST') {
     $stmt->bind_param("iissss", $tenantId, $shopId, $name, $address, $contact, $status);
     
     if ($stmt->execute()) {
+        // Track feature usage
+        require_once '../../helpers/FeatureTracker.php';
+        FeatureTracker::track('vendors', 'create', $_SESSION['user_id'], $tenantId, $shopId);
+        
         echo json_encode(["success" => true, "message" => "Vendor added successfully", "id" => $stmt->insert_id]);
     } else {
          http_response_code(500);

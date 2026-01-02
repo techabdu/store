@@ -267,6 +267,10 @@ function createReport($conn, $user_id, $shopId) {
             throw new Exception("Failed to save report: " . $stmt->error);
         }
 
+        // Track feature usage
+        require_once '../../helpers/FeatureTracker.php';
+        FeatureTracker::track('reports', 'generate', $user_id, $_SESSION['tenant_id'], $shopId);
+
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(["success" => false, "message" => "Error saving report: " . $e->getMessage()]);
