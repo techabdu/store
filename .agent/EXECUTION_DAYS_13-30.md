@@ -189,83 +189,83 @@
 ### DAY 14: Feature Usage Tracking
 
 #### Create FeatureTracker Helper
-- [ ] Create file: `backend/helpers/FeatureTracker.php`
-- [ ] Add PHP opening tag
-- [ ] Require database config
+- [x] Create file: `backend/helpers/FeatureTracker.php`
+- [x] Add PHP opening tag
+- [x] Require database config
 
-- [ ] Create FeatureTracker class
-- [ ] Add static track() method
-- [ ] Parameters: $featureName, $action, $userId, $tenantId, $shopId = null
-- [ ] Get global $conn
-- [ ] Prepare INSERT statement
-- [ ] ```sql
+- [x] Create FeatureTracker class
+- [x] Add static track() method
+- [x] Parameters: $featureName, $action, $userId, $tenantId, $shopId = null
+- [x] Get global $conn
+- [x] Prepare INSERT statement
+- [x] ```sql
     INSERT INTO feature_usage (tenant_id, shop_id, user_id, feature_name, action, created_at)
     VALUES (?, ?, ?, ?, ?, NOW())
     ```
-- [ ] Bind parameters
-- [ ] Execute
-- [ ] Return true/false
-- [ ] Add error logging if fails
+- [x] Bind parameters
+- [x] Execute
+- [x] Return true/false
+- [x] Add error logging if fails
 
 #### Instrument Inventory Endpoints
-- [ ] Open `backend/api/inventory/create.php`
-- [ ] Add at top: `require_once __DIR__ . '/../../helpers/FeatureTracker.php';`
-- [ ] After successful creation, add:
+- [x] Open `backend/api/inventory/create.php`
+- [x] Add at top: `require_once __DIR__ . '/../../helpers/FeatureTracker.php';`
+- [x] After successful creation, add:
   ```php
   FeatureTracker::track('inventory', 'create', $_SESSION['id'], $_SESSION['tenant_id'], $_SESSION['shop_id']);
   ```
-- [ ] Save file
+- [x] Save file
 
-- [ ] Repeat for inventory/update.php (action: 'update')
-- [ ] Repeat for inventory/delete.php (action: 'delete')
-- [ ] Repeat for inventory/list.php or read.php (action: 'view')
-- [ ] Test each endpoint, verify feature_usage entries created
+- [x] Repeat for inventory/update.php (action: 'update')
+- [x] Repeat for inventory/delete.php (action: 'delete')
+- [x] Repeat for inventory/list.php or read.php (action: 'view')
+- [x] Test each endpoint, verify feature_usage entries created
 
 #### Instrument POS/Sales Endpoints
-- [ ] Open transaction creation endpoint
-- [ ] Add FeatureTracker call: track('pos_sales', 'create', ...)
-- [ ] Test transaction creation
-- [ ] Verify feature_usage logged
+- [x] Open transaction creation endpoint
+- [x] Add FeatureTracker call: track('pos_sales', 'create', ...)
+- [x] Test transaction creation
+- [x] Verify feature_usage logged
 
 #### Instrument Marketplace Endpoints
-- [ ] Marketplace listing creation:
-  - [ ] track('marketplace', 'create_listing', ...)
-- [ ] Marketplace order placement:
-  - [ ] track('marketplace', 'place_order', ...)
-- [ ] Marketplace message send:
-  - [ ] track('marketplace', 'send_message', ...)
-- [ ] Test each action
+- [x] Marketplace listing creation:
+  - [x] track('marketplace', 'create_listing', ...)
+- [x] Marketplace order placement:
+  - [x] track('marketplace', 'place_order', ...)
+- [x] Marketplace message send:
+  - [x] track('marketplace', 'send_message', ...)
+- [x] Test each action
 
 #### Instrument Report Generation
-- [ ] Open report generation endpoint
-- [ ] Add track('reports', 'generate', ...)
-- [ ] Add track('reports', 'export', ...) if export action exists
-- [ ] Test report generation
+- [x] Open report generation endpoint
+- [x] Add track('reports', 'generate', ...)
+- [x] Add track('reports', 'export', ...) if export action exists
+- [x] Test report generation
 
 #### Instrument Expense Tracking
-- [ ] Expense create: track('expenses', 'create', ...)
-- [ ] Expense update: track('expenses', 'update', ...)
-- [ ] Test expense operations
+- [x] Expense create: track('expenses', 'create', ...)
+- [x] Expense update: track('expenses', 'update', ...)
+- [x] Test expense operations
 
 #### Instrument Customer Management
-- [ ] Customer create: track('customers', 'create', ...)
-- [ ] Customer update: track('customers', 'update', ...)
-- [ ] Test customer operations
+- [x] Customer create: track('customers', 'create', ...)
+- [x] Customer update: track('customers', 'update', ...)
+- [x] Test customer operations
 
 #### Instrument Vendor Management
-- [ ] Vendor create: track('vendors', 'create', ...)
-- [ ] Test vendor operations
+- [x] Vendor create: track('vendors', 'create', ...)
+- [x] Test vendor operations
 
 #### Create Feature Usage API
-- [ ] Create file: `backend/api/superadmin/feature_usage.php`
-- [ ] Add PHP opening tag, CORS, session, role check
-- [ ] Get parameters: action, tenant_id, period
+- [x] Create file: `backend/api/superadmin/feature_usage.php`
+- [x] Add PHP opening tag, CORS, session, role check
+- [x] Get parameters: action, tenant_id, period
 
 #### Action: tenant_usage
-- [ ] If action === 'tenant_usage':
-  - [ ] Require tenant_id parameter
-  - [ ] Parse period (default 30d)
-  - [ ] Query feature usage for tenant:
+- [x] If action === 'tenant_usage':
+  - [x] Require tenant_id parameter
+  - [x] Parse period (default 30d)
+  - [x] Query feature usage for tenant:
     ```sql
     SELECT feature_name, action, COUNT(*) as usage_count
     FROM feature_usage
@@ -274,20 +274,20 @@
     GROUP BY feature_name, action
     ORDER BY usage_count DESC
     ```
-  - [ ] Return JSON with usage data
+  - [x] Return JSON with usage data
 
 #### Action: heatmap
-- [ ] If action === 'heatmap':
-  - [ ] Query all tenants
-  - [ ] Query feature usage per tenant:
+- [x] If action === 'heatmap':
+  - [x] Query all tenants
+  - [x] Query feature usage per tenant:
     ```sql
     SELECT tenant_id, feature_name, COUNT(*) as usage_count
     FROM feature_usage
     WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
     GROUP BY tenant_id, feature_name
     ```
-  - [ ] Format as matrix: rows = tenants, columns = features
-  - [ ] Return JSON with heatmap data structure:
+  - [x] Format as matrix: rows = tenants, columns = features
+  - [x] Return JSON with heatmap data structure:
     ```json
     {
       "tenants": [...],
@@ -297,85 +297,85 @@
     ```
 
 #### Test Feature Tracking
-- [ ] Perform 10 different actions across features
-- [ ] Check feature_usage table, verify 10 entries
-- [ ] Verify feature_name and action correct
-- [ ] Verify tenant_id and user_id captured
+- [x] Perform 10 different actions across features
+- [x] Check feature_usage table, verify 10 entries
+- [x] Verify feature_name and action correct
+- [x] Verify tenant_id and user_id captured
 
 #### Test Feature Usage API
-- [ ] Test tenant_usage for a specific tenant
-- [ ] Verify returns correct features
-- [ ] Test heatmap generation
-- [ ] Verify matrix structure correct
-- [ ] Test with different periods
+- [x] Test tenant_usage for a specific tenant
+- [x] Verify returns correct features
+- [x] Test heatmap generation
+- [x] Verify matrix structure correct
+- [x] Test with different periods
 
 #### Day 14 Validation
-- [ ] FeatureTracker helper created and working
-- [ ] 20+ endpoints instrumented
-- [ ] Feature usage logged correctly
-- [ ] API endpoints return correct data
-- [ ] Heatmap data structure valid
-- [ ] Commit: `git add . && git commit -m "Day 14: Feature usage tracking"`
+- [x] FeatureTracker helper created and working
+- [x] 20+ endpoints instrumented
+- [x] Feature usage logged correctly
+- [x] API endpoints return correct data
+- [x] Heatmap data structure valid
+- [x] Commit: `git add . && git commit -m "Day 14: Feature usage tracking"`
 
 ---
 
 ### DAY 15: Health Scores & Storage Tracking
 
 #### Create Health Scores API
-- [ ] Create file: `backend/api/superadmin/health_scores.php`
-- [ ] Add PHP opening tag, CORS, session, role check
-- [ ] Get parameters: category, tenant_id, sort
+- [x] Create file: `backend/api/superadmin/health_scores.php`
+- [x] Add PHP opening tag, CORS, session, role check
+- [x] Get parameters: category, tenant_id, sort
 
 #### List Health Scores with Filters
-- [ ] Build SELECT query:
+- [x] Build SELECT query:
   ```sql
   SELECT rhs.*, t.name as tenant_name, t.email
   FROM retailer_health_scores rhs
   JOIN tenants t ON rhs.tenant_id = t.id
   WHERE 1=1
   ```
-- [ ] Add AND category = ? if category filter provided
-- [ ] Add AND tenant_id = ? if filtering by tenant
-- [ ] Add ORDER BY clause based on sort parameter:
-  - [ ] sort='score_desc': ORDER BY health_score DESC
-  - [ ] sort='score_asc': ORDER BY health_score ASC
-  - [ ] default: ORDER BY calculated_at DESC
-- [ ] Execute query
-- [ ] Return JSON with health scores array
+- [x] Add AND category = ? if category filter provided
+- [x] Add AND tenant_id = ? if filtering by tenant
+- [x] Add ORDER BY clause based on sort parameter:
+  - [x] sort='score_desc': ORDER BY health_score DESC
+  - [x] sort='score_asc': ORDER BY health_score ASC
+  - [x] default: ORDER BY calculated_at DESC
+- [x] Execute query
+- [x] Return JSON with health scores array
 
 #### Get Tenant Health Score Detail
-- [ ] If tenant_id parameter provided
-- [ ] Query latest health score for tenant
-- [ ] Query health score history (last 30 days):
+- [x] If tenant_id parameter provided
+- [x] Query latest health score for tenant
+- [x] Query health score history (last 30 days):
   ```sql
   SELECT * FROM retail er_health_scores
   WHERE tenant_id = ?
   ORDER BY calculated_at DESC
   LIMIT 30
   ```
-- [ ] Return JSON with:
-  - [ ] current_score (latest)
-  - [ ] history (array)
-  - [ ] trend (improving/declining based on history)
+- [x] Return JSON with:
+  - [x] current_score (latest)
+  - [x] history (array)
+  - [x] trend (improving/declining based on history)
 
 #### Test Health Scores API
-- [ ] Test list all health scores
-- [ ] Test filter by category='at_risk'
-- [ ] Test filter by category='power_user'
-- [ ] Test sort by score ascending
-- [ ] Test get specific tenant health score
-- [ ] Verify trend calculation works
+- [x] Test list all health scores
+- [x] Test filter by category='at_risk'
+- [x] Test filter by category='power_user'
+- [x] Test sort by score ascending
+- [x] Test get specific tenant health score
+- [x] Verify trend calculation works
 
 #### Create StorageCalculator Worker
-- [ ] Create file: `backend/workers/StorageCalculator.php`
-- [ ] Add PHP opening tag
-- [ ] Require database config
-- [ ] Initialize connection
+- [x] Create file: `backend/workers/StorageCalculator.php`
+- [x] Add PHP opening tag
+- [x] Require database config
+- [x] Initialize connection
 
 #### Calculate Database Size Per Tenant
-- [ ] Get list of all tenants
-- [ ] For each tenant:
-  - [ ] Query total rows for this tenant across all tables:
+- [x] Get list of all tenants
+- [x] For each tenant:
+  - [x] Query total rows for this tenant across all tables:
     ```sql
     SELECT 
       (SELECT COUNT(*) FROM inventory WHERE tenant_id = ?) +
@@ -384,21 +384,21 @@
       ... (all tenant-specific tables)
     AS total_records
     ```
-  - [ ] Estimate database size (rows * avg_row_size)
-  - [ ] Or use table size query:
+  - [x] Estimate database size (rows * avg_row_size)
+  - [x] Or use table size query:
     ```sql
     SELECT SUM(data_length + index_length) / 1024 / 1024 AS size_mb
     FROM information_schema.TABLES
     WHERE table_schema = 'store'
     AND table_name IN (...)
     ```
-  - [ ] (This gets total, need to calculate per-tenant portion)
-  - [ ] Store in variable
+  - [x] (This gets total, need to calculate per-tenant portion)
+  - [x] Store in variable
 
 #### Calculate File Storage Per Tenant
-- [ ] For each tenant:
-  - [ ] Check if uploads directory exists for tenant
-  - [ ] Calculate directory size:
+- [x] For each tenant:
+  - [x] Check if uploads directory exists for tenant
+  - [x] Calculate directory size:
     ```php
     function getDirectorySize($path) {
         $totalSize = 0;
@@ -411,43 +411,43 @@
         return $totalSize;
     }
     ```
-  - [ ] Convert to MB
-  - [ ] Store in variable
+  - [x] Convert to MB
+  - [x] Store in variable
 
 #### Store Storage Metrics
-- [ ] For each tenant:
-  - [ ] INSERT INTO storage_metrics (tenant_id, database_size_mb, file_storage_mb, total_records, measured_at)
-  - [ ] VALUES (?, ?, ?, ?, NOW())
-  - [ ] Execute
+- [x] For each tenant:
+  - [x] INSERT INTO storage_metrics (tenant_id, database_size_mb, file_storage_mb, total_records, measured_at)
+  - [x] VALUES (?, ?, ?, ?, NOW())
+  - [x] Execute
 
 #### Add Logging
-- [ ] Echo: "Calculated storage for X tenants"
-- [ ] Echo: "Total platform database size: X MB"
-- [ ] Echo: "Total platform file storage: Y MB"
+- [x] Echo: "Calculated storage for X tenants"
+- [x] Echo: "Total platform database size: X MB"
+- [x] Echo: "Total platform file storage: Y MB"
 
 #### Test StorageCalculator
-- [ ] Run manually: `php backend/workers/StorageCalculator.php`
-- [ ] Check storage_metrics table
-- [ ] Verify entries for all tenants
-- [ ] Verify sizes reasonable
-- [ ] Check execution time
+- [x] Run manually: `php backend/workers/StorageCalculator.php`
+- [x] Check storage_metrics table
+- [x] Verify entries for all tenants
+- [x] Verify sizes reasonable
+- [x] Check execution time
 
 #### Add to Cron (if not already scheduled)
-- [ ] Open crontab: `crontab -e`
-- [ ] Add line (if not exists):
+- [x] Open crontab: `crontab -e`
+- [x] Add line (if not exists):
   ```
   0 4 * * * /usr/bin/php /path/to/backend/workers/StorageCalculator.php >> /path/to/backend/logs/storage_calculator.log 2>&1
   ```
-- [ ] Save
+- [x] Save
 
 #### Day 15 Validation
-- [ ] Health scores API works
-- [ ] Filtering and sorting functional
-- [ ] History and trends calculated correctly
-- [ ] StorageCalculator worker runs successfully
-- [ ] Storage metrics stored for all tenants
-- [ ] Cron job scheduled
-- [ ] Commit: `git add . && git commit -m "Day 15: Health scores API and storage calculator"`
+- [x] Health scores API works
+- [x] Filtering and sorting functional
+- [x] History and trends calculated correctly
+- [x] StorageCalculator worker runs successfully
+- [x] Storage metrics stored for all tenants
+- [x] Cron job scheduled
+- [x] Commit: `git add . && git commit -m "Day 15: Health scores API and storage calculator"`
 - [ ] Tag: `git tag phase-3-complete`
 
 #### Phase 3 Complete
