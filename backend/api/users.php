@@ -1,6 +1,7 @@
 <?php
 require_once '../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once '../../middleware/api_logger.php'; // API request logging
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
