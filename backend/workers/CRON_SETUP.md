@@ -19,6 +19,12 @@ This guide explains how to set up cron jobs for the background workers.
 **Schedule:** Every hour (15 minutes after metrics aggregation)  
 **Cron:** `15 * * * *`
 
+### 3. Data Retention Worker
+**File:** `backend/workers/data_retention_worker.php`  
+**Purpose:** Cleans up old logs and optimizes database storage  
+**Schedule:** Daily at 2:00 AM  
+**Cron:** `0 2 * * *`
+
 ---
 
 ## Setup Instructions
@@ -37,6 +43,9 @@ crontab -e
 
 # Alert System - Runs every hour at minute 15 (after metrics)
 15 * * * * /usr/bin/php /Applications/XAMPP/xamppfiles/htdocs/store/backend/workers/alert_system_worker.php >> /Applications/XAMPP/xamppfiles/htdocs/store/backend/logs/cron.log 2>&1
+
+# Data Retention - Runs daily at 2:00 AM
+0 2 * * * /usr/bin/php /Applications/XAMPP/xamppfiles/htdocs/store/backend/workers/data_retention_worker.php >> /Applications/XAMPP/xamppfiles/htdocs/store/backend/logs/cron.log 2>&1
 ```
 
 3. **Save and exit** (in vi: press `ESC`, type `:wq`, press `ENTER`)
