@@ -13,6 +13,12 @@ This guide explains how to set up cron jobs for the background workers.
 **Schedule:** Every hour  
 **Cron:** `0 * * * *`
 
+### 2. Alert System Worker
+**File:** `backend/workers/alert_system_worker.php`  
+**Purpose:** Monitors metrics and sends email alerts when thresholds are exceeded  
+**Schedule:** Every hour (15 minutes after metrics aggregation)  
+**Cron:** `15 * * * *`
+
 ---
 
 ## Setup Instructions
@@ -24,10 +30,13 @@ This guide explains how to set up cron jobs for the background workers.
 crontab -e
 ```
 
-2. **Add the following line:**
+2. **Add the following lines:**
 ```bash
 # Metrics Aggregation - Runs every hour at minute 0
 0 * * * * /usr/bin/php /Applications/XAMPP/xamppfiles/htdocs/store/backend/workers/metrics_aggregation_worker.php >> /Applications/XAMPP/xamppfiles/htdocs/store/backend/logs/cron.log 2>&1
+
+# Alert System - Runs every hour at minute 15 (after metrics)
+15 * * * * /usr/bin/php /Applications/XAMPP/xamppfiles/htdocs/store/backend/workers/alert_system_worker.php >> /Applications/XAMPP/xamppfiles/htdocs/store/backend/logs/cron.log 2>&1
 ```
 
 3. **Save and exit** (in vi: press `ESC`, type `:wq`, press `ENTER`)
