@@ -1,0 +1,293 @@
+/* User Health Page */
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 0;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* Charts Section */
+.charts-section {
+    margin-bottom: 32px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+/* Cohort Section */
+.cohort-section {
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.cohort-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.cohort-description {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 24px 0;
+}
+
+.cohort-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+}
+
+.cohort-table th,
+.cohort-table td {
+    padding: 12px 16px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.cohort-table thead th {
+    background: var(--bg-surface);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+}
+
+.cohort-table tbody td {
+    font-weight: 500;
+}
+
+.cohort-month {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cohort-legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.legend-color {
+    width: 24px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+/* Inactive Users Section */
+.inactive-users-section {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.inactive-users-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+/* Role Badge */
+.role-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.role-superadmin {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+.role-admin {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+.role-user {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Dark theme adjustments */
+[data-theme='dark'] .role-superadmin {
+    background: rgba(234, 67, 53, 0.2);
+}
+
+[data-theme='dark'] .role-admin {
+    background: rgba(66, 133, 244, 0.2);
+}
+
+[data-theme='dark'] .role-user {
+    background: rgba(52, 168, 83, 0.2);
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+    .page-header h1 {
+        font-size: 28px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .cohort-section,
+    .inactive-users-section {
+        padding: 16px;
+    }
+
+    .cohort-table th,
+    .cohort-table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .cohort-legend {
+        gap: 16px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .cohort-section,
+    .inactive-users-section {
+        padding: 12px;
+    }
+
+    .cohort-section h3,
+    .inactive-users-section h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .cohort-description {
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+
+    .cohort-table th,
+    .cohort-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .cohort-legend {
+        gap: 12px;
+    }
+
+    .legend-item {
+        font-size: 12px;
+    }
+
+    .legend-color {
+        width: 20px;
+        height: 14px;
+    }
+
+    .role-badge {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    .cohort-table th,
+    .cohort-table td {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .role-badge {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+}
+
+/* iPhone SE */
+@media (max-width: 320px) {
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .cohort-section h3,
+    .inactive-users-section h3 {
+        font-size: 15px;
+    }
+
+    .cohort-table th,
+    .cohort-table td {
+        padding: 6px;
+        font-size: 10px;
+    }
+
+    .legend-item {
+        font-size: 11px;
+    }
+}

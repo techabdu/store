@@ -69,6 +69,8 @@ import OverviewDashboard from './pages/SuperAdmin/OverviewDashboard';
 import TenantDetail from './pages/SuperAdmin/TenantDetail';
 import SystemHealth from './pages/SuperAdmin/SystemHealth';
 import ErrorHealth from './pages/SuperAdmin/ErrorHealth';
+import BusinessHealth from './pages/SuperAdmin/BusinessHealth';
+import UserHealth from './pages/SuperAdmin/UserHealth';
 
 function App() {
     return (
@@ -168,6 +170,22 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <ErrorHealth />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/business-health"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <BusinessHealth />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/user-health"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <UserHealth />
                                         </ProtectedRoute>
                                     }
                                 />
