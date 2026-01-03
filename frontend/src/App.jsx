@@ -65,6 +65,7 @@ import MySales from './pages/marketplace/MySales';
 import Debts from './pages/shared/Debts';
 import TestWebSocket from './pages/TestWebSocket';
 import ComponentTest from './pages/SuperAdmin/ComponentTest';
+import OverviewDashboard from './pages/SuperAdmin/OverviewDashboard';
 
 function App() {
     return (
@@ -132,6 +133,14 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <ComponentTest />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/overview"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <OverviewDashboard />
                                         </ProtectedRoute>
                                     }
                                 />
