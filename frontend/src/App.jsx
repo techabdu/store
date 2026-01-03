@@ -67,6 +67,8 @@ import TestWebSocket from './pages/TestWebSocket';
 import ComponentTest from './pages/SuperAdmin/ComponentTest';
 import OverviewDashboard from './pages/SuperAdmin/OverviewDashboard';
 import TenantDetail from './pages/SuperAdmin/TenantDetail';
+import SystemHealth from './pages/SuperAdmin/SystemHealth';
+import ErrorHealth from './pages/SuperAdmin/ErrorHealth';
 
 function App() {
     return (
@@ -150,6 +152,22 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <TenantDetail />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/system-health"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <SystemHealth />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/error-health"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <ErrorHealth />
                                         </ProtectedRoute>
                                     }
                                 />
