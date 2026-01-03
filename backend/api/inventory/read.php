@@ -15,7 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/shop_helper.php';
@@ -146,10 +145,6 @@ try {
         'offset' => $offset,
         'shop_id' => $shopId
     ]);
-
-    // Track feature usage
-    require_once '../../helpers/FeatureTracker.php';
-    FeatureTracker::track('inventory', 'view', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
     
     $stmt->close();
     $countStmt->close();

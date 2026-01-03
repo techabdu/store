@@ -9,7 +9,6 @@ header('Content-Type: application/json');
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/activity_log.php';
@@ -171,12 +170,9 @@ try {
         // Log activity
         logActivity(
             $_SESSION['user_id'],
+            'inventory_update',
             $logDetails
         );
-
-        // Track feature usage
-        require_once '../../helpers/FeatureTracker.php';
-        FeatureTracker::track('inventory', 'update', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
         
         http_response_code(200);
         echo json_encode([

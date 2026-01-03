@@ -1,6 +1,5 @@
 <?php
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 require_once '../../config/config.php';
 require_once '../../helpers/email_sender.php';
 require_once '../../helpers/sanitize.php';

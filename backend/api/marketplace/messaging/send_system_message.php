@@ -4,7 +4,6 @@
 
 // Database connection is expected to be provided by the caller
 // require_once dirname(__DIR__, 3) . '/config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 
 /**
  * Send an automatic system message in a marketplace conversation

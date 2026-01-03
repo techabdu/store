@@ -3,7 +3,6 @@
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 
 // Set CORS headers
 setCorsHeaders();
@@ -125,29 +124,6 @@ if ($msg_stmt->execute()) {
     // Unarchive for both
     $conn->query("UPDATE marketplace_conversations SET is_archived_by_buyer = 0, is_archived_by_seller = 0 WHERE id = $conversation_id");
     
-    // Track feature usage
-    // We need tenant_id. It's available if new conversation created, but if replying, we need to fetch it.
-    // Let's assume tenant_id is in session properly or fetch from conversation.
-    // For now, use session tenant_id as simpler proxy or fetch properly.
-    // Best: fetch from conversation or listings.
-    
-    // Simple fetch of tenant_id from conversation to be safe
-    if (!isset($tenant_id)) {
-        $t_stmt = $conn->prepare("SELECT tenant_id, buyer_shop_id FROM marketplace_conversations WHERE id = ?");
-        $t_stmt->bind_param("i", $conversation_id);
-        $t_stmt->execute();
-        $t_res = $t_stmt->get_result()->fetch_assoc();
-        $tenant_id = $t_res['tenant_id'];
-        $buyer_shop_id = $t_res['buyer_shop_id']; // This might be null if seller is replying
-    }
-    
-    require_once '../../../helpers/FeatureTracker.php';
-    // shop_id logic: if sender is buyer, use buyer_shop_id. If sender is seller... we need seller's shop id. 
-    // Let's just pass null for shop_id if unclear, or session shop id.
-    // Simplest: Current session shop id or null.
-    $current_shop_id = $_SESSION['shop_id'] ?? null;
-    FeatureTracker::track('marketplace', 'send_message', $user_id, $tenant_id, $current_shop_id);
-
     echo json_encode(['success' => true, 'message' => 'Message sent', 'conversation_id' => $conversation_id]);
 } else {
     http_response_code(500);

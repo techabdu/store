@@ -1,7 +1,6 @@
 <?php
 require_once '../../config/config.php';
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 require_once '../../middleware/auth.php';
 require_once '../../helpers/shop_helper.php';
 
@@ -266,10 +265,6 @@ function createReport($conn, $user_id, $shopId) {
         } else {
             throw new Exception("Failed to save report: " . $stmt->error);
         }
-
-        // Track feature usage
-        require_once '../../helpers/FeatureTracker.php';
-        FeatureTracker::track('reports', 'generate', $user_id, $_SESSION['tenant_id'], $shopId);
 
     } catch (Exception $e) {
         http_response_code(500);

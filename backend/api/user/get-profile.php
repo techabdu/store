@@ -22,7 +22,6 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 
 // Set CORS headers using centralized config
 setCorsHeaders();

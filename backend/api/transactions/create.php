@@ -9,7 +9,6 @@ header('Content-Type: application/json');
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/activity_log.php';
@@ -342,10 +341,6 @@ try {
             'trade_in_items' => count($tradeInItems)
         ])
     );
-
-    // Track feature usage
-    require_once '../../helpers/FeatureTracker.php';
-    FeatureTracker::track('pos_sales', 'create', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
     
     // Commit transaction
     $conn->commit();

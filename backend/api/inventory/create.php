@@ -6,7 +6,6 @@
  */
 
 require_once '../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
 require_once '../../config/config.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
@@ -147,10 +146,6 @@ try {
             'inventory_create',
             "Added new inventory: $brand $model (IMEI: $imei)"
         );
-
-        // Track feature usage
-        require_once '../../helpers/FeatureTracker.php';
-        FeatureTracker::track('inventory', 'create', $_SESSION['user_id'], $_SESSION['tenant_id'], $shopId);
         
         http_response_code(201);
         echo json_encode([
