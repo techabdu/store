@@ -26,7 +26,9 @@ import {
   ChevronRight,
   TrendingUp,
   PieChart,
-  Boxes
+  Boxes,
+  AlertCircle,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -67,12 +69,22 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
           {
+            label: 'System Health',
+            icon: Activity,
+            children: [
+              { icon: Activity, label: 'System Metrics', path: '/superadmin/system-health' },
+              { icon: AlertCircle, label: 'Error Diagnostics', path: '/superadmin/error-health' },
+              { icon: DollarSign, label: 'Business Health', path: '/superadmin/business-health' },
+              { icon: Users, label: 'User Analytics', path: '/superadmin/user-health' }
+            ]
+          },
+          {
             label: 'Management',
             icon: Settings,
             children: [
               { icon: Users, label: 'User Management', path: '/superadmin/users' },
               { icon: Store, label: 'Tenant Management', path: '/superadmin/tenants' },
-              { icon: Activity, label: 'System Insights', path: '/superadmin/system-insights' }
+              { icon: MessageSquare, label: 'Support Queue', path: '/superadmin/support' }
             ]
           },
           { icon: Globe, label: 'Marketplace', path: '/marketplace' }

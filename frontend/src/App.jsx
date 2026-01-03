@@ -71,6 +71,7 @@ import SystemHealth from './pages/SuperAdmin/SystemHealth';
 import ErrorHealth from './pages/SuperAdmin/ErrorHealth';
 import BusinessHealth from './pages/SuperAdmin/BusinessHealth';
 import UserHealth from './pages/SuperAdmin/UserHealth';
+import SupportDashboard from './pages/SuperAdmin/SupportDashboard';
 import MyTickets from './pages/Support/MyTickets';
 import TicketDetail from './pages/Support/TicketDetail';
 
@@ -188,6 +189,14 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <UserHealth />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/support"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <SupportDashboard />
                                         </ProtectedRoute>
                                     }
                                 />
