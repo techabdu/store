@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRealtimeAlerts } from '../hooks/useRealtimeAlerts';
 import { useRealtimeMetrics } from '../hooks/useRealtimeMetrics';
 import ConnectionIndicator from '../components/ConnectionIndicator';
