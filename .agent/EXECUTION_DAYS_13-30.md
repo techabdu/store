@@ -649,22 +649,22 @@
   stderr_logfile=/var/log/websocket-server-error.log
   ```
 - [x] Save file
-- [ ] Reload supervisor: `sudo supervisorctl reread`
-- [ ] Update: `sudo supervisorctl update`
-- [ ] Start: `sudo supervisorctl start websocket-server`
-- [ ] Check status: `sudo supervisorctl status websocket-server`
+- [x] Reload supervisor: `sudo supervisorctl reread`
+- [x] Update: `sudo supervisorctl update`
+- [x] Start: `sudo supervisorctl start websocket-server`
+- [x] Check status: `sudo supervisorctl status websocket-server`
 
 #### Day 16-17 Validation
-- [ ] WebSocket server file created
-- [ ] All MessageComponentInterface methods implemented
-- [ ] 4 channels implemented (alerts, metrics, activity, errors)
-- [ ] Polling logic works for all channels
-- [ ] Can connect from browser
-- [ ] Subscribe/unsubscribe works
-- [ ] Broadcasts received
-- [ ] Supervisor configured (for production)
-- [ ] Server stable (no crashes after 1 hour)
-- [ ] Commit: `git add . && git commit -m "Day 16-17: WebSocket server implementation"`
+- [x] WebSocket server file created
+- [x] All MessageComponentInterface methods implemented
+- [x] 4 channels implemented (alerts, metrics, activity, errors)
+- [x] Polling logic works for all channels
+- [x] Can connect from browser
+- [x] Subscribe/unsubscribe works
+- [x] Broadcasts received
+- [x] Supervisor configured (for production)
+- [x] Server stable (no crashes after 1 hour)
+- [x] Commit: `git add . && git commit -m "Day 16-17: WebSocket server implementation"`
 
 ---
 

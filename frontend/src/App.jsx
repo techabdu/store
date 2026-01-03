@@ -63,6 +63,7 @@ import MarketplaceReceipt from './pages/marketplace/MarketplaceReceipt';
 import MyPurchases from './pages/marketplace/MyPurchases';
 import MySales from './pages/marketplace/MySales';
 import Debts from './pages/shared/Debts';
+import TestWebSocket from './pages/TestWebSocket';
 
 function App() {
     return (
@@ -114,6 +115,14 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <SystemInsights />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/test-websocket"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <TestWebSocket />
                                         </ProtectedRoute>
                                     }
                                 />
