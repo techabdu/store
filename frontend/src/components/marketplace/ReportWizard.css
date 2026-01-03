@@ -1,0 +1,378 @@
+/* Report Wizard Styles */
+
+.wizard-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.wizard-content {
+    width: 100%;
+    max-width: 600px;
+    background: var(--bg-surface);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.wizard-header {
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-header h2 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--error);
+}
+
+/* Progress Bar */
+.wizard-progress {
+    height: 4px;
+    background: var(--hover-bg);
+    width: 100%;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.step-1 {
+    width: 25%;
+}
+
+.step-2 {
+    width: 50%;
+}
+
+.step-3 {
+    width: 75%;
+}
+
+.step-4 {
+    width: 100%;
+}
+
+.wizard-body {
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.wizard-step h3 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.step-subtitle {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 14px;
+}
+
+/* Step 1: Types */
+.report-types-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.type-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-background);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.type-card:hover {
+    border-color: var(--primary);
+    background: var(--hover-bg);
+    transform: translateX(4px);
+}
+
+.type-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.type-info {
+    flex: 1;
+}
+
+.type-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 2px;
+}
+
+.type-desc {
+    display: block;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.arrow {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+/* Step 2: Form */
+.form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-background);
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.context-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(66, 133, 244, 0.05);
+    border: 1px dashed var(--primary);
+    border-radius: 8px;
+    color: var(--primary);
+    font-size: 13px;
+}
+
+/* Step 3: Review */
+.review-card {
+    padding: 24px;
+    background: var(--bg-background);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.review-item label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.review-text {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.review-text.desc {
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+/* Step 4: Success */
+.success-step {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success-icon-wrapper {
+    width: 100px;
+    height: 100px;
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+}
+
+.ticket-box {
+    margin: 32px 0;
+    background: var(--hover-bg);
+    padding: 24px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ticket-box .label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.ticket-box .number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: monospace;
+}
+
+/* Actions */
+.wizard-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-next,
+.btn-submit,
+.btn-close-wizard {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-submit {
+    background: var(--success);
+}
+
+.btn-close-wizard {
+    width: 100%;
+    justify-content: center;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.wizard-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--error);
+    font-size: 14px;
+    margin-top: 16px;
+    background: rgba(234, 67, 53, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* Animations */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .wizard-overlay {
+        padding: 0;
+    }
+
+    .wizard-content {
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .wizard-body {
+        padding: 24px;
+    }
+
+    .wizard-step h3 {
+        font-size: 20px;
+    }
+}
