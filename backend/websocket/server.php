@@ -18,6 +18,7 @@ class SuperAdminDashboard implements MessageComponentInterface {
     protected $lastMetricCheck = 0;
     protected $lastActivityCheck = 0;
     protected $lastErrorCheck = 0;
+    protected $lastTenantNotificationCheck = 0;
 
     public function __construct() {
         $this->clients = new \SplObjectStorage;
@@ -242,6 +243,64 @@ class SuperAdminDashboard implements MessageComponentInterface {
         }
     }
     
+    // Check for new tenant-specific notifications - Poll every 5 seconds
+    public function checkForNewTenantNotifications() {
+        $now = time();
+        $lastCheck = $this->lastTenantNotificationCheck ?: ($now - 5);
+        $queryCheckTime = date('Y-m-d H:i:s', $lastCheck);
+
+        try {
+            // Find all unique tenant IDs from active subscriptions
+            $activeTenantIds = [];
+            foreach (array_keys($this->subscriptions) as $channel) {
+                if (preg_match('/^tenant_(\d+)_notifications$/', $channel, $matches)) {
+                    $activeTenantIds[] = intval($matches[1]);
+                }
+            }
+
+            if (empty($activeTenantIds)) {
+                $this->lastTenantNotificationCheck = $now;
+                return;
+            }
+
+            $placeholders = implode(',', array_fill(0, count($activeTenantIds), '?'));
+            $sql = "
+                SELECT * FROM tenant_notifications
+                WHERE is_resolved = 0
+                AND created_at > ?
+                AND tenant_id IN ($placeholders)
+                ORDER BY created_at DESC
+            ";
+
+            $stmt = $this->conn->prepare($sql);
+            $types = "s" . str_repeat("i", count($activeTenantIds));
+            $params = array_merge([$queryCheckTime], $activeTenantIds);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $notificationsByTenant = [];
+            while ($row = $result->fetch_assoc()) {
+                $notificationsByTenant[$row['tenant_id']][] = $row;
+            }
+            
+            foreach ($notificationsByTenant as $tenantId => $notifications) {
+                echo "Broadcasting " . count($notifications) . " new notifications to tenant $tenantId\n";
+                $this->broadcastToChannel("tenant_{$tenantId}_notifications", [
+                    'type' => 'new_notifications',
+                    'data' => $notifications
+                ]);
+            }
+            
+            $this->lastTenantNotificationCheck = $now;
+        } catch (\Exception $e) {
+             echo "Tenant notification check error: " . $e->getMessage() . "\n";
+             if (strpos($e->getMessage(), 'gone away') !== false) {
+                 $this->reconnectDb();
+            }
+        }
+    }
+
     private function reconnectDb() {
         echo "Reconnecting to database...\n";
         $db = new Database();
@@ -268,6 +327,10 @@ $loop->addPeriodicTimer(10, function() use ($dashboard) {
 
 $loop->addPeriodicTimer(10, function() use ($dashboard) {
     $dashboard->checkForNewErrors();
+});
+
+$loop->addPeriodicTimer(5, function() use ($dashboard) {
+    $dashboard->checkForNewTenantNotifications();
 });
 
 // Create WebSocket server on port 8080

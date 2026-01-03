@@ -5,42 +5,26 @@
  * Purpose: Manage all support tickets (list, view details, respond, change status)
  * Method: GET (list, detail), POST (respond, change_status)
  * Authentication: Required (SuperAdmin only)
- * 
- * Actions:
- * - action=list: Get all tickets with filtering
- * - action=detail&id={id}: Get ticket details and conversation thread
- * - action=respond (POST): Add an admin response to a ticket
- * - action=change_status (POST): Update ticket status
  */
 
-require_once '../../config/database.php';
 require_once '../../config/config.php';
+require_once '../../config/database.php';
+require_once '../../middleware/auth.php';
+require_once '../../middleware/role.php';
 require_once '../../helpers/EmailNotifier.php';
 
 // Set headers
 header('Content-Type: application/json');
 setCorsHeaders();
 
-// Start session and check authentication
-session_start();
-
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'superadmin') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Forbidden: SuperAdmin access required']);
-    exit;
-}
+// Authenticate and verify SuperAdmin role
+$user = checkAuth();
+checkRole(['superadmin']);
 
 $admin_id = $_SESSION['user_id'];
 
-// Get database connection
-$database = new Database();
-$conn = $database->connect();
-
-if (!$conn) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
-    exit;
-}
+// Database connection is already initialized in database.php as $conn
+global $conn;
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
@@ -53,7 +37,7 @@ if ($method === 'GET') {
         $type = isset($_GET['type']) ? $_GET['type'] : '';
         
         $query = "
-            SELECT t.*, u.username as creator_name, u.email as creator_email, tn.name as tenant_name 
+            SELECT t.*, u.username as creator_name, u.email as creator_email, tn.shop_name as tenant_name 
             FROM support_tickets t
             JOIN users u ON t.user_id = u.id
             JOIN tenants tn ON t.tenant_id = tn.id
@@ -84,6 +68,12 @@ if ($method === 'GET') {
         $query .= " ORDER BY t.created_at DESC";
         
         $stmt = $conn->prepare($query);
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Prepare failed: ' . $conn->error]);
+            exit;
+        }
+
         if (!empty($params)) {
             $stmt->bind_param($types, ...$params);
         }
@@ -107,7 +97,9 @@ if ($method === 'GET') {
             FROM support_tickets
         ";
         $stats_result = $conn->query($stats_query);
-        $stats = $stats_result->fetch_assoc();
+        $stats = $stats_result ? $stats_result->fetch_assoc() : [
+            'total' => 0, 'open_tickets' => 0, 'in_progress' => 0, 'awaiting' => 0, 'resolved' => 0
+        ];
         
         echo json_encode([
             'success' => true, 
@@ -127,12 +119,17 @@ if ($method === 'GET') {
         
         // Fetch ticket details
         $stmt = $conn->prepare("
-            SELECT t.*, u.username as creator_name, u.email as creator_email, tn.name as tenant_name 
+            SELECT t.*, u.username as creator_name, u.email as creator_email, tn.shop_name as tenant_name 
             FROM support_tickets t
             JOIN users u ON t.user_id = u.id
             JOIN tenants tn ON t.tenant_id = tn.id
             WHERE t.id = ?
         ");
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Prepare failed: ' . $conn->error]);
+            exit;
+        }
         $stmt->bind_param("i", $ticket_id);
         $stmt->execute();
         $ticket_result = $stmt->get_result();
@@ -154,15 +151,19 @@ if ($method === 'GET') {
             WHERE r.ticket_id = ?
             ORDER BY r.created_at ASC
         ");
-        $resp_stmt->bind_param("i", $ticket_id);
-        $resp_stmt->execute();
-        $resp_result = $resp_stmt->get_result();
-        
-        $responses = [];
-        while ($row = $resp_result->fetch_assoc()) {
-            $responses[] = $row;
+        if ($resp_stmt) {
+            $resp_stmt->bind_param("i", $ticket_id);
+            $resp_stmt->execute();
+            $resp_result = $resp_stmt->get_result();
+            
+            $responses = [];
+            while ($row = $resp_result->fetch_assoc()) {
+                $responses[] = $row;
+            }
+            $resp_stmt->close();
+        } else {
+            $responses = [];
         }
-        $resp_stmt->close();
         
         // Fetch history
         $hist_stmt = $conn->prepare("
@@ -172,15 +173,19 @@ if ($method === 'GET') {
             WHERE h.ticket_id = ?
             ORDER BY h.changed_at DESC
         ");
-        $hist_stmt->bind_param("i", $ticket_id);
-        $hist_stmt->execute();
-        $hist_result = $hist_stmt->get_result();
-        
-        $history = [];
-        while ($row = $hist_result->fetch_assoc()) {
-            $history[] = $row;
+        if ($hist_stmt) {
+            $hist_stmt->bind_param("i", $ticket_id);
+            $hist_stmt->execute();
+            $hist_result = $hist_stmt->get_result();
+            
+            $history = [];
+            while ($row = $hist_result->fetch_assoc()) {
+                $history[] = $row;
+            }
+            $hist_stmt->close();
+        } else {
+            $history = [];
         }
-        $hist_stmt->close();
         
         echo json_encode([
             'success' => true, 
@@ -207,6 +212,11 @@ if ($method === 'GET') {
             INSERT INTO support_ticket_responses (ticket_id, user_id, is_admin_response, message) 
             VALUES (?, ?, 1, ?)
         ");
+        if (!$ins_stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Prepare failed: ' . $conn->error]);
+            exit;
+        }
         $ins_stmt->bind_param("iis", $ticket_id, $admin_id, $message);
         
         if ($ins_stmt->execute()) {
@@ -216,9 +226,11 @@ if ($method === 'GET') {
                 SET status = 'awaiting_response', updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ? AND status IN ('open', 'in_progress')
             ");
-            $update_stmt->bind_param("i", $ticket_id);
-            $update_stmt->execute();
-            $update_stmt->close();
+            if ($update_stmt) {
+                $update_stmt->bind_param("i", $ticket_id);
+                $update_stmt->execute();
+                $update_stmt->close();
+            }
             
             // Notify user about admin response
             try {
@@ -228,20 +240,22 @@ if ($method === 'GET') {
                     JOIN users u ON t.user_id = u.id 
                     WHERE t.id = ?
                 ");
-                $user_stmt->bind_param("i", $ticket_id);
-                $user_stmt->execute();
-                $user_res = $user_stmt->get_result();
-                if ($target_user = $user_res->fetch_assoc()) {
-                    $notifier = new EmailNotifier();
-                    $notifier->sendResponseNotification(
-                        $target_user['email'],
-                        $target_user['username'],
-                        $target_user['ticket_number'],
-                        true,
-                        $message
-                    );
+                if ($user_stmt) {
+                    $user_stmt->bind_param("i", $ticket_id);
+                    $user_stmt->execute();
+                    $user_res = $user_stmt->get_result();
+                    if ($target_user = $user_res->fetch_assoc()) {
+                        $notifier = new EmailNotifier();
+                        $notifier->sendResponseNotification(
+                            $target_user['email'],
+                            $target_user['username'],
+                            $target_user['ticket_number'],
+                            true,
+                            $message
+                        );
+                    }
+                    $user_stmt->close();
                 }
-                $user_stmt->close();
             } catch (Exception $e) {
                 error_log("Failed to send response notification to user: " . $e->getMessage());
             }
@@ -249,7 +263,7 @@ if ($method === 'GET') {
             echo json_encode(['success' => true, 'message' => 'Response added successfully']);
         } else {
             http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'Failed to add response']);
+            echo json_encode(['success' => false, 'error' => 'Failed to add response: ' . $ins_stmt->error]);
         }
         $ins_stmt->close();
         
@@ -266,6 +280,11 @@ if ($method === 'GET') {
         
         // Get current status
         $cur_stmt = $conn->prepare("SELECT status FROM support_tickets WHERE id = ?");
+        if (!$cur_stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Prepare failed: ' . $conn->error]);
+            exit;
+        }
         $cur_stmt->bind_param("i", $ticket_id);
         $cur_stmt->execute();
         $cur_res = $cur_stmt->get_result();
@@ -287,6 +306,11 @@ if ($method === 'GET') {
         // Update status
         $resolved_at_sql = ($new_status === 'resolved') ? ", resolved_at = CURRENT_TIMESTAMP" : "";
         $upd_stmt = $conn->prepare("UPDATE support_tickets SET status = ?, updated_at = CURRENT_TIMESTAMP $resolved_at_sql WHERE id = ?");
+        if (!$upd_stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Prepare failed: ' . $conn->error]);
+            exit;
+        }
         $upd_stmt->bind_param("si", $new_status, $ticket_id);
         
         if ($upd_stmt->execute()) {
@@ -295,18 +319,21 @@ if ($method === 'GET') {
                 INSERT INTO support_ticket_status_history (ticket_id, from_status, to_status, changed_by, notes) 
                 VALUES (?, ?, ?, ?, ?)
             ");
-            $hist_stmt->bind_param("issis", $ticket_id, $old_status, $new_status, $admin_id, $notes);
-            $hist_stmt->execute();
-            $hist_stmt->close();
+            if ($hist_stmt) {
+                $hist_stmt->bind_param("issis", $ticket_id, $old_status, $new_status, $admin_id, $notes);
+                $hist_stmt->execute();
+                $hist_stmt->close();
+            }
             
             echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
         } else {
             http_response_code(500);
-            echo json_encode(['success' => false, 'error' => 'Failed to update status']);
+            echo json_encode(['success' => false, 'error' => 'Failed to update status: ' . $upd_stmt->error]);
         }
         $upd_stmt->close();
     }
+} else {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
 }
-
-$conn->close();
 ?>

@@ -67,6 +67,7 @@ import TestWebSocket from './pages/TestWebSocket';
 import ComponentTest from './pages/SuperAdmin/ComponentTest';
 import OverviewDashboard from './pages/SuperAdmin/OverviewDashboard';
 import TenantDetail from './pages/SuperAdmin/TenantDetail';
+import TenantDetailPage from './pages/superadmin/TenantDetailPage';
 import SystemHealth from './pages/SuperAdmin/SystemHealth';
 import ErrorHealth from './pages/SuperAdmin/ErrorHealth';
 import BusinessHealth from './pages/SuperAdmin/BusinessHealth';
@@ -74,6 +75,7 @@ import UserHealth from './pages/SuperAdmin/UserHealth';
 import SupportDashboard from './pages/SuperAdmin/SupportDashboard';
 import MyTickets from './pages/Support/MyTickets';
 import TicketDetail from './pages/Support/TicketDetail';
+import ImpersonationBanner from './components/superadmin/ImpersonationBanner';
 
 function App() {
     return (
@@ -82,6 +84,7 @@ function App() {
                 <ThemeProvider>
                     <NotificationProvider>
                         <AuthProvider>
+                            <ImpersonationBanner />
                             <Routes>
                                 <Route path="/login" element={<Login />} />
                                 <Route path="/register" element={<Register />} />
@@ -189,6 +192,14 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <UserHealth />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/tenants/:id"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <TenantDetailPage />
                                         </ProtectedRoute>
                                     }
                                 />
