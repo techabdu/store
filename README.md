@@ -15,13 +15,20 @@ A complete SaaS-ready management system for phone retail businesses. Supports mu
 - **Inventory Management**: Track phones with IMEI, brand, model, storage, color, condition, and pricing.
 - **Point of Sale (POS)**: Process sales and trade-ins with automatic inventory updates.
 - **Financials**: Track expenses, sales history, and generate profit/loss reports.
-- **Security**: Email verification, secure authentication, and activity logging.
+- **Support System**: Robust internal helpdesk with role-based ticket management.
+- **Platform Monitoring**: Real-time health tracking for system, users, errors, and business metrics.
+- **Reporting Wizard**: Context-aware 3-step reporting for disputes and technical issues.
+- **Security**: Email verification, secure authentication, and detailed activity audit logs.
 
 ## Tech Stack
 
 - **Frontend**: React (Vite), React Router, Axios, Tailwind-like CSS
 - **Backend**: PHP (OOP), RESTful APIs, MySQL
 - **Security**: JWT-like session management, BCrypt password hashing, CSRF protection
+
+## Documentation
+- **User Guide**: [Support & Monitoring User Guide](./MONITORING_USER_GUIDE.md)
+- **Admin Guide**: [Technical Infrastructure & Monitoring Admin Guide](./MONITORING_ADMIN_GUIDE.md)
 
 ## Quick Start
 
