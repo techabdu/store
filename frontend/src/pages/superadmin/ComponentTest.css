@@ -1,0 +1,164 @@
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.test-section {
+    margin-bottom: 48px;
+}
+
+.section-title {
+    font-size: 24px;
+    color: var(--text-primary);
+    margin: 0 0 24px 0;
+    font-weight: 600;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.charts-grid-single {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--primary);
+    background-color: transparent;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background-color: var(--primary);
+    color: #FFFFFF;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+    }
+
+    .section-title {
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .test-section {
+        margin-bottom: 32px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+    .container {
+        padding: 12px;
+    }
+
+    .page-header {
+        margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .page-subtitle {
+        font-size: 13px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .metrics-grid {
+        gap: 12px;
+    }
+
+    .charts-grid {
+        gap: 12px;
+    }
+
+    .test-section {
+        margin-bottom: 24px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+}
+
+/* iPhone SE - smallest common device */
+@media (max-width: 320px) {
+    .container {
+        padding: 8px;
+    }
+
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .section-title {
+        font-size: 15px;
+    }
+}

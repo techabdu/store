@@ -64,6 +64,7 @@ import MyPurchases from './pages/marketplace/MyPurchases';
 import MySales from './pages/marketplace/MySales';
 import Debts from './pages/shared/Debts';
 import TestWebSocket from './pages/TestWebSocket';
+import ComponentTest from './pages/SuperAdmin/ComponentTest';
 
 function App() {
     return (
@@ -123,6 +124,14 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <TestWebSocket />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/component-test"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <ComponentTest />
                                         </ProtectedRoute>
                                     }
                                 />
