@@ -4,11 +4,16 @@ import { notifyError } from './notificationHelper';
 // Detect environment based on hostname
 export const isProduction = window.location.hostname !== 'localhost';
 
-export const SERVER_URL = import.meta.env.VITE_API_URL || (isProduction ? 'https://prhub.shop' : 'http://localhost');
+// SERVER_URL is the base server domain (used for images and absolute paths)
+export const SERVER_URL = isProduction ? 'https://prhub.shop' : 'http://localhost';
+
+// API_BASE_URL is the full path to the API
+// If VITE_API_URL is provided in .env, use it; otherwise construct it
+export const API_BASE_URL = import.meta.env.VITE_API_URL || `${SERVER_URL}${isProduction ? '' : '/store'}/backend/api`;
 
 // Create axios instance with base configuration
 const api = axios.create({
-    baseURL: `${SERVER_URL}${isProduction ? '' : '/store'}/backend/api`,
+    baseURL: API_BASE_URL,
     withCredentials: true, // Important for cookies/sessions
     headers: {
         'Content-Type': 'application/json',

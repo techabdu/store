@@ -199,42 +199,46 @@ class EventLogger {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
                 );
                 
-                $tenantId = $enrichedContext['tenant_id'] ?? null;
-                $userId = $enrichedContext['user_id'] ?? null;
-                $shopId = $enrichedContext['shop_id'] ?? null;
-                $errorType = $context['error_type'] ?? 'UnknownError';
-                $errorCode = $context['error_code'] ?? null;
-                $filePath = $context['file'] ?? null;
-                $lineNumber = $context['line'] ?? null;
-                $stackTrace = $context['stack_trace'] ?? null;
-                $requestUrl = $enrichedContext['request_uri'];
-                // Handle empty request_method for ENUM field
-                $requestMethod = !empty($enrichedContext['request_method']) ? $enrichedContext['request_method'] : null;
-                $ipAddress = $enrichedContext['ip_address'];
-                $userAgent = $enrichedContext['user_agent'];
-                $contextJson = json_encode($context);
-                
-                $stmt->bind_param(
-                    "iiissssssisssss",
-                    $tenantId,
-                    $userId,
-                    $shopId,
-                    $errorLevel,
-                    $errorType,
-                    $errorMessage,
-                    $errorCode,
-                    $filePath,
-                    $lineNumber,
-                    $stackTrace,
-                    $requestUrl,
-                    $requestMethod,
-                    $ipAddress,
-                    $userAgent,
-                    $contextJson
-                );
-                
-                $stmt->execute();
-                $stmt->close();
+                if ($stmt) {
+                    $tenantId = $enrichedContext['tenant_id'] ?? null;
+                    $userId = $enrichedContext['user_id'] ?? null;
+                    $shopId = $enrichedContext['shop_id'] ?? null;
+                    $errorType = $context['error_type'] ?? 'UnknownError';
+                    $errorCode = $context['error_code'] ?? null;
+                    $filePath = $context['file'] ?? null;
+                    $lineNumber = isset($context['line']) ? (int)$context['line'] : null;
+                    $stackTrace = $context['stack_trace'] ?? null;
+                    $requestUrl = $enrichedContext['request_uri'];
+                    // Handle empty request_method for ENUM field
+                    $requestMethod = !empty($enrichedContext['request_method']) ? $enrichedContext['request_method'] : null;
+                    $ipAddress = $enrichedContext['ip_address'];
+                    $userAgent = $enrichedContext['user_agent'];
+                    $contextJson = json_encode($context);
+                    
+                    $stmt->bind_param(
+                        "iiisssssissssss",
+                        $tenantId,
+                        $userId,
+                        $shopId,
+                        $errorLevel,
+                        $errorType,
+                        $errorMessage,
+                        $errorCode,
+                        $filePath,
+                        $lineNumber,
+                        $stackTrace,
+                        $requestUrl,
+                        $requestMethod,
+                        $ipAddress,
+                        $userAgent,
+                        $contextJson
+                    );
+                    
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    error_log("EventLogger::logError prepare failed: " . $conn->error);
+                }
             }
             
             return true;
@@ -284,29 +288,34 @@ class EventLogger {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
                 );
                 
-                $tenantId = $context['tenant_id'] ?? null;
-                $userId = $context['user_id'] ?? null;
-                $shopId = $context['shop_id'] ?? null;
-                $ipAddress = $context['ip_address'];
-                $userAgent = $context['user_agent'];
-                
-                $stmt->bind_param(
-                    "iiissiiisss",
-                    $tenantId,
-                    $userId,
-                    $shopId,
-                    $endpoint,
-                    $method,
-                    $statusCode,
-                    $responseTimeMs,
-                    $ipAddress,
-                    $userAgent,
-                    $isError,
-                    $module
-                );
-                
-                $stmt->execute();
-                $stmt->close();
+                if ($stmt) {
+                    $tenantId = $context['tenant_id'] ?? null;
+                    $userId = $context['user_id'] ?? null;
+                    $shopId = $context['shop_id'] ?? null;
+                    $ipAddress = $context['ip_address'];
+                    $userAgent = $context['user_agent'];
+                    $isError = (int)$isError;
+                    
+                    $stmt->bind_param(
+                        "iiissiissis",
+                        $tenantId,
+                        $userId,
+                        $shopId,
+                        $endpoint,
+                        $method,
+                        $statusCode,
+                        $responseTimeMs,
+                        $ipAddress,
+                        $userAgent,
+                        $isError,
+                        $module
+                    );
+                    
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    error_log("EventLogger::logApiRequest prepare failed: " . $conn->error);
+                }
             }
             
             return true;

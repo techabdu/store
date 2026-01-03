@@ -5,11 +5,17 @@
  */
 require_once '../config/config.php';
 require_once '../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
+require_once '../middleware/api_logger.php'; // API request logging
 require_once '../middleware/auth.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 // Set headers
 header("Content-Type: application/json; charset=UTF-8");

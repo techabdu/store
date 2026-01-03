@@ -9,7 +9,7 @@
 
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../../config/database.php';
-require_once '../../middleware/api_logger.php'; // API request logging
+require_once '../../../middleware/api_logger.php'; // API request logging
 
 // Set CORS headers
 setCorsHeaders();

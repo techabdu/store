@@ -7,6 +7,13 @@ require_once __DIR__ . '/../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
