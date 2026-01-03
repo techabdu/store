@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { User, MapPin, Phone, MessageSquare, Shield, ShieldCheck, Star, ArrowLeft, Package, Edit } from 'lucide-react';
+import { User, MapPin, Phone, MessageSquare, Shield, ShieldCheck, Star, ArrowLeft, Package, Edit, ShieldAlert } from 'lucide-react';
 import api, { SERVER_URL, isProduction } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import ReportWizard from '../../components/Marketplace/ReportWizard';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProfile.css';
@@ -19,6 +20,7 @@ const MarketplaceSellerProfile = () => {
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [isReportWizardOpen, setIsReportWizardOpen] = useState(false);
 
     // Listings state
     const [listings, setListings] = useState([]);
@@ -206,6 +208,10 @@ const MarketplaceSellerProfile = () => {
                                     <MessageSquare size={18} />
                                     Message Seller
                                 </button>
+                                <button className="btn-edit-profile" onClick={() => setIsReportWizardOpen(true)} style={{ marginLeft: '10px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                                    <ShieldAlert size={18} />
+                                    Report User
+                                </button>
                             </div>
                         )}
                         {/* If it's the owner, maybe show an Edit Profile button instead of Message */}
@@ -342,6 +348,16 @@ const MarketplaceSellerProfile = () => {
                     </div>
                 </div>
             </main>
+
+            <ReportWizard
+                isOpen={isReportWizardOpen}
+                onClose={() => setIsReportWizardOpen(false)}
+                initialType="report_seller"
+                contextData={{
+                    userId: id,
+                    subject: `Report User: ${profile.display_name}`
+                }}
+            />
         </div>
     );
 };

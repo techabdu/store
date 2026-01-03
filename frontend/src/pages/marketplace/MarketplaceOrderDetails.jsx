@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
-import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTriangle, Receipt } from 'lucide-react';
+import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTriangle, Receipt, ShieldAlert } from 'lucide-react';
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import ReportWizard from '../../components/Marketplace/ReportWizard';
 import './MarketplacePage.css';
 import '../../styles/wizard.css';
 import './MarketplaceOrderDetails.css';
@@ -20,6 +21,7 @@ const MarketplaceOrderDetails = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelling, setCancelling] = useState(false);
+    const [isReportWizardOpen, setIsReportWizardOpen] = useState(false);
     const { showError, showSuccess } = useNotification();
 
     // Sidebar state for mobile
@@ -297,6 +299,14 @@ const MarketplaceOrderDetails = () => {
                                                             View Receipt
                                                         </button>
                                                     )}
+                                                    <button
+                                                        onClick={() => setIsReportWizardOpen(true)}
+                                                        className="btn-outline-secondary full-width"
+                                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '8px' }}
+                                                    >
+                                                        <ShieldAlert size={16} />
+                                                        Dispute / Report
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -350,6 +360,18 @@ const MarketplaceOrderDetails = () => {
                     </div>
                 </div>
             )}
+
+            <ReportWizard
+                isOpen={isReportWizardOpen}
+                onClose={() => setIsReportWizardOpen(false)}
+                initialType="dispute"
+                contextData={{
+                    orderId: order.id,
+                    orderNumber: order.order_number,
+                    listingId: order.listing_id,
+                    subject: `Dispute for Order: ${order.order_number}`
+                }}
+            />
         </div>
     );
 };
