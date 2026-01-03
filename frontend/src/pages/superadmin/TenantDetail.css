@@ -1,0 +1,660 @@
+/* Tenant Detail Page */
+
+.back-button {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    transition: color 0.2s ease;
+}
+
+.back-button:hover {
+    color: var(--text-primary);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 4px 0 0 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-active {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.status-trial {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.status-suspended {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+.plan-badge {
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.plan-trial {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.plan-basic {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+.plan-pro {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.plan-enterprise {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+/* Tabs */
+.tabs-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--border-color);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    margin-bottom: -2px;
+}
+
+.tab-button:hover {
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.tab-content {
+    min-height: 400px;
+}
+
+.tab-panel {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Overview Tab */
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.info-section,
+.stats-section {
+    padding: 24px;
+}
+
+.info-section h3,
+.stats-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Usage Tab */
+.usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.usage-section {
+    padding: 24px;
+}
+
+.usage-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+.usage-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 24px;
+}
+
+.usage-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.usage-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.usage-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.storage-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.storage-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.storage-stat span:first-child {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.storage-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.storage-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.storage-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.storage-percentage {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+.features-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--hover-bg);
+    border-radius: 8px;
+}
+
+.feature-icon {
+    color: var(--success);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.feature-name {
+    color: var(--text-primary);
+    font-size: 14px;
+    text-transform: capitalize;
+}
+
+/* Activity Tab */
+.activity-section {
+    padding: 24px;
+}
+
+.activity-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 24px 0;
+}
+
+.activity-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: relative;
+    padding-left: 24px;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.activity-item {
+    display: flex;
+    gap: 16px;
+    position: relative;
+}
+
+.activity-dot {
+    position: absolute;
+    left: -24px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 3px solid var(--bg-surface);
+    z-index: 1;
+}
+
+.activity-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.activity-header strong {
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.activity-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.activity-user {
+    font-size: 13px;
+    color: var(--primary);
+}
+
+.activity-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Health Score Tab */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.health-section {
+    padding: 24px;
+}
+
+.health-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 24px 0;
+}
+
+.health-score-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 32px 0;
+}
+
+.health-score-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.health-score-inner {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.health-score-value {
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.health-score-label {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+.health-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.health-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--hover-bg);
+    border-radius: 8px;
+}
+
+.health-detail-label {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.health-detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+    }
+
+    .overview-grid,
+    .usage-grid,
+    .health-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tabs-navigation {
+        gap: 4px;
+    }
+
+    .tab-button {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .health-score-circle {
+        width: 180px;
+        height: 180px;
+    }
+
+    .health-score-inner {
+        width: 140px;
+        height: 140px;
+    }
+
+    .health-score-value {
+        font-size: 40px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+    }
+
+    .header-actions {
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .info-section,
+    .stats-section,
+    .usage-section,
+    .activity-section,
+    .health-section {
+        padding: 16px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-value {
+        font-size: 20px;
+    }
+
+    .health-score-circle {
+        width: 150px;
+        height: 150px;
+    }
+
+    .health-score-inner {
+        width: 120px;
+        height: 120px;
+    }
+
+    .health-score-value {
+        font-size: 32px;
+    }
+
+    .health-score-label {
+        font-size: 14px;
+    }
+
+    .activity-timeline {
+        padding-left: 20px;
+    }
+
+    .activity-dot {
+        left: -20px;
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* iPhone SE */
+@media (max-width: 320px) {
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    .tab-button {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .health-score-circle {
+        width: 130px;
+        height: 130px;
+    }
+
+    .health-score-inner {
+        width: 100px;
+        height: 100px;
+    }
+
+    .health-score-value {
+        font-size: 28px;
+    }
+}
+
+.loading-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    gap: 16px;
+}
+
+.error-state h2 {
+    color: var(--text-primary);
+    font-size: 24px;
+}
+
+.btn-primary {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}

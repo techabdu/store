@@ -66,6 +66,7 @@ import Debts from './pages/shared/Debts';
 import TestWebSocket from './pages/TestWebSocket';
 import ComponentTest from './pages/SuperAdmin/ComponentTest';
 import OverviewDashboard from './pages/SuperAdmin/OverviewDashboard';
+import TenantDetail from './pages/SuperAdmin/TenantDetail';
 
 function App() {
     return (
@@ -141,6 +142,14 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['superadmin']}>
                                             <OverviewDashboard />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/superadmin/tenant/:id"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['superadmin']}>
+                                            <TenantDetail />
                                         </ProtectedRoute>
                                     }
                                 />
