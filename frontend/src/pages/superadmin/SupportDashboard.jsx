@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import api from '../../utils/api';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
 import MetricCard from '../../components/MetricCard';
 import DataTable from '../../components/Tables/DataTable';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import {
     MessageSquare,
     Clock,
@@ -13,10 +12,7 @@ import {
     AlertCircle,
     Filter,
     Search,
-    ChevronDown,
-    ArrowLeft,
     Send,
-    History,
     RefreshCw,
     X
 } from 'lucide-react';
@@ -27,8 +23,6 @@ const SupportDashboard = () => {
     const { showSuccess, showError } = useNotification();
 
     // UI State
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showDetail, setShowDetail] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
@@ -80,17 +74,6 @@ const SupportDashboard = () => {
     useEffect(() => {
         fetchTickets();
     }, [filters.status, filters.priority, filters.type]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (!mobile) setSidebarOpen(false);
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     const handleTicketClick = async (ticket) => {
         try {
@@ -204,107 +187,97 @@ const SupportDashboard = () => {
         t.creator_name.toLowerCase().includes(filters.search.toLowerCase())
     );
 
+    const headerActions = (
+        <button className="btn-secondary btn-sm" onClick={fetchTickets}>
+            <RefreshCw size={18} style={{ marginRight: '8px' }} />
+            Refresh
+        </button>
+    );
+
     return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-            />
+        <SuperAdminLayout
+            title="Support Dashboard"
+            subtitle="Manage marketplace reports and disputes"
+            loading={loading}
+            headerActions={headerActions}
+        >
+            <div className="metrics-grid mb-24">
+                <MetricCard
+                    title="Open Tickets"
+                    value={stats.open_tickets}
+                    icon={AlertCircle}
+                    trend="+2 from yesterday"
+                    color="blue"
+                />
+                <MetricCard
+                    title="Awaiting Response"
+                    value={stats.awaiting}
+                    icon={Clock}
+                    trend="-1 from morning"
+                    color="yellow"
+                />
+                <MetricCard
+                    title="Resolved (Total)"
+                    value={stats.resolved}
+                    icon={CheckCircle}
+                    trend="+15 this week"
+                    color="green"
+                />
+                <MetricCard
+                    title="Total System Tickets"
+                    value={stats.total}
+                    icon={MessageSquare}
+                    color="purple"
+                />
+            </div>
 
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    <div className="page-header">
-                        <div>
-                            <h1 className="heading-1">Support Dashboard</h1>
-                            <p className="text-secondary">Manage marketplace reports and disputes</p>
-                        </div>
-                        <button className="refresh-btn" onClick={fetchTickets}>
-                            <RefreshCw size={18} />
-                            Refresh
-                        </button>
-                    </div>
-
-                    <div className="metrics-grid">
-                        <MetricCard
-                            title="Open Tickets"
-                            value={stats.open_tickets}
-                            icon={AlertCircle}
-                            trend="+2 from yesterday"
-                            color="blue"
-                        />
-                        <MetricCard
-                            title="Awaiting Response"
-                            value={stats.awaiting}
-                            icon={Clock}
-                            trend="-1 from morning"
-                            color="yellow"
-                        />
-                        <MetricCard
-                            title="Resolved (Total)"
-                            value={stats.resolved}
-                            icon={CheckCircle}
-                            trend="+15 this week"
-                            color="green"
-                        />
-                        <MetricCard
-                            title="Total System Tickets"
-                            value={stats.total}
-                            icon={MessageSquare}
-                            color="purple"
+            <div className="dashboard-card glass-card">
+                <div className="table-header">
+                    <div className="search-box">
+                        <Search size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search tickets, users, subjects..."
+                            value={filters.search}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                         />
                     </div>
-
-                    <div className="dashboard-card glass-card">
-                        <div className="table-header">
-                            <div className="search-box">
-                                <Search size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search tickets, users, subjects..."
-                                    value={filters.search}
-                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                />
-                            </div>
-                            <div className="filters-group">
-                                <div className="filter-select">
-                                    <Filter size={14} />
-                                    <select
-                                        value={filters.status}
-                                        onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                                    >
-                                        <option value="">All Statuses</option>
-                                        <option value="open">Open</option>
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="awaiting_response">Awaiting User</option>
-                                        <option value="resolved">Resolved</option>
-                                        <option value="closed">Closed</option>
-                                    </select>
-                                </div>
-                                <div className="filter-select">
-                                    <select
-                                        value={filters.priority}
-                                        onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                                    >
-                                        <option value="">All Priorities</option>
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                        <option value="urgent">Urgent</option>
-                                    </select>
-                                </div>
-                            </div>
+                    <div className="filters-group">
+                        <div className="filter-select">
+                            <Filter size={14} />
+                            <select
+                                value={filters.status}
+                                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="awaiting_response">Awaiting User</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
                         </div>
-
-                        <DataTable
-                            columns={columns}
-                            data={filteredTickets}
-                            onRowClick={handleTicketClick}
-                        />
+                        <div className="filter-select">
+                            <select
+                                value={filters.priority}
+                                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                            >
+                                <option value="">All Priorities</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </main>
+
+                <DataTable
+                    columns={columns}
+                    data={filteredTickets}
+                    onRowClick={handleTicketClick}
+                />
+            </div>
 
             {/* Ticket Detail Side Overlay */}
             {showDetail && selectedTicket && (
@@ -444,8 +417,10 @@ const SupportDashboard = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </SuperAdminLayout>
     );
 };
 
 export default SupportDashboard;
+
+

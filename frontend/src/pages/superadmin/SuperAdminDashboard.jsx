@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
 import MetricCard from '../../components/MetricCard';
 import ChartCard from '../../components/ChartCard';
 import ActivityTable from '../../components/ActivityTable';
 import AlertsList from '../../components/AlertsList';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import {
     Activity,
     Users,
     Clock,
     Database,
-    AlertTriangle
 } from 'lucide-react';
 import {
     LineChart,
@@ -27,31 +23,14 @@ import {
     Cell,
     Legend
 } from 'recharts';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import '../../styles/dashboard.css';
 import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = () => {
-    const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [dashboardData, setDashboardData] = useState(null);
-
-    // Responsive Sidebar Logic
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false);
-            }
-        };
-
-        handleResize(); // Initial check
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -73,24 +52,6 @@ const SuperAdminDashboard = () => {
 
         fetchDashboardData();
     }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
-
-    if (loading) {
-        return (
-            <div className="dashboard-container">
-                <TopBar toggleSidebar={toggleSidebar} user={user} />
-                <Sidebar isOpen={sidebarOpen} isMobile={isMobile} closeSidebar={() => setSidebarOpen(false)} />
-                <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                    <div className="content-wrapper flex items-center justify-center h-screen">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                    </div>
-                </main>
-            </div>
-        );
-    }
 
     // Process Data for UI
     const metrics = dashboardData ? [
@@ -165,30 +126,14 @@ const SuperAdminDashboard = () => {
     })) || [];
 
     return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
-
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-            />
-
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    {/* Page Header */}
-                    <div className="page-header">
-                        <h1 className="heading-1">SuperAdmin Dashboard</h1>
-                        <p className="text-secondary">Welcome back, {user?.username || 'SuperAdmin'}</p>
-                    </div>
-
-                    {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                            <strong className="font-bold">Error!</strong>
-                            <span className="block sm:inline"> {error}</span>
-                        </div>
-                    )}
-
+        <SuperAdminLayout
+            title="SuperAdmin Dashboard"
+            subtitle="Analyze and monitor overall system operations"
+            loading={loading}
+            error={error}
+        >
+            {dashboardData && (
+                <>
                     {/* Metrics Grid */}
                     <div className="grid-4">
                         {metrics.map((metric, index) => (
@@ -254,10 +199,11 @@ const SuperAdminDashboard = () => {
                             emptyState={{ text: 'No alerts. All systems running smoothly!' }}
                         />
                     </div>
-                </div>
-            </main>
-        </div>
+                </>
+            )}
+        </SuperAdminLayout>
     );
 };
 
 export default SuperAdminDashboard;
+

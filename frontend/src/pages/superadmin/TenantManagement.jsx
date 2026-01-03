@@ -1,31 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import {
     Store,
     Users,
     DollarSign,
     Calendar,
-    MoreVertical,
     Ban,
     CheckCircle,
     Trash2,
     Mail,
     Phone,
     MapPin,
-    TrendingUp
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
 import { useNotification } from '../../context/NotificationContext';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import '../../styles/dashboard.css';
 import './TenantManagement.css';
 
 const TenantManagement = () => {
-    const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
     const [tenants, setTenants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,25 +43,6 @@ const TenantManagement = () => {
     useEffect(() => {
         fetchTenants();
     }, []);
-
-    // Responsive Sidebar Logic
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false);
-            }
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
 
     // Handle tenant status change
     const handleStatusChange = async (tenantId, newStatus) => {
@@ -165,189 +139,174 @@ const TenantManagement = () => {
         return diff > 0 ? diff : 0;
     };
 
-    return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
-
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-            />
-
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    {/* Page Header */}
-                    <div className="tenant-management-header">
-                        <div>
-                            <h1 className="heading-1">Tenant Management</h1>
-                            <p className="text-secondary">Manage all registered shops and their subscriptions</p>
-                        </div>
-                        <div className="header-stats">
-                            <div className="stat-item">
-                                <span className="stat-label">Total Shops</span>
-                                <span className="stat-value">{tenants.length}</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-label">Active</span>
-                                <span className="stat-value">{tenants.filter(t => t.status === 'active').length}</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-label">Trial</span>
-                                <span className="stat-value">{tenants.filter(t => t.status === 'trial').length}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Filters */}
-                    <div className="filters-container">
-                        <div className="search-input-wrapper">
-                            <FaSearch className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Search shops..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="filter-buttons">
-                            <button
-                                className={`filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('all')}
-                            >
-                                All
-                            </button>
-                            <button
-                                className={`filter-btn ${filterStatus === 'active' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('active')}
-                            >
-                                Active
-                            </button>
-                            <button
-                                className={`filter-btn ${filterStatus === 'trial' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('trial')}
-                            >
-                                Trial
-                            </button>
-                            <button
-                                className={`filter-btn ${filterStatus === 'suspended' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('suspended')}
-                            >
-                                Suspended
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Tenants Grid */}
-                    {loading ? (
-                        <div className="loading-state">Loading tenants...</div>
-                    ) : (
-                        <div className="tenants-grid">
-                            {filteredTenants.map((tenant) => {
-                                const daysRemaining = getDaysRemaining(tenant);
-                                return (
-                                    <div key={tenant.id} className="tenant-card">
-                                        <div className="tenant-card-header">
-                                            <div className="tenant-info">
-                                                <div className="tenant-icon">
-                                                    <Store size={24} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="tenant-name">{tenant.shop_name}</h3>
-                                                    <span className={`status-badge ${getStatusBadge(tenant.status)}`}>
-                                                        {tenant.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="tenant-actions">
-                                                {tenant.status === 'active' || tenant.status === 'trial' ? (
-                                                    <button
-                                                        className="action-btn suspend"
-                                                        onClick={() => handleStatusChange(tenant.id, 'suspended')}
-                                                        title="Suspend Shop"
-                                                    >
-                                                        <Ban size={18} />
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        className="action-btn activate"
-                                                        onClick={() => handleStatusChange(tenant.id, 'active')}
-                                                        title="Activate Shop"
-                                                    >
-                                                        <CheckCircle size={18} />
-                                                    </button>
-                                                )}
-                                                <button
-                                                    className="action-btn delete"
-                                                    onClick={() => handleDelete(tenant.id, tenant.shop_name)}
-                                                    title="Delete Shop"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="tenant-card-body">
-                                            <div className="tenant-detail">
-                                                <Mail size={16} />
-                                                <span>{tenant.shop_email}</span>
-                                            </div>
-                                            <div className="tenant-detail">
-                                                <Phone size={16} />
-                                                <span>{tenant.shop_phone}</span>
-                                            </div>
-                                            {tenant.shop_address && (
-                                                <div className="tenant-detail">
-                                                    <MapPin size={16} />
-                                                    <span>{tenant.shop_address}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="tenant-card-footer">
-                                            <div className="tenant-stat">
-                                                <Users size={16} />
-                                                <span>{tenant.user_count} users</span>
-                                            </div>
-                                            <div className="tenant-stat">
-                                                <Store size={16} />
-                                                <span>{tenant.inventory_count} items</span>
-                                            </div>
-                                            <div className="tenant-stat">
-                                                <DollarSign size={16} />
-                                                <span>${tenant.total_sales.toFixed(2)}</span>
-                                            </div>
-                                        </div>
-
-                                        {daysRemaining !== null && tenant.status === 'trial' && (
-                                            <div className={`trial-warning ${daysRemaining <= 5 ? 'urgent' : ''}`}>
-                                                <Calendar size={16} />
-                                                <span>{daysRemaining} days remaining in trial</span>
-                                            </div>
-                                        )}
-
-                                        <div className="tenant-meta">
-                                            <span>Registered: {formatDate(tenant.created_at)}</span>
-                                            <span className={`plan-badge plan-${tenant.plan_type}`}>
-                                                {tenant.plan_type.replace('_', ' ')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {filteredTenants.length === 0 && !loading && (
-                        <div className="empty-state">
-                            <Store size={48} />
-                            <p>No shops found</p>
-                        </div>
-                    )}
-                </div>
-            </main>
+    const headerActions = (
+        <div className="header-stats">
+            <div className="stat-item">
+                <span className="stat-label">Total Shops</span>
+                <span className="stat-value">{tenants.length}</span>
+            </div>
+            <div className="stat-item">
+                <span className="stat-label">Active</span>
+                <span className="stat-value">{tenants.filter(t => t.status === 'active').length}</span>
+            </div>
+            <div className="stat-item">
+                <span className="stat-label">Trial</span>
+                <span className="stat-value">{tenants.filter(t => t.status === 'trial').length}</span>
+            </div>
         </div>
+    );
+
+    return (
+        <SuperAdminLayout
+            title="Tenant Management"
+            subtitle="Manage all registered shops and their subscriptions"
+            loading={loading}
+            headerActions={headerActions}
+        >
+            {/* Filters */}
+            <div className="filters-container">
+                <div className="search-input-wrapper">
+                    <FaSearch className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="Search shops..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <div className="filter-buttons">
+                    <button
+                        className={`filter-btn ${filterStatus === 'all' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('all')}
+                    >
+                        All
+                    </button>
+                    <button
+                        className={`filter-btn ${filterStatus === 'active' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('active')}
+                    >
+                        Active
+                    </button>
+                    <button
+                        className={`filter-btn ${filterStatus === 'trial' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('trial')}
+                    >
+                        Trial
+                    </button>
+                    <button
+                        className={`filter-btn ${filterStatus === 'suspended' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('suspended')}
+                    >
+                        Suspended
+                    </button>
+                </div>
+            </div>
+
+            {/* Tenants Grid */}
+            <div className="tenants-grid">
+                {filteredTenants.map((tenant) => {
+                    const daysRemaining = getDaysRemaining(tenant);
+                    return (
+                        <div key={tenant.id} className="tenant-card glass-card">
+                            <div className="tenant-card-header">
+                                <div className="tenant-info">
+                                    <div className="tenant-icon">
+                                        <Store size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="tenant-name">{tenant.shop_name}</h3>
+                                        <span className={`status-badge ${getStatusBadge(tenant.status)}`}>
+                                            {tenant.status}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="tenant-actions">
+                                    {tenant.status === 'active' || tenant.status === 'trial' ? (
+                                        <button
+                                            className="action-btn suspend"
+                                            onClick={() => handleStatusChange(tenant.id, 'suspended')}
+                                            title="Suspend Shop"
+                                        >
+                                            <Ban size={18} />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="action-btn activate"
+                                            onClick={() => handleStatusChange(tenant.id, 'active')}
+                                            title="Activate Shop"
+                                        >
+                                            <CheckCircle size={18} />
+                                        </button>
+                                    )}
+                                    <button
+                                        className="action-btn delete"
+                                        onClick={() => handleDelete(tenant.id, tenant.shop_name)}
+                                        title="Delete Shop"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="tenant-card-body">
+                                <div className="tenant-detail">
+                                    <Mail size={16} />
+                                    <span>{tenant.shop_email}</span>
+                                </div>
+                                <div className="tenant-detail">
+                                    <Phone size={16} />
+                                    <span>{tenant.shop_phone}</span>
+                                </div>
+                                {tenant.shop_address && (
+                                    <div className="tenant-detail">
+                                        <MapPin size={16} />
+                                        <span>{tenant.shop_address}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="tenant-card-footer">
+                                <div className="tenant-stat">
+                                    <Users size={16} />
+                                    <span>{tenant.user_count} users</span>
+                                </div>
+                                <div className="tenant-stat">
+                                    <Store size={16} />
+                                    <span>{tenant.inventory_count} items</span>
+                                </div>
+                                <div className="tenant-stat">
+                                    <DollarSign size={16} />
+                                    <span>${tenant.total_sales.toFixed(2)}</span>
+                                </div>
+                            </div>
+
+                            {daysRemaining !== null && tenant.status === 'trial' && (
+                                <div className={`trial-warning ${daysRemaining <= 5 ? 'urgent' : ''}`}>
+                                    <Calendar size={16} />
+                                    <span>{daysRemaining} days remaining in trial</span>
+                                </div>
+                            )}
+
+                            <div className="tenant-meta">
+                                <span>Registered: {formatDate(tenant.created_at)}</span>
+                                <span className={`plan-badge plan-${tenant.plan_type}`}>
+                                    {tenant.plan_type.replace('_', ' ')}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {filteredTenants.length === 0 && (
+                <div className="empty-state">
+                    <Store size={48} />
+                    <p>No shops found</p>
+                </div>
+            )}
+        </SuperAdminLayout>
     );
 };
 
 export default TenantManagement;
+

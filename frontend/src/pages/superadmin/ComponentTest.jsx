@@ -2,6 +2,7 @@ import React from 'react';
 import HealthPillarCard from '../../components/Dashboard/HealthPillarCard';
 import { LineChart, BarChart, PieChart } from '../../components/Charts';
 import DataTable from '../../components/Tables/DataTable';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import './ComponentTest.css';
 
 const ComponentTest = () => {
@@ -48,97 +49,94 @@ const ComponentTest = () => {
     };
 
     return (
-        <div className="main-content">
-            <div className="container">
-                <div className="page-header">
-                    <h1>Component Test Page</h1>
-                    <p className="page-subtitle">Testing all Day 21 components</p>
+        <SuperAdminLayout
+            title="Component Test Page"
+            subtitle="Testing all Day 21 components"
+        >
+            {/* Health Pillar Cards */}
+            <section className="test-section">
+                <h2 className="section-title">Health Pillar Cards</h2>
+                <div className="metrics-grid">
+                    <HealthPillarCard
+                        title="System Health"
+                        status="healthy"
+                        value="99.9%"
+                        trend="+0.1%"
+                        trendDirection="up"
+                        subtitle="vs last week"
+                    />
+                    <HealthPillarCard
+                        title="API Performance"
+                        status="warning"
+                        value="450ms"
+                        trend="+50ms"
+                        trendDirection="down"
+                        subtitle="avg response time"
+                    />
+                    <HealthPillarCard
+                        title="Error Rate"
+                        status="critical"
+                        value="5.2%"
+                        trend="+2.1%"
+                        trendDirection="down"
+                        subtitle="last 24 hours"
+                    />
+                    <HealthPillarCard
+                        title="Database"
+                        status="healthy"
+                        value="Active"
+                        trend="0 issues"
+                        trendDirection="up"
+                        subtitle="all connections stable"
+                    />
+                </div>
+            </section>
+
+            {/* Charts */}
+            <section className="test-section">
+                <h2 className="section-title">Chart Components</h2>
+
+                <div className="charts-grid">
+                    <LineChart
+                        data={lineData}
+                        labels={lineLabels}
+                        title="API Response Time (ms)"
+                        height={300}
+                    />
+
+                    <BarChart
+                        data={barData}
+                        labels={barLabels}
+                        title="Monthly Revenue ($)"
+                        height={300}
+                    />
                 </div>
 
-                {/* Health Pillar Cards */}
-                <section className="test-section">
-                    <h2 className="section-title">Health Pillar Cards</h2>
-                    <div className="metrics-grid">
-                        <HealthPillarCard
-                            title="System Health"
-                            status="healthy"
-                            value="99.9%"
-                            trend="+0.1%"
-                            trendDirection="up"
-                            subtitle="vs last week"
-                        />
-                        <HealthPillarCard
-                            title="API Performance"
-                            status="warning"
-                            value="450ms"
-                            trend="+50ms"
-                            trendDirection="down"
-                            subtitle="avg response time"
-                        />
-                        <HealthPillarCard
-                            title="Error Rate"
-                            status="critical"
-                            value="5.2%"
-                            trend="+2.1%"
-                            trendDirection="down"
-                            subtitle="last 24 hours"
-                        />
-                        <HealthPillarCard
-                            title="Database"
-                            status="healthy"
-                            value="Active"
-                            trend="0 issues"
-                            trendDirection="up"
-                            subtitle="all connections stable"
-                        />
-                    </div>
-                </section>
+                <div className="charts-grid-single">
+                    <PieChart
+                        data={pieData}
+                        labels={pieLabels}
+                        title="Feature Usage Distribution"
+                        height={350}
+                    />
+                </div>
+            </section>
 
-                {/* Charts */}
-                <section className="test-section">
-                    <h2 className="section-title">Chart Components</h2>
-
-                    <div className="charts-grid">
-                        <LineChart
-                            data={lineData}
-                            labels={lineLabels}
-                            title="API Response Time (ms)"
-                            height={300}
-                        />
-
-                        <BarChart
-                            data={barData}
-                            labels={barLabels}
-                            title="Monthly Revenue ($)"
-                            height={300}
-                        />
-                    </div>
-
-                    <div className="charts-grid-single">
-                        <PieChart
-                            data={pieData}
-                            labels={pieLabels}
-                            title="Feature Usage Distribution"
-                            height={350}
-                        />
-                    </div>
-                </section>
-
-                {/* Data Table */}
-                <section className="test-section">
-                    <h2 className="section-title">Data Table Component</h2>
-                    <div className="glass-card" style={{ padding: '24px' }}>
-                        <DataTable
-                            columns={tableColumns}
-                            data={tableData}
-                            pageSize={5}
-                            onRowClick={handleRowClick}
-                        />
-                    </div>
-                </section>
-            </div>
-        </div>
+            {/* Data Table */}
+            <section className="test-section">
+                <h2 className="section-title">Data Table Component</h2>
+                <div className="glass-card" style={{ padding: '24px' }}>
+                    <DataTable
+                        columns={tableColumns}
+                        data={tableData}
+                        pageSize={5}
+                        onRowClick={handleRowClick}
+                    />
+                </div>
+            </section>
+        </SuperAdminLayout>
     );
 };
 
 export default ComponentTest;
+

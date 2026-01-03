@@ -4,6 +4,7 @@ import { LineChart, BarChart } from '../../components/Charts';
 import DataTable from '../../components/Tables/DataTable';
 import ConnectionIndicator from '../../components/ConnectionIndicator';
 import { Users, UserCheck, Clock, TrendingDown } from 'lucide-react';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import './UserHealth.css';
 
 const UserHealth = () => {
@@ -16,10 +17,6 @@ const UserHealth = () => {
         const fetchUserHealth = async () => {
             try {
                 setLoading(true);
-
-                // TODO: Replace with actual API call
-                // const response = await axios.get('/api/superadmin/user_health');
-                // setUserData(response.data);
 
                 // Mock data for now
                 const mockData = {
@@ -151,162 +148,148 @@ const UserHealth = () => {
         }
     ];
 
-    // Loading state
-    if (loading) {
-        return (
-            <div className="main-content">
-                <div className="container">
-                    <div className="loading-state">
-                        <div>Loading user health...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="main-content">
+        <SuperAdminLayout
+            title="User Health"
+            subtitle="Monitor user engagement, retention, and activity"
+            loading={loading}
+        >
             <ConnectionIndicator isConnected={isConnected} />
 
-            <div className="container">
-                {/* Page Header */}
-                <div className="page-header">
-                    <div>
-                        <h1>User Health</h1>
-                        <p className="page-subtitle">Monitor user engagement, retention, and activity</p>
-                    </div>
-                </div>
-
-                {/* Metric Cards Grid */}
-                <div className="metrics-grid">
-                    {/* DAU (Daily Active Users) */}
-                    <MetricCard
-                        title="DAU"
-                        value={userData.dau.toLocaleString()}
-                        icon={Users}
-                        trend="+5%"
-                        trendDirection="up"
-                        subtitle="daily active users"
-                        color="primary"
-                    />
-
-                    {/* MAU (Monthly Active Users) */}
-                    <MetricCard
-                        title="MAU"
-                        value={userData.mau.toLocaleString()}
-                        icon={UserCheck}
-                        trend="+8%"
-                        trendDirection="up"
-                        subtitle="monthly active users"
-                        color="success"
-                    />
-
-                    {/* DAU/MAU Ratio */}
-                    <MetricCard
-                        title="DAU/MAU Ratio"
-                        value={`${userData.dau_mau_ratio}%`}
-                        icon={TrendingDown}
-                        subtitle="engagement metric"
-                        color="info"
-                    />
-
-                    {/* Average Session Duration */}
-                    <MetricCard
-                        title="Avg Session"
-                        value={`${userData.avg_session_duration} min`}
-                        icon={Clock}
-                        subtitle="per session"
-                        color="warning"
-                    />
-                </div>
-
-                {/* Charts Section */}
-                <div className="charts-section">
-                    <div className="charts-grid">
-                        {/* DAU/MAU Trend */}
-                        <LineChart
-                            data={userData.charts.dau_mau_trend.data}
-                            labels={userData.charts.dau_mau_trend.labels}
-                            title="DAU/MAU Ratio Over Time"
-                            height={300}
+            {userData && (
+                <>
+                    {/* Metric Cards Grid */}
+                    <div className="metrics-grid">
+                        {/* DAU (Daily Active Users) */}
+                        <MetricCard
+                            title="DAU"
+                            value={userData.dau.toLocaleString()}
+                            icon={Users}
+                            trend="+5%"
+                            trendDirection="up"
+                            subtitle="daily active users"
+                            color="primary"
                         />
 
-                        {/* User Segmentation */}
-                        <BarChart
-                            data={userData.charts.user_segmentation.data}
-                            labels={userData.charts.user_segmentation.labels}
-                            title="User Segmentation by Role"
-                            height={300}
+                        {/* MAU (Monthly Active Users) */}
+                        <MetricCard
+                            title="MAU"
+                            value={userData.mau.toLocaleString()}
+                            icon={UserCheck}
+                            trend="+8%"
+                            trendDirection="up"
+                            subtitle="monthly active users"
+                            color="success"
+                        />
+
+                        {/* DAU/MAU Ratio */}
+                        <MetricCard
+                            title="DAU/MAU Ratio"
+                            value={`${userData.dau_mau_ratio}%`}
+                            icon={TrendingDown}
+                            subtitle="engagement metric"
+                            color="info"
+                        />
+
+                        {/* Average Session Duration */}
+                        <MetricCard
+                            title="Avg Session"
+                            value={`${userData.avg_session_duration} min`}
+                            icon={Clock}
+                            subtitle="per session"
+                            color="warning"
                         />
                     </div>
-                </div>
 
-                {/* Retention Cohort Table */}
-                <div className="cohort-section glass-card">
-                    <h3>User Retention Cohort Analysis</h3>
-                    <p className="cohort-description">
-                        Percentage of users who return each month after signup
-                    </p>
-                    <div className="table-responsive">
-                        <table className="cohort-table">
-                            <thead>
-                                <tr>
-                                    <th>Signup Month</th>
-                                    <th>Month 0</th>
-                                    <th>Month 1</th>
-                                    <th>Month 2</th>
-                                    <th>Month 3</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {userData.retention_cohort.map((cohort, index) => (
-                                    <tr key={index}>
-                                        <td className="cohort-month">{cohort.month}</td>
-                                        <td style={{ background: getRetentionColor(cohort.month_0) }}>
-                                            {cohort.month_0 !== null ? `${cohort.month_0}%` : '-'}
-                                        </td>
-                                        <td style={{ background: getRetentionColor(cohort.month_1) }}>
-                                            {cohort.month_1 !== null ? `${cohort.month_1}%` : '-'}
-                                        </td>
-                                        <td style={{ background: getRetentionColor(cohort.month_2) }}>
-                                            {cohort.month_2 !== null ? `${cohort.month_2}%` : '-'}
-                                        </td>
-                                        <td style={{ background: getRetentionColor(cohort.month_3) }}>
-                                            {cohort.month_3 !== null ? `${cohort.month_3}%` : '-'}
-                                        </td>
+                    {/* Charts Section */}
+                    <div className="charts-section">
+                        <div className="charts-grid">
+                            {/* DAU/MAU Trend */}
+                            <LineChart
+                                data={userData.charts.dau_mau_trend.data}
+                                labels={userData.charts.dau_mau_trend.labels}
+                                title="DAU/MAU Ratio Over Time"
+                                height={300}
+                            />
+
+                            {/* User Segmentation */}
+                            <BarChart
+                                data={userData.charts.user_segmentation.data}
+                                labels={userData.charts.user_segmentation.labels}
+                                title="User Segmentation by Role"
+                                height={300}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Retention Cohort Table */}
+                    <div className="cohort-section glass-card">
+                        <h3>User Retention Cohort Analysis</h3>
+                        <p className="cohort-description">
+                            Percentage of users who return each month after signup
+                        </p>
+                        <div className="table-responsive">
+                            <table className="cohort-table">
+                                <thead>
+                                    <tr>
+                                        <th>Signup Month</th>
+                                        <th>Month 0</th>
+                                        <th>Month 1</th>
+                                        <th>Month 2</th>
+                                        <th>Month 3</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {userData.retention_cohort.map((cohort, index) => (
+                                        <tr key={index}>
+                                            <td className="cohort-month">{cohort.month}</td>
+                                            <td style={{ background: getRetentionColor(cohort.month_0) }}>
+                                                {cohort.month_0 !== null ? `${cohort.month_0}%` : '-'}
+                                            </td>
+                                            <td style={{ background: getRetentionColor(cohort.month_1) }}>
+                                                {cohort.month_1 !== null ? `${cohort.month_1}%` : '-'}
+                                            </td>
+                                            <td style={{ background: getRetentionColor(cohort.month_2) }}>
+                                                {cohort.month_2 !== null ? `${cohort.month_2}%` : '-'}
+                                            </td>
+                                            <td style={{ background: getRetentionColor(cohort.month_3) }}>
+                                                {cohort.month_3 !== null ? `${cohort.month_3}%` : '-'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="cohort-legend">
+                            <div className="legend-item">
+                                <span className="legend-color" style={{ background: 'rgba(52, 168, 83, 0.3)' }}></span>
+                                <span>High (≥80%)</span>
+                            </div>
+                            <div className="legend-item">
+                                <span className="legend-color" style={{ background: 'rgba(251, 188, 4, 0.3)' }}></span>
+                                <span>Medium (60-79%)</span>
+                            </div>
+                            <div className="legend-item">
+                                <span className="legend-color" style={{ background: 'rgba(234, 67, 53, 0.3)' }}></span>
+                                <span>Low (&lt;60%)</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="cohort-legend">
-                        <div className="legend-item">
-                            <span className="legend-color" style={{ background: 'rgba(52, 168, 83, 0.3)' }}></span>
-                            <span>High (≥80%)</span>
-                        </div>
-                        <div className="legend-item">
-                            <span className="legend-color" style={{ background: 'rgba(251, 188, 4, 0.3)' }}></span>
-                            <span>Medium (60-79%)</span>
-                        </div>
-                        <div className="legend-item">
-                            <span className="legend-color" style={{ background: 'rgba(234, 67, 53, 0.3)' }}></span>
-                            <span>Low (&lt;60%)</span>
-                        </div>
-                    </div>
-                </div>
 
-                {/* Inactive Users Table */}
-                <div className="inactive-users-section glass-card">
-                    <h3>Inactive Users (&gt;30 Days)</h3>
-                    <DataTable
-                        columns={inactiveUsersColumns}
-                        data={userData.inactive_users}
-                        pageSize={10}
-                    />
-                </div>
-            </div>
-        </div>
+                    {/* Inactive Users Table */}
+                    <div className="inactive-users-section glass-card">
+                        <h3>Inactive Users (&gt;30 Days)</h3>
+                        <DataTable
+                            columns={inactiveUsersColumns}
+                            data={userData.inactive_users}
+                            pageSize={10}
+                        />
+                    </div>
+                </>
+            )}
+        </SuperAdminLayout>
     );
 };
 
 export default UserHealth;
+

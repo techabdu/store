@@ -5,6 +5,7 @@ import DataTable from '../../components/Tables/DataTable';
 import ErrorDetailModal from '../../components/ErrorDetailModal';
 import ConnectionIndicator from '../../components/ConnectionIndicator';
 import { AlertTriangle, Users, TrendingDown, AlertCircle } from 'lucide-react';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import './ErrorHealth.css';
 
 const ErrorHealth = () => {
@@ -18,10 +19,6 @@ const ErrorHealth = () => {
         const fetchErrorHealth = async () => {
             try {
                 setLoading(true);
-
-                // TODO: Replace with actual API call
-                // const response = await axios.get('/api/superadmin/error_health');
-                // setErrorData(response.data);
 
                 // Mock data for now
                 const mockData = {
@@ -190,115 +187,100 @@ const ErrorHealth = () => {
         }
     ];
 
-    // Loading state
-    if (loading) {
-        return (
-            <div className="main-content">
-                <div className="container">
-                    <div className="loading-state">
-                        <div>Loading error health...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="main-content">
+        <SuperAdminLayout
+            title="Error Health"
+            subtitle="Monitor and track system errors"
+            loading={loading}
+        >
             <ConnectionIndicator isConnected={isConnected} />
 
-            <div className="container">
-                {/* Page Header */}
-                <div className="page-header">
-                    <div>
-                        <h1>Error Health</h1>
-                        <p className="page-subtitle">Monitor and track system errors</p>
-                    </div>
-                </div>
-
-                {/* Metric Cards Grid */}
-                <div className="metrics-grid">
-                    {/* Total Errors (24h) */}
-                    <MetricCard
-                        title="Total Errors (24h)"
-                        value={errorData.total_errors_24h.toLocaleString()}
-                        icon={AlertTriangle}
-                        subtitle="in the last 24 hours"
-                        color="error"
-                    />
-
-                    {/* Error Rate */}
-                    <MetricCard
-                        title="Error Rate"
-                        value={`${errorData.error_rate}%`}
-                        icon={TrendingDown}
-                        trend="-0.2%"
-                        trendDirection="down"
-                        subtitle="vs yesterday"
-                        color="warning"
-                    />
-
-                    {/* Critical Errors */}
-                    <MetricCard
-                        title="Critical Errors"
-                        value={errorData.critical_errors}
-                        icon={AlertCircle}
-                        subtitle="requiring immediate attention"
-                        color="error"
-                    />
-
-                    {/* Affected Users */}
-                    <MetricCard
-                        title="Affected Users"
-                        value={errorData.affected_users}
-                        icon={Users}
-                        subtitle="experienced errors today"
-                        color="warning"
-                    />
-                </div>
-
-                {/* Charts Section */}
-                <div className="charts-section">
-                    <div className="charts-grid">
-                        {/* Error Rate Trend */}
-                        <LineChart
-                            data={errorData.charts.error_rate_trend.data}
-                            labels={errorData.charts.error_rate_trend.labels}
-                            title="Error Rate Trend (Last 7 Days)"
-                            height={300}
+            {errorData && (
+                <>
+                    {/* Metric Cards Grid */}
+                    <div className="metrics-grid">
+                        {/* Total Errors (24h) */}
+                        <MetricCard
+                            title="Total Errors (24h)"
+                            value={errorData.total_errors_24h.toLocaleString()}
+                            icon={AlertTriangle}
+                            subtitle="in the last 24 hours"
+                            color="error"
                         />
 
-                        {/* Error Breakdown by Type */}
-                        <PieChart
-                            data={errorData.charts.error_by_type.data}
-                            labels={errorData.charts.error_by_type.labels}
-                            title="Error Breakdown by Type"
-                            height={300}
+                        {/* Error Rate */}
+                        <MetricCard
+                            title="Error Rate"
+                            value={`${errorData.error_rate}%`}
+                            icon={TrendingDown}
+                            trend="-0.2%"
+                            trendDirection="down"
+                            subtitle="vs yesterday"
+                            color="warning"
+                        />
+
+                        {/* Critical Errors */}
+                        <MetricCard
+                            title="Critical Errors"
+                            value={errorData.critical_errors}
+                            icon={AlertCircle}
+                            subtitle="requiring immediate attention"
+                            color="error"
+                        />
+
+                        {/* Affected Users */}
+                        <MetricCard
+                            title="Affected Users"
+                            value={errorData.affected_users}
+                            icon={Users}
+                            subtitle="experienced errors today"
+                            color="warning"
                         />
                     </div>
 
-                    {/* Error by Module */}
-                    <div className="chart-full-width">
-                        <BarChart
-                            data={errorData.charts.error_by_module.data}
-                            labels={errorData.charts.error_by_module.labels}
-                            title="Error Breakdown by Module"
-                            height={300}
+                    {/* Charts Section */}
+                    <div className="charts-section">
+                        <div className="charts-grid">
+                            {/* Error Rate Trend */}
+                            <LineChart
+                                data={errorData.charts.error_rate_trend.data}
+                                labels={errorData.charts.error_rate_trend.labels}
+                                title="Error Rate Trend (Last 7 Days)"
+                                height={300}
+                            />
+
+                            {/* Error Breakdown by Type */}
+                            <PieChart
+                                data={errorData.charts.error_by_type.data}
+                                labels={errorData.charts.error_by_type.labels}
+                                title="Error Breakdown by Type"
+                                height={300}
+                            />
+                        </div>
+
+                        {/* Error by Module */}
+                        <div className="chart-full-width mt-24">
+                            <BarChart
+                                data={errorData.charts.error_by_module.data}
+                                labels={errorData.charts.error_by_module.labels}
+                                title="Error Breakdown by Module"
+                                height={300}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Recent Errors Table */}
+                    <div className="errors-table-section glass-card">
+                        <h3>Recent Errors</h3>
+                        <DataTable
+                            columns={errorColumns}
+                            data={errorData.recent_errors}
+                            pageSize={10}
+                            onRowClick={(error) => setSelectedError(error)}
                         />
                     </div>
-                </div>
-
-                {/* Recent Errors Table */}
-                <div className="errors-table-section glass-card">
-                    <h3>Recent Errors</h3>
-                    <DataTable
-                        columns={errorColumns}
-                        data={errorData.recent_errors}
-                        pageSize={10}
-                        onRowClick={(error) => setSelectedError(error)}
-                    />
-                </div>
-            </div>
+                </>
+            )}
 
             {/* Error Detail Modal */}
             {selectedError && (
@@ -307,8 +289,9 @@ const ErrorHealth = () => {
                     onClose={() => setSelectedError(null)}
                 />
             )}
-        </div>
+        </SuperAdminLayout>
     );
 };
 
 export default ErrorHealth;
+

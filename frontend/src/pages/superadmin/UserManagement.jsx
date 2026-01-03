@@ -1,27 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../../components/TopBar';
-import Sidebar from '../../components/Sidebar';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import {
     Plus,
-    MoreVertical,
     Trash2,
     Lock,
     Shield,
     ShieldOff,
-    Edit2,
     X
 } from 'lucide-react';
 import { FaSearch } from 'react-icons/fa';
 import { useNotification } from '../../context/NotificationContext';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import '../../styles/dashboard.css';
 import './UserManagement.css';
 
 const UserManagement = () => {
-    const { user } = useAuth();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showResetModal, setShowResetModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -59,25 +52,6 @@ const UserManagement = () => {
     useEffect(() => {
         fetchUsers();
     }, []);
-
-    // Responsive Sidebar Logic
-    useEffect(() => {
-        const handleResize = () => {
-            const mobile = window.innerWidth < 1024;
-            setIsMobile(mobile);
-            if (mobile) {
-                setSidebarOpen(false);
-            }
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const toggleSidebar = () => {
-        setSidebarOpen(!sidebarOpen);
-    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -170,110 +144,98 @@ const UserManagement = () => {
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const headerActions = (
+        <button className="add-user-btn" onClick={() => setShowModal(true)}>
+            <Plus size={20} />
+            Add Admin
+        </button>
+    );
+
     return (
-        <div className="dashboard-container">
-            <TopBar toggleSidebar={toggleSidebar} user={user} />
-
-            <Sidebar
-                isOpen={sidebarOpen}
-                isMobile={isMobile}
-                closeSidebar={() => setSidebarOpen(false)}
-            />
-
-            <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
-                <div className="content-wrapper">
-                    {/* Page Header */}
-                    <div className="user-management-header">
-                        <div>
-                            <h1 className="heading-1">User Management</h1>
-                            <p className="text-secondary">Manage system administrators and their access</p>
-                        </div>
-                        <button className="add-user-btn" onClick={() => setShowModal(true)}>
-                            <Plus size={20} />
-                            Add Admin
-                        </button>
-                    </div>
-
-                    {/* Search Bar */}
-                    <div className="search-bar-container">
-                        <div className="search-input-wrapper">
-                            <FaSearch className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Search users..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Users Table */}
-                    <div className="dashboard-card user-table-container">
-                        <table className="user-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Last Active</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.map((user) => (
-                                    <tr key={user.id}>
-                                        <td>
-                                            <div className="user-info">
-                                                <div className="user-avatar">
-                                                    {user.username.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="user-details">
-                                                    <span className="user-name">{user.username}</span>
-                                                    <span className="user-email">{user.email}</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span style={{ textTransform: 'capitalize' }}>{user.role}</span>
-                                        </td>
-                                        <td>
-                                            <span className={`status-badge ${user.status}`}>
-                                                {user.status}
-                                            </span>
-                                        </td>
-                                        <td>{user.lastActive}</td>
-                                        <td>
-                                            <div className="actions-cell">
-                                                <button
-                                                    className="action-btn"
-                                                    title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
-                                                    onClick={() => handleToggleStatus(user.id, user.status)}
-                                                >
-                                                    {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
-                                                </button>
-                                                <button
-                                                    className="action-btn"
-                                                    title="Reset Password"
-                                                    onClick={() => openResetModal(user)}
-                                                >
-                                                    <Lock size={18} />
-                                                </button>
-                                                <button
-                                                    className="action-btn delete"
-                                                    title="Delete User"
-                                                    onClick={() => handleDelete(user.id)}
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+        <SuperAdminLayout
+            title="User Management"
+            subtitle="Manage system administrators and their access"
+            loading={loading}
+            headerActions={headerActions}
+        >
+            {/* Search Bar */}
+            <div className="search-bar-container">
+                <div className="search-input-wrapper">
+                    <FaSearch className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="Search users..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                 </div>
-            </main>
+            </div>
+
+            {/* Users Table */}
+            <div className="dashboard-card user-table-container">
+                <table className="user-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredUsers.map((user) => (
+                            <tr key={user.id}>
+                                <td>
+                                    <div className="user-info">
+                                        <div className="user-avatar">
+                                            {user.username.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="user-details">
+                                            <span className="user-name">{user.username}</span>
+                                            <span className="user-email">{user.email}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style={{ textTransform: 'capitalize' }}>{user.role}</span>
+                                </td>
+                                <td>
+                                    <span className={`status-badge ${user.status}`}>
+                                        {user.status}
+                                    </span>
+                                </td>
+                                <td>{user.lastActive}</td>
+                                <td>
+                                    <div className="actions-cell">
+                                        <button
+                                            className="action-btn"
+                                            title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
+                                            onClick={() => handleToggleStatus(user.id, user.status)}
+                                        >
+                                            {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
+                                        </button>
+                                        <button
+                                            className="action-btn"
+                                            title="Reset Password"
+                                            onClick={() => openResetModal(user)}
+                                        >
+                                            <Lock size={18} />
+                                        </button>
+                                        <button
+                                            className="action-btn delete"
+                                            title="Delete User"
+                                            onClick={() => handleDelete(user.id)}
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
             {/* Add User Modal */}
             {showModal && (
@@ -376,8 +338,9 @@ const UserManagement = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </SuperAdminLayout>
     );
 };
 
 export default UserManagement;
+

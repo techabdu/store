@@ -4,6 +4,7 @@ import { LineChart, BarChart, PieChart } from '../../components/Charts';
 import DataTable from '../../components/Tables/DataTable';
 import ConnectionIndicator from '../../components/ConnectionIndicator';
 import { DollarSign, ShoppingCart, TrendingUp, CreditCard } from 'lucide-react';
+import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import './BusinessHealth.css';
 
 const BusinessHealth = () => {
@@ -16,10 +17,6 @@ const BusinessHealth = () => {
         const fetchBusinessHealth = async () => {
             try {
                 setLoading(true);
-
-                // TODO: Replace with actual API call
-                // const response = await axios.get('/api/superadmin/business_health');
-                // setBusinessData(response.data);
 
                 // Mock data for now
                 const mockData = {
@@ -161,118 +158,104 @@ const BusinessHealth = () => {
         }
     ];
 
-    // Loading state
-    if (loading) {
-        return (
-            <div className="main-content">
-                <div className="container">
-                    <div className="loading-state">
-                        <div>Loading business health...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="main-content">
+        <SuperAdminLayout
+            title="Business Health"
+            subtitle="Monitor revenue, transactions, and business metrics"
+            loading={loading}
+        >
             <ConnectionIndicator isConnected={isConnected} />
 
-            <div className="container">
-                {/* Page Header */}
-                <div className="page-header">
-                    <div>
-                        <h1>Business Health</h1>
-                        <p className="page-subtitle">Monitor revenue, transactions, and business metrics</p>
-                    </div>
-                </div>
+            {businessData && (
+                <>
+                    {/* Metric Cards Grid */}
+                    <div className="metrics-grid">
+                        {/* Daily Revenue */}
+                        <MetricCard
+                            title="Daily Revenue"
+                            value={`$${businessData.daily_revenue.toLocaleString()}`}
+                            icon={DollarSign}
+                            trend="+8%"
+                            trendDirection="up"
+                            subtitle="vs yesterday"
+                            color="success"
+                        />
 
-                {/* Metric Cards Grid */}
-                <div className="metrics-grid">
-                    {/* Daily Revenue */}
-                    <MetricCard
-                        title="Daily Revenue"
-                        value={`$${businessData.daily_revenue.toLocaleString()}`}
-                        icon={DollarSign}
-                        trend="+8%"
-                        trendDirection="up"
-                        subtitle="vs yesterday"
-                        color="success"
-                    />
+                        {/* Total Transactions */}
+                        <MetricCard
+                            title="Total Transactions"
+                            value={businessData.total_transactions.toLocaleString()}
+                            icon={ShoppingCart}
+                            trend="+12%"
+                            trendDirection="up"
+                            subtitle="today"
+                            color="primary"
+                        />
 
-                    {/* Total Transactions */}
-                    <MetricCard
-                        title="Total Transactions"
-                        value={businessData.total_transactions.toLocaleString()}
-                        icon={ShoppingCart}
-                        trend="+12%"
-                        trendDirection="up"
-                        subtitle="today"
-                        color="primary"
-                    />
+                        {/* GMV (Gross Merchandise Value) */}
+                        <MetricCard
+                            title="GMV"
+                            value={`$${businessData.gmv.toLocaleString()}`}
+                            icon={TrendingUp}
+                            subtitle="gross merchandise value"
+                            color="info"
+                        />
 
-                    {/* GMV (Gross Merchandise Value) */}
-                    <MetricCard
-                        title="GMV"
-                        value={`$${businessData.gmv.toLocaleString()}`}
-                        icon={TrendingUp}
-                        subtitle="gross merchandise value"
-                        color="info"
-                    />
-
-                    {/* Average Transaction Value */}
-                    <MetricCard
-                        title="Avg Transaction"
-                        value={`$${businessData.avg_transaction_value.toFixed(2)}`}
-                        icon={CreditCard}
-                        subtitle="per transaction"
-                        color="warning"
-                    />
-                </div>
-
-                {/* Charts Section */}
-                <div className="charts-section">
-                    {/* Revenue Trend */}
-                    <div className="chart-full-width">
-                        <LineChart
-                            data={businessData.charts.revenue_trend.data}
-                            labels={businessData.charts.revenue_trend.labels}
-                            title="Revenue Trend (Last 12 Months)"
-                            height={300}
+                        {/* Average Transaction Value */}
+                        <MetricCard
+                            title="Avg Transaction"
+                            value={`$${businessData.avg_transaction_value.toFixed(2)}`}
+                            icon={CreditCard}
+                            subtitle="per transaction"
+                            color="warning"
                         />
                     </div>
 
-                    <div className="charts-grid">
-                        {/* Top Selling Devices */}
-                        <BarChart
-                            data={businessData.charts.top_devices.data}
-                            labels={businessData.charts.top_devices.labels}
-                            title="Top Selling Devices"
-                            height={300}
-                        />
+                    {/* Charts Section */}
+                    <div className="charts-section">
+                        {/* Revenue Trend */}
+                        <div className="chart-full-width">
+                            <LineChart
+                                data={businessData.charts.revenue_trend.data}
+                                labels={businessData.charts.revenue_trend.labels}
+                                title="Revenue Trend (Last 12 Months)"
+                                height={300}
+                            />
+                        </div>
 
-                        {/* Payment Method Breakdown */}
-                        <PieChart
-                            data={businessData.charts.payment_methods.data}
-                            labels={businessData.charts.payment_methods.labels}
-                            title="Payment Method Distribution"
-                            height={300}
+                        <div className="charts-grid mt-24">
+                            {/* Top Selling Devices */}
+                            <BarChart
+                                data={businessData.charts.top_devices.data}
+                                labels={businessData.charts.top_devices.labels}
+                                title="Top Selling Devices"
+                                height={300}
+                            />
+
+                            {/* Payment Method Breakdown */}
+                            <PieChart
+                                data={businessData.charts.payment_methods.data}
+                                labels={businessData.charts.payment_methods.labels}
+                                title="Payment Method Distribution"
+                                height={300}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Recent Transactions Table */}
+                    <div className="transactions-table-section glass-card">
+                        <h3>Recent Transactions</h3>
+                        <DataTable
+                            columns={transactionColumns}
+                            data={businessData.recent_transactions}
+                            pageSize={10}
                         />
                     </div>
-                </div>
-
-                {/* Recent Transactions Table */}
-                <div className="transactions-table-section glass-card">
-                    <h3>Recent Transactions</h3>
-                    <DataTable
-                        columns={transactionColumns}
-                        data={businessData.recent_transactions}
-                        pageSize={10}
-                    />
-                </div>
-            </div>
-        </div>
+                </>
+            )}
+        </SuperAdminLayout>
     );
 };
 
 export default BusinessHealth;
+
