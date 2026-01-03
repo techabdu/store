@@ -71,6 +71,8 @@ import SystemHealth from './pages/SuperAdmin/SystemHealth';
 import ErrorHealth from './pages/SuperAdmin/ErrorHealth';
 import BusinessHealth from './pages/SuperAdmin/BusinessHealth';
 import UserHealth from './pages/SuperAdmin/UserHealth';
+import MyTickets from './pages/Support/MyTickets';
+import TicketDetail from './pages/Support/TicketDetail';
 
 function App() {
     return (
@@ -541,6 +543,23 @@ function App() {
                                     element={
                                         <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
                                             <MySales />
+                                        </ProtectedRoute>
+                                    }
+                                />
+
+                                <Route
+                                    path="/support/tickets"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+                                            <MyTickets />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/support/ticket/:id"
+                                    element={
+                                        <ProtectedRoute allowedRoles={['user', 'admin', 'superadmin']}>
+                                            <TicketDetail />
                                         </ProtectedRoute>
                                     }
                                 />
