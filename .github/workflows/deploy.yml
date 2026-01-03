@@ -31,6 +31,10 @@ jobs:
       - name: Build React App
         working-directory: ./frontend
         run: npm run build
+        env:
+          VITE_API_URL: https://prhub.shop/api
+          VITE_WS_URL: wss://prhub.shop:8080
+          VITE_APP_ENV: production
 
       # 5. Copy .htaccess to build folder
       - name: Copy .htaccess to Build
@@ -91,4 +95,35 @@ jobs:
             **/.git*/**
             **/node_modules/**
             **/.gitignore
+
+      # 9. Execute Remote Tasks (Migrations, Cron, WebSocket)
+      - name: Run Database Migrations and Setup Services
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Navigate to project root
+            cd ~/domains/prhub.shop/public_html
+            
+            # Run database migrations (monitoring system)
+            mysql -u ${{ secrets.DB_USER }} -p'${{ secrets.DB_PASS }}' ${{ secrets.DB_NAME }} < backend/sql/migrations/001_monitoring_tables.sql || echo "Migration 001 already applied or failed"
+            mysql -u ${{ secrets.DB_USER }} -p'${{ secrets.DB_PASS }}' ${{ secrets.DB_NAME }} < backend/sql/migrations/002_saas_metrics_tables.sql || echo "Migration 002 already applied or failed"
+            mysql -u ${{ secrets.DB_USER }} -p'${{ secrets.DB_PASS }}' ${{ secrets.DB_NAME }} < backend/sql/migrations/003_support_system.sql || echo "Migration 003 already applied or failed"
+            
+            # Setup cron jobs for monitoring workers
+            chmod +x backend/scripts/setup_cron.sh
+            bash backend/scripts/setup_cron.sh
+            
+            # Restart WebSocket server
+            if command -v supervisorctl >/dev/null 2>&1; then
+              sudo supervisorctl restart websocket-server || echo "Supervisor not available or websocket-server not configured"
+            else
+              # Fallback: Kill and restart manually
+              pkill -f "backend/websocket/server.php" || true
+              nohup php backend/websocket/server.php > backend/websocket/server.log 2>&1 &
+              echo "WebSocket server restarted in background"
+            fi
             
