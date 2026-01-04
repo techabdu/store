@@ -121,10 +121,10 @@ class SuperAdminDashboard implements MessageComponentInterface {
             }
             
             $this->lastAlertCheck = $now;
-        } catch (Exception $e) {
-            echo "Alert check error: " . $e->getMessage() . "\n";
-            // Reconnect DB if gone away
-            if (strpos($e->getMessage(), 'gone away') !== false) {
+        } catch (\Throwable $e) {
+            echo "[" . date('Y-m-d H:i:s') . "] Alert check error: " . $e->getMessage() . "\n";
+            // Reconnect DB if gone away or connection lost
+            if (strpos($e->getMessage(), 'gone away') !== false || $this->conn === null) {
                  $this->reconnectDb();
             }
         }
@@ -163,9 +163,9 @@ class SuperAdminDashboard implements MessageComponentInterface {
             
             $this->broadcastToChannel('metrics', ['type' => 'metrics_update', 'data' => $metrics]);
             
-        } catch (Exception $e) {
-             echo "Metrics check error: " . $e->getMessage() . "\n";
-             if (strpos($e->getMessage(), 'gone away') !== false) {
+        } catch (\Throwable $e) {
+             echo "[" . date('Y-m-d H:i:s') . "] Metrics check error: " . $e->getMessage() . "\n";
+             if (strpos($e->getMessage(), 'gone away') !== false || $this->conn === null) {
                  $this->reconnectDb();
             }
         }
@@ -200,9 +200,9 @@ class SuperAdminDashboard implements MessageComponentInterface {
             }
             
             $this->lastActivityCheck = $now;
-        } catch (Exception $e) {
-             echo "Activity check error: " . $e->getMessage() . "\n";
-             if (strpos($e->getMessage(), 'gone away') !== false) {
+        } catch (\Throwable $e) {
+             echo "[" . date('Y-m-d H:i:s') . "] Activity check error: " . $e->getMessage() . "\n";
+             if (strpos($e->getMessage(), 'gone away') !== false || $this->conn === null) {
                  $this->reconnectDb();
             }
         }
@@ -235,9 +235,9 @@ class SuperAdminDashboard implements MessageComponentInterface {
             }
             
             $this->lastErrorCheck = $now;
-        } catch (Exception $e) {
-             echo "Error check error: " . $e->getMessage() . "\n";
-             if (strpos($e->getMessage(), 'gone away') !== false) {
+        } catch (\Throwable $e) {
+             echo "[" . date('Y-m-d H:i:s') . "] Error check error: " . $e->getMessage() . "\n";
+             if (strpos($e->getMessage(), 'gone away') !== false || $this->conn === null) {
                  $this->reconnectDb();
             }
         }
@@ -293,9 +293,9 @@ class SuperAdminDashboard implements MessageComponentInterface {
             }
             
             $this->lastTenantNotificationCheck = $now;
-        } catch (\Exception $e) {
-             echo "Tenant notification check error: " . $e->getMessage() . "\n";
-             if (strpos($e->getMessage(), 'gone away') !== false) {
+        } catch (\Throwable $e) {
+             echo "[" . date('Y-m-d H:i:s') . "] Tenant notification check error: " . $e->getMessage() . "\n";
+             if (strpos($e->getMessage(), 'gone away') !== false || $this->conn === null) {
                  $this->reconnectDb();
             }
         }
@@ -340,7 +340,7 @@ $server = new IoServer(
             $dashboard
         )
     ),
-    new React\Socket\SocketServer('0.0.0.0:8080', [], $loop),
+    new React\Socket\SocketServer('[::]:8080', [], $loop),
     $loop
 );
 

@@ -23,8 +23,9 @@
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem 2rem;
+    row-gap: 1.5rem;
 }
 
 .summary-item {
@@ -69,7 +70,7 @@
 /* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
 }
 
@@ -271,8 +272,21 @@
     font-style: italic;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive Design */
+
+/* Tablet - 768px to 1023px */
+@media (max-width: 1023px) and (min-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobile - below 768px */
+@media (max-width: 767px) {
     .stats-grid {
         grid-template-columns: 1fr;
     }
@@ -289,5 +303,36 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.25rem;
+    }
+
+    .summary-card,
+    .activity-section {
+        padding: 1.25rem;
+    }
+
+    .stat-card {
+        padding: 1.25rem;
+    }
+}
+
+/* Extra small mobile - below 480px */
+@media (max-width: 480px) {
+
+    .summary-card h3,
+    .activity-section h3 {
+        font-size: 1.1rem;
+    }
+
+    .stat-content h4 {
+        font-size: 0.8rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
     }
 }

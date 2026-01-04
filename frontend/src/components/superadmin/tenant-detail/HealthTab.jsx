@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
     Activity, Database, Cpu, Zap,
-    AlertTriangle, CheckCircle, BarChart2, Server
+    AlertTriangle, CheckCircle, BarChart2, Server, Users
 } from 'lucide-react';
 import api from '../../../utils/api';
+import SkeletonLoader from './SkeletonLoader';
 import './HealthTab.css';
 
 const HealthTab = ({ tenantId }) => {

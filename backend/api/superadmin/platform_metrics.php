@@ -4,34 +4,17 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../helpers/EventLogger.php';
 require_once __DIR__ . '/../../middleware/api_logger.php';
 
+require_once __DIR__ . '/../../middleware/auth.php';
+require_once __DIR__ . '/../../middleware/role.php';
+
 // Set CORS headers
-if (function_exists('setCorsHeaders')) {
-    setCorsHeaders();
-} else {
-    header("Access-Control-Allow-Origin: *");
-    header("Content-Type: application/json; charset=UTF-8");
-    header("Access-Control-Allow-Methods: GET, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization");
-}
+setCorsHeaders();
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+header("Content-Type: application/json; charset=UTF-8");
 
-// Start session
-if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.gc_maxlifetime', 172800);
-    ini_set('session.cookie_lifetime', 172800);
-    session_start();
-}
-
-// Auth Check: Superadmin only
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'superadmin') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Unauthorized access']);
-    exit;
-}
+// Authenticate and verify SuperAdmin role
+$user = checkAuth();
+checkRole(['superadmin']);
 
 $db = new Database();
 $conn = $db->connect();

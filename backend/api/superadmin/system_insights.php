@@ -26,12 +26,8 @@ require_once __DIR__ . '/../../classes/BusinessMetrics.php';
 // CORS Headers
 header("Content-Type: application/json; charset=UTF-8");
 
-// Start session and check authentication
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Verify SuperAdmin role
+// Authenticate and verify SuperAdmin role
+$user = checkAuth();
 checkRole(['superadmin']);
 
 // Get tab parameter

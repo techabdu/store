@@ -135,10 +135,37 @@
 }
 
 /* Tab Navigation */
+.tab-navigation-wrapper {
+    margin-bottom: 2rem;
+}
+
+.mobile-tab-select {
+    display: none;
+    margin-bottom: 1rem;
+}
+
+.tab-select {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.2rem;
+}
+
 .tab-navigation {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 2rem;
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -146,6 +173,15 @@
     padding: 0.5rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+.tab-navigation::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tab-navigation::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.2);
+    border-radius: 4px;
 }
 
 .tab-button {
@@ -284,6 +320,60 @@
 }
 
 /* Responsive Design */
+@media (max-width: 480px) {
+    .tenant-detail-page {
+        padding: 0.5rem;
+    }
+
+    .tenant-header {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .tenant-header-info h1 {
+        font-size: 1.25rem;
+    }
+
+    .tab-content {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .breadcrumb-link {
+        font-size: 0.8rem;
+    }
+}
+
+/* Ensure Responsive Containers for Charts */
+.recharts-responsive-container {
+    min-height: 250px;
+}
+
+@media (max-width: 600px) {
+    .recharts-responsive-container {
+        min-height: 200px;
+    }
+}
+
+/* Custom Scrollbar for Tab Navigation */
+.tab-navigation::-webkit-scrollbar {
+    height: 3px;
+}
+
+.tab-navigation::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tab-navigation::-webkit-scrollbar-thumb {
+    background: rgba(167, 139, 250, 0.3);
+    border-radius: 3px;
+}
+
 @media (max-width: 1024px) {
     .tenant-header {
         flex-direction: column;
@@ -307,6 +397,7 @@
 @media (max-width: 768px) {
     .tenant-header {
         padding: 1.5rem;
+        gap: 1.5rem;
     }
 
     .tenant-header-info h1 {
@@ -316,23 +407,23 @@
     .tenant-header-meta {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.5rem;
     }
 
-    .tab-button {
-        padding: 0.75rem 1rem;
-        font-size: 0.85rem;
+    .mobile-tab-select {
+        display: block;
     }
 
-    .tab-label {
+    .tab-navigation {
         display: none;
-    }
-
-    .tab-button.active .tab-label {
-        display: inline;
     }
 
     .tab-content {
         padding: 1.5rem;
+    }
+
+    .tenant-header-contact {
+        gap: 0.5rem;
     }
 }
 
@@ -372,6 +463,7 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
 }
+
 /* Notification Badge */
 .relative {
     position: relative;

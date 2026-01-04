@@ -14,7 +14,15 @@ const EmptyState = ({ icon: Icon, title, description, action }) => {
             </p>
             {action && (
                 <div className="empty-state-action">
-                    {action}
+                    {React.isValidElement(action) ? (
+                        action
+                    ) : action.label && action.onClick ? (
+                        <button onClick={action.onClick} className="empty-state-btn">
+                            {action.label}
+                        </button>
+                    ) : (
+                        action
+                    )}
                 </div>
             )}
         </div>

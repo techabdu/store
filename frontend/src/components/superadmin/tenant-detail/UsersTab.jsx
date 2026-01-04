@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Users as UsersIcon, Search, UserCog, Ban, CheckCircle, Filter, Activity, Calendar } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import ImpersonationModal from '../ImpersonationModal';
+import SkeletonLoader from './SkeletonLoader';
+import EmptyState from './EmptyState';
+import Pagination from './Pagination';
 import api from '../../../utils/api';
 import './UsersTab.css';
 
@@ -9,6 +12,7 @@ const UsersTab = ({ tenantId }) => {
     const [users, setUsers] = useState([]);
     const [activityLogs, setActivityLogs] = useState([]);
     const [loginAnalytics, setLoginAnalytics] = useState(null);
+    const [userBreakdown, setUserBreakdown] = useState({ total: 0, admin: 0, user: 0, active: 0 });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
@@ -17,21 +21,49 @@ const UsersTab = ({ tenantId }) => {
     const [dateRange, setDateRange] = useState('7'); // days
     const [impersonateModal, setImpersonateModal] = useState({ isOpen: false, user: null });
 
+    // Pagination states
+    const [usersPagination, setUsersPagination] = useState({ page: 1, limit: 20, total: 0, pages: 1 });
+    const [activityPagination, setActivityPagination] = useState({ page: 1, limit: 50, total: 0, pages: 1 });
+
     useEffect(() => {
         if (tenantId) {
-            fetchUsers();
-            fetchActivityLogs();
+            const delayDebounceFn = setTimeout(() => {
+                fetchUsers(1);
+            }, 300);
+            return () => clearTimeout(delayDebounceFn);
+        }
+    }, [tenantId, searchTerm, roleFilter]);
+
+    useEffect(() => {
+        if (tenantId) {
+            fetchActivityLogs(1);
+        }
+    }, [tenantId, dateRange, activityFilter]);
+
+    useEffect(() => {
+        if (tenantId) {
             fetchLoginAnalytics();
         }
-    }, [tenantId, dateRange]);
+    }, [tenantId]);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (page = 1) => {
         try {
             setLoading(true);
-            const response = await api.get(`/superadmin/tenant_users.php?action=list&tenant_id=${tenantId}`);
+            const response = await api.get('/superadmin/tenant_users.php', {
+                params: {
+                    action: 'list',
+                    tenant_id: tenantId,
+                    page: page,
+                    limit: usersPagination.limit,
+                    search: searchTerm,
+                    role: roleFilter
+                }
+            });
 
             if (response.data.success) {
                 setUsers(response.data.users);
+                setUsersPagination(response.data.pagination);
+                setUserBreakdown(response.data.breakdown);
             }
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -40,12 +72,21 @@ const UsersTab = ({ tenantId }) => {
         }
     };
 
-    const fetchActivityLogs = async () => {
+    const fetchActivityLogs = async (page = 1) => {
         try {
-            const response = await api.get(`/superadmin/tenant_users.php?action=activity_logs&tenant_id=${tenantId}&days=${dateRange}`);
+            const response = await api.get('/superadmin/tenant_users.php', {
+                params: {
+                    action: 'activity_logs',
+                    tenant_id: tenantId,
+                    page: page,
+                    limit: activityPagination.limit,
+                    action_filter: activityFilter === 'all' ? '' : activityFilter
+                }
+            });
 
             if (response.data.success) {
                 setActivityLogs(response.data.activity_logs || []);
+                setActivityPagination(response.data.pagination);
             }
         } catch (err) {
             console.error('Error fetching activity logs:', err);
@@ -112,17 +153,24 @@ const UsersTab = ({ tenantId }) => {
         }
     };
 
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        return matchesSearch && matchesRole;
-    });
+    // Helper functions for badges
+    const getRoleBadge = (role) => {
+        const badges = {
+            'superadmin': 'role-superadmin',
+            'admin': 'role-admin',
+            'user': 'role-user'
+        };
+        return badges[role] || 'role-user';
+    };
 
-    const filteredActivityLogs = activityLogs.filter(log => {
-        if (activityFilter === 'all') return true;
-        return log.action.toLowerCase().includes(activityFilter.toLowerCase());
-    });
+    const getStatusBadge = (status) => {
+        const badges = {
+            'active': 'status-active',
+            'inactive': 'status-inactive',
+            'suspended': 'status-suspended'
+        };
+        return badges[status] || 'status-inactive';
+    };
 
     if (loading) {
         return (
@@ -190,72 +238,84 @@ const UsersTab = ({ tenantId }) => {
                     </div>
 
                     <div className="users-table-container">
-                        <table className="users-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Shop</th>
-                                    <th>Last Activity</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.map(user => (
-                                    <tr key={user.id}>
-                                        <td>
-                                            <div className="user-cell">
-                                                <div className="user-avatar">{user.username.charAt(0).toUpperCase()}</div>
-                                                <span>{user.username}</span>
-                                            </div>
-                                        </td>
-                                        <td>{user.email}</td>
-                                        <td>
-                                            <span className={`role-badge role-${user.role}`}>{user.role}</span>
-                                        </td>
-                                        <td>
-                                            <span className={`status-badge status-${user.status}`}>{user.status}</span>
-                                        </td>
-                                        <td>{user.shop_name || 'N/A'}</td>
-                                        <td className="last-activity">
-                                            {user.last_activity ? formatTime(user.last_activity) : 'Never'}
-                                        </td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                <button
-                                                    className="action-btn impersonate"
-                                                    onClick={() => handleImpersonateClick(user)}
-                                                    title="Impersonate User"
-                                                >
-                                                    <UserCog size={16} />
-                                                </button>
-                                                {user.status === 'active' ? (
-                                                    <button
-                                                        className="action-btn suspend"
-                                                        onClick={() => handleSuspendUser(user.id)}
-                                                        title="Suspend User"
-                                                    >
-                                                        <Ban size={16} />
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        className="action-btn activate"
-                                                        onClick={() => handleActivateUser(user.id)}
-                                                        title="Activate User"
-                                                    >
-                                                        <CheckCircle size={16} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        {filteredUsers.length === 0 && (
+                        {users.length > 0 ? (
+                            <>
+                                <table className="users-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Shop</th>
+                                            <th>Last Activity</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {users.map((user) => (
+                                            <tr key={user.id}>
+                                                <td>
+                                                    <div className="user-info">
+                                                        <div className="user-avatar">
+                                                            {user.username.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div className="user-details">
+                                                            <span className="username">{user.username}</span>
+                                                            <span className="email">{user.email}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className={`role-badge ${getRoleBadge(user.role)}`}>
+                                                        {user.role}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className={`status-badge ${getStatusBadge(user.status)}`}>
+                                                        {user.status}
+                                                    </span>
+                                                </td>
+                                                <td>{user.shop_name || 'System'}</td>
+                                                <td>{user.last_activity ? new Date(user.last_activity).toLocaleString() : 'Never'}</td>
+                                                <td>
+                                                    <div className="user-actions">
+                                                        <button
+                                                            className="user-action-btn impersonate"
+                                                            onClick={() => handleImpersonateClick(user)}
+                                                            title="Impersonate User"
+                                                        >
+                                                            <UserCog size={16} />
+                                                        </button>
+                                                        {user.status === 'active' ? (
+                                                            <button
+                                                                className="user-action-btn suspend"
+                                                                onClick={() => handleSuspendUser(user.id)}
+                                                                title="Suspend User"
+                                                            >
+                                                                <Ban size={16} />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                className="user-action-btn activate"
+                                                                onClick={() => handleActivateUser(user.id)}
+                                                                title="Activate User"
+                                                            >
+                                                                <CheckCircle size={16} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <Pagination
+                                    currentPage={usersPagination.page}
+                                    totalPages={usersPagination.pages}
+                                    onPageChange={(p) => fetchUsers(p)}
+                                />
+                            </>
+                        ) : (
                             <EmptyState
                                 icon={UsersIcon}
                                 title="No Users Found"
@@ -267,19 +327,19 @@ const UsersTab = ({ tenantId }) => {
                     <div className="user-stats">
                         <div className="stat-item">
                             <label>Total Users</label>
-                            <span>{users.length}</span>
+                            <span>{userBreakdown.total}</span>
                         </div>
                         <div className="stat-item">
                             <label>Active</label>
-                            <span>{users.filter(u => u.status === 'active').length}</span>
+                            <span>{userBreakdown.active}</span>
                         </div>
                         <div className="stat-item">
                             <label>Admins</label>
-                            <span>{users.filter(u => u.role === 'admin').length}</span>
+                            <span>{userBreakdown.admin}</span>
                         </div>
                         <div className="stat-item">
                             <label>Regular Users</label>
-                            <span>{users.filter(u => u.role === 'user').length}</span>
+                            <span>{userBreakdown.user}</span>
                         </div>
                     </div>
                 </>
@@ -310,25 +370,33 @@ const UsersTab = ({ tenantId }) => {
                         </div>
                     </div>
 
-                    <div className="activity-logs-container">
-                        {filteredActivityLogs.length > 0 ? (
-                            <div className="activity-timeline">
-                                {filteredActivityLogs.map((log, index) => (
-                                    <div key={index} className="activity-log-item">
-                                        <div className="log-marker"></div>
-                                        <div className="log-content">
-                                            <div className="log-header">
-                                                <span className="log-user">{log.username}</span>
-                                                <span className="log-action">{formatAction(log.action)}</span>
-                                                <span className="log-time">{formatTime(log.created_at)}</span>
+                    <div className="activity-list">
+                        {activityLogs.length > 0 ? (
+                            <>
+                                {activityLogs.map((log) => (
+                                    <div key={log.id} className="activity-item glass-card">
+                                        <div className="activity-icon">
+                                            <Activity size={16} />
+                                        </div>
+                                        <div className="activity-details">
+                                            <div className="activity-main">
+                                                <span className="activity-user">{log.username}</span>
+                                                <span className="activity-action">{log.action.replace(/_/g, ' ')}</span>
+                                                {log.details && <span className="activity-info">({log.details})</span>}
                                             </div>
-                                            {log.details && (
-                                                <div className="log-details">{log.details}</div>
-                                            )}
+                                            <div className="activity-meta">
+                                                <span>{new Date(log.created_at).toLocaleString()}</span>
+                                                <span>IP: {log.ip_address}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
-                            </div>
+                                <Pagination
+                                    currentPage={activityPagination.page}
+                                    totalPages={activityPagination.pages}
+                                    onPageChange={(p) => fetchActivityLogs(p)}
+                                />
+                            </>
                         ) : (
                             <EmptyState
                                 icon={Activity}

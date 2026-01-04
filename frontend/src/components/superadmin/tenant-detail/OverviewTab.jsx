@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, Package, DollarSign, MessageSquare, Calendar, TrendingUp } from 'lucide-react';
+import { Users, Package, DollarSign, MessageSquare, Calendar, TrendingUp, Activity } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
+import EmptyState from './EmptyState';
 import api from '../../../utils/api';
 import './OverviewTab.css';
 

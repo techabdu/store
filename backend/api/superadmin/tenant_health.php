@@ -102,12 +102,13 @@ if ($method === 'GET') {
         echo json_encode([
             'success' => true,
             'resources' => [
-                'storage_used_mb' => floatval($resources['storage_used_mb'] ?: $estimated_storage),
-                'storage_limit_mb' => 1024, // 1GB default limit
+                'database_size' => round($estimated_storage, 2) . ' MB',
+                'storage_used' => round(floatval($resources['storage_used_mb'] ?: $estimated_storage), 2) . ' MB',
+                'storage_limit' => '1 GB',
                 'storage_percentage' => round((floatval($resources['storage_used_mb'] ?: $estimated_storage) / 1024) * 100, 2),
-                'api_calls_today' => intval($resources['api_calls_today']),
-                'api_call_limit' => 10000, // 10k per day default
-                'total_logins' => intval($resources['total_logins']),
+                'api_calls_24h' => intval($resources['api_calls_today']),
+                'api_call_limit' => 10000,
+                'active_sessions' => intval($resources['total_logins'] / 10), // Placeholder active sessions
                 'last_login' => $resources['last_login_at']
             ],
             'database_metrics' => $db_metrics,
@@ -121,11 +122,11 @@ if ($method === 'GET') {
                 performance_score,
                 error_rate,
                 avg_response_time,
-                uptime_percentage,
-                last_checked
+                uptime_percentage as uptime,
+                calculated_at as last_checked
             FROM retailer_health_scores
             WHERE tenant_id = ?
-            ORDER BY last_checked DESC
+            ORDER BY calculated_at DESC
             LIMIT 1
         ");
         
@@ -174,7 +175,7 @@ if ($method === 'GET') {
                 'performance_score' => 85, // Default placeholder
                 'error_rate' => $total_actions > 0 ? round(($error_count / $total_actions) * 100, 2) : 0,
                 'avg_response_time' => 250, // Placeholder (ms)
-                'uptime_percentage' => 99.9, // Placeholder
+                'uptime' => '99.9%', // Placeholder
                 'last_checked' => date('Y-m-d H:i:s')
             ];
         }
@@ -369,12 +370,32 @@ if ($method === 'GET') {
         elseif ($score < 85) $status = 'fair';
         elseif ($score < 95) $status = 'good';
         
+        // Format breakdown for frontend (converting impact to score)
+        $formatted_breakdown = [];
+        foreach ($breakdown as $item) {
+            $formatted_breakdown[] = [
+                'category' => $item['factor'],
+                'score' => 100 + $item['impact']
+            ];
+        }
+
+        // Format recommendations for frontend
+        $formatted_recs = [];
+        foreach ($recommendations as $rec) {
+            $priority = (strpos($rec, 'High') !== false || strpos($rec, 'unresolved') !== false) ? 'high' : 'medium';
+            $formatted_recs[] = [
+                'priority' => $priority,
+                'title' => $priority === 'high' ? 'Priority Issue' : 'Optimization',
+                'description' => $rec
+            ];
+        }
+
         echo json_encode([
             'success' => true,
-            'health_score' => $score,
+            'score' => $score,
             'status' => $status,
-            'breakdown' => $breakdown,
-            'recommendations' => $recommendations
+            'breakdown' => $formatted_breakdown,
+            'recommendations' => $formatted_recs
         ]);
     }
 } else {

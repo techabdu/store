@@ -88,13 +88,15 @@ if ($method === 'GET') {
             $active_plan = $subscription['subscription_plan'];
         }
         
-        // Get subscription history
+        // Get subscription history with modifier names
         $history_stmt = $conn->prepare("
             SELECT 
-                id, from_plan, to_plan, changed_by, changed_at, notes
-            FROM subscription_history 
-            WHERE tenant_id = ?
-            ORDER BY changed_at DESC
+                h.id, h.from_plan, h.to_plan, h.changed_by, h.changed_at, h.notes,
+                COALESCE(u.username, 'System') as changed_by_name
+            FROM subscription_history h
+            LEFT JOIN users u ON h.changed_by = u.id
+            WHERE h.tenant_id = ?
+            ORDER BY h.changed_at DESC
             LIMIT 10
         ");
         
@@ -105,17 +107,12 @@ if ($method === 'GET') {
             $history_result = $history_stmt->get_result();
             
             while ($row = $history_result->fetch_assoc()) {
-                // Get admin username
-                $admin_stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
-                $admin_stmt->bind_param("i", $row['changed_by']);
-                $admin_stmt->execute();
-                $admin_result = $admin_stmt->get_result();
-                $row['changed_by_name'] = $admin_result->num_rows > 0 ? $admin_result->fetch_assoc()['username'] : 'System';
-                $admin_stmt->close();
-                
                 $history[] = $row;
             }
             $history_stmt->close();
+        } else {
+            // Log error but don't fail the whole request
+            error_log("Database error in subscription history: " . $conn->error);
         }
         
         echo json_encode([
@@ -241,15 +238,18 @@ if ($method === 'GET') {
             // Log to subscription history
             $history_stmt = $conn->prepare("
                 INSERT INTO subscription_history 
-                (tenant_id, from_plan, to_plan, changed_by, notes) 
-                VALUES (?, ?, ?, ?, ?)
+                (tenant_id, from_plan, to_plan, from_mrr, to_mrr, change_type, changed_by, notes) 
+                VALUES (?, ?, ?, ?, ?, 'upgrade', ?, ?)
             ");
             
             if ($history_stmt) {
                 $admin_id = $_SESSION['user_id'];
-                $history_stmt->bind_param("issis", $tenant_id, $old_plan, $new_plan, $admin_id, $notes);
+                $old_mrr = $current['mrr'] ?? 0;
+                $history_stmt->bind_param("issddis", $tenant_id, $old_plan, $new_plan, $old_mrr, $mrr, $admin_id, $notes);
                 $history_stmt->execute();
                 $history_stmt->close();
+            } else {
+                error_log("Failed to prepare subscription history insert: " . $conn->error);
             }
             
             // Log activity

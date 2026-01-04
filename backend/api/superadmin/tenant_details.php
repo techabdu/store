@@ -99,8 +99,8 @@ if ($method === 'GET') {
         // Total Inventory
         $inventory_stmt = $conn->prepare("
             SELECT COUNT(*) as total_items,
-                   SUM(quantity) as total_quantity,
-                   SUM(quantity * cost_price) as total_value
+                   SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) as total_quantity,
+                   SUM(CASE WHEN status = 'in_stock' THEN cost_price ELSE 0 END) as total_value
             FROM inventory WHERE tenant_id = ?
         ");
         $inventory_stmt->bind_param("i", $tenant_id);
@@ -142,27 +142,27 @@ if ($method === 'GET') {
         // Recent Activity Timeline (last 10 entries)
         $timeline_stmt = $conn->prepare("
             SELECT 
-                id, action, entity_type, entity_id, 
-                user_id, details, ip_address, created_at
-            FROM activity_logs 
-            WHERE tenant_id = ?
-            ORDER BY created_at DESC 
+                al.id, al.action, al.entity_type, al.entity_id, 
+                al.user_id, al.details, al.ip_address, al.created_at,
+                u.username
+            FROM activity_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            WHERE al.tenant_id = ?
+            ORDER BY al.created_at DESC 
             LIMIT 10
         ");
+        if (!$timeline_stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $conn->error]);
+            exit;
+        }
+
         $timeline_stmt->bind_param("i", $tenant_id);
         $timeline_stmt->execute();
         $timeline_result = $timeline_stmt->get_result();
         
         $timeline = [];
         while ($row = $timeline_result->fetch_assoc()) {
-            // Get username for the activity
-            $user_stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
-            $user_stmt->bind_param("i", $row['user_id']);
-            $user_stmt->execute();
-            $user_res = $user_stmt->get_result();
-            $row['username'] = $user_res->num_rows > 0 ? $user_res->fetch_assoc()['username'] : 'Unknown';
-            $user_stmt->close();
-            
             $timeline[] = $row;
         }
         $timeline_stmt->close();

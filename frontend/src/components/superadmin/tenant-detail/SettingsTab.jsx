@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import {
     Settings, Shield, Trash2, CheckCircle,
     XCircle, Lock, Mail, Save, AlertTriangle,
-    RefreshCcw, Info
+    RefreshCcw, Info, AlertCircle
 } from 'lucide-react';
 import SkeletonLoader from './SkeletonLoader';
+import EmptyState from './EmptyState';
 import api from '../../../utils/api';
 import './SettingsTab.css';
 
-const SettingsTab = ({ tenantId }) => {
+const SettingsTab = ({ tenantId, onUpdate }) => {
     const [features, setFeatures] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -25,12 +26,15 @@ const SettingsTab = ({ tenantId }) => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await api.get(`/superadmin/tenant_settings.php?action=get_features&tenant_id=${tenantId}`);
             if (response.data.success) {
                 setFeatures(response.data.features);
+            } else {
+                setError(response.data.error || 'Failed to load settings');
             }
         } catch (err) {
-            setError('Failed to load settings');
+            setError(err.response?.data?.error || 'Failed to load administration settings');
         } finally {
             setLoading(false);
         }
@@ -49,9 +53,11 @@ const SettingsTab = ({ tenantId }) => {
                 setFeatures(features.map(f =>
                     f.feature_key === featureKey ? { ...f, is_enabled: !currentStatus } : f
                 ));
+            } else {
+                alert(response.data.error || 'Failed to toggle feature');
             }
         } catch (err) {
-            alert('Failed to toggle feature');
+            alert(err.response?.data?.error || 'Failed to update feature status');
         } finally {
             setSaving(false);
         }
@@ -70,9 +76,11 @@ const SettingsTab = ({ tenantId }) => {
                 setFeatures(features.map(f =>
                     f.feature_key === featureKey ? { ...f, custom_limit: newLimit } : f
                 ));
+            } else {
+                alert(response.data.error || 'Failed to update limit');
             }
         } catch (err) {
-            alert('Failed to update limit');
+            alert(err.response?.data?.error || 'Failed to update limit');
         } finally {
             setSaving(false);
         }
@@ -88,9 +96,12 @@ const SettingsTab = ({ tenantId }) => {
             });
             if (response.data.success) {
                 alert('Email verified successfully');
+                if (onUpdate) onUpdate();
+            } else {
+                alert(response.data.error || 'Failed to verify email');
             }
         } catch (err) {
-            alert('Failed to verify email');
+            alert(err.response?.data?.error || 'Error verifying email');
         } finally {
             setSaving(false);
         }
@@ -112,6 +123,8 @@ const SettingsTab = ({ tenantId }) => {
             if (response.data.success) {
                 alert('Tenant deleted successfully');
                 window.location.href = '/superadmin/tenants';
+            } else {
+                alert(response.data.error || 'Failed to delete tenant');
             }
         } catch (err) {
             alert(err.response?.data?.error || 'Failed to delete tenant');
@@ -123,10 +136,26 @@ const SettingsTab = ({ tenantId }) => {
 
     if (loading) {
         return (
-            <div className="loading-state">
-                <div className="spinner"></div>
-                <p>Loading administration settings...</p>
+            <div className="settings-tab skeleton-mode">
+                <SkeletonLoader type="card" />
+                <div style={{ marginTop: '2rem' }}>
+                    <SkeletonLoader type="table" />
+                </div>
             </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <EmptyState
+                icon={AlertCircle}
+                title="Error Loading Settings"
+                description={error}
+                action={{
+                    label: "Retry",
+                    onClick: fetchSettings
+                }}
+            />
         );
     }
 
@@ -145,33 +174,31 @@ const SettingsTab = ({ tenantId }) => {
                         {features.map(feature => (
                             <div key={feature.feature_key} className="feature-item">
                                 <div className="feature-info">
-                                    <h4 className="capitalize">{feature.feature_key.replace('_', ' ')}</h4>
+                                    <h4 className="capitalize">{feature.feature_key.replace(/_/g, ' ')}</h4>
                                     {feature.modified_at && (
                                         <span className="modified-info">
                                             Last modified: {new Date(feature.modified_at).toLocaleDateString()}
                                         </span>
                                     )}
                                 </div>
-
                                 <div className="feature-actions">
-                                    {feature.custom_limit !== undefined && (
-                                        <div className="limit-input">
-                                            <input
-                                                type="number"
-                                                value={feature.custom_limit || ''}
-                                                onChange={(e) => handleUpdateLimit(feature.feature_key, e.target.value)}
-                                                placeholder="No limit"
-                                            />
-                                            <label>Limit</label>
-                                        </div>
-                                    )}
+                                    <div className="limit-input-group">
+                                        <label>Limit</label>
+                                        <input
+                                            type="number"
+                                            defaultValue={feature.custom_limit}
+                                            onBlur={(e) => handleUpdateLimit(feature.feature_key, e.target.value)}
+                                            className="limit-input"
+                                            disabled={saving}
+                                        />
+                                    </div>
                                     <button
                                         className={`toggle-btn ${feature.is_enabled ? 'enabled' : 'disabled'}`}
                                         onClick={() => handleToggleFeature(feature.feature_key, feature.is_enabled)}
                                         disabled={saving}
                                     >
                                         {feature.is_enabled ? <CheckCircle size={18} /> : <XCircle size={18} />}
-                                        {feature.is_enabled ? 'Enabled' : 'Disabled'}
+                                        <span>{feature.is_enabled ? 'Enabled' : 'Disabled'}</span>
                                     </button>
                                 </div>
                             </div>
@@ -227,7 +254,7 @@ const SettingsTab = ({ tenantId }) => {
             {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="modal-overlay">
-                    <div className="delete-modal">
+                    <div className="delete-modal shadow-glass">
                         <div className="modal-header">
                             <div className="danger-icon">
                                 <AlertTriangle size={32} />

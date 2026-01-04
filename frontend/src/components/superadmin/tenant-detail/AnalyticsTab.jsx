@@ -8,6 +8,7 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import SkeletonLoader from './SkeletonLoader';
+import EmptyState from './EmptyState';
 import api from '../../../utils/api';
 import './AnalyticsTab.css';
 

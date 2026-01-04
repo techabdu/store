@@ -35,6 +35,11 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 if ($method === 'GET') {
     if ($action === 'list') {
         $tenant_id = isset($_GET['tenant_id']) ? intval($_GET['tenant_id']) : 0;
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
+        $offset = ($page - 1) * $limit;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $role = isset($_GET['role']) ? trim($_GET['role']) : '';
         
         if ($tenant_id <= 0) {
             http_response_code(400);
@@ -42,26 +47,58 @@ if ($method === 'GET') {
             exit;
         }
         
-        // Get all users for tenant with role breakdown
-        $users_stmt = $conn->prepare("
+        // Build query
+        $where = "WHERE u.tenant_id = ?";
+        $params = [$tenant_id];
+        $types = "i";
+        
+        if (!empty($search)) {
+            $where .= " AND (u.username LIKE ? OR u.email LIKE ?)";
+            $searchParam = "%$search%";
+            $params[] = $searchParam;
+            $params[] = $searchParam;
+            $types .= "ss";
+        }
+        
+        if (!empty($role) && $role !== 'all') {
+            $where .= " AND u.role = ?";
+            $params[] = $role;
+            $types .= "s";
+        }
+        
+        // Count total for pagination
+        $count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM users u $where");
+        $count_stmt->bind_param($types, ...$params);
+        $count_stmt->execute();
+        $total_count = $count_stmt->get_result()->fetch_assoc()['total'];
+        $count_stmt->close();
+        
+        // Get paginated users
+        $query = "
             SELECT 
                 u.id, u.username, u.email, u.role, u.status,
                 u.shop_id, u.created_at, u.updated_at,
-                s.name as shop_name,
+                s.shop_name,
                 (SELECT MAX(created_at) FROM activity_logs WHERE user_id = u.id) as last_activity
             FROM users u
             LEFT JOIN shops s ON u.shop_id = s.id
-            WHERE u.tenant_id = ?
+            $where
             ORDER BY u.created_at DESC
-        ");
+            LIMIT ? OFFSET ?
+        ";
         
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
+        
+        $users_stmt = $conn->prepare($query);
         if (!$users_stmt) {
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Database error: ' . $conn->error]);
             exit;
         }
         
-        $users_stmt->bind_param("i", $tenant_id);
+        $users_stmt->bind_param($types, ...$params);
         $users_stmt->execute();
         $users_result = $users_stmt->get_result();
         
@@ -71,19 +108,32 @@ if ($method === 'GET') {
         }
         $users_stmt->close();
         
-        // Role breakdown stats
-        $role_breakdown = [
-            'total' => count($users),
-            'admin' => count(array_filter($users, fn($u) => $u['role'] === 'admin')),
-            'user' => count(array_filter($users, fn($u) => $u['role'] === 'user')),
-            'active' => count(array_filter($users, fn($u) => $u['status'] === 'active')),
-            'inactive' => count(array_filter($users, fn($u) => $u['status'] === 'inactive'))
-        ];
+        // Role breakdown stats (global for this tenant)
+        $role_stmt = $conn->prepare("
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admin,
+                SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) as user,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as suspended
+            FROM users 
+            WHERE tenant_id = ?
+        ");
+        $role_stmt->bind_param("i", $tenant_id);
+        $role_stmt->execute();
+        $role_breakdown = $role_stmt->get_result()->fetch_assoc();
+        $role_stmt->close();
         
         echo json_encode([
             'success' => true,
             'users' => $users,
-            'breakdown' => $role_breakdown
+            'breakdown' => $role_breakdown,
+            'pagination' => [
+                'total' => (int)$total_count,
+                'page' => $page,
+                'limit' => $limit,
+                'pages' => ceil($total_count / $limit)
+            ]
         ]);
         
     } elseif ($action === 'activity_logs') {

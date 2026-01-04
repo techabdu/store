@@ -108,7 +108,7 @@ const TenantDetailPage = () => {
             return <UsersTab tenantId={id} />;
         }
         if (activeTab === 'subscription') {
-            return <SubscriptionTab tenantId={id} />;
+            return <SubscriptionTab tenantId={id} onUpdate={fetchTenantData} />;
         }
         if (activeTab === 'analytics') {
             return <AnalyticsTab tenantId={id} />;
@@ -120,7 +120,7 @@ const TenantDetailPage = () => {
             return <SupportTab tenantId={id} />;
         }
         if (activeTab === 'settings') {
-            return <SettingsTab tenantId={id} />;
+            return <SettingsTab tenantId={id} onUpdate={fetchTenantData} />;
         }
 
         // Placeholder for other tabs
@@ -228,20 +228,36 @@ const TenantDetailPage = () => {
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="tab-navigation">
-                    {tabs.map(tab => {
-                        const Icon = tab.icon;
-                        return (
-                            <button
-                                key={tab.id}
-                                className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-                                onClick={() => setActiveTab(tab.id)}
-                            >
-                                <Icon size={20} />
-                                <span className="tab-label">{tab.label}</span>
-                            </button>
-                        );
-                    })}
+                <div className="tab-navigation-wrapper">
+                    <div className="mobile-tab-select">
+                        <select
+                            value={activeTab}
+                            onChange={(e) => setActiveTab(e.target.value)}
+                            className="tab-select"
+                        >
+                            {tabs.map(tab => (
+                                <option key={tab.id} value={tab.id}>
+                                    {tab.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="tab-navigation">
+                        {tabs.map(tab => {
+                            const Icon = tab.icon;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(tab.id)}
+                                >
+                                    <Icon size={20} />
+                                    <span className="tab-label">{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Tab Content */}

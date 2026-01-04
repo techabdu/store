@@ -41,28 +41,45 @@ if ($method === 'GET') {
     
     if ($action === 'tickets') {
         $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
+        $offset = ($page - 1) * $limit;
         
-        // Get all support tickets for this tenant
-        $query = "
-            SELECT 
-                t.id, t.ticket_number, t.type, t.subject, t.description,
-                t.status, t.priority, t.created_at, t.updated_at, t.resolved_at,
-                u.username as creator_name, u.email as creator_email
-            FROM support_tickets t
-            LEFT JOIN users u ON t.user_id = u.id
-            WHERE t.tenant_id = ?
-        ";
-        
+        // Build base where
+        $where = "WHERE t.tenant_id = ?";
         $params = [$tenant_id];
         $types = "i";
         
         if (!empty($status_filter)) {
-            $query .= " AND t.status = ?";
+            $where .= " AND t.status = ?";
             $params[] = $status_filter;
             $types .= "s";
         }
+
+        // Count total for pagination
+        $count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM support_tickets t $where");
+        $count_stmt->bind_param($types, ...$params);
+        $count_stmt->execute();
+        $total_count = $count_stmt->get_result()->fetch_assoc()['total'];
+        $count_stmt->close();
         
-        $query .= " ORDER BY t.created_at DESC";
+        // Get paginated support tickets
+        $query = "
+            SELECT 
+                t.id, t.ticket_number, t.type, t.subject, t.description,
+                t.status, t.priority, t.created_at, t.updated_at, t.resolved_at,
+                u.username as creator_name, u.email as creator_email,
+                (SELECT COUNT(*) FROM support_ticket_responses WHERE ticket_id = t.id) as response_count
+            FROM support_tickets t
+            LEFT JOIN users u ON t.user_id = u.id
+            $where
+            ORDER BY t.created_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        
+        $params[] = $limit;
+        $params[] = $offset;
+        $types .= "ii";
         
         $tickets_stmt = $conn->prepare($query);
         if (!$tickets_stmt) {
@@ -77,18 +94,6 @@ if ($method === 'GET') {
         
         $tickets = [];
         while ($row = $tickets_result->fetch_assoc()) {
-            // Get response count for each ticket
-            $response_count_stmt = $conn->prepare("
-                SELECT COUNT(*) as response_count 
-                FROM support_ticket_responses 
-                WHERE ticket_id = ?
-            ");
-            $response_count_stmt->bind_param("i", $row['id']);
-            $response_count_stmt->execute();
-            $response_count_result = $response_count_stmt->get_result();
-            $row['response_count'] = $response_count_result->fetch_assoc()['response_count'];
-            $response_count_stmt->close();
-            
             $tickets[] = $row;
         }
         $tickets_stmt->close();
@@ -113,14 +118,33 @@ if ($method === 'GET') {
         echo json_encode([
             'success' => true,
             'tickets' => $tickets,
-            'stats' => $stats
+            'stats' => $stats,
+            'pagination' => [
+                'total' => (int)$total_count,
+                'page' => $page,
+                'limit' => $limit,
+                'pages' => ceil($total_count / $limit)
+            ]
         ]);
         
     } elseif ($action === 'communications') {
-        // Get communication/notification history for tenant
-        // This would include emails sent, notifications, etc.
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
+        $offset = ($page - 1) * $limit;
         
-        // For now, get activity logs related to communications
+        // Count total for pagination
+        $count_stmt = $conn->prepare("
+            SELECT COUNT(*) as total 
+            FROM activity_logs 
+            WHERE tenant_id = ? 
+            AND (action LIKE '%email%' OR action LIKE '%notification%' OR action LIKE '%support%')
+        ");
+        $count_stmt->bind_param("i", $tenant_id);
+        $count_stmt->execute();
+        $total_count = $count_stmt->get_result()->fetch_assoc()['total'];
+        $count_stmt->close();
+
+        // Get communication/notification history for tenant
         $comm_stmt = $conn->prepare("
             SELECT 
                 al.id, al.action, al.details, al.created_at,
@@ -134,10 +158,10 @@ if ($method === 'GET') {
                 al.action LIKE '%support%'
             )
             ORDER BY al.created_at DESC
-            LIMIT 50
+            LIMIT ? OFFSET ?
         ");
         
-        $comm_stmt->bind_param("i", $tenant_id);
+        $comm_stmt->bind_param("iii", $tenant_id, $limit, $offset);
         $comm_stmt->execute();
         $comm_result = $comm_stmt->get_result();
         
@@ -150,6 +174,12 @@ if ($method === 'GET') {
         echo json_encode([
             'success' => true,
             'communications' => $communications,
+            'pagination' => [
+                'total' => (int)$total_count,
+                'page' => $page,
+                'limit' => $limit,
+                'pages' => ceil($total_count / $limit)
+            ],
             'note' => 'Full email integration pending'
         ]);
         

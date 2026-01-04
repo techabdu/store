@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SkeletonLoader from './SkeletonLoader';
+import EmptyState from './EmptyState';
+import Pagination from './Pagination';
 import api from '../../../utils/api';
 import './SupportTab.css';
 
@@ -20,32 +22,76 @@ const SupportTab = ({ tenantId }) => {
     const [newNote, setNewNote] = useState('');
     const [addingNote, setAddingNote] = useState(false);
 
+    // Pagination states
+    const [ticketsPagination, setTicketsPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 });
+    const [commsPagination, setCommsPagination] = useState({ page: 1, limit: 20, total: 0, pages: 1 });
+
     useEffect(() => {
         if (tenantId) {
-            fetchSupportData();
+            const loadAllData = async () => {
+                setLoading(true);
+                try {
+                    await Promise.all([
+                        fetchTickets(1),
+                        fetchCommunications(1),
+                        fetchNotes()
+                    ]);
+                } catch (err) {
+                    console.error('Error loading support data:', err);
+                    setError('Failed to load support data');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            loadAllData();
         }
-    }, [tenantId]);
+    }, [tenantId, statusFilter]);
 
-    const fetchSupportData = async () => {
+    const fetchTickets = async (page = 1) => {
         try {
-            setLoading(true);
-            setError(null);
-
-            const [ticketsRes, commsRes, notesRes] = await Promise.all([
-                api.get(`/superadmin/tenant_support.php?action=tickets&tenant_id=${tenantId}`),
-                api.get(`/superadmin/tenant_support.php?action=communications&tenant_id=${tenantId}`),
-                api.get(`/superadmin/tenant_settings.php?action=get_notes&tenant_id=${tenantId}`)
-            ]);
-
-            if (ticketsRes.data.success) setTickets(ticketsRes.data.tickets || []);
-            if (commsRes.data.success) setCommunications(commsRes.data.communications || []);
-            if (notesRes.data.success) setNotes(notesRes.data.notes || []);
-
+            const res = await api.get('/superadmin/tenant_support.php', {
+                params: {
+                    action: 'tickets',
+                    tenant_id: tenantId,
+                    page: page,
+                    limit: ticketsPagination.limit,
+                    status: statusFilter === 'all' ? '' : statusFilter
+                }
+            });
+            if (res.data.success) {
+                setTickets(res.data.tickets || []);
+                setTicketsPagination(res.data.pagination);
+            }
         } catch (err) {
-            console.error('Error fetching support data:', err);
-            setError(err.response?.data?.error || 'Failed to load support records');
-        } finally {
-            setLoading(false);
+            console.error('Error fetching tickets:', err);
+        }
+    };
+
+    const fetchCommunications = async (page = 1) => {
+        try {
+            const res = await api.get('/superadmin/tenant_support.php', {
+                params: {
+                    action: 'communications',
+                    tenant_id: tenantId,
+                    page: page,
+                    limit: commsPagination.limit
+                }
+            });
+            if (res.data.success) {
+                setCommunications(res.data.communications || []);
+                setCommsPagination(res.data.pagination);
+            }
+        } catch (err) {
+            console.error('Error fetching communications:', err);
+        }
+    };
+
+    const fetchNotes = async () => {
+        try {
+            const res = await api.get(`/superadmin/tenant_settings.php?action=get_notes&tenant_id=${tenantId}`);
+            if (res.data.success) setNotes(res.data.notes || []);
+        } catch (err) {
+            console.error('Error fetching notes:', err);
         }
     };
 
@@ -132,7 +178,7 @@ const SupportTab = ({ tenantId }) => {
                     <div className="section-card">
                         <div className="card-header">
                             <h3><MessageSquare size={20} /> Support Tickets</h3>
-                            <button className="btn-secondary btn-sm" onClick={fetchSupportData}>
+                            <button className="btn-secondary btn-sm" onClick={() => fetchTickets(1)}>
                                 Refresh
                             </button>
                         </div>
@@ -160,24 +206,31 @@ const SupportTab = ({ tenantId }) => {
                         </div>
 
                         <div className="tickets-list">
-                            {filteredTickets.length > 0 ? (
-                                filteredTickets.map(ticket => (
-                                    <div key={ticket.id} className="ticket-item">
-                                        <div className="ticket-header">
-                                            <div className="ticket-id">#{ticket.id}</div>
-                                            {getStatusBadge(ticket.status)}
+                            {tickets.length > 0 ? (
+                                <>
+                                    {tickets.map(ticket => (
+                                        <div key={ticket.id} className="ticket-item">
+                                            <div className="ticket-header">
+                                                <div className="ticket-id">#{ticket.ticket_number}</div>
+                                                {getStatusBadge(ticket.status)}
+                                            </div>
+                                            <div className="ticket-subject">{ticket.subject}</div>
+                                            <div className="ticket-footer">
+                                                <span className="ticket-date">
+                                                    <Clock size={14} /> {new Date(ticket.created_at).toLocaleDateString()}
+                                                </span>
+                                                <Link to={`/superadmin/support?ticket=${ticket.id}`} className="view-link">
+                                                    View Full Ticket <ExternalLink size={14} />
+                                                </Link>
+                                            </div>
                                         </div>
-                                        <div className="ticket-subject">{ticket.subject}</div>
-                                        <div className="ticket-footer">
-                                            <span className="ticket-date">
-                                                <Clock size={14} /> {new Date(ticket.created_at).toLocaleDateString()}
-                                            </span>
-                                            <Link to={`/superadmin/support?ticket=${ticket.id}`} className="view-link">
-                                                View Full Ticket <ExternalLink size={14} />
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))
+                                    ))}
+                                    <Pagination
+                                        currentPage={ticketsPagination.page}
+                                        totalPages={ticketsPagination.pages}
+                                        onPageChange={(p) => fetchTickets(p)}
+                                    />
+                                </>
                             ) : (
                                 <EmptyState
                                     icon={MessageSquare}
@@ -195,20 +248,27 @@ const SupportTab = ({ tenantId }) => {
                         </div>
                         <div className="comms-timeline">
                             {communications.length > 0 ? (
-                                communications.map((comm, index) => (
-                                    <div key={index} className="comm-item">
-                                        <div className="comm-icon">
-                                            {comm.type === 'email' ? <Mail size={16} /> : <FileText size={16} />}
-                                        </div>
-                                        <div className="comm-content">
-                                            <div className="comm-header">
-                                                <span className="comm-type">{comm.type}</span>
-                                                <span className="comm-time">{new Date(comm.created_at).toLocaleString()}</span>
+                                <>
+                                    {communications.map((comm, index) => (
+                                        <div key={index} className="comm-item">
+                                            <div className="comm-icon">
+                                                {comm.action?.includes('email') ? <Mail size={16} /> : <FileText size={16} />}
                                             </div>
-                                            <div className="comm-subject">{comm.subject}</div>
+                                            <div className="comm-content">
+                                                <div className="comm-header">
+                                                    <span className="comm-type">{comm.action?.replace('email_', '').replace('notification_', '')}</span>
+                                                    <span className="comm-time">{new Date(comm.created_at).toLocaleString()}</span>
+                                                </div>
+                                                <div className="comm-subject">{comm.details}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))}
+                                    <Pagination
+                                        currentPage={commsPagination.page}
+                                        totalPages={commsPagination.pages}
+                                        onPageChange={(p) => fetchCommunications(p)}
+                                    />
+                                </>
                             ) : (
                                 <EmptyState
                                     icon={Mail}
@@ -248,7 +308,7 @@ const SupportTab = ({ tenantId }) => {
                                             </span>
                                             <button className="delete-btn" onClick={() => deleteNote(note.id)}>×</button>
                                         </div>
-                                        <div className="note-text">{note.note}</div>
+                                        <div className="note-text">{note.content || note.note}</div>
                                         <div className="note-date">
                                             {new Date(note.created_at).toLocaleString()}
                                         </div>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Calendar, TrendingUp, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import api from '../../../utils/api';
+import SkeletonLoader from './SkeletonLoader';
+import EmptyState from './EmptyState';
 import './SubscriptionTab.css';
 
-const SubscriptionTab = ({ tenantId }) => {
+const SubscriptionTab = ({ tenantId, onUpdate }) => {
     const [subscription, setSubscription] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -13,7 +15,12 @@ const SubscriptionTab = ({ tenantId }) => {
     const [extending, setExtending] = useState(false);
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-    const plans = ['Trial', 'Basic', 'Premium', 'Enterprise'];
+    const plans = [
+        { key: 'free_trial', label: 'Trial' },
+        { key: 'basic', label: 'Basic' },
+        { key: 'premium', label: 'Premium' },
+        { key: 'enterprise', label: 'Enterprise' }
+    ];
 
     useEffect(() => {
         if (tenantId) {
@@ -30,12 +37,11 @@ const SubscriptionTab = ({ tenantId }) => {
 
             if (response.data.success) {
                 setSubscription(response.data.subscription);
-                setSelectedPlan(response.data.subscription.subscription_plan || 'Trial');
+                setSelectedPlan(response.data.subscription.subscription_plan || 'free_trial');
             } else {
                 setError(response.data.error || 'Failed to load subscription data');
             }
         } catch (err) {
-            console.error('Error fetching subscription:', err);
             setError(err.response?.data?.error || 'Failed to load subscription details');
         } finally {
             setLoading(false);
@@ -61,13 +67,13 @@ const SubscriptionTab = ({ tenantId }) => {
             });
 
             if (response.data.success) {
-                alert(`Successfully upgraded to ${selectedPlan} plan`);
+                alert(`Successfully upgraded to ${plans.find(p => p.key === selectedPlan)?.label} plan`);
                 fetchSubscription();
+                if (onUpdate) onUpdate();
             } else {
                 alert(response.data.error || 'Upgrade failed');
             }
         } catch (err) {
-            console.error('Error upgrading plan:', err);
             alert(err.response?.data?.error || 'Failed to upgrade plan');
         } finally {
             setUpgrading(false);
@@ -94,11 +100,11 @@ const SubscriptionTab = ({ tenantId }) => {
                 alert(`Trial extended by ${days} days`);
                 setDaysToExtend('');
                 fetchSubscription();
+                if (onUpdate) onUpdate();
             } else {
                 alert(response.data.error || 'Extension failed');
             }
         } catch (err) {
-            console.error('Error extending trial:', err);
             alert(err.response?.data?.error || 'Failed to extend trial');
         } finally {
             setExtending(false);
@@ -107,10 +113,10 @@ const SubscriptionTab = ({ tenantId }) => {
 
     const getPlanColor = (plan) => {
         const colors = {
-            'Trial': 'plan-trial',
-            'Basic': 'plan-basic',
-            'Premium': 'plan-premium',
-            'Enterprise': 'plan-enterprise'
+            'free_trial': 'plan-trial',
+            'basic': 'plan-basic',
+            'premium': 'plan-premium',
+            'enterprise': 'plan-enterprise'
         };
         return colors[plan] || 'plan-trial';
     };
@@ -120,6 +126,7 @@ const SubscriptionTab = ({ tenantId }) => {
             'active': 'status-active',
             'cancelled': 'status-cancelled',
             'expired': 'status-expired',
+            'suspended': 'status-suspended',
             'trial': 'status-trial'
         };
         return colors[status] || 'status-active';
@@ -157,30 +164,37 @@ const SubscriptionTab = ({ tenantId }) => {
 
     if (error) {
         return (
-            <div className="error-state">
-                <AlertCircle size={48} />
-                <h3>Error Loading Subscription</h3>
-                <p>{error}</p>
-                <button onClick={fetchSubscription} className="btn-retry">Retry</button>
-            </div>
+            <EmptyState
+                icon={AlertCircle}
+                title="Error Loading Subscription"
+                description={error}
+                action={{
+                    label: "Retry",
+                    onClick: fetchSubscription
+                }}
+            />
         );
     }
 
-    const daysRemaining = calculateDaysRemaining(subscription?.trial_end_date || subscription?.subscription_end_date);
+    const daysRemaining = calculateDaysRemaining(subscription?.trial_ends_at || subscription?.subscription_ends_at);
+    const currentPlanLabel = plans.find(p => p.key === subscription?.subscription_plan)?.label || subscription?.subscription_plan || 'Trial';
 
     return (
         <div className="subscription-tab">
             {/* Current Plan Card */}
             <div className="current-plan-card">
                 <div className="card-header">
-                    <h3><CreditCard size={24} /> Current Subscription</h3>
+                    <div className="title-with-icon">
+                        <CreditCard size={24} />
+                        <h3>Current Subscription</h3>
+                    </div>
                 </div>
 
                 <div className="plan-details">
                     <div className="plan-info">
                         <div className="plan-badge-container">
                             <span className={`plan-badge ${getPlanColor(subscription?.subscription_plan)}`}>
-                                {subscription?.subscription_plan || 'Trial'}
+                                {currentPlanLabel}
                             </span>
                             <span className={`status-badge ${getStatusColor(subscription?.status)}`}>
                                 {subscription?.status || 'Active'}
@@ -192,14 +206,14 @@ const SubscriptionTab = ({ tenantId }) => {
                                 <Calendar size={18} />
                                 <div>
                                     <label>Start Date</label>
-                                    <span>{formatDate(subscription?.subscription_start_date || subscription?.trial_start_date)}</span>
+                                    <span>{formatDate(subscription?.created_at)}</span>
                                 </div>
                             </div>
                             <div className="meta-item">
                                 <Calendar size={18} />
                                 <div>
                                     <label>End Date</label>
-                                    <span>{formatDate(subscription?.subscription_end_date || subscription?.trial_end_date)}</span>
+                                    <span>{formatDate(subscription?.subscription_ends_at || subscription?.trial_ends_at)}</span>
                                 </div>
                             </div>
                             {daysRemaining !== null && (
@@ -214,7 +228,7 @@ const SubscriptionTab = ({ tenantId }) => {
                         </div>
                     </div>
 
-                    {subscription?.subscription_plan === 'Trial' && daysRemaining < 7 && (
+                    {(subscription?.subscription_plan === 'free_trial' || subscription?.subscription_plan === 'trial') && daysRemaining < 7 && (
                         <div className="trial-warning">
                             <AlertCircle size={20} />
                             <span>Trial ending soon. Consider upgrading to a paid plan.</span>
@@ -226,7 +240,8 @@ const SubscriptionTab = ({ tenantId }) => {
             {/* Plan Upgrade Section */}
             <div className="upgrade-section">
                 <div className="section-header">
-                    <h3><TrendingUp size={24} /> Manage Plan</h3>
+                    <TrendingUp size={24} />
+                    <h3>Manage Plan</h3>
                 </div>
 
                 <div className="upgrade-content">
@@ -239,11 +254,11 @@ const SubscriptionTab = ({ tenantId }) => {
                         >
                             {plans.map(plan => (
                                 <option
-                                    key={plan}
-                                    value={plan}
-                                    disabled={plan === subscription?.subscription_plan}
+                                    key={plan.key}
+                                    value={plan.key}
+                                    disabled={plan.key === subscription?.subscription_plan}
                                 >
-                                    {plan} {plan === subscription?.subscription_plan ? '(Current)' : ''}
+                                    {plan.label} {plan.key === subscription?.subscription_plan ? '(Current)' : ''}
                                 </option>
                             ))}
                         </select>
@@ -260,50 +275,54 @@ const SubscriptionTab = ({ tenantId }) => {
                     <div className="plan-features">
                         <h4>Plan Features</h4>
                         <div className="features-grid">
-                            <div className={`feature-card ${selectedPlan === 'Trial' ? 'selected' : ''}`}>
-                                <h5>Trial</h5>
-                                <ul>
-                                    <li><CheckCircle size={16} /> 14-day trial</li>
-                                    <li><CheckCircle size={16} /> Basic features</li>
-                                    <li><CheckCircle size={16} /> Limited support</li>
-                                </ul>
-                            </div>
-                            <div className={`feature-card ${selectedPlan === 'Basic' ? 'selected' : ''}`}>
-                                <h5>Basic</h5>
-                                <ul>
-                                    <li><CheckCircle size={16} /> All trial features</li>
-                                    <li><CheckCircle size={16} /> Email support</li>
-                                    <li><CheckCircle size={16} /> 100 products</li>
-                                </ul>
-                            </div>
-                            <div className={`feature-card ${selectedPlan === 'Premium' ? 'selected' : ''}`}>
-                                <h5>Premium</h5>
-                                <ul>
-                                    <li><CheckCircle size={16} /> All basic features</li>
-                                    <li><CheckCircle size={16} /> Priority support</li>
-                                    <li><CheckCircle size={16} /> 1000 products</li>
-                                    <li><CheckCircle size={16} /> Advanced analytics</li>
-                                </ul>
-                            </div>
-                            <div className={`feature-card ${selectedPlan === 'Enterprise' ? 'selected' : ''}`}>
-                                <h5>Enterprise</h5>
-                                <ul>
-                                    <li><CheckCircle size={16} /> Unlimited products</li>
-                                    <li><CheckCircle size={16} /> 24/7 support</li>
-                                    <li><CheckCircle size={16} /> Custom integrations</li>
-                                    <li><CheckCircle size={16} /> Dedicated account manager</li>
-                                </ul>
-                            </div>
+                            {plans.map(p => (
+                                <div key={p.key} className={`feature-card ${selectedPlan === p.key ? 'selected' : ''}`}>
+                                    <h5>{p.label}</h5>
+                                    <ul>
+                                        {p.key === 'free_trial' && (
+                                            <>
+                                                <li><CheckCircle size={16} /> 14-day trial</li>
+                                                <li><CheckCircle size={16} /> Basic features</li>
+                                                <li><CheckCircle size={16} /> Limited support</li>
+                                            </>
+                                        )}
+                                        {p.key === 'basic' && (
+                                            <>
+                                                <li><CheckCircle size={16} /> All trial features</li>
+                                                <li><CheckCircle size={16} /> Email support</li>
+                                                <li><CheckCircle size={16} /> 100 products</li>
+                                            </>
+                                        )}
+                                        {p.key === 'premium' && (
+                                            <>
+                                                <li><CheckCircle size={16} /> All basic features</li>
+                                                <li><CheckCircle size={16} /> Priority support</li>
+                                                <li><CheckCircle size={16} /> 1000 products</li>
+                                                <li><CheckCircle size={16} /> Advanced analytics</li>
+                                            </>
+                                        )}
+                                        {p.key === 'enterprise' && (
+                                            <>
+                                                <li><CheckCircle size={16} /> Unlimited products</li>
+                                                <li><CheckCircle size={16} /> 24/7 support</li>
+                                                <li><CheckCircle size={16} /> Custom integrations</li>
+                                                <li><CheckCircle size={16} /> Dedicated manager</li>
+                                            </>
+                                        )}
+                                    </ul>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Trial Extension Section - Only show if on trial */}
-            {subscription?.subscription_plan === 'Trial' && (
+            {(subscription?.subscription_plan === 'free_trial' || subscription?.subscription_plan === 'trial') && (
                 <div className="trial-extension-section">
                     <div className="section-header">
-                        <h3><Clock size={24} /> Extend Trial Period</h3>
+                        <Clock size={24} />
+                        <h3>Extend Trial Period</h3>
                     </div>
 
                     <div className="extension-form">
@@ -318,7 +337,7 @@ const SubscriptionTab = ({ tenantId }) => {
                                 placeholder="Enter number of days"
                                 disabled={extending}
                             />
-                            <span className="form-hint">Current trial ends: {formatDate(subscription?.trial_end_date)}</span>
+                            <span className="form-hint">Current trial ends: {formatDate(subscription?.trial_ends_at)}</span>
                         </div>
 
                         <button
@@ -339,8 +358,8 @@ const SubscriptionTab = ({ tenantId }) => {
                         <h3>Confirm Plan Upgrade</h3>
                         <p>
                             Are you sure you want to upgrade this tenant from
-                            <strong> {subscription?.subscription_plan}</strong> to
-                            <strong> {selectedPlan}</strong>?
+                            <strong> {currentPlanLabel}</strong> to
+                            <strong> {plans.find(p => p.key === selectedPlan)?.label}</strong>?
                         </p>
                         <div className="modal-actions">
                             <button onClick={() => setShowUpgradeModal(false)} className="btn-cancel">

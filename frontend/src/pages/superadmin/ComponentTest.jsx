@@ -45,7 +45,7 @@ const ComponentTest = () => {
     ];
 
     const handleRowClick = (row) => {
-        console.log('Row clicked:', row);
+        // Row clicked handler
     };
 
     return (

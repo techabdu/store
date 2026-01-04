@@ -45,14 +45,16 @@ if ($method === 'GET') {
     }
     
     if ($action === 'get_features') {
-        // Get all feature access settings for tenant
+        // Get all feature access settings for tenant with modifier names
         $features_stmt = $conn->prepare("
             SELECT 
-                id, feature_key, is_enabled, custom_limit, notes,
-                modified_by, modified_at
-            FROM tenant_feature_access
-            WHERE tenant_id = ?
-            ORDER BY feature_key ASC
+                f.id, f.feature_key, f.is_enabled, f.custom_limit, f.notes,
+                f.modified_by, f.modified_at,
+                COALESCE(u.username, 'System') as modified_by_name
+            FROM tenant_feature_access f
+            LEFT JOIN users u ON f.modified_by = u.id
+            WHERE f.tenant_id = ?
+            ORDER BY f.feature_key ASC
         ");
         
         $features_stmt->bind_param("i", $tenant_id);
@@ -61,14 +63,6 @@ if ($method === 'GET') {
         
         $features = [];
         while ($row = $features_result->fetch_assoc()) {
-            // Get modifier username
-            $user_stmt = $conn->prepare("SELECT username FROM users WHERE id = ?");
-            $user_stmt->bind_param("i", $row['modified_by']);
-            $user_stmt->execute();
-            $user_result = $user_stmt->get_result();
-            $row['modified_by_name'] = $user_result->num_rows > 0 ? $user_result->fetch_assoc()['username'] : 'System';
-            $user_stmt->close();
-            
             $features[] = $row;
         }
         $features_stmt->close();

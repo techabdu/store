@@ -44,6 +44,42 @@ switch ($method) {
 function handleGet() {
     global $conn;
     
+    $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+    $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 10;
+    $offset = ($page - 1) * $limit;
+    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $status = isset($_GET['status']) ? trim($_GET['status']) : '';
+    
+    // Count total for pagination
+    $countSql = "SELECT COUNT(*) as total FROM tenants t WHERE 1=1";
+    $countParams = [];
+    $countTypes = "";
+    
+    if (!empty($search)) {
+        $countSql .= " AND (t.shop_name LIKE ? OR t.shop_email LIKE ?)";
+        $searchParam = "%$search%";
+        $countParams[] = $searchParam;
+        $countParams[] = $searchParam;
+        $countTypes .= "ss";
+    }
+    
+    if (!empty($status) && $status !== 'all') {
+        $countSql .= " AND t.status = ?";
+        $countParams[] = $status;
+        $countTypes .= "s";
+    }
+    
+    $totalCount = 0;
+    if (!empty($countParams)) {
+        $countStmt = $conn->prepare($countSql);
+        $countStmt->bind_param($countTypes, ...$countParams);
+        $countStmt->execute();
+        $totalCount = $countStmt->get_result()->fetch_assoc()['total'];
+        $countStmt->close();
+    } else {
+        $totalCount = $conn->query($countSql)->fetch_assoc()['total'];
+    }
+
     $sql = "
         SELECT 
             t.id,
@@ -58,18 +94,44 @@ function handleGet() {
             t.email_verified,
             t.created_at,
             t.updated_at,
-            COUNT(DISTINCT u.id) as user_count,
-            COUNT(DISTINCT i.id) as inventory_count,
-            COALESCE(SUM(tr.total_amount), 0) as total_sales
+            (SELECT COUNT(*) FROM users WHERE tenant_id = t.id) as user_count,
+            (SELECT COUNT(*) FROM inventory WHERE tenant_id = t.id) as inventory_count,
+            (SELECT COALESCE(SUM(total_amount), 0) FROM transactions WHERE tenant_id = t.id) as total_sales
         FROM tenants t
-        LEFT JOIN users u ON t.id = u.tenant_id
-        LEFT JOIN inventory i ON t.id = i.tenant_id
-        LEFT JOIN transactions tr ON t.id = tr.tenant_id
-        GROUP BY t.id
-        ORDER BY t.created_at DESC
+        WHERE 1=1
     ";
     
-    $result = $conn->query($sql);
+    $params = [];
+    $types = "";
+    
+    if (!empty($search)) {
+        $sql .= " AND (t.shop_name LIKE ? OR t.shop_email LIKE ?)";
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $types .= "ss";
+    }
+    
+    if (!empty($status) && $status !== 'all') {
+        $sql .= " AND t.status = ?";
+        $params[] = $status;
+        $types .= "s";
+    }
+    
+    $sql .= " ORDER BY t.created_at DESC LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= "ii";
+    
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Database prepare failed: ' . $conn->error]);
+        return;
+    }
+    
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
     
     if (!$result) {
         http_response_code(500);
@@ -112,7 +174,12 @@ function handleGet() {
     echo json_encode([
         'success' => true,
         'tenants' => $tenants,
-        'total' => count($tenants)
+        'pagination' => [
+            'total' => (int)$totalCount,
+            'page' => $page,
+            'limit' => $limit,
+            'pages' => ceil($totalCount / $limit)
+        ]
     ]);
 }
 

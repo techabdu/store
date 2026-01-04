@@ -81,17 +81,17 @@ if ($method === 'GET') {
         // Top selling items (last 30 days)
         $top_items_stmt = $conn->prepare("
             SELECT 
-                i.product_name,
-                i.category,
-                SUM(ti.quantity) as units_sold,
-                SUM(ti.subtotal) as revenue,
+                CONCAT(i.brand, ' ', i.model) as product_name,
+                i.storage as category,
+                COUNT(*) as units_sold,
+                SUM(ti.price) as revenue,
                 COUNT(DISTINCT ti.transaction_id) as order_count
             FROM transaction_items ti
             JOIN inventory i ON ti.inventory_id = i.id
             JOIN transactions t ON ti.transaction_id = t.id
             WHERE t.tenant_id = ?
             AND t.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            GROUP BY ti.inventory_id
+            GROUP BY i.brand, i.model, i.storage
             ORDER BY revenue DESC
             LIMIT 10
         ");
@@ -153,28 +153,38 @@ if ($method === 'GET') {
         $inventory_stmt = $conn->prepare("
             SELECT 
                 COUNT(*) as total_items,
-                SUM(quantity) as total_quantity,
-                SUM(quantity * cost_price) as total_value,
-                SUM(quantity * selling_price) as potential_revenue,
-                SUM(CASE WHEN quantity = 0 THEN 1 ELSE 0 END) as out_of_stock_count,
-                SUM(CASE WHEN quantity < 10 THEN 1 ELSE 0 END) as low_stock_count
+                SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) as total_quantity,
+                SUM(CASE WHEN status = 'in_stock' THEN cost_price ELSE 0 END) as total_value,
+                SUM(CASE WHEN status = 'in_stock' THEN price ELSE 0 END) as potential_revenue,
+                SUM(CASE WHEN status = 'sold' THEN 1 ELSE 0 END) as sold_count,
+                (SELECT COUNT(*) FROM (
+                    SELECT brand, model, storage 
+                    FROM inventory 
+                    WHERE tenant_id = ? AND status = 'in_stock'
+                    GROUP BY brand, model, storage
+                    HAVING COUNT(*) < 3
+                ) as low_stock) as low_stock_count
             FROM inventory
             WHERE tenant_id = ?
         ");
-        $inventory_stmt->bind_param("i", $tenant_id);
+        $inventory_stmt->bind_param("ii", $tenant_id, $tenant_id);
         $inventory_stmt->execute();
         $inventory_result = $inventory_stmt->get_result();
         $inventory_stats = $inventory_result->fetch_assoc();
         $inventory_stmt->close();
         
-        // Low stock items
+        // Low stock groups (Models with < 3 units available)
         $low_stock_stmt = $conn->prepare("
             SELECT 
-                id, product_name, category, quantity, selling_price
+                CONCAT(brand, ' ', model) as product_name,
+                storage as category,
+                COUNT(*) as quantity,
+                AVG(price) as selling_price
             FROM inventory
             WHERE tenant_id = ?
-            AND quantity < 10
-            AND quantity > 0
+            AND status = 'in_stock'
+            GROUP BY brand, model, storage
+            HAVING quantity < 3
             ORDER BY quantity ASC
             LIMIT 10
         ");
@@ -191,7 +201,7 @@ if ($method === 'GET') {
         // Inventory turnover (last 30 days)
         $turnover_stmt = $conn->prepare("
             SELECT 
-                SUM(ti.quantity) as units_sold
+                COUNT(*) as units_sold
             FROM transaction_items ti
             JOIN transactions t ON ti.transaction_id = t.id
             WHERE t.tenant_id = ?
@@ -203,9 +213,8 @@ if ($method === 'GET') {
         $units_sold = $turnover_result->fetch_assoc()['units_sold'] ?: 0;
         $turnover_stmt->close();
         
-        $turnover_rate = $inventory_stats['total_quantity'] > 0 
-            ? ($units_sold / $inventory_stats['total_quantity']) * 100 
-            : 0;
+        $total_available = $inventory_stats['total_quantity'] ?: 1;
+        $turnover_rate = ($units_sold / $total_available) * 100;
         
         echo json_encode([
             'success' => true,

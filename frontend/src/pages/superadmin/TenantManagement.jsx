@@ -20,6 +20,7 @@ import { useNotification } from '../../context/NotificationContext';
 import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import SkeletonLoader from '../../components/superadmin/tenant-detail/SkeletonLoader';
 import EmptyState from '../../components/superadmin/tenant-detail/EmptyState';
+import Pagination from '../../components/superadmin/tenant-detail/Pagination';
 import '../../styles/dashboard.css';
 import './TenantManagement.css';
 
@@ -28,6 +29,7 @@ const TenantManagement = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [pagination, setPagination] = useState({ page: 1, limit: 12, total: 0, pages: 1 });
     const { showError, showSuccess } = useNotification();
     const navigate = useNavigate();
 
@@ -36,12 +38,20 @@ const TenantManagement = () => {
     };
 
     // Fetch tenants
-    const fetchTenants = async () => {
+    const fetchTenants = async (page = 1) => {
         try {
             setLoading(true);
-            const response = await api.get('/superadmin/tenants.php');
+            const response = await api.get('/superadmin/tenants.php', {
+                params: {
+                    page: page,
+                    limit: pagination.limit,
+                    search: searchTerm,
+                    status: filterStatus
+                }
+            });
             if (response.data.success) {
                 setTenants(response.data.tenants);
+                setPagination(response.data.pagination);
             }
         } catch (err) {
             console.error('Failed to fetch tenants:', err);
@@ -52,8 +62,16 @@ const TenantManagement = () => {
     };
 
     useEffect(() => {
-        fetchTenants();
-    }, []);
+        const delayDebounceFn = setTimeout(() => {
+            fetchTenants(1);
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm, filterStatus]);
+
+    const handlePageChange = (newPage) => {
+        fetchTenants(newPage);
+    };
 
     // Handle tenant status change
     const handleStatusChange = async (tenantId, newStatus) => {
@@ -112,17 +130,6 @@ const TenantManagement = () => {
         }
     };
 
-    // Filter tenants
-    const filteredTenants = tenants.filter(tenant => {
-        const matchesSearch =
-            tenant.shop_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            tenant.shop_email.toLowerCase().includes(searchTerm.toLowerCase());
-
-        const matchesStatus = filterStatus === 'all' || tenant.status === filterStatus;
-
-        return matchesSearch && matchesStatus;
-    });
-
     // Get status badge class
     const getStatusBadge = (status) => {
         const badges = {
@@ -153,16 +160,12 @@ const TenantManagement = () => {
     const headerActions = (
         <div className="header-stats">
             <div className="stat-item">
-                <span className="stat-label">Total</span>
+                <span className="stat-label">System Total</span>
+                <span className="stat-value">{pagination.total}</span>
+            </div>
+            <div className="stat-item">
+                <span className="stat-label">On This Page</span>
                 <span className="stat-value">{tenants.length}</span>
-            </div>
-            <div className="stat-item">
-                <span className="stat-label">Active</span>
-                <span className="stat-value">{tenants.filter(t => t.status === 'active').length}</span>
-            </div>
-            <div className="stat-item">
-                <span className="stat-label">Trial</span>
-                <span className="stat-value">{tenants.filter(t => t.status === 'trial').length}</span>
             </div>
         </div>
     );
@@ -204,108 +207,116 @@ const TenantManagement = () => {
                             <SkeletonLoader key={i} type="card" />
                         ))}
                     </div>
-                ) : filteredTenants.length > 0 ? (
-                    <div className="tenants-grid">
-                        {filteredTenants.map((tenant) => {
-                            const daysRemaining = getDaysRemaining(tenant);
-                            return (
-                                <div key={tenant.id} className="tenant-card glass-card">
-                                    <div className="tenant-card-header">
-                                        <div className="tenant-info">
-                                            <div className="tenant-icon">
-                                                <Store size={24} />
+                ) : tenants.length > 0 ? (
+                    <div className="tenants-grid-container">
+                        <div className="tenants-grid">
+                            {tenants.map((tenant) => {
+                                const daysRemaining = getDaysRemaining(tenant);
+                                return (
+                                    <div key={tenant.id} className="tenant-card glass-card">
+                                        <div className="tenant-card-header">
+                                            <div className="tenant-info">
+                                                <div className="tenant-icon">
+                                                    <Store size={24} />
+                                                </div>
+                                                <div className="tenant-name-section">
+                                                    <h3>{tenant.shop_name}</h3>
+                                                    <span className={`status-badge ${getStatusBadge(tenant.status)}`}>
+                                                        {tenant.status}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="tenant-name-section">
-                                                <h3>{tenant.shop_name}</h3>
-                                                <span className={`status-badge ${getStatusBadge(tenant.status)}`}>
-                                                    {tenant.status}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="tenant-actions">
-                                            <button
-                                                className="action-btn view"
-                                                onClick={() => handleViewDetails(tenant.id)}
-                                                title="View Details"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                            {tenant.status === 'active' || tenant.status === 'trial' ? (
+                                            <div className="tenant-actions">
                                                 <button
-                                                    className="action-btn suspend"
-                                                    onClick={() => handleStatusChange(tenant.id, 'suspended')}
-                                                    title="Suspend Shop"
+                                                    className="action-btn view"
+                                                    onClick={() => handleViewDetails(tenant.id)}
+                                                    title="View Details"
                                                 >
-                                                    <Ban size={18} />
+                                                    <Eye size={18} />
                                                 </button>
-                                            ) : (
+                                                {tenant.status === 'active' || tenant.status === 'trial' ? (
+                                                    <button
+                                                        className="action-btn suspend"
+                                                        onClick={() => handleStatusChange(tenant.id, 'suspended')}
+                                                        title="Suspend Shop"
+                                                    >
+                                                        <Ban size={18} />
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        className="action-btn activate"
+                                                        onClick={() => handleStatusChange(tenant.id, 'active')}
+                                                        title="Activate Shop"
+                                                    >
+                                                        <CheckCircle size={18} />
+                                                    </button>
+                                                )}
                                                 <button
-                                                    className="action-btn activate"
-                                                    onClick={() => handleStatusChange(tenant.id, 'active')}
-                                                    title="Activate Shop"
+                                                    className="action-btn delete"
+                                                    onClick={() => handleDelete(tenant.id, tenant.shop_name)}
+                                                    title="Delete Shop"
                                                 >
-                                                    <CheckCircle size={18} />
+                                                    <Trash2 size={18} />
                                                 </button>
-                                            )}
-                                            <button
-                                                className="action-btn delete"
-                                                onClick={() => handleDelete(tenant.id, tenant.shop_name)}
-                                                title="Delete Shop"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="tenant-card-body">
-                                        <div className="tenant-detail">
-                                            <Mail size={16} />
-                                            <span>{tenant.shop_email}</span>
-                                        </div>
-                                        <div className="tenant-detail">
-                                            <Phone size={16} />
-                                            <span>{tenant.shop_phone || 'No phone'}</span>
-                                        </div>
-                                        <div className="tenant-detail">
-                                            <MapPin size={16} />
-                                            <span>{tenant.shop_address || 'No address set'}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="tenant-card-footer">
-                                        <div className="tenant-stats">
-                                            <div className="tenant-stat" title="Total Users">
-                                                <Users size={16} />
-                                                <span>{tenant.user_count}</span>
-                                            </div>
-                                            <div className="tenant-stat" title="Inventory Items">
-                                                <Store size={16} />
-                                                <span>{tenant.inventory_count}</span>
-                                            </div>
-                                            <div className="tenant-stat" title="Total Sales">
-                                                <DollarSign size={16} />
-                                                <span>${parseFloat(tenant.total_sales || 0).toLocaleString()}</span>
                                             </div>
                                         </div>
-                                        <div className="plan-badge">
-                                            {tenant.plan_type?.replace('_', ' ') || 'Free Trial'}
+
+                                        <div className="tenant-card-body">
+                                            <div className="tenant-detail">
+                                                <Mail size={16} />
+                                                <span>{tenant.shop_email}</span>
+                                            </div>
+                                            <div className="tenant-detail">
+                                                <Phone size={16} />
+                                                <span>{tenant.shop_phone || 'No phone'}</span>
+                                            </div>
+                                            <div className="tenant-detail">
+                                                <MapPin size={16} />
+                                                <span>{tenant.shop_address || 'No address set'}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="tenant-card-footer">
+                                            <div className="tenant-stats">
+                                                <div className="tenant-stat" title="Total Users">
+                                                    <Users size={16} />
+                                                    <span>{tenant.user_count}</span>
+                                                </div>
+                                                <div className="tenant-stat" title="Inventory Items">
+                                                    <Store size={16} />
+                                                    <span>{tenant.inventory_count}</span>
+                                                </div>
+                                                <div className="tenant-stat" title="Total Sales">
+                                                    <DollarSign size={16} />
+                                                    <span>${parseFloat(tenant.total_sales || 0).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                            <div className="plan-badge">
+                                                {tenant.plan_type?.replace('_', ' ') || 'Free Trial'}
+                                            </div>
+                                        </div>
+
+                                        {daysRemaining !== null && tenant.status === 'trial' && (
+                                            <div className={`trial-warning-overlay ${daysRemaining <= 5 ? 'urgent' : ''}`}>
+                                                <Calendar size={18} />
+                                                <span>{daysRemaining} days remaining in trial</span>
+                                            </div>
+                                        )}
+
+                                        <div className="tenant-meta">
+                                            <span>Registered: {formatDate(tenant.created_at)}</span>
+                                            <span>ID: {tenant.id}</span>
                                         </div>
                                     </div>
+                                );
+                            })}
+                        </div>
 
-                                    {daysRemaining !== null && tenant.status === 'trial' && (
-                                        <div className={`trial-warning-overlay ${daysRemaining <= 5 ? 'urgent' : ''}`}>
-                                            <Calendar size={18} />
-                                            <span>{daysRemaining} days remaining in trial</span>
-                                        </div>
-                                    )}
-
-                                    <div className="tenant-meta">
-                                        <span>Registered: {formatDate(tenant.created_at)}</span>
-                                        <span>ID: {tenant.id}</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        <Pagination
+                            currentPage={pagination.page}
+                            totalPages={pagination.pages}
+                            onPageChange={handlePageChange}
+                        />
                     </div>
                 ) : (
                     <EmptyState
