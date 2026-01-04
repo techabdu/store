@@ -41,7 +41,9 @@ echo json_encode([
         'role' => $user['role'],
         'status' => $user['status'],
         'shop_id' => $user['shop_id'] ?? null,
-        'is_owner' => $isOwner
+        'is_owner' => $isOwner,
+        'impersonating' => $_SESSION['impersonating'] ?? false,
+        'impersonation_started_at' => $_SESSION['impersonation_started_at'] ?? null
     ],
     'shop_context' => [
         'current_shop_id' => $currentShopId,

@@ -74,6 +74,16 @@
     width: 70%;
 }
 
+/* Header Block Skeleton */
+.skeleton-header-block {
+    margin-bottom: 1rem;
+}
+
+.skeleton-header-block .skeleton-line {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
 /* Stats Skeleton */
 .skeleton-stats {
     display: grid;

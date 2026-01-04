@@ -1,28 +1,11 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../helpers/session_helper.php';
 
 /**
- * Start session securely if not already started
+ * Initialize session with centralized configuration
  */
-if (session_status() === PHP_SESSION_NONE) {
-    // Set session configuration
-    ini_set('session.gc_maxlifetime', 172800); // 48 hours
-    ini_set('session.cookie_lifetime', 172800);
-    ini_set('session.cookie_httponly', 1);
-    
-    // Secure cookie only if HTTPS is enabled
-    $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-    ini_set('session.cookie_secure', $isHttps ? 1 : 0);
-    
-    // Set SameSite policy
-    // Use 'Lax' for HTTP/Localhost to ensure cookies are sent during development
-    // Use 'Strict' or 'None' (with Secure) for Production HTTPS
-    ini_set('session.cookie_samesite', $isHttps ? 'Strict' : 'Lax');
-    
-    ini_set('session.use_strict_mode', 1);
-    
-    session_start();
-}
+initializeSecureSession();
 
 /**
  * Check if user is authenticated and session is valid
@@ -40,31 +23,13 @@ function checkAuth() {
         exit;
     }
     
-    // Check session absolute timeout (7 days = 604800 seconds)
-    // Prevent session fixation/indefinite sessions
-    $absolute_timeout = 604800;
-    if (!isset($_SESSION['created_at'])) {
-        $_SESSION['created_at'] = time(); // Set if missing
-    } else if (time() - $_SESSION['created_at'] > $absolute_timeout) {
-        session_unset();
-        session_destroy();
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Session expired (absolute limit)']);
-        exit;
-    }
-
-    // Check inactivity timeout (48 hours)
-    $timeout_duration = 172800;
-    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
-        session_unset();
-        session_destroy();
+    // Check session timeout using centralized helper
+    if (!checkSessionTimeout()) {
+        destroySession();
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Session expired']);
         exit;
     }
-    
-    // Update last activity
-    $_SESSION['last_activity'] = time();
     
     // Verify user exists and is active, and get tenant_id and shop_id
     
@@ -78,8 +43,7 @@ function checkAuth() {
         $result = $stmt->get_result();
         
         if ($result->num_rows === 0) {
-            session_unset();
-            session_destroy();
+            destroySession();
             http_response_code(401);
             echo json_encode(['success' => false, 'error' => 'User not found']);
             exit;
@@ -88,8 +52,7 @@ function checkAuth() {
         $user = $result->fetch_assoc();
         
         if ($user['status'] !== 'active') {
-            session_unset();
-            session_destroy();
+            destroySession();
             http_response_code(401);
             echo json_encode(['success' => false, 'error' => 'Account inactive']);
             exit;
@@ -159,8 +122,7 @@ function checkAuth() {
             
             // Check tenant status
             if ($tenant['status'] === 'suspended') {
-                session_unset();
-                session_destroy();
+                destroySession();
                 http_response_code(403);
                 echo json_encode(['success' => false, 'error' => 'Your shop has been suspended. Please contact support.']);
                 exit;

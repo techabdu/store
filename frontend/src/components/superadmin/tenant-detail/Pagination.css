@@ -59,7 +59,7 @@
 }
 
 .pagination-number.active {
-    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    background: #6366f1;
     color: #fff;
     border: none;
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);

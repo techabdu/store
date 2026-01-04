@@ -90,6 +90,13 @@ api.interceptors.response.use(
         }
 
         // Global Error Handling
+
+        // Ignore aborted/cancelled requests (happens during React Strict Mode double-mount)
+        if (error.name === 'CanceledError' || error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+            // Don't show notifications for cancelled requests
+            return Promise.reject(error);
+        }
+
         if (error.response) {
             const status = error.response.status;
             const errorMsg = error.response.data?.error || error.response.data?.message || 'A server error occurred';
@@ -100,7 +107,7 @@ api.interceptors.response.use(
                 notifyError(errorMsg);
             }
         } else if (error.request) {
-            // Network error
+            // Network error (but not aborted - already checked above)
             notifyError('No response from server. Please check your internet connection.');
         } else {
             // Something else went wrong

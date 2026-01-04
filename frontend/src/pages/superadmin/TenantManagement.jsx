@@ -232,7 +232,7 @@ const TenantManagement = () => {
                                                     onClick={() => handleViewDetails(tenant.id)}
                                                     title="View Details"
                                                 >
-                                                    <Eye size={18} />
+                                                    <Eye size={24} />
                                                 </button>
                                                 {tenant.status === 'active' || tenant.status === 'trial' ? (
                                                     <button
@@ -240,7 +240,7 @@ const TenantManagement = () => {
                                                         onClick={() => handleStatusChange(tenant.id, 'suspended')}
                                                         title="Suspend Shop"
                                                     >
-                                                        <Ban size={18} />
+                                                        <Ban size={24} />
                                                     </button>
                                                 ) : (
                                                     <button
@@ -248,7 +248,7 @@ const TenantManagement = () => {
                                                         onClick={() => handleStatusChange(tenant.id, 'active')}
                                                         title="Activate Shop"
                                                     >
-                                                        <CheckCircle size={18} />
+                                                        <CheckCircle size={24} />
                                                     </button>
                                                 )}
                                                 <button
@@ -256,7 +256,7 @@ const TenantManagement = () => {
                                                     onClick={() => handleDelete(tenant.id, tenant.shop_name)}
                                                     title="Delete Shop"
                                                 >
-                                                    <Trash2 size={18} />
+                                                    <Trash2 size={24} />
                                                 </button>
                                             </div>
                                         </div>

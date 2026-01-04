@@ -36,12 +36,29 @@ const OverviewTab = ({ tenantId }) => {
     if (loading) {
         return (
             <div className="overview-tab skeleton-mode">
-                <SkeletonLoader type="card" />
+                {/* Tenant Information Card Skeleton */}
+                <div className="summary-card">
+                    <div className="skeleton-header-block animate-pulse">
+                        <div className="skeleton-line" style={{ width: '200px', height: '24px' }}></div>
+                    </div>
+                    <div style={{ marginTop: '1.5rem' }}>
+                        <SkeletonLoader type="list" count={3} />
+                    </div>
+                </div>
+
+                {/* Stats Cards Skeleton */}
                 <div style={{ marginTop: '2rem' }}>
                     <SkeletonLoader type="stats" />
                 </div>
-                <div style={{ marginTop: '2rem' }}>
-                    <SkeletonLoader type="list" count={5} />
+
+                {/* Recent Activity Card Skeleton */}
+                <div className="activity-section" style={{ marginTop: '2rem' }}>
+                    <div className="skeleton-header-block animate-pulse">
+                        <div className="skeleton-line" style={{ width: '180px', height: '24px' }}></div>
+                    </div>
+                    <div style={{ marginTop: '1.5rem' }}>
+                        <SkeletonLoader type="list" count={5} />
+                    </div>
                 </div>
             </div>
         );
@@ -57,7 +74,17 @@ const OverviewTab = ({ tenantId }) => {
         <div className="overview-tab">
             {/* Tenant Summary Card */}
             <div className="summary-card">
-                <h3>Tenant Information</h3>
+                <div className="summary-header">
+                    <h3>Tenant Information</h3>
+                    {/* Trial Info Badge */}
+                    {tenant?.trial_ends_at && tenant?.days_remaining > 0 && (
+                        <div className="trial-badge">
+                            <Calendar size={16} />
+                            <span>Trial ends in <strong>{tenant.days_remaining} days</strong></span>
+                        </div>
+                    )}
+                </div>
+
                 <div className="summary-grid">
                     <div className="summary-item">
                         <label>Shop Name</label>
@@ -86,14 +113,6 @@ const OverviewTab = ({ tenantId }) => {
                         </span>
                     </div>
                 </div>
-
-                {/* Trial Info */}
-                {tenant?.trial_ends_at && tenant?.days_remaining > 0 && (
-                    <div className="trial-info">
-                        <Calendar size={20} />
-                        <span>Trial ends in <strong>{tenant.days_remaining} days</strong></span>
-                    </div>
-                )}
             </div>
 
             {/* Quick Stats */}
@@ -156,7 +175,9 @@ const OverviewTab = ({ tenantId }) => {
             {/* Recent Activity Timeline */}
             <div className="activity-section">
                 <h3>Recent Activity</h3>
-                {timeline && timeline.length > 0 ? (
+                {loading ? (
+                    <SkeletonLoader type="list" count={5} />
+                ) : timeline && timeline.length > 0 ? (
                     <div className="timeline">
                         {timeline.map((item, index) => (
                             <div key={item.id || index} className="timeline-item">

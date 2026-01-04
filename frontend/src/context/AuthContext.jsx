@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
 
     // Check session on mount
     useEffect(() => {
+        let isMounted = true; // Track if component is still mounted
         const controller = new AbortController();
 
         const checkSession = async () => {
@@ -37,6 +38,12 @@ export const AuthProvider = ({ children }) => {
                 const response = await api.get('/auth/check-session.php', {
                     signal: controller.signal
                 });
+
+                // Only update state if component is still mounted
+                if (!isMounted) {
+                    return;
+                }
+
                 if (response.data.success) {
                     setUser(response.data.user);
                     setIsAuthenticated(true);
@@ -52,9 +59,16 @@ export const AuthProvider = ({ children }) => {
                         setIsOwner(ctx.is_owner || false);
                     }
                 }
+
+                setIsLoading(false);
             } catch (error) {
                 // Ignore abort errors (component unmounted)
                 if (error.name === 'CanceledError' || error.name === 'AbortError') {
+                    return; // Don't update any state
+                }
+
+                // Only update state if component is still mounted
+                if (!isMounted) {
                     return;
                 }
 
@@ -65,7 +79,6 @@ export const AuthProvider = ({ children }) => {
                 setShops([]);
                 setIsOwner(false);
                 setShopSettings(null);
-            } finally {
                 setIsLoading(false);
             }
         };
@@ -73,7 +86,10 @@ export const AuthProvider = ({ children }) => {
         checkSession();
 
         // Cleanup: abort pending request if component unmounts
-        return () => controller.abort();
+        return () => {
+            isMounted = false; // Mark as unmounted
+            controller.abort();
+        };
     }, [fetchShopSettings]);
 
     const login = async (username, password) => {

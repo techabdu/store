@@ -57,22 +57,22 @@
 }
 
 .metric-card.total-sales .metric-icon {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%);
+    background: rgba(139, 92, 246, 0.15);
     color: #a78bfa;
 }
 
 .metric-card.avg-order .metric-icon {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%);
+    background: rgba(59, 130, 246, 0.15);
     color: #60a5fa;
 }
 
 .metric-card.transactions .metric-icon {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+    background: rgba(16, 185, 129, 0.15);
     color: #34d399;
 }
 
 .metric-card.conversion .metric-icon {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+    background: rgba(251, 191, 36, 0.15);
     color: #fbbf24;
 }
 
@@ -179,7 +179,7 @@
 .item-rank {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #667eea;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -229,7 +229,7 @@
 
 .item-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: #667eea;
     border-radius: 3px;
     transition: width 0.5s ease;
 }
@@ -347,7 +347,7 @@
 .btn-retry {
     margin-top: 1rem;
     padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #667eea;
     border: none;
     border-radius: 8px;
     color: white;

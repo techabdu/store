@@ -168,12 +168,6 @@ const AnalyticsTab = ({ tenantId }) => {
                     <div className="chart-container">
                         <ResponsiveContainer width="100%" height={300}>
                             <AreaChart data={salesMetrics.revenue_trend}>
-                                <defs>
-                                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                                 <XAxis
                                     dataKey="date"
@@ -200,7 +194,7 @@ const AnalyticsTab = ({ tenantId }) => {
                                     dataKey="revenue"
                                     stroke="#a78bfa"
                                     strokeWidth={2}
-                                    fill="url(#revenueGradient)"
+                                    fill="rgba(167, 139, 250, 0.2)"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>

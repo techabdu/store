@@ -361,10 +361,7 @@ const TenantDetail = () => {
                                         <h3>Overall Health Score</h3>
                                         <div className="health-score-display">
                                             <div className="health-score-circle" style={{
-                                                background: `conic-gradient(
-                                                    var(--success) ${tenant.health_score * 3.6}deg,
-                                                    var(--border-color) ${tenant.health_score * 3.6}deg
-                                                )`
+                                                background: tenant.health_score >= 70 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'
                                             }}>
                                                 <div className="health-score-inner">
                                                     <span className="health-score-value">{tenant.health_score}</span>
