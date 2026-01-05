@@ -3,121 +3,72 @@ import MetricCard from '../../components/MetricCard';
 import { LineChart, BarChart, PieChart } from '../../components/Charts';
 import DataTable from '../../components/Tables/DataTable';
 import ConnectionIndicator from '../../components/ConnectionIndicator';
-import { DollarSign, ShoppingCart, TrendingUp, CreditCard } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, CreditCard, RefreshCw, AlertCircle } from 'lucide-react';
 import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
+import api from '../../utils/api';
 import './BusinessHealth.css';
 
 const BusinessHealth = () => {
     const [businessData, setBusinessData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(null);
 
-    // Fetch business health data
-    useEffect(() => {
-        const fetchBusinessHealth = async () => {
-            try {
-                setLoading(true);
+    /**
+     * Fetch business health data from the backend API
+     * Retrieves real-time metrics including:
+     * - Daily revenue and transaction counts
+     * - GMV and average transaction values
+     * - Revenue trends, top selling devices, payment method distribution
+     * - Recent transactions across all tenants
+     */
+    const fetchBusinessHealth = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-                // Mock data for now
-                const mockData = {
-                    daily_revenue: 12345,
-                    total_transactions: 456,
-                    gmv: 125000,
-                    avg_transaction_value: 27.08,
+            const response = await api.get('/superadmin/business_health.php');
+
+            if (response.data.success) {
+                const data = response.data.data;
+
+                // Transform API response to match component expectations
+                const transformedData = {
+                    daily_revenue: data.daily_revenue || 0,
+                    total_transactions: data.total_transactions || 0,
+                    gmv: data.gmv || 0,
+                    avg_transaction_value: data.avg_transaction_value || 0,
+                    revenue_trend: data.revenue_trend || 0,
+                    transaction_trend: data.transaction_trend || 0,
                     charts: {
-                        revenue_trend: {
-                            data: [8500, 9200, 10100, 9800, 11200, 10500, 11800, 12100, 11500, 12800, 11900, 12345],
-                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                        },
-                        top_devices: {
-                            data: [450, 380, 320, 280, 220, 180, 150],
-                            labels: ['iPhone 13', 'Samsung S21', 'iPhone 12', 'Pixel 6', 'OnePlus 9', 'Xiaomi Mi 11', 'Others']
-                        },
-                        payment_methods: {
-                            data: [45, 30, 15, 10],
-                            labels: ['Credit Card', 'Cash', 'Mobile Payment', 'Bank Transfer']
-                        }
+                        revenue_trend: data.charts?.revenue_trend || { data: [], labels: [] },
+                        top_devices: data.charts?.top_devices || { data: [], labels: [] },
+                        payment_methods: data.charts?.payment_methods || { data: [], labels: [] }
                     },
-                    recent_transactions: [
-                        {
-                            id: 1,
-                            tenant: 'Tech Store Alpha',
-                            amount: 899.99,
-                            device: 'iPhone 13 Pro',
-                            payment_method: 'Credit Card',
-                            timestamp: '2026-01-03T11:45:00Z'
-                        },
-                        {
-                            id: 2,
-                            tenant: 'Phone Hub Beta',
-                            amount: 649.99,
-                            device: 'Samsung Galaxy S21',
-                            payment_method: 'Cash',
-                            timestamp: '2026-01-03T11:30:00Z'
-                        },
-                        {
-                            id: 3,
-                            tenant: 'Mobile World Gamma',
-                            amount: 499.99,
-                            device: 'Google Pixel 6',
-                            payment_method: 'Mobile Payment',
-                            timestamp: '2026-01-03T11:15:00Z'
-                        },
-                        {
-                            id: 4,
-                            tenant: 'Device Shop Delta',
-                            amount: 799.99,
-                            device: 'iPhone 12',
-                            payment_method: 'Credit Card',
-                            timestamp: '2026-01-03T11:00:00Z'
-                        },
-                        {
-                            id: 5,
-                            tenant: 'Gadget Store Epsilon',
-                            amount: 549.99,
-                            device: 'OnePlus 9 Pro',
-                            payment_method: 'Bank Transfer',
-                            timestamp: '2026-01-03T10:45:00Z'
-                        },
-                        {
-                            id: 6,
-                            tenant: 'Smart Phones Zeta',
-                            amount: 699.99,
-                            device: 'Xiaomi Mi 11',
-                            payment_method: 'Credit Card',
-                            timestamp: '2026-01-03T10:30:00Z'
-                        },
-                        {
-                            id: 7,
-                            tenant: 'Tech Retail Eta',
-                            amount: 449.99,
-                            device: 'Samsung A52',
-                            payment_method: 'Cash',
-                            timestamp: '2026-01-03T10:15:00Z'
-                        },
-                        {
-                            id: 8,
-                            tenant: 'Mobile Plus Theta',
-                            amount: 999.99,
-                            device: 'iPhone 13 Pro Max',
-                            payment_method: 'Credit Card',
-                            timestamp: '2026-01-03T10:00:00Z'
-                        }
-                    ]
+                    recent_transactions: data.recent_transactions || []
                 };
 
-                setBusinessData(mockData);
+                setBusinessData(transformedData);
                 setIsConnected(true);
-            } catch (error) {
-                console.error('Failed to fetch business health:', error);
-            } finally {
-                setLoading(false);
+                setLastUpdated(data.last_updated || new Date().toISOString());
+            } else {
+                throw new Error(response.data.error || 'Failed to fetch business health data');
             }
-        };
+        } catch (err) {
+            console.error('Failed to fetch business health:', err);
+            setError(err.message || 'Failed to load business health data');
+            setIsConnected(false);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // Initial fetch and auto-refresh every 60 seconds
+    useEffect(() => {
         fetchBusinessHealth();
 
-        // Refresh every 60 seconds
+        // Refresh every 60 seconds for real-time updates
         const interval = setInterval(fetchBusinessHealth, 60000);
         return () => clearInterval(interval);
     }, []);
@@ -138,7 +89,7 @@ const BusinessHealth = () => {
             key: 'amount',
             label: 'Amount',
             sortable: true,
-            render: (val) => `$${val.toFixed(2)}`
+            render: (val) => `₦${val.toFixed(2)}`
         },
         {
             key: 'payment_method',
@@ -163,20 +114,50 @@ const BusinessHealth = () => {
             title="Business Health"
             subtitle="Monitor revenue, transactions, and business metrics"
             loading={loading}
+            headerActions={
+                <button
+                    className="refresh-btn"
+                    onClick={fetchBusinessHealth}
+                    disabled={loading}
+                    title="Refresh data"
+                >
+                    <RefreshCw size={18} className={loading ? 'spinning' : ''} />
+                </button>
+            }
         >
             <ConnectionIndicator isConnected={isConnected} />
 
+            {/* Error State */}
+            {error && !businessData && (
+                <div className="error-state glass-card">
+                    <AlertCircle size={48} />
+                    <h3>Failed to Load Business Health Data</h3>
+                    <p>{error}</p>
+                    <button className="retry-btn" onClick={fetchBusinessHealth}>
+                        <RefreshCw size={16} />
+                        Retry
+                    </button>
+                </div>
+            )}
+
             {businessData && (
                 <>
+                    {/* Last Updated Indicator */}
+                    {lastUpdated && (
+                        <div className="last-updated">
+                            Last updated: {new Date(lastUpdated).toLocaleString()}
+                        </div>
+                    )}
+
                     {/* Metric Cards Grid */}
                     <div className="metrics-grid">
                         {/* Daily Revenue */}
                         <MetricCard
                             title="Daily Revenue"
-                            value={`$${businessData.daily_revenue.toLocaleString()}`}
+                            value={`₦${businessData.daily_revenue.toLocaleString()}`}
                             icon={DollarSign}
-                            trend="+8%"
-                            trendDirection="up"
+                            trend={businessData.revenue_trend !== 0 ? `${businessData.revenue_trend > 0 ? '+' : ''}${businessData.revenue_trend}%` : null}
+                            trendDirection={businessData.revenue_trend >= 0 ? 'up' : 'down'}
                             subtitle="vs yesterday"
                             color="success"
                         />
@@ -186,8 +167,8 @@ const BusinessHealth = () => {
                             title="Total Transactions"
                             value={businessData.total_transactions.toLocaleString()}
                             icon={ShoppingCart}
-                            trend="+12%"
-                            trendDirection="up"
+                            trend={businessData.transaction_trend !== 0 ? `${businessData.transaction_trend > 0 ? '+' : ''}${businessData.transaction_trend}%` : null}
+                            trendDirection={businessData.transaction_trend >= 0 ? 'up' : 'down'}
                             subtitle="today"
                             color="primary"
                         />
@@ -195,16 +176,16 @@ const BusinessHealth = () => {
                         {/* GMV (Gross Merchandise Value) */}
                         <MetricCard
                             title="GMV"
-                            value={`$${businessData.gmv.toLocaleString()}`}
+                            value={`₦${businessData.gmv.toLocaleString()}`}
                             icon={TrendingUp}
-                            subtitle="gross merchandise value"
+                            subtitle="this month"
                             color="info"
                         />
 
                         {/* Average Transaction Value */}
                         <MetricCard
                             title="Avg Transaction"
-                            value={`$${businessData.avg_transaction_value.toFixed(2)}`}
+                            value={`₦${businessData.avg_transaction_value.toFixed(2)}`}
                             icon={CreditCard}
                             subtitle="per transaction"
                             color="warning"

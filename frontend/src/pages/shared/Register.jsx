@@ -340,7 +340,7 @@ const Register = () => {
                                         </>
                                     ) : (
                                         <>
-                                            <span className="currency">{plan.currency || '$'}</span>
+                                            <span className="currency">{plan.currency || '₦'}</span>
                                             <span className="price">{typeof plan.price === 'number' ? plan.price.toLocaleString() : plan.price}</span>
                                             <span className="duration">/{plan.duration.split(' ')[1]}</span>
                                         </>

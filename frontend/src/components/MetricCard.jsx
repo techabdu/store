@@ -10,9 +10,11 @@ const MetricCard = ({ title, value, icon: Icon, trend, trendDirection, subtitle,
           <h3 className="metric-title">{title}</h3>
           <div className="metric-value">{value}</div>
         </div>
-        <div className={`metric-icon-wrapper metric-bg-${color}`}>
-          <Icon size={24} className={`metric-text-${color}`} />
-        </div>
+        {Icon && (
+          <div className={`metric-icon-wrapper metric-bg-${color}`}>
+            <Icon size={24} className={`metric-text-${color}`} />
+          </div>
+        )}
       </div>
 
       <div className="metric-footer">

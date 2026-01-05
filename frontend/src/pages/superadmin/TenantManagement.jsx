@@ -288,7 +288,7 @@ const TenantManagement = () => {
                                                 </div>
                                                 <div className="tenant-stat" title="Total Sales">
                                                     <DollarSign size={16} />
-                                                    <span>${parseFloat(tenant.total_sales || 0).toLocaleString()}</span>
+                                                    <span>₦{parseFloat(tenant.total_sales || 0).toLocaleString()}</span>
                                                 </div>
                                             </div>
                                             <div className="plan-badge">

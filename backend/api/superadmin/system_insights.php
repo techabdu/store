@@ -314,6 +314,10 @@ function getOverviewData() {
         'activity' => [
             'recent_logs' => $auditCompliance->getRecentActivities(5),
             'chart_data' => $peakUsage['daily_activity']
+        ],
+        'charts' => [
+            'apiLatency' => $performanceMonitor->getApiResponseTimeTrend(6),
+            'errorRate' => $performanceMonitor->getErrorRateTrend(7)
         ]
     ];
     

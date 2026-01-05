@@ -1,163 +1,76 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
 import MetricCard from '../../components/MetricCard';
 import { LineChart, BarChart, PieChart } from '../../components/Charts';
 import DataTable from '../../components/Tables/DataTable';
 import ErrorDetailModal from '../../components/ErrorDetailModal';
 import ConnectionIndicator from '../../components/ConnectionIndicator';
-import { AlertTriangle, Users, TrendingDown, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Users, TrendingDown, AlertCircle, RefreshCw } from 'lucide-react';
 import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import './ErrorHealth.css';
 
+/**
+ * ErrorHealth Component
+ * 
+ * Displays real-time error tracking metrics for SuperAdmin
+ * Data sources:
+ * - application_errors table for error counts and details
+ * - activity_logs for error rate calculations
+ * - PerformanceMonitor class for aggregated metrics
+ */
 const ErrorHealth = () => {
     const [errorData, setErrorData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
     const [selectedError, setSelectedError] = useState(null);
+    const [lastUpdated, setLastUpdated] = useState(null);
 
-    // Fetch error health data
-    useEffect(() => {
-        const fetchErrorHealth = async () => {
-            try {
-                setLoading(true);
+    /**
+     * Fetch error health data from backend API
+     */
+    const fetchErrorHealth = async () => {
+        try {
+            setError(null);
 
-                // Mock data for now
-                const mockData = {
-                    total_errors_24h: 127,
-                    error_rate: 0.8,
-                    critical_errors: 12,
-                    affected_users: 45,
-                    charts: {
-                        error_rate_trend: {
-                            data: [2.1, 1.8, 1.5, 1.2, 1.0, 0.9, 0.8],
-                            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                        },
-                        error_by_type: {
-                            data: [45, 32, 25, 15, 10],
-                            labels: ['Database', 'API', 'Authentication', 'Validation', 'Other']
-                        },
-                        error_by_module: {
-                            data: [38, 28, 22, 18, 12, 9],
-                            labels: ['Inventory', 'Sales', 'Auth', 'Reports', 'Marketplace', 'Other']
-                        }
-                    },
-                    recent_errors: [
-                        {
-                            id: 1,
-                            type: 'Database',
-                            message: 'Connection timeout to database server',
-                            severity: 'critical',
-                            file: '/backend/api/inventory/get.php',
-                            line: 45,
-                            timestamp: '2026-01-03T11:30:00Z',
-                            user: 'admin@techstore.com',
-                            stack_trace: `Error: Connection timeout
-  at Database.connect (/backend/config/database.php:23)
-  at InventoryAPI.get (/backend/api/inventory/get.php:45)
-  at Router.handle (/backend/router.php:12)`,
-                            context: {
-                                query: 'SELECT * FROM inventory WHERE tenant_id = ?',
-                                params: [123],
-                                timeout: 5000
-                            }
-                        },
-                        {
-                            id: 2,
-                            type: 'API',
-                            message: 'External API rate limit exceeded',
-                            severity: 'warning',
-                            file: '/backend/api/marketplace/sync.php',
-                            line: 78,
-                            timestamp: '2026-01-03T11:15:00Z',
-                            user: 'system',
-                            stack_trace: `Error: Rate limit exceeded
-  at ExternalAPI.call (/backend/utils/api.php:56)
-  at MarketplaceSync.sync (/backend/api/marketplace/sync.php:78)`,
-                            context: {
-                                endpoint: 'https://api.example.com/products',
-                                rate_limit: 100,
-                                current_usage: 105
-                            }
-                        },
-                        {
-                            id: 3,
-                            type: 'Authentication',
-                            message: 'Invalid JWT token signature',
-                            severity: 'warning',
-                            file: '/backend/middleware/auth.php',
-                            line: 34,
-                            timestamp: '2026-01-03T11:00:00Z',
-                            user: 'unknown@example.com',
-                            stack_trace: `Error: Invalid signature
-  at JWT.verify (/backend/utils/jwt.php:89)
-  at AuthMiddleware.check (/backend/middleware/auth.php:34)`,
-                            context: {
-                                token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                                ip_address: '192.168.1.100'
-                            }
-                        },
-                        {
-                            id: 4,
-                            type: 'Validation',
-                            message: 'Invalid email format in user registration',
-                            severity: 'warning',
-                            file: '/backend/api/auth/register.php',
-                            line: 67,
-                            timestamp: '2026-01-03T10:45:00Z',
-                            user: 'system',
-                            stack_trace: `Error: Validation failed
-  at Validator.email (/backend/utils/validator.php:23)
-  at AuthAPI.register (/backend/api/auth/register.php:67)`,
-                            context: {
-                                input: 'invalid-email',
-                                field: 'email'
-                            }
-                        },
-                        {
-                            id: 5,
-                            type: 'Database',
-                            message: 'Duplicate entry for unique key',
-                            severity: 'warning',
-                            file: '/backend/api/inventory/create.php',
-                            line: 92,
-                            timestamp: '2026-01-03T10:30:00Z',
-                            user: 'staff@shop.com',
-                            stack_trace: `Error: Duplicate entry
-  at Database.insert (/backend/config/database.php:145)
-  at InventoryAPI.create (/backend/api/inventory/create.php:92)`,
-                            context: {
-                                table: 'inventory',
-                                key: 'sku',
-                                value: 'PHONE-123'
-                            }
-                        }
-                    ]
-                };
+            const response = await api.get('/superadmin/error_health.php');
 
-                setErrorData(mockData);
+            if (response.data.success) {
+                setErrorData(response.data.data);
                 setIsConnected(true);
-            } catch (error) {
-                console.error('Failed to fetch error health:', error);
-            } finally {
-                setLoading(false);
+                setLastUpdated(new Date());
+            } else {
+                setError(response.data.error || 'Failed to fetch error health data');
+                setIsConnected(false);
             }
-        };
+        } catch (err) {
+            console.error('Failed to fetch error health:', err);
+            setError(err.response?.data?.error || 'Unable to connect to the server');
+            setIsConnected(false);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // Initial fetch and auto-refresh every 30 seconds
+    useEffect(() => {
         fetchErrorHealth();
 
-        // Refresh every 30 seconds
         const interval = setInterval(fetchErrorHealth, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    // Table columns configuration
+    /**
+     * Table columns configuration for recent errors
+     */
     const errorColumns = [
         {
             key: 'type',
             label: 'Type',
             sortable: true,
             render: (val) => (
-                <span className={`error-type-badge error-type-${val.toLowerCase()}`}>
-                    {val}
+                <span className={`error-type-badge error-type-${(val || 'unknown').toLowerCase()}`}>
+                    {val || 'Unknown'}
                 </span>
             )
         },
@@ -166,7 +79,9 @@ const ErrorHealth = () => {
             label: 'Message',
             sortable: false,
             render: (val) => (
-                <span className="error-message-preview">{val}</span>
+                <span className="error-message-preview" title={val}>
+                    {val ? (val.length > 60 ? val.substring(0, 60) + '...' : val) : 'No message'}
+                </span>
             )
         },
         {
@@ -174,8 +89,8 @@ const ErrorHealth = () => {
             label: 'Severity',
             sortable: true,
             render: (val) => (
-                <span className={`severity-badge severity-${val}`}>
-                    {val.charAt(0).toUpperCase() + val.slice(1)}
+                <span className={`severity-badge severity-${val || 'warning'}`}>
+                    {val ? val.charAt(0).toUpperCase() + val.slice(1) : 'Unknown'}
                 </span>
             )
         },
@@ -183,15 +98,60 @@ const ErrorHealth = () => {
             key: 'timestamp',
             label: 'Time',
             sortable: true,
-            render: (val) => new Date(val).toLocaleString()
+            render: (val) => val ? new Date(val).toLocaleString() : 'Unknown'
         }
     ];
+
+    /**
+     * Header actions for refresh and status
+     */
+    const headerActions = (
+        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {lastUpdated && (
+                <div className="last-updated text-sm text-secondary">
+                    Updated: {lastUpdated.toLocaleTimeString()}
+                </div>
+            )}
+            <button
+                onClick={fetchErrorHealth}
+                className="btn-secondary btn-sm"
+                disabled={loading}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+                <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                Refresh
+            </button>
+        </div>
+    );
+
+    /**
+     * Error state UI
+     */
+    if (error && !errorData) {
+        return (
+            <SuperAdminLayout
+                title="Error Health"
+                subtitle="Monitor and track system errors"
+                headerActions={headerActions}
+            >
+                <div className="error-container glass-card" style={{ textAlign: 'center', padding: '3rem' }}>
+                    <AlertTriangle size={48} color="var(--error)" />
+                    <h3 style={{ marginTop: '1rem' }}>Unable to Load Error Health Data</h3>
+                    <p className="text-secondary">{error}</p>
+                    <button onClick={fetchErrorHealth} className="btn-primary" style={{ marginTop: '1rem' }}>
+                        Try Again
+                    </button>
+                </div>
+            </SuperAdminLayout>
+        );
+    }
 
     return (
         <SuperAdminLayout
             title="Error Health"
             subtitle="Monitor and track system errors"
-            loading={loading}
+            loading={loading && !errorData}
+            headerActions={headerActions}
         >
             <ConnectionIndicator isConnected={isConnected} />
 
@@ -202,39 +162,39 @@ const ErrorHealth = () => {
                         {/* Total Errors (24h) */}
                         <MetricCard
                             title="Total Errors (24h)"
-                            value={errorData.total_errors_24h.toLocaleString()}
+                            value={(errorData.total_errors_24h || 0).toLocaleString()}
                             icon={AlertTriangle}
                             subtitle="in the last 24 hours"
-                            color="error"
+                            color={errorData.total_errors_24h > 50 ? 'error' : 'warning'}
                         />
 
                         {/* Error Rate */}
                         <MetricCard
                             title="Error Rate"
-                            value={`${errorData.error_rate}%`}
+                            value={`${errorData.error_rate || 0}%`}
                             icon={TrendingDown}
-                            trend="-0.2%"
-                            trendDirection="down"
-                            subtitle="vs yesterday"
-                            color="warning"
+                            trend={errorData.error_rate < 1 ? 'Healthy' : 'Needs attention'}
+                            trendDirection={errorData.error_rate < 1 ? 'down' : 'up'}
+                            subtitle="of total requests"
+                            color={errorData.error_rate > 5 ? 'error' : 'warning'}
                         />
 
                         {/* Critical Errors */}
                         <MetricCard
                             title="Critical Errors"
-                            value={errorData.critical_errors}
+                            value={errorData.critical_errors || 0}
                             icon={AlertCircle}
                             subtitle="requiring immediate attention"
-                            color="error"
+                            color={errorData.critical_errors > 0 ? 'error' : 'success'}
                         />
 
                         {/* Affected Users */}
                         <MetricCard
                             title="Affected Users"
-                            value={errorData.affected_users}
+                            value={errorData.affected_users || 0}
                             icon={Users}
                             subtitle="experienced errors today"
-                            color="warning"
+                            color={errorData.affected_users > 10 ? 'warning' : 'info'}
                         />
                     </div>
 
@@ -242,42 +202,57 @@ const ErrorHealth = () => {
                     <div className="charts-section">
                         <div className="charts-grid">
                             {/* Error Rate Trend */}
-                            <LineChart
-                                data={errorData.charts.error_rate_trend.data}
-                                labels={errorData.charts.error_rate_trend.labels}
-                                title="Error Rate Trend (Last 7 Days)"
-                                height={300}
-                            />
+                            {errorData.charts?.error_rate_trend && (
+                                <LineChart
+                                    data={errorData.charts.error_rate_trend.data}
+                                    labels={errorData.charts.error_rate_trend.labels}
+                                    title="Error Count Trend (Last 7 Days)"
+                                    height={300}
+                                />
+                            )}
 
                             {/* Error Breakdown by Type */}
-                            <PieChart
-                                data={errorData.charts.error_by_type.data}
-                                labels={errorData.charts.error_by_type.labels}
-                                title="Error Breakdown by Type"
-                                height={300}
-                            />
+                            {errorData.charts?.error_by_type && errorData.charts.error_by_type.data.length > 0 && (
+                                <PieChart
+                                    data={errorData.charts.error_by_type.data}
+                                    labels={errorData.charts.error_by_type.labels}
+                                    title="Error Breakdown by Type"
+                                    height={300}
+                                />
+                            )}
                         </div>
 
                         {/* Error by Module */}
-                        <div className="chart-full-width mt-24">
-                            <BarChart
-                                data={errorData.charts.error_by_module.data}
-                                labels={errorData.charts.error_by_module.labels}
-                                title="Error Breakdown by Module"
-                                height={300}
-                            />
-                        </div>
+                        {errorData.charts?.error_by_module && errorData.charts.error_by_module.data.length > 0 && (
+                            <div className="chart-full-width mt-24">
+                                <BarChart
+                                    data={errorData.charts.error_by_module.data}
+                                    labels={errorData.charts.error_by_module.labels}
+                                    title="Error Breakdown by Module"
+                                    height={300}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Recent Errors Table */}
                     <div className="errors-table-section glass-card">
                         <h3>Recent Errors</h3>
-                        <DataTable
-                            columns={errorColumns}
-                            data={errorData.recent_errors}
-                            pageSize={10}
-                            onRowClick={(error) => setSelectedError(error)}
-                        />
+                        {errorData.recent_errors && errorData.recent_errors.length > 0 ? (
+                            <DataTable
+                                columns={errorColumns}
+                                data={errorData.recent_errors}
+                                pageSize={10}
+                                onRowClick={(error) => setSelectedError(error)}
+                            />
+                        ) : (
+                            <div className="no-errors-message" style={{ textAlign: 'center', padding: '2rem' }}>
+                                <AlertCircle size={32} color="var(--success)" />
+                                <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
+                                    No errors recorded in the last 48 hours. System is running smoothly!
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
@@ -294,4 +269,3 @@ const ErrorHealth = () => {
 };
 
 export default ErrorHealth;
-

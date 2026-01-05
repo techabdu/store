@@ -79,11 +79,11 @@ import ImpersonationBanner from './components/superadmin/ImpersonationBanner';
 
 function App() {
     return (
-        <ErrorBoundary>
-            <BrowserRouter>
-                <ThemeProvider>
-                    <NotificationProvider>
-                        <AuthProvider>
+        <BrowserRouter>
+            <ThemeProvider>
+                <NotificationProvider>
+                    <AuthProvider>
+                        <ErrorBoundary>
                             <ImpersonationBanner />
                             <Routes>
                                 <Route path="/login" element={<Login />} />
@@ -433,7 +433,7 @@ function App() {
                                 <Route
                                     path="/marketplace"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceDashboard />
                                         </ProtectedRoute>
                                     }
@@ -441,7 +441,7 @@ function App() {
                                 <Route
                                     path="/marketplace/listings"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceListings />
                                         </ProtectedRoute>
                                     }
@@ -449,7 +449,7 @@ function App() {
                                 <Route
                                     path="/marketplace/create-listing"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceCreateListing />
                                         </ProtectedRoute>
                                     }
@@ -457,7 +457,7 @@ function App() {
                                 <Route
                                     path="/marketplace/buying"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceBuying />
                                         </ProtectedRoute>
                                     }
@@ -465,7 +465,7 @@ function App() {
                                 <Route
                                     path="/marketplace/selling"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceSelling />
                                         </ProtectedRoute>
                                     }
@@ -473,7 +473,7 @@ function App() {
                                 <Route
                                     path="/marketplace/edit-listing/:id"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceEditListing />
                                         </ProtectedRoute>
                                     }
@@ -481,7 +481,7 @@ function App() {
                                 <Route
                                     path="/marketplace/listing/:id"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceProductDetails />
                                         </ProtectedRoute>
                                     }
@@ -489,7 +489,7 @@ function App() {
                                 <Route
                                     path="/marketplace/wallet"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceWallet />
                                         </ProtectedRoute>
                                     }
@@ -497,7 +497,7 @@ function App() {
                                 <Route
                                     path="/marketplace/messages"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceMessages />
                                         </ProtectedRoute>
                                     }
@@ -505,7 +505,7 @@ function App() {
                                 <Route
                                     path="/marketplace/orders"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceOrders />
                                         </ProtectedRoute>
                                     }
@@ -513,7 +513,7 @@ function App() {
                                 <Route
                                     path="/marketplace/order/:id"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceOrderDetails />
                                         </ProtectedRoute>
                                     }
@@ -521,7 +521,7 @@ function App() {
                                 <Route
                                     path="/marketplace/profile"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceProfile />
                                         </ProtectedRoute>
                                     }
@@ -529,7 +529,7 @@ function App() {
                                 <Route
                                     path="/marketplace/verify"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceVerification />
                                         </ProtectedRoute>
                                     }
@@ -537,7 +537,7 @@ function App() {
                                 <Route
                                     path="/marketplace/seller/:id"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceSellerProfile />
                                         </ProtectedRoute>
                                     }
@@ -545,7 +545,7 @@ function App() {
                                 <Route
                                     path="/marketplace/receipt/:id"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MarketplaceReceipt />
                                         </ProtectedRoute>
                                     }
@@ -553,7 +553,7 @@ function App() {
                                 <Route
                                     path="/marketplace/my-purchases"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MyPurchases />
                                         </ProtectedRoute>
                                     }
@@ -561,7 +561,7 @@ function App() {
                                 <Route
                                     path="/marketplace/my-sales"
                                     element={
-                                        <ProtectedRoute allowedRoles={['admin', 'superadmin']}>
+                                        <ProtectedRoute allowedRoles={['admin']}>
                                             <MySales />
                                         </ProtectedRoute>
                                     }
@@ -587,11 +587,11 @@ function App() {
 
                                 <Route path="/" element={<LandingPage />} />
                             </Routes>
-                        </AuthProvider>
-                    </NotificationProvider>
-                </ThemeProvider>
-            </BrowserRouter >
-        </ErrorBoundary>
+                        </ErrorBoundary>
+                    </AuthProvider>
+                </NotificationProvider>
+            </ThemeProvider>
+        </BrowserRouter >
     );
 }
 

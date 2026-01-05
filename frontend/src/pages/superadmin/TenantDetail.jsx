@@ -70,7 +70,7 @@ const TenantDetail = () => {
                             action: 'Sale completed',
                             user: 'cashier@techstore-alpha.com',
                             timestamp: '2026-01-03T06:45:00Z',
-                            details: 'Transaction #12345 - $450.00'
+                            details: 'Transaction #12345 - ₦450.00'
                         },
                         {
                             id: 4,
@@ -84,7 +84,7 @@ const TenantDetail = () => {
                             action: 'Marketplace listing created',
                             user: 'seller@techstore-alpha.com',
                             timestamp: '2026-01-02T15:30:00Z',
-                            details: 'iPhone 13 Pro - $899'
+                            details: 'iPhone 13 Pro - ₦899'
                         }
                     ],
                     // Health score breakdown
@@ -214,7 +214,7 @@ const TenantDetail = () => {
                                             </div>
                                             <div className="info-item">
                                                 <span className="info-label">MRR</span>
-                                                <span className="info-value">${tenant.mrr}</span>
+                                                <span className="info-value">₦{tenant.mrr}</span>
                                             </div>
                                             <div className="info-item">
                                                 <span className="info-label">Status</span>
@@ -245,7 +245,7 @@ const TenantDetail = () => {
                                             </div>
                                             <div className="stat-item">
                                                 <span className="stat-label">Total Sales</span>
-                                                <span className="stat-value">${tenant.total_sales.toLocaleString()}</span>
+                                                <span className="stat-value">₦{tenant.total_sales.toLocaleString()}</span>
                                             </div>
                                             <div className="stat-item">
                                                 <span className="stat-label">Health Score</span>

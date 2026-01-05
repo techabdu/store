@@ -2,6 +2,7 @@
 // backend/api/marketplace/profile/update.php
 
 require_once '../../../config/config.php';
+require_once '../../../middleware/api_logger.php'; // API request logging
 
 setCorsHeaders();
 header("Content-Type: application/json");

@@ -3,99 +3,74 @@ import MetricCard from '../../components/MetricCard';
 import { LineChart, BarChart } from '../../components/Charts';
 import DataTable from '../../components/Tables/DataTable';
 import ConnectionIndicator from '../../components/ConnectionIndicator';
-import { Users, UserCheck, Clock, TrendingDown } from 'lucide-react';
+import { Users, UserCheck, Clock, TrendingDown, RefreshCw, AlertCircle } from 'lucide-react';
 import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
+import api from '../../utils/api';
 import './UserHealth.css';
 
 const UserHealth = () => {
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(null);
 
-    // Fetch user health data
-    useEffect(() => {
-        const fetchUserHealth = async () => {
-            try {
-                setLoading(true);
+    /**
+     * Fetch user health data from the backend API
+     * Retrieves real-time metrics including:
+     * - DAU (Daily Active Users) and MAU (Monthly Active Users)
+     * - DAU/MAU ratio (stickiness metric)
+     * - Average session duration
+     * - User segmentation by role
+     * - Retention cohort analysis
+     * - Inactive users list (>30 days)
+     */
+    const fetchUserHealth = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-                // Mock data for now
-                const mockData = {
-                    dau: 1234,
-                    mau: 3456,
-                    dau_mau_ratio: 35.7,
-                    avg_session_duration: 24.5,
+            const response = await api.get('/superadmin/user_health.php');
+
+            if (response.data.success) {
+                const data = response.data.data;
+
+                // Transform API response to match component expectations
+                const transformedData = {
+                    dau: data.dau || 0,
+                    mau: data.mau || 0,
+                    dau_mau_ratio: data.dau_mau_ratio || 0,
+                    avg_session_duration: data.avg_session_duration || 0,
+                    dau_trend: data.dau_trend || 0,
+                    mau_trend: data.mau_trend || 0,
                     charts: {
-                        dau_mau_trend: {
-                            data: [32.5, 33.2, 34.1, 33.8, 35.2, 34.9, 35.7],
-                            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                        },
-                        user_segmentation: {
-                            data: [450, 380, 320],
-                            labels: ['SuperAdmin', 'Admin', 'User']
-                        }
+                        dau_mau_trend: data.charts?.dau_mau_trend || { data: [], labels: [] },
+                        user_segmentation: data.charts?.user_segmentation || { data: [], labels: [] }
                     },
-                    retention_cohort: [
-                        { month: 'Jan 2026', month_0: 100, month_1: 85, month_2: 72, month_3: 65 },
-                        { month: 'Feb 2026', month_0: 100, month_1: 88, month_2: 75, month_3: null },
-                        { month: 'Mar 2026', month_0: 100, month_1: 90, month_2: null, month_3: null },
-                        { month: 'Apr 2026', month_0: 100, month_1: null, month_2: null, month_3: null }
-                    ],
-                    inactive_users: [
-                        {
-                            id: 1,
-                            username: 'john.doe@techstore.com',
-                            tenant: 'Tech Store Alpha',
-                            role: 'admin',
-                            last_login: '2025-11-15T10:30:00Z',
-                            days_inactive: 49
-                        },
-                        {
-                            id: 2,
-                            username: 'jane.smith@phonehub.com',
-                            tenant: 'Phone Hub Beta',
-                            role: 'user',
-                            last_login: '2025-11-20T14:15:00Z',
-                            days_inactive: 44
-                        },
-                        {
-                            id: 3,
-                            username: 'mike.wilson@mobileworld.com',
-                            tenant: 'Mobile World Gamma',
-                            role: 'user',
-                            last_login: '2025-11-25T09:45:00Z',
-                            days_inactive: 39
-                        },
-                        {
-                            id: 4,
-                            username: 'sarah.jones@deviceshop.com',
-                            tenant: 'Device Shop Delta',
-                            role: 'admin',
-                            last_login: '2025-12-01T16:20:00Z',
-                            days_inactive: 33
-                        },
-                        {
-                            id: 5,
-                            username: 'tom.brown@gadgetstore.com',
-                            tenant: 'Gadget Store Epsilon',
-                            role: 'user',
-                            last_login: '2025-12-03T11:00:00Z',
-                            days_inactive: 31
-                        }
-                    ]
+                    retention_cohort: data.retention_cohort || [],
+                    inactive_users: data.inactive_users || []
                 };
 
-                setUserData(mockData);
+                setUserData(transformedData);
                 setIsConnected(true);
-            } catch (error) {
-                console.error('Failed to fetch user health:', error);
-            } finally {
-                setLoading(false);
+                setLastUpdated(data.last_updated || new Date().toISOString());
+            } else {
+                throw new Error(response.data.error || 'Failed to fetch user health data');
             }
-        };
+        } catch (err) {
+            console.error('Failed to fetch user health:', err);
+            setError(err.message || 'Failed to load user health data');
+            setIsConnected(false);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    // Initial fetch and auto-refresh every 60 seconds
+    useEffect(() => {
         fetchUserHealth();
 
-        // Refresh every 60 seconds
+        // Refresh every 60 seconds for real-time updates
         const interval = setInterval(fetchUserHealth, 60000);
         return () => clearInterval(interval);
     }, []);
@@ -153,11 +128,41 @@ const UserHealth = () => {
             title="User Health"
             subtitle="Monitor user engagement, retention, and activity"
             loading={loading}
+            headerActions={
+                <button
+                    className="refresh-btn"
+                    onClick={fetchUserHealth}
+                    disabled={loading}
+                    title="Refresh data"
+                >
+                    <RefreshCw size={18} className={loading ? 'spinning' : ''} />
+                </button>
+            }
         >
             <ConnectionIndicator isConnected={isConnected} />
 
+            {/* Error State */}
+            {error && !userData && (
+                <div className="error-state glass-card">
+                    <AlertCircle size={48} />
+                    <h3>Failed to Load User Health Data</h3>
+                    <p>{error}</p>
+                    <button className="retry-btn" onClick={fetchUserHealth}>
+                        <RefreshCw size={16} />
+                        Retry
+                    </button>
+                </div>
+            )}
+
             {userData && (
                 <>
+                    {/* Last Updated Indicator */}
+                    {lastUpdated && (
+                        <div className="last-updated">
+                            Last updated: {new Date(lastUpdated).toLocaleString()}
+                        </div>
+                    )}
+
                     {/* Metric Cards Grid */}
                     <div className="metrics-grid">
                         {/* DAU (Daily Active Users) */}
@@ -165,8 +170,8 @@ const UserHealth = () => {
                             title="DAU"
                             value={userData.dau.toLocaleString()}
                             icon={Users}
-                            trend="+5%"
-                            trendDirection="up"
+                            trend={userData.dau_trend !== 0 ? `${userData.dau_trend > 0 ? '+' : ''}${userData.dau_trend}%` : null}
+                            trendDirection={userData.dau_trend >= 0 ? 'up' : 'down'}
                             subtitle="daily active users"
                             color="primary"
                         />
@@ -176,8 +181,8 @@ const UserHealth = () => {
                             title="MAU"
                             value={userData.mau.toLocaleString()}
                             icon={UserCheck}
-                            trend="+8%"
-                            trendDirection="up"
+                            trend={userData.mau_trend !== 0 ? `${userData.mau_trend > 0 ? '+' : ''}${userData.mau_trend}%` : null}
+                            trendDirection={userData.mau_trend >= 0 ? 'up' : 'down'}
                             subtitle="monthly active users"
                             color="success"
                         />

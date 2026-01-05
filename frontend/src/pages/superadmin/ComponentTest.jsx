@@ -20,7 +20,7 @@ const ComponentTest = () => {
     const tableColumns = [
         { key: 'name', label: 'Tenant Name', sortable: true },
         { key: 'status', label: 'Status', sortable: true },
-        { key: 'mrr', label: 'MRR', sortable: true, render: (value) => `$${value}` },
+        { key: 'mrr', label: 'MRR', sortable: true, render: (value) => `₦${value}` },
         { key: 'healthScore', label: 'Health Score', sortable: true },
         {
             key: 'actions',
@@ -107,7 +107,7 @@ const ComponentTest = () => {
                     <BarChart
                         data={barData}
                         labels={barLabels}
-                        title="Monthly Revenue ($)"
+                        title="Monthly Revenue (₦)"
                         height={300}
                     />
                 </div>

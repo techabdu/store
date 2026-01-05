@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
 import HealthPillarCard from '../../components/Dashboard/HealthPillarCard';
 import { LineChart } from '../../components/Charts';
 import AlertBadge from '../../components/Dashboard/AlertBadge';
@@ -18,100 +19,94 @@ const OverviewDashboard = () => {
         const fetchHealthData = async () => {
             try {
                 setLoading(true);
+                const response = await api.get('/superadmin/system_insights.php?tab=overview');
 
-                // Mock data for now
-                const mockData = {
-                    system: {
-                        status: 'healthy',
-                        uptime: '99.9%',
-                        trend: '+0.1%',
-                        direction: 'up'
-                    },
-                    user: {
-                        status: 'healthy',
-                        dau: '1,234',
-                        trend: '+12%',
-                        direction: 'up'
-                    },
-                    error: {
-                        status: 'warning',
-                        rate: '0.8%',
-                        trend: '-15%',
-                        direction: 'down'
-                    },
-                    business: {
-                        status: 'healthy',
-                        revenue: '$12,345',
-                        trend: '+8%',
-                        direction: 'up'
-                    },
-                    charts: {
-                        apiLatency: [30, 45, 50, 48, 52, 47, 43],
-                        errorRate: [2, 1.5, 1, 0.8, 0.5, 0.4, 0.3]
+                if (response.data.success) {
+                    const data = response.data.data;
+
+                    // helper to get trend direction and text
+                    const getTrend = (current, previous) => {
+                        // For now we don't have historical comparison for all, so we default
+                        return { text: 'N/A', direction: 'neutral' };
+                    };
+
+                    // Transform charts data
+                    const latencyLabels = data.charts?.apiLatency?.map(item => item.label) || [];
+                    const latencyValues = data.charts?.apiLatency?.map(item => item.value) || [];
+
+                    const errorLabels = data.charts?.errorRate?.map(item => item.label) || [];
+                    const errorValues = data.charts?.errorRate?.map(item => item.value) || [];
+
+                    const mappedData = {
+                        system: {
+                            status: data.system.health.toLowerCase(),
+                            uptime: data.system.uptime.uptime_percentage || '99.9%', // fallback
+                            trend: '+0.0%',
+                            direction: 'up'
+                        },
+                        user: {
+                            status: 'healthy', // Logic to determine health
+                            dau: data.performance.active_users.active_count.toString(),
+                            trend: 'Live',
+                            direction: 'neutral'
+                        },
+                        error: {
+                            status: data.performance.error_rate > 5 ? 'critical' : (data.performance.error_rate > 1 ? 'warning' : 'healthy'),
+                            rate: data.performance.error_rate + '%',
+                            trend: 'N/A',
+                            direction: 'neutral'
+                        },
+                        business: {
+                            status: 'healthy',
+                            revenue: '₦' + (data.business.revenue_today?.total_revenue || '0.00'),
+                            trend: 'N/A',
+                            direction: 'up'
+                        },
+                        charts: {
+                            apiLatency: latencyValues,
+                            apiLatencyLabels: latencyLabels,
+                            errorRate: errorValues,
+                            errorRateLabels: errorLabels
+                        }
+                    };
+
+                    setHealthData(mappedData);
+
+                    // Set Alerts
+                    if (data.alerts?.recent_critical) {
+                        setAlerts(data.alerts.recent_critical.map(alert => ({
+                            id: alert.id,
+                            severity: alert.severity,
+                            message: alert.message,
+                            created_at: alert.created_at
+                        })));
                     }
-                };
 
-                setHealthData(mockData);
-
-                // Mock alerts
-                setAlerts([
-                    {
-                        id: 1,
-                        severity: 'critical',
-                        message: 'High error rate detected in payment module',
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 2,
-                        severity: 'warning',
-                        message: 'Database connection pool nearing capacity',
-                        created_at: new Date(Date.now() - 3600000).toISOString()
+                    // Set Activity
+                    if (data.activity?.recent_logs) {
+                        setActivity(data.activity.recent_logs.map(log => ({
+                            id: log.id,
+                            action: log.action,
+                            user: log.username || 'System',
+                            timestamp: log.created_at
+                        })));
                     }
-                ]);
 
-                // Mock activity
-                setActivity([
-                    {
-                        id: 1,
-                        action: 'New tenant registered',
-                        user: 'System',
-                        timestamp: new Date().toISOString()
-                    },
-                    {
-                        id: 2,
-                        action: 'Admin user logged in',
-                        user: 'john@example.com',
-                        timestamp: new Date(Date.now() - 1800000).toISOString()
-                    },
-                    {
-                        id: 3,
-                        action: 'Inventory updated',
-                        user: 'jane@example.com',
-                        timestamp: new Date(Date.now() - 3600000).toISOString()
-                    },
-                    {
-                        id: 4,
-                        action: 'New marketplace listing created',
-                        user: 'seller@example.com',
-                        timestamp: new Date(Date.now() - 7200000).toISOString()
-                    },
-                    {
-                        id: 5,
-                        action: 'Report generated',
-                        user: 'admin@example.com',
-                        timestamp: new Date(Date.now() - 10800000).toISOString()
-                    }
-                ]);
-
-                setIsConnected(true);
+                    setIsConnected(true);
+                }
             } catch (error) {
                 console.error('Failed to fetch health data:', error);
+                setIsConnected(false);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchHealthData();
+
+        // Auto refresh every 60s
+        const interval = setInterval(fetchHealthData, 60000);
+        return () => clearInterval(interval);
     }, []);
 
     const headerActions = (
@@ -173,14 +168,14 @@ const OverviewDashboard = () => {
                         <div className="charts-grid">
                             <LineChart
                                 data={healthData.charts.apiLatency}
-                                labels={['6h ago', '5h ago', '4h ago', '3h ago', '2h ago', '1h ago', 'Now']}
+                                labels={healthData.charts.apiLatencyLabels}
                                 title="API Response Time (Last 6 Hours)"
                                 height={300}
                             />
 
                             <LineChart
                                 data={healthData.charts.errorRate}
-                                labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
+                                labels={healthData.charts.errorRateLabels}
                                 title="Error Rate Trend (Last 7 Days)"
                                 height={300}
                             />

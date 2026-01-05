@@ -28,7 +28,9 @@ import {
   PieChart,
   Boxes,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  Lightbulb,
+  Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
@@ -68,6 +70,7 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
       case 'superadmin':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/superadmin/dashboard' },
+          { icon: Eye, label: 'Overview', path: '/superadmin/overview' },
           {
             label: 'System Health',
             icon: Activity,
@@ -75,7 +78,8 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
               { icon: Activity, label: 'System Metrics', path: '/superadmin/system-health' },
               { icon: AlertCircle, label: 'Error Diagnostics', path: '/superadmin/error-health' },
               { icon: DollarSign, label: 'Business Health', path: '/superadmin/business-health' },
-              { icon: Users, label: 'User Analytics', path: '/superadmin/user-health' }
+              { icon: Users, label: 'User Analytics', path: '/superadmin/user-health' },
+              { icon: Lightbulb, label: 'System Insights', path: '/superadmin/system-insights' }
             ]
           },
           {
@@ -87,7 +91,14 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
               { icon: MessageSquare, label: 'Support Queue', path: '/superadmin/support' }
             ]
           },
-          { icon: Globe, label: 'Marketplace', path: '/marketplace' }
+          {
+            label: 'Developer Tools',
+            icon: GitBranch,
+            children: [
+              { icon: Boxes, label: 'Component Test', path: '/superadmin/component-test' },
+              { icon: Activity, label: 'WebSocket Test', path: '/superadmin/test-websocket' }
+            ]
+          }
         ];
       case 'admin':
         return [

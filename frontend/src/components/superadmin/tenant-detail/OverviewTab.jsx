@@ -150,7 +150,7 @@ const OverviewTab = ({ tenantId }) => {
                     <div className="stat-content">
                         <h4>Monthly Sales</h4>
                         <p className="stat-number">
-                            ${parseFloat(stats?.sales?.total_sales || 0).toLocaleString()}
+                            ₦{parseFloat(stats?.sales?.total_sales || 0).toLocaleString()}
                         </p>
                         <span className="stat-detail">
                             {stats?.sales?.transaction_count || 0} transactions
