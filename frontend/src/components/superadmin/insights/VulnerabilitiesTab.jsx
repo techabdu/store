@@ -170,6 +170,69 @@ const VulnerabilitiesTab = ({ data }) => {
                     </div>
                 )}
 
+                {/* SSL Certificate */}
+                {breakdown && breakdown.ssl_certificate && (
+                    <div className="insight-card">
+                        <h3>
+                            <FaShieldAlt className="card-icon info" />
+                            SSL Certificate
+                        </h3>
+                        <div className="score-mini">
+                            <div className={`mini-score ${getScoreColor(breakdown.ssl_certificate.security_score)}`}>
+                                {breakdown.ssl_certificate.security_score}/100
+                            </div>
+                            <div className="mini-status">{breakdown.ssl_certificate.status}</div>
+                        </div>
+                        {breakdown.ssl_certificate.certificate ? (
+                            <div className="ssl-details">
+                                <div className="ssl-item">
+                                    <span className="ssl-label">Subject:</span>
+                                    <span className="ssl-value">{breakdown.ssl_certificate.certificate.subject}</span>
+                                </div>
+                                <div className="ssl-item">
+                                    <span className="ssl-label">Issuer:</span>
+                                    <span className="ssl-value">{breakdown.ssl_certificate.certificate.issuer}</span>
+                                </div>
+                                <div className="ssl-item">
+                                    <span className="ssl-label">Valid From:</span>
+                                    <span className="ssl-value">{new Date(breakdown.ssl_certificate.certificate.valid_from).toLocaleDateString()}</span>
+                                </div>
+                                <div className="ssl-item">
+                                    <span className="ssl-label">Expires:</span>
+                                    <span className={`ssl-value ${breakdown.ssl_certificate.certificate.days_remaining <= 30 ? 'warning' : 'success'}`}>
+                                        {new Date(breakdown.ssl_certificate.certificate.valid_to).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <div className="ssl-item">
+                                    <span className="ssl-label">Days Remaining:</span>
+                                    <span className={`ssl-value ${breakdown.ssl_certificate.certificate.days_remaining <= 30 ? 'warning' : 'success'}`}>
+                                        {breakdown.ssl_certificate.certificate.days_remaining} days
+                                    </span>
+                                </div>
+                            </div>
+                        ) : breakdown.ssl_certificate.message ? (
+                            <div className="no-issues">
+                                <FaCheckCircle className="success-icon" />
+                                <p>{breakdown.ssl_certificate.message}</p>
+                            </div>
+                        ) : breakdown.ssl_certificate.issues && breakdown.ssl_certificate.issues.length > 0 ? (
+                            <div className="issues-list">
+                                {breakdown.ssl_certificate.issues.map((issue, index) => (
+                                    <div key={index} className={`issue-item ${issue.severity}`}>
+                                        <div className="issue-type">{issue.type?.replace(/_/g, ' ')}</div>
+                                        <div className="issue-desc">{issue.description}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="no-issues">
+                                <FaCheckCircle className="success-icon" />
+                                <p>SSL certificate is valid</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Recommendations */}
                 {total_issues > 0 && (
                     <div className="insight-card full-width recommendations">

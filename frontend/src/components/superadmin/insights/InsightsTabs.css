@@ -825,3 +825,77 @@
         padding: 0.5rem;
     }
 }
+
+/* SSL Certificate Details */
+.ssl-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.ssl-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background-color: var(--background);
+    border-radius: 6px;
+}
+
+.ssl-label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.ssl-value {
+    color: var(--text-secondary);
+}
+
+.ssl-value.success {
+    color: #10b981;
+}
+
+.ssl-value.warning {
+    color: #f59e0b;
+}
+
+/* Email Cell */
+.email-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Status badges for tenant statuses */
+.status-badge.active {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.status-badge.trial {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.status-badge.suspended {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.status-badge.pending {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.status-badge.not_applicable {
+    background-color: rgba(107, 114, 128, 0.2);
+    color: #6b7280;
+}
+
+/* Bar fill success variant */
+.bar-fill.success {
+    background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+}

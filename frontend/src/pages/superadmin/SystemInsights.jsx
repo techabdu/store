@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaShieldAlt, FaDatabase, FaServer, FaTachometerAlt, FaClipboardList, FaBug, FaExclamationTriangle } from 'react-icons/fa';
+import { FaShieldAlt, FaDatabase, FaServer, FaTachometerAlt, FaClipboardList, FaBug, FaExclamationTriangle, FaChartLine, FaDownload } from 'react-icons/fa';
 import api from '../../utils/api';
 import SecurityTab from '../../components/superadmin/insights/SecurityTab';
 import DatabaseTab from '../../components/superadmin/insights/DatabaseTab';
@@ -7,19 +7,22 @@ import ResourcesTab from '../../components/superadmin/insights/ResourcesTab';
 import PerformanceTab from '../../components/superadmin/insights/PerformanceTab';
 import AuditTab from '../../components/superadmin/insights/AuditTab';
 import VulnerabilitiesTab from '../../components/superadmin/insights/VulnerabilitiesTab';
+import BusinessTab from '../../components/superadmin/insights/BusinessTab';
 import SuperAdminLayout from '../../components/superadmin/SuperAdminLayout';
 import '../../styles/dashboard.css';
 import './SystemInsights.css';
 
 const SystemInsights = () => {
-    const [activeTab, setActiveTab] = useState('security');
+    const [activeTab, setActiveTab] = useState('business');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [lastUpdated, setLastUpdated] = useState(null);
     const [autoRefresh, setAutoRefresh] = useState(true);
+    const [exporting, setExporting] = useState(false);
 
     const tabs = [
+        { id: 'business', label: 'Business', icon: FaChartLine },
         { id: 'security', label: 'Security', icon: FaShieldAlt },
         { id: 'database', label: 'Database', icon: FaDatabase },
         { id: 'resources', label: 'Resources', icon: FaServer },
@@ -97,6 +100,8 @@ const SystemInsights = () => {
         }
 
         switch (activeTab) {
+            case 'business':
+                return <BusinessTab data={data} />;
             case 'security':
                 return <SecurityTab data={data} />;
             case 'database':
@@ -111,6 +116,34 @@ const SystemInsights = () => {
                 return <VulnerabilitiesTab data={data} />;
             default:
                 return <div>Invalid tab</div>;
+        }
+    };
+
+    // Export current tab data as JSON
+    const handleExport = async () => {
+        if (!data) return;
+
+        setExporting(true);
+        try {
+            const exportData = {
+                tab: activeTab,
+                exportedAt: new Date().toISOString(),
+                data: data
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `system-insights-${activeTab}-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Export failed:', err);
+        } finally {
+            setExporting(false);
         }
     };
 
@@ -131,6 +164,15 @@ const SystemInsights = () => {
                     Last updated: {lastUpdated.toLocaleTimeString()}
                 </div>
             )}
+            <button
+                onClick={handleExport}
+                className="btn-secondary btn-sm"
+                disabled={loading || exporting || !data}
+                title="Export current tab data as JSON"
+            >
+                <FaDownload style={{ marginRight: '0.5rem' }} />
+                {exporting ? 'Exporting...' : 'Export'}
+            </button>
             <button onClick={fetchData} className="btn-secondary btn-sm" disabled={loading}>
                 Refresh Now
             </button>

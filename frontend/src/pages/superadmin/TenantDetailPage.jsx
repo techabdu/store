@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     LayoutDashboard, Users, CreditCard, TrendingUp, Activity, MessageSquare, Settings, ArrowLeft,
@@ -14,9 +14,11 @@ import SupportTab from '../../components/superadmin/tenant-detail/SupportTab';
 import SettingsTab from '../../components/superadmin/tenant-detail/SettingsTab';
 import SkeletonLoader from '../../components/superadmin/tenant-detail/SkeletonLoader';
 import TenantNotifications from '../../components/superadmin/tenant-detail/TenantNotifications';
-import useSuperAdminWebSocket from '../../hooks/useSuperAdminWebSocket';
 import api from '../../utils/api';
 import './TenantDetailPage.css';
+
+// Polling interval for notifications (30 seconds)
+const NOTIFICATION_POLL_INTERVAL = 30000;
 
 const TenantDetailPage = () => {
     const { id } = useParams();
@@ -28,21 +30,9 @@ const TenantDetailPage = () => {
     const [notificationCount, setNotificationCount] = useState(0);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-    // WebSocket for real-time notifications
-    const { lastMessage } = useSuperAdminWebSocket(`tenant_${id}_notifications`);
-
-    useEffect(() => {
-        if (lastMessage && lastMessage.type === 'new_notifications') {
-            // New notifications arrived via WebSocket
-            setNotificationCount(prev => prev + lastMessage.data.length);
-            // Optionally show a toast here
-            if (window.Notification && Notification.permission === 'granted') {
-                new Notification(`Tenant Alert: ${tenant?.shop_name}`, {
-                    body: lastMessage.data[0].title
-                });
-            }
-        }
-    }, [lastMessage, tenant]);
+    // Ref to track previous notification count for detecting new notifications
+    const prevNotificationCountRef = useRef(0);
+    const pollingIntervalRef = useRef(null);
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -54,9 +44,54 @@ const TenantDetailPage = () => {
         { id: 'settings', label: 'Settings', icon: Settings }
     ];
 
+    // Fetch notifications only (for polling - lighter than full data refresh)
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const response = await api.get(`/superadmin/tenant_notifications.php?action=list&tenant_id=${id}`);
+            if (response.data.success) {
+                const newCount = response.data.notifications.length;
+
+                // Check if we have new notifications
+                if (newCount > prevNotificationCountRef.current && prevNotificationCountRef.current > 0) {
+                    // Show browser notification if permission granted
+                    if (window.Notification && Notification.permission === 'granted' && tenant) {
+                        new Notification(`Tenant Alert: ${tenant.shop_name}`, {
+                            body: `You have ${newCount - prevNotificationCountRef.current} new notification(s)`
+                        });
+                    }
+                }
+
+                prevNotificationCountRef.current = newCount;
+                setNotificationCount(newCount);
+            }
+        } catch (err) {
+            // Silently fail for polling - don't disrupt the user experience
+            console.warn('Failed to poll notifications:', err.message);
+        }
+    }, [id, tenant]);
+
+    // Initial data fetch
     useEffect(() => {
         fetchTenantData();
     }, [id]);
+
+    // Polling for notifications every 30 seconds
+    useEffect(() => {
+        // Start polling after initial load
+        if (!loading && tenant) {
+            pollingIntervalRef.current = setInterval(() => {
+                fetchNotifications();
+            }, NOTIFICATION_POLL_INTERVAL);
+        }
+
+        // Cleanup: stop polling when component unmounts or dependencies change
+        return () => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current);
+                pollingIntervalRef.current = null;
+            }
+        };
+    }, [loading, tenant, fetchNotifications]);
 
     const fetchTenantData = async () => {
         try {
