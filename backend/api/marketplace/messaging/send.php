@@ -119,11 +119,21 @@ $msg_stmt = $conn->prepare("INSERT INTO marketplace_messages (conversation_id, s
 $msg_stmt->bind_param("iiisss", $conversation_id, $user_id, $receiver_id, $message, $message_type, $metadata);
 
 if ($msg_stmt->execute()) {
-    // Update conversation timestamp
-    $conn->query("UPDATE marketplace_conversations SET last_message_at = NOW() WHERE id = $conversation_id");
+    // Update conversation timestamp (SECURITY FIX: use prepared statement)
+    $updateTimeStmt = $conn->prepare("UPDATE marketplace_conversations SET last_message_at = NOW() WHERE id = ?");
+    if ($updateTimeStmt) {
+        $updateTimeStmt->bind_param("i", $conversation_id);
+        $updateTimeStmt->execute();
+        $updateTimeStmt->close();
+    }
     
-    // Unarchive for both
-    $conn->query("UPDATE marketplace_conversations SET is_archived_by_buyer = 0, is_archived_by_seller = 0 WHERE id = $conversation_id");
+    // Unarchive for both (SECURITY FIX: use prepared statement)
+    $unarchiveStmt = $conn->prepare("UPDATE marketplace_conversations SET is_archived_by_buyer = 0, is_archived_by_seller = 0 WHERE id = ?");
+    if ($unarchiveStmt) {
+        $unarchiveStmt->bind_param("i", $conversation_id);
+        $unarchiveStmt->execute();
+        $unarchiveStmt->close();
+    }
     
     // Track feature usage
     // We need tenant_id. It's available if new conversation created, but if replying, we need to fetch it.

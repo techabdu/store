@@ -185,11 +185,21 @@ try {
             }
         }
         
-        // Update profile stats
-        $conn->query("UPDATE marketplace_profiles SET total_listings = total_listings + 1 WHERE user_id = $user_id");
+        // Update profile stats (SECURITY FIX: use prepared statement)
+        $profileStmt = $conn->prepare("UPDATE marketplace_profiles SET total_listings = total_listings + 1 WHERE user_id = ?");
+        if ($profileStmt) {
+            $profileStmt->bind_param("i", $user_id);
+            $profileStmt->execute();
+            $profileStmt->close();
+        }
         
-        // NEW: Mark inventory item as listed to prevent local sales conflict
-        $conn->query("UPDATE inventory SET is_listed = 1 WHERE id = " . (int)$data->inventory_id);
+        // NEW: Mark inventory item as listed to prevent local sales conflict (SECURITY FIX: use prepared statement)
+        $inventoryStmt = $conn->prepare("UPDATE inventory SET is_listed = 1 WHERE id = ?");
+        if ($inventoryStmt) {
+            $inventoryStmt->bind_param("i", $data->inventory_id);
+            $inventoryStmt->execute();
+            $inventoryStmt->close();
+        }
 
         // Track feature usage
         require_once '../../../helpers/FeatureTracker.php';

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
 require_once __DIR__ . '/../helpers/shop_helper.php';
+require_once __DIR__ . '/../helpers/csrf.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
@@ -17,6 +18,11 @@ header("Content-Type: application/json; charset=UTF-8");
 $currentUser = checkAuth();
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+// SECURITY FIX: Verify CSRF for state-changing requests
+if (in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'])) {
+    requireCsrf();
+}
 
 switch ($method) {
     case 'GET':

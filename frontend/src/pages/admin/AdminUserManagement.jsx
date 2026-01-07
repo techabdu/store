@@ -333,33 +333,33 @@ const AdminUserManagement = () => {
                                                     <div className="actions-cell">
                                                         {!user.is_owner && (
                                                             <button
-                                                                className="action-btn"
+                                                                className="action-btn promote"
                                                                 title={user.role === 'user' ? 'Promote to Branch Manager' : 'Demote to Staff'}
                                                                 onClick={() => handleRoleChange(user.id, user.role)}
                                                             >
-                                                                {user.role === 'user' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                                                                {user.role === 'user' ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
                                                             </button>
                                                         )}
                                                         <button
-                                                            className="action-btn"
+                                                            className="action-btn status"
                                                             title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
                                                             onClick={() => handleToggleStatus(user.id, user.status)}
                                                         >
-                                                            {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
+                                                            {user.status === 'active' ? <ShieldOff size={20} /> : <Shield size={20} />}
                                                         </button>
                                                         <button
-                                                            className="action-btn"
+                                                            className="action-btn reset"
                                                             title="Reset Password"
                                                             onClick={() => openResetModal(user)}
                                                         >
-                                                            <Lock size={18} />
+                                                            <Lock size={20} />
                                                         </button>
                                                         <button
                                                             className="action-btn delete"
                                                             title="Delete User"
                                                             onClick={() => handleDelete(user.id)}
                                                         >
-                                                            <Trash2 size={18} />
+                                                            <Trash2 size={20} />
                                                         </button>
                                                     </div>
                                                 </td>

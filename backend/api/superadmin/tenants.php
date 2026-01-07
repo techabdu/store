@@ -292,13 +292,16 @@ function handleDelete() {
     $conn->begin_transaction();
     
     try {
-        // Delete related data (CASCADE should handle this if foreign keys are set, but let's be explicit)
-        $conn->query("DELETE FROM activity_logs WHERE tenant_id = $tenantId");
-        $conn->query("DELETE FROM transactions WHERE tenant_id = $tenantId");
-        $conn->query("DELETE FROM inventory WHERE tenant_id = $tenantId");
-        $conn->query("DELETE FROM expenses WHERE tenant_id = $tenantId");
-        $conn->query("DELETE FROM reports WHERE tenant_id = $tenantId");
-        $conn->query("DELETE FROM users WHERE tenant_id = $tenantId");
+        // Delete related data using prepared statements (SECURITY FIX: prevent SQL injection)
+        $tables = ['activity_logs', 'transactions', 'inventory', 'expenses', 'reports', 'users', 'shops'];
+        foreach ($tables as $table) {
+            $deleteStmt = $conn->prepare("DELETE FROM `$table` WHERE tenant_id = ?");
+            if ($deleteStmt) {
+                $deleteStmt->bind_param("i", $tenantId);
+                $deleteStmt->execute();
+                $deleteStmt->close();
+            }
+        }
         
         // Finally delete tenant
         $stmt = $conn->prepare("DELETE FROM tenants WHERE id = ?");

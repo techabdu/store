@@ -67,11 +67,21 @@ function sendSystemMessage($conn, $listing_id, $buyer_id, $seller_id, $message_t
             return false;
         }
         
-        // 6. Update conversation timestamp
-        $conn->query("UPDATE marketplace_conversations SET last_message_at = NOW() WHERE id = $conversation_id");
+        // 6. Update conversation timestamp (SECURITY FIX: use prepared statement)
+        $updateTimeStmt = $conn->prepare("UPDATE marketplace_conversations SET last_message_at = NOW() WHERE id = ?");
+        if ($updateTimeStmt) {
+            $updateTimeStmt->bind_param("i", $conversation_id);
+            $updateTimeStmt->execute();
+            $updateTimeStmt->close();
+        }
         
-        // 7. Unarchive for both parties
-        $conn->query("UPDATE marketplace_conversations SET is_archived_by_buyer = 0, is_archived_by_seller = 0 WHERE id = $conversation_id");
+        // 7. Unarchive for both parties (SECURITY FIX: use prepared statement)
+        $unarchiveStmt = $conn->prepare("UPDATE marketplace_conversations SET is_archived_by_buyer = 0, is_archived_by_seller = 0 WHERE id = ?");
+        if ($unarchiveStmt) {
+            $unarchiveStmt->bind_param("i", $conversation_id);
+            $unarchiveStmt->execute();
+            $unarchiveStmt->close();
+        }
         
         return true;
         
