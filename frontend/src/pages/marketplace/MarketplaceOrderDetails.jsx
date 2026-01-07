@@ -6,7 +6,7 @@ import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck, Info, AlertTria
 import api, { SERVER_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-import ReportWizard from '../../components/Marketplace/ReportWizard';
+import ReportWizard from '../../components/marketplace/ReportWizard';
 import './MarketplacePage.css';
 import '../../styles/wizard.css';
 import './MarketplaceOrderDetails.css';

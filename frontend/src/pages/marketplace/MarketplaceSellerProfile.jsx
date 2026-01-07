@@ -6,7 +6,7 @@ import { User, MapPin, Phone, MessageSquare, Shield, ShieldCheck, Star, ArrowLef
 import api, { SERVER_URL, isProduction } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-import ReportWizard from '../../components/Marketplace/ReportWizard';
+import ReportWizard from '../../components/marketplace/ReportWizard';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProfile.css';

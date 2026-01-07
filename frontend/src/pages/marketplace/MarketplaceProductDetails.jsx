@@ -7,7 +7,7 @@ import api, { SERVER_URL } from '../../utils/api';
 import { ShoppingCart, MessageSquare, ArrowLeft, X, ChevronLeft, ChevronRight, Star, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-import ReportWizard from '../../components/Marketplace/ReportWizard';
+import ReportWizard from '../../components/marketplace/ReportWizard';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProductDetails.css';
