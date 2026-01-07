@@ -1,7 +1,7 @@
 <?php
-require_once '../../config/config.php';
-require_once '../../middleware/api_logger.php'; // API request logging
-require_once '../../helpers/csrf.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../middleware/api_logger.php'; // API request logging
+require_once __DIR__ . '/../../helpers/csrf.php';
 
 // Set CORS headers
 setCorsHeaders();

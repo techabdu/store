@@ -194,5 +194,5 @@ if ($method === 'GET') {
     $ins_stmt->close();
 }
 
-$conn->close();
+
 ?>

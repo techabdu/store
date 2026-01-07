@@ -50,5 +50,5 @@ try {
     echo json_encode(['success' => false, 'error' => 'Failed to retrieve activity logs']);
 }
 
-$conn->close();
+
 ?>

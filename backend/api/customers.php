@@ -129,4 +129,4 @@ if ($action === 'get_customers') {
     echo json_encode(["success" => false, "message" => "Invalid action"]);
 }
 
-$conn->close();
+

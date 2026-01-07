@@ -256,5 +256,5 @@ try {
     echo json_encode(['success' => false, 'error' => 'Unable to process delivery confirmation. Please try again or contact support.']);
 }
 
-$conn->close();
+
 ?>

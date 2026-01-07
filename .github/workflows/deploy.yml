@@ -32,7 +32,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build
         env:
-          VITE_API_URL: https://prhub.shop/api
+          VITE_API_URL: https://prhub.shop/backend/api
           VITE_WS_URL: wss://prhub.shop:8080
           VITE_APP_ENV: production
 

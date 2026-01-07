@@ -202,5 +202,5 @@ try {
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }
 
-$conn->close();
+
 ?>

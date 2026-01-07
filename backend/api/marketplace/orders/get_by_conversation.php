@@ -106,5 +106,5 @@ try {
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $t->getMessage()]);
 }
 
-$conn->close();
+
 ?>
