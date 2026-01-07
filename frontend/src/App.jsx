@@ -64,8 +64,7 @@ import MarketplaceReceipt from './pages/marketplace/MarketplaceReceipt';
 import MyPurchases from './pages/marketplace/MyPurchases';
 import MySales from './pages/marketplace/MySales';
 import Debts from './pages/shared/Debts';
-import TestWebSocket from './pages/TestWebSocket';
-import ComponentTest from './pages/SuperAdmin/ComponentTest';
+
 import OverviewDashboard from './pages/SuperAdmin/OverviewDashboard';
 import TenantDetail from './pages/SuperAdmin/TenantDetail';
 import TenantDetailPage from './pages/superadmin/TenantDetailPage';
@@ -135,22 +134,7 @@ function App() {
                                             </ProtectedRoute>
                                         }
                                     />
-                                    <Route
-                                        path="/superadmin/test-websocket"
-                                        element={
-                                            <ProtectedRoute allowedRoles={['superadmin']}>
-                                                <TestWebSocket />
-                                            </ProtectedRoute>
-                                        }
-                                    />
-                                    <Route
-                                        path="/superadmin/component-test"
-                                        element={
-                                            <ProtectedRoute allowedRoles={['superadmin']}>
-                                                <ComponentTest />
-                                            </ProtectedRoute>
-                                        }
-                                    />
+
                                     <Route
                                         path="/superadmin/overview"
                                         element={
