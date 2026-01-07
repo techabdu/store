@@ -152,12 +152,27 @@ try {
         http_response_code(200);
         echo json_encode(["success" => true, "message" => "Verification email sent."]);
     } else {
-        throw new Exception($sendResult['message']);
+        // If email fails, we still updated the token in database.
+        // In development, we can provide the link in error log or even response (if safe)
+        $errorMessage = "Failed to send email: " . $sendResult['message'];
+        error_log("Resend verification error: " . $errorMessage);
+        
+        // For development, also log the link to make it easier to test without working SMTP
+        if (Environment::get() === 'development') {
+            error_log("DEVELOPMENT: Verification Link for $email: $verificationLink");
+        }
+
+        http_response_code(500); // Keep 500 as it is a server-side failure
+        echo json_encode([
+            "success" => false, 
+            "error" => "We couldn't send the verification email. Please check your internet connection or try again later.",
+            "debug" => (Environment::get() === 'development') ? $sendResult['message'] : null
+        ]);
     }
 
 } catch (Exception $e) {
-    error_log("Resend verification error: " . $e->getMessage());
+    error_log("Resend verification Exception: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["success" => false, "error" => "Failed to send email. Please try again later."]);
+    echo json_encode(["success" => false, "error" => "An unexpected error occurred. Please try again later."]);
 }
 ?>

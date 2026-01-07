@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import TopBar from './TopBar';
 import Sidebar from './Sidebar';
 
-const AdminLayout = ({ children, title, subtitle, loading, error, alertsCount = 0, headerActions }) => {
+const AdminLayout = ({ children, title, subtitle, loading, error, alertsCount = 0, headerActions, trialBar }) => {
     const { user } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -40,6 +40,9 @@ const AdminLayout = ({ children, title, subtitle, loading, error, alertsCount = 
 
             <main className="main-content" style={{ marginLeft: isMobile ? 0 : (sidebarOpen ? '256px' : '72px') }}>
                 <div className="content-wrapper">
+                    {/* Trial Status Bar at the top */}
+                    {trialBar}
+
                     {/* Page Header */}
                     {(title || subtitle || headerActions) && (
                         <div className="page-header mb-24" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
@@ -74,3 +77,4 @@ const AdminLayout = ({ children, title, subtitle, loading, error, alertsCount = 
 };
 
 export default AdminLayout;
+

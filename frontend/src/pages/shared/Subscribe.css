@@ -1,0 +1,141 @@
+/* Subscribe.css specific overrides to compliment register.css */
+
+.subscribe-page-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem 5rem;
+    position: relative;
+    z-index: 10;
+}
+
+.page-back-button {
+    position: absolute;
+    top: 2rem;
+    left: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid var(--lp-border);
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    color: var(--lp-text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.page-back-button:hover {
+    transform: translateX(-4px);
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--lp-primary);
+}
+
+/* Coming Soon Alert */
+.sp-coming-soon-alert {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: white;
+    border: 1.5px solid #f59e0b;
+    border-radius: var(--lp-radius-lg);
+    padding: 1.5rem 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+}
+
+.sp-coming-soon-alert .alert-icon {
+    font-size: 2rem;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.sp-coming-soon-alert h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    color: #b45309;
+    font-weight: 700;
+}
+
+.sp-coming-soon-alert p {
+    margin: 0;
+    color: #92400e;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.subscribe-footer {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.subscribe-footer p {
+    color: var(--lp-text-secondary);
+    font-size: 1rem;
+}
+
+.subscribe-footer a {
+    color: var(--lp-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.subscribe-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Highlight for current active plan */
+.plan-card.current-active {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.02);
+}
+
+.plan-card .current-badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background-color: #10b981;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Forced 3 columns on desktop to ensure single row as requested */
+@media (min-width: 769px) {
+    .subscribe-page-wrapper .plans-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+.select-plan-btn.btn-disabled {
+    background-color: #f1f3f4 !important;
+    color: #9aa0a6 !important;
+    border-color: #dadce0 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.8;
+}
+
+/* Responsiveness for back button */
+@media (max-width: 768px) {
+    .page-back-button {
+        position: static;
+        margin-bottom: 2rem;
+    }
+
+    .subscribe-page-wrapper {
+        padding-top: 1rem;
+    }
+
+    .sp-coming-soon-alert {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+    }
+}

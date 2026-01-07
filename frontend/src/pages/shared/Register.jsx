@@ -94,31 +94,41 @@ const Register = () => {
     // Available plans - matching landing page pricing
     const plans = [
         {
-            id: 'starter',
+            id: 'basic',
             name: 'Starter',
-            price: 0,
-            duration: '25 days',
+            price: 39999,
+            originalPrice: 39999,
+            isFree: true,
+            currency: '₦',
+            duration: '14 days free, then /month',
             features: [
-                'Up to 50 inventory',
+                'Up to 29 items in inventory',
+                'Last 50 sales in history',
+                '2 User accounts (Admin + 1)',
                 'Basic sales tracking',
-                '1 User account'
+                'POS system access',
+                'Stock level alerts',
+                'Basic reporting'
             ],
             recommended: false
         },
         {
             id: 'pro',
             name: 'Pro',
-            price: 49999,
+            price: 50000,
             duration: 'per month',
             currency: '₦',
             features: [
-                'Up to 150 inventory',
+                'Unlimited inventory items',
+                'Unlimited sales history',
+                'Unlimited User accounts',
                 'Advanced analytics',
-                'Up to 5 User accounts',
                 'Priority support',
                 'Receipt printing',
                 'Finance Calculation',
-                'Customer Management'
+                'Customer Management',
+                'Multi-store management',
+                'Debt Management'
             ],
             recommended: true
         },
@@ -131,8 +141,11 @@ const Register = () => {
                 'Unlimited everything',
                 'Custom integrations',
                 'Multi-user support',
-                'Multi-store management'
+                'Dedicated support',
+                'API access'
             ],
+            isContact: true,
+            contactEmail: 'support@prhub.shop',
             recommended: false
         }
     ];
@@ -261,7 +274,7 @@ const Register = () => {
 
     if (registrationSuccess) {
         return (
-            <div className="register-page split-layout success-mode">
+            <div className="register-page split-layout success-mode" data-theme="light">
                 <div className="register-container">
                     {/* Left Side - Visual Section */}
                     <div className="register-visual-section">
@@ -311,7 +324,7 @@ const Register = () => {
     // Step 1: Plan Selection
     if (step === 1) {
         return (
-            <div className="register-page">
+            <div className="register-page" data-theme="light">
                 <ParticlesBackground />
                 <div className="register-container plan-selection">
                     <div className="register-header">
@@ -324,26 +337,36 @@ const Register = () => {
                             <div
                                 key={plan.id}
                                 className={`plan-card ${selectedPlan === plan.id ? 'selected' : ''} ${plan.recommended ? 'recommended' : ''}`}
-                                onClick={() => setSelectedPlan(plan.id)}
+                                onClick={() => !plan.isContact && setSelectedPlan(plan.id)}
                             >
                                 {plan.recommended && <div className="recommended-badge">Recommended</div>}
                                 <h3>{plan.name}</h3>
-                                <div className="plan-price">
-                                    {plan.price === 0 ? (
-                                        <>
-                                            <span className="price">Free</span>
-                                            <span className="duration">{plan.duration}</span>
-                                        </>
+                                <div className="plan-price-wrapper">
+                                    {plan.isFree && plan.originalPrice ? (
+                                        <div className="price-stack">
+                                            <div className="price-focus is-free">FREE</div>
+                                            <div className="price-details">
+                                                <span className="price-old">{plan.currency || '₦'}{plan.originalPrice.toLocaleString()}</span>
+                                                <span className="price-condition">14 days free, then {plan.currency || '₦'}{plan.originalPrice.toLocaleString()}/month</span>
+                                            </div>
+                                        </div>
                                     ) : plan.price === 'Custom' ? (
-                                        <>
-                                            <span className="price">Custom</span>
-                                        </>
+                                        <div className="price-stack">
+                                            <div className="price-focus">Custom</div>
+                                            <div className="price-details">
+                                                <span className="price-condition">Contact for tailored pricing</span>
+                                            </div>
+                                        </div>
                                     ) : (
-                                        <>
-                                            <span className="currency">{plan.currency || '₦'}</span>
-                                            <span className="price">{typeof plan.price === 'number' ? plan.price.toLocaleString() : plan.price}</span>
-                                            <span className="duration">/{plan.duration.split(' ')[1]}</span>
-                                        </>
+                                        <div className="price-stack">
+                                            <div className="price-focus">
+                                                {plan.currency || '₦'}
+                                                {typeof plan.price === 'number' ? plan.price.toLocaleString() : plan.price}
+                                            </div>
+                                            <div className="price-details">
+                                                <span className="price-condition">billed monthly</span>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                                 <ul className="plan-features">
@@ -354,6 +377,27 @@ const Register = () => {
                                         </li>
                                     ))}
                                 </ul>
+                                {plan.isContact ? (
+                                    <button
+                                        className="select-plan-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.location.href = `mailto:${plan.contactEmail}?subject=Enterprise Plan Inquiry`;
+                                        }}
+                                    >
+                                        Contact Us
+                                    </button>
+                                ) : (
+                                    <button
+                                        className={`select-plan-btn ${selectedPlan === plan.id ? 'is-selected' : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedPlan(plan.id);
+                                        }}
+                                    >
+                                        {selectedPlan === plan.id ? 'Selected' : 'Select Plan'}
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -377,7 +421,7 @@ const Register = () => {
 
     // Step 2: Registration Form (Multi-step)
     return (
-        <div className="register-page split-layout">
+        <div className="register-page split-layout" data-theme="light">
             <div className="register-container">
                 {/* Left Side - Visual Section */}
                 <div className="register-visual-section">
@@ -512,7 +556,7 @@ const Register = () => {
 
                                 <div className="form-navigation">
                                     <button type="button" onClick={handleNextStep} className="btn-next">
-                                        Next Step <FaArrowRight style={{ marginLeft: '8px', verticalAlign: 'middle' }} />
+                                        Next Step <FaArrowRight className="btn-icon-shift" />
                                     </button>
                                 </div>
 
@@ -583,10 +627,18 @@ const Register = () => {
 
                                 <div className="form-navigation">
                                     <button type="button" onClick={handlePrevStep} className="btn-back">
-                                        <FaArrowLeft style={{ marginRight: '8px', verticalAlign: 'middle' }} /> Back
+                                        <FaArrowLeft className="btn-icon-back" /> Back
                                     </button>
                                     <button type="submit" disabled={isSubmitting} className="btn-next">
-                                        {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                                        {isSubmitting ? (
+                                            <>
+                                                <FaSpinner className="spinner" /> Creating Account...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Create Account <FaArrowRight className="btn-icon-shift" />
+                                            </>
+                                        )}
                                     </button>
                                 </div>
 

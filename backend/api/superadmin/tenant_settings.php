@@ -280,26 +280,37 @@ if ($method === 'GET') {
             exit;
         }
         
-        // Manually verify tenant email
+        // Get current status to see if we need to activate it
+        $status_stmt = $conn->prepare("SELECT status FROM tenants WHERE id = ?");
+        $status_stmt->bind_param("i", $tenant_id);
+        $status_stmt->execute();
+        $tenant_status = $status_stmt->get_result()->fetch_assoc()['status'] ?? 'pending';
+        $status_stmt->close();
+
+        // If status was 'pending', move to 'trial'. 
+        $newStatus = ($tenant_status === 'pending') ? 'trial' : $tenant_status;
+
+        // Manually verify tenant email and update status if pending
         $verify_stmt = $conn->prepare("
             UPDATE tenants 
-            SET email_verified = 1, verification_token = NULL
+            SET email_verified = 1, status = ?, verification_token = NULL
             WHERE id = ?
         ");
-        $verify_stmt->bind_param("i", $tenant_id);
+        $verify_stmt->bind_param("si", $newStatus, $tenant_id);
         
         if ($verify_stmt->execute()) {
             // Log activity
             $admin_id = $_SESSION['user_id'];
             $activity_stmt = $conn->prepare("
                 INSERT INTO activity_logs (tenant_id, user_id, action, entity_type, entity_id, details)
-                VALUES (?, ?, 'email_verified', 'tenant', ?, 'Email manually verified by SuperAdmin')
+                VALUES (?, ?, 'email_verified', 'tenant', ?, ?)
             ");
-            $activity_stmt->bind_param("iii", $tenant_id, $admin_id, $tenant_id);
+            $details = "Email manually verified by SuperAdmin. Status updated to: $newStatus";
+            $activity_stmt->bind_param("iiis", $tenant_id, $admin_id, $tenant_id, $details);
             $activity_stmt->execute();
             $activity_stmt->close();
             
-            echo json_encode(['success' => true, 'message' => 'Email verified successfully']);
+            echo json_encode(['success' => true, 'message' => 'Email verified successfully and account activated.']);
         } else {
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => 'Failed to verify email']);

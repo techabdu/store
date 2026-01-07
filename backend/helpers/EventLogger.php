@@ -56,13 +56,37 @@ class EventLogger {
     /**
      * Get database connection
      * 
-     * @return mysqli Database connection
+     * Creates a fresh independent connection to avoid conflicts
+     * with connections closed by the main script
+     * 
+     * @return mysqli|null Database connection or null if connection fails
      */
     private static function getConnection() {
-        if (self::$conn === null) {
-            require_once __DIR__ . '/../config/database.php';
-            global $conn;
-            self::$conn = $conn;
+        if (self::$conn === null || !self::$conn instanceof mysqli || @self::$conn->ping() === false) {
+            // Create fresh independent connection
+            require_once __DIR__ . '/../config/environment.php';
+            
+            try {
+                // Get database config from Environment class
+                $dbHost = Environment::config('db_host', 'localhost');
+                $dbUser = Environment::config('db_user', 'root');
+                $dbPass = Environment::config('db_pass', '');
+                $dbName = Environment::config('db_name', 'store');
+                
+                self::$conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
+                
+                if (self::$conn->connect_error) {
+                    error_log("EventLogger: Database connection failed: " . self::$conn->connect_error);
+                    self::$conn = null;
+                    return null;
+                }
+                
+                self::$conn->set_charset("utf8mb4");
+            } catch (Exception $e) {
+                error_log("EventLogger: Database connection exception: " . $e->getMessage());
+                self::$conn = null;
+                return null;
+            }
         }
         return self::$conn;
     }
@@ -276,7 +300,7 @@ class EventLogger {
             
             // Log to database (api_request_logs table)
             $conn = self::getConnection();
-            if ($conn) {
+            if ($conn && $conn instanceof mysqli) {
                 $stmt = $conn->prepare(
                     "INSERT INTO api_request_logs (
                         tenant_id, user_id, shop_id,

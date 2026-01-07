@@ -33,15 +33,38 @@ import {
   Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSubscription } from '../context/SubscriptionContext';
+import ProBadge from './ProBadge';
+import ComingSoonBadge from './ComingSoonBadge';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
   const { logout, user } = useAuth();
+  const { isPageRestricted } = useSubscription();
   const [isHovered, setIsHovered] = useState(false);
   const [openGroups, setOpenGroups] = useState({});
   const location = useLocation();
 
   const isMarketplace = location.pathname.startsWith('/marketplace');
+
+  // Map of path segments to restriction feature names
+  const pathToFeatureMap = {
+    '/admin/customer-insights': 'customer-insights',
+    '/admin/abc-analysis': 'abc-analysis',
+    '/admin/branch-comparison': 'branch-comparison',
+    '/admin/cash-flow': 'cash-flow',
+    '/admin/budgeting': 'budgeting',
+    '/admin/customers': 'customers',
+    '/admin/branches': 'branches',
+    '/marketplace': 'marketplace'
+  };
+
+  // Check if a nav item path is restricted
+  const isNavItemRestricted = (path) => {
+    const feature = pathToFeatureMap[path];
+    if (!feature) return false;
+    return isPageRestricted(feature);
+  };
 
   // MARKETPLACE NAVIGATION ITEMS
   const marketplaceNavItems = [
@@ -237,22 +260,66 @@ const Sidebar = ({ isOpen, isMobile, closeSidebar, alertCount = 0 }) => {
                     </button>
                     {isGroupOpen && (isOpen || isHovered) && (
                       <div className="group-children">
-                        {item.children.map((child) => (
-                          <NavLink
-                            key={child.path}
-                            to={child.path}
-                            className={({ isActive }) =>
-                              `nav-item child-item ${isActive ? 'active' : ''}`
-                            }
-                            onClick={() => isMobile && setTimeout(closeSidebar, 150)}
-                            title={!isMobile && !isOpen && !isHovered ? child.label : ''}
-                          >
-                            <child.icon size={18} className="nav-icon child-icon" />
-                            <span className="nav-label">{child.label}</span>
-                          </NavLink>
-                        ))}
+                        {item.children.map((child) => {
+                          const isRestricted = isNavItemRestricted(child.path);
+
+                          if (isRestricted) {
+                            // Render as non-clickable locked item
+                            return (
+                              <div
+                                key={child.path}
+                                className="nav-item child-item locked"
+                                title={child.path.startsWith('/marketplace') ? "Coming Soon" : "Upgrade to Pro to access this feature"}
+                              >
+
+                                <child.icon size={18} className="nav-icon child-icon" />
+                                <span className="nav-label">{child.label}</span>
+                                {child.path.startsWith('/marketplace') ?
+                                  <ComingSoonBadge size="small" /> :
+                                  <ProBadge size="small" />
+                                }
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <NavLink
+                              key={child.path}
+                              to={child.path}
+                              className={({ isActive }) =>
+                                `nav-item child-item ${isActive ? 'active' : ''}`
+                              }
+                              onClick={() => isMobile && setTimeout(closeSidebar, 150)}
+                              title={!isMobile && !isOpen && !isHovered ? child.label : ''}
+                            >
+                              <child.icon size={18} className="nav-icon child-icon" />
+                              <span className="nav-label">{child.label}</span>
+                            </NavLink>
+                          );
+                        })}
                       </div>
                     )}
+                  </div>
+                );
+              }
+
+              // Top-level items (non-group)
+              const isRestricted = isNavItemRestricted(item.path);
+
+              if (isRestricted) {
+                return (
+                  <div
+                    key={item.path}
+                    className="nav-item locked"
+                    title={item.path.startsWith('/marketplace') ? "Coming Soon" : "Upgrade to Pro to access this feature"}
+                  >
+
+                    <item.icon size={20} className="nav-icon" />
+                    <span className="nav-label">{item.label}</span>
+                    {item.path.startsWith('/marketplace') ?
+                      <ComingSoonBadge size="small" /> :
+                      <ProBadge size="small" />
+                    }
                   </div>
                 );
               }

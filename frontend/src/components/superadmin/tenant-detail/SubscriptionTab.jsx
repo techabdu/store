@@ -18,7 +18,7 @@ const SubscriptionTab = ({ tenantId, onUpdate }) => {
     const plans = [
         { key: 'free_trial', label: 'Trial' },
         { key: 'basic', label: 'Basic' },
-        { key: 'premium', label: 'Premium' },
+        { key: 'pro', label: 'Pro' },
         { key: 'enterprise', label: 'Enterprise' }
     ];
 
@@ -115,7 +115,7 @@ const SubscriptionTab = ({ tenantId, onUpdate }) => {
         const colors = {
             'free_trial': 'plan-trial',
             'basic': 'plan-basic',
-            'premium': 'plan-premium',
+            'pro': 'plan-premium',
             'enterprise': 'plan-enterprise'
         };
         return colors[plan] || 'plan-trial';
@@ -293,7 +293,7 @@ const SubscriptionTab = ({ tenantId, onUpdate }) => {
                                                 <li><CheckCircle size={16} /> 100 products</li>
                                             </>
                                         )}
-                                        {p.key === 'premium' && (
+                                        {p.key === 'pro' && (
                                             <>
                                                 <li><CheckCircle size={16} /> All basic features</li>
                                                 <li><CheckCircle size={16} /> Priority support</li>

@@ -192,7 +192,7 @@ if ($method === 'GET') {
         }
         
         // Validate plan
-        $valid_plans = ['free_trial', 'basic', 'premium', 'enterprise'];
+        $valid_plans = ['free_trial', 'basic', 'pro', 'enterprise'];
         if (!in_array($new_plan, $valid_plans)) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Invalid plan type. Must be: ' . implode(', ', $valid_plans)]);
@@ -200,7 +200,7 @@ if ($method === 'GET') {
         }
         
         // Get current plan
-        $current_stmt = $conn->prepare("SELECT plan_type, subscription_plan, status FROM tenants WHERE id = ?");
+        $current_stmt = $conn->prepare("SELECT plan_type, subscription_plan, status, mrr FROM tenants WHERE id = ?");
         $current_stmt->bind_param("i", $tenant_id);
         $current_stmt->execute();
         $current_result = $current_stmt->get_result();
@@ -233,20 +233,27 @@ if ($method === 'GET') {
             WHERE id = ?
         ");
         
+        if (!$update_stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Database prepare error (update): ' . $conn->error]);
+            exit;
+        }
+
         $update_stmt->bind_param("sssdi", $new_plan, $new_plan, $subscription_ends_at, $mrr, $tenant_id);
         
         if ($update_stmt->execute()) {
             // Log to subscription history
+            // Log to subscription history
             $history_stmt = $conn->prepare("
                 INSERT INTO subscription_history 
-                (tenant_id, from_plan, to_plan, from_mrr, to_mrr, change_type, changed_by, notes) 
-                VALUES (?, ?, ?, ?, ?, 'upgrade', ?, ?)
+                (tenant_id, from_plan, to_plan, from_mrr, to_mrr, change_type, notes) 
+                VALUES (?, ?, ?, ?, ?, 'upgrade', ?)
             ");
             
             if ($history_stmt) {
-                $admin_id = $_SESSION['user_id'];
+                // $admin_id = $_SESSION['user_id']; // Not used in table
                 $old_mrr = $current['mrr'] ?? 0;
-                $history_stmt->bind_param("issddis", $tenant_id, $old_plan, $new_plan, $old_mrr, $mrr, $admin_id, $notes);
+                $history_stmt->bind_param("issdds", $tenant_id, $old_plan, $new_plan, $old_mrr, $mrr, $notes);
                 $history_stmt->execute();
                 $history_stmt->close();
             } else {

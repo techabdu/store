@@ -85,7 +85,7 @@ try {
     // 2. Create Tenant
     // Generate verification token
     $verification_token = bin2hex(random_bytes(32));
-    $trial_ends_at = date('Y-m-d H:i:s', strtotime('+25 days'));
+    $trial_ends_at = date('Y-m-d H:i:s', strtotime('+14 days'));
 
     $insertTenant = $conn->prepare("INSERT INTO tenants (shop_name, shop_address, shop_phone, shop_email, status, plan_type, trial_ends_at, verification_token) VALUES (?, ?, ?, ?, 'pending', 'free_trial', ?, ?)");
     $insertTenant->bind_param("ssssss", $shop_name, $shop_address, $shop_phone, $owner_email, $trial_ends_at, $verification_token);
@@ -198,9 +198,13 @@ try {
     $emailResult = sendEmail($owner_email, $subject, $body);
     
     if (!$emailResult['success']) {
-        // Log error but don't fail registration? Or fail?
-        // Better to warn user but keep account created
+        // Log error but don't fail registration
         error_log("Failed to send verification email: " . $emailResult['message']);
+        
+        // For development, also log the link to make it easier to test without working SMTP
+        if (Environment::get() === 'development') {
+            error_log("DEVELOPMENT: Verification Link for $owner_email: $verificationLink");
+        }
     }
 
     $conn->commit();

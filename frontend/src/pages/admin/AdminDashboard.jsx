@@ -4,7 +4,9 @@ import MetricCard from '../../components/MetricCard';
 import ChartCard from '../../components/ChartCard';
 import ActivityTable from '../../components/ActivityTable';
 import AlertsList from '../../components/AlertsList';
+import TrialStatusBar from '../../components/TrialStatusBar';
 import { useAuth } from '../../context/AuthContext';
+import { useSubscription } from '../../context/SubscriptionContext';
 import api from '../../utils/api';
 import {
     ShoppingBag,
@@ -27,6 +29,7 @@ import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
+    const { subscription, isTrialActive, getTrialDaysRemaining, getPlanName } = useSubscription();
     // State for dashboard data
     const [metrics, setMetrics] = useState([]);
     const [salesData, setSalesData] = useState([]);
@@ -176,6 +179,15 @@ const AdminDashboard = () => {
             loading={loading}
             error={null}
             alertsCount={alerts.length}
+            trialBar={
+                isTrialActive() && getPlanName() === 'basic' && (
+                    <TrialStatusBar
+                        daysRemaining={getTrialDaysRemaining()}
+                        planName={subscription?.display_name || 'Starter'}
+                        totalDays={14}
+                    />
+                )
+            }
         >
             {/* Metrics Grid */}
             <div className="grid-3">
