@@ -1,0 +1,430 @@
+/* Support Dashboard and Ticket Styles */
+
+.support-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.support-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.support-header h1 {
+    font-size: 28px;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.support-header p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.btn-create-ticket {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
+}
+
+.btn-create-ticket:hover {
+    filter: brightness(1.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(66, 133, 244, 0.3);
+}
+
+.support-info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 32px;
+}
+
+.info-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.icon-wrapper.blue {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+.icon-wrapper.yellow {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.info-card h3 {
+    font-size: 18px;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+}
+
+.info-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Badge Styles */
+.badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-open {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+.status-in_progress {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.status-awaiting_response {
+    background: rgba(167, 107, 255, 0.1);
+    color: #a76bff;
+}
+
+.status-resolved {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.status-closed {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-secondary);
+}
+
+.priority-urgent {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+.priority-high {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+    opacity: 0.8;
+}
+
+.priority-medium {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.priority-low {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+/* Ticket Detail Layout */
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px 0;
+    margin-bottom: 24px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.btn-back:hover {
+    color: var(--primary);
+}
+
+.ticket-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 32px;
+}
+
+.conversation-section {
+    display: flex;
+    flex-direction: column;
+    min-height: 600px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.conversation-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.conversation-header h2 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.ticket-id-label {
+    font-size: 12px;
+    font-family: monospace;
+    color: var(--text-secondary);
+    background: var(--hover-bg);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.messages-list {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    max-height: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.message-bubble {
+    max-width: 85%;
+    padding: 16px;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.message-bubble.original {
+    align-self: flex-start;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+}
+
+.message-bubble.user {
+    align-self: flex-end;
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+
+.message-bubble.admin {
+    align-self: flex-start;
+    background: var(--bg-surface);
+    border-left: 4px solid var(--success);
+    border-bottom-left-radius: 2px;
+}
+
+.message-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.message-bubble.user .message-info {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message-bubble.admin .message-info {
+    color: var(--text-secondary);
+}
+
+.sender-name {
+    font-weight: 700;
+}
+
+.reply-form {
+    padding: 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-background);
+}
+
+.reply-form textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    resize: none;
+    margin-bottom: 12px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.reply-form textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.btn-send {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    float: right;
+    transition: all 0.2s;
+}
+
+.btn-send:hover:not(:disabled) {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-send:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.sidebar-card {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.sidebar-card h3 {
+    font-size: 16px;
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.info-item label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.info-item span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.help-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.05) 0%, rgba(167, 107, 255, 0.05) 100%);
+}
+
+.help-card svg {
+    margin-bottom: 16px;
+    color: var(--primary);
+}
+
+.help-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.closed-notification {
+    padding: 24px;
+    background: rgba(52, 168, 83, 0.05);
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 500;
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+    .ticket-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ticket-sidebar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .sidebar-card {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .support-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .btn-create-ticket {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .ticket-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .message-bubble {
+        max-width: 95%;
+    }
+}
+
+[data-theme='dark'] .message-bubble.admin {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] .message-bubble.original {
+    background: rgba(255, 255, 255, 0.03);
+}

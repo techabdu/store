@@ -3,6 +3,7 @@ import TopBar from '../../components/TopBar';
 import Sidebar from '../../components/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSubscription } from '../../context/SubscriptionContext';
 import api from '../../utils/api';
 import {
     Plus,
@@ -38,6 +39,10 @@ const AdminUserManagement = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const { showError, showSuccess } = useNotification();
+    const { getPlanLimits, getPlanName } = useSubscription();
+
+    const limits = getPlanLimits();
+    const isUsersLimitReached = limits?.max_users !== -1 && limits?.max_users !== undefined && users.filter(u => u.status === 'active').length >= limits.max_users;
 
     const [formData, setFormData] = useState({
         username: '',
@@ -251,10 +256,23 @@ const AdminUserManagement = () => {
                                     <h1 className="heading-1">User Management</h1>
                                     <p className="text-secondary">Manage users and their access levels</p>
                                 </div>
-                                <button className="add-user-btn" onClick={() => setView('add')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Plus size={20} />
-                                    <span className="btn-text">Add User</span>
-                                </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                    <button
+                                        className="add-user-btn"
+                                        onClick={() => setView('add')}
+                                        disabled={isUsersLimitReached}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: isUsersLimitReached ? 0.5 : 1, cursor: isUsersLimitReached ? 'not-allowed' : 'pointer' }}
+                                        title={isUsersLimitReached ? `User limit of ${limits?.max_users} reached for ${getPlanName()} plan` : 'Add new user'}
+                                    >
+                                        <Plus size={20} />
+                                        <span className="btn-text">Add User</span>
+                                    </button>
+                                    {isUsersLimitReached && (
+                                        <span className="text-xs text-red-500 font-medium">
+                                            Limit of {limits?.max_users} users reached
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Search Bar */}
@@ -315,33 +333,33 @@ const AdminUserManagement = () => {
                                                     <div className="actions-cell">
                                                         {!user.is_owner && (
                                                             <button
-                                                                className="action-btn"
+                                                                className="action-btn promote"
                                                                 title={user.role === 'user' ? 'Promote to Branch Manager' : 'Demote to Staff'}
                                                                 onClick={() => handleRoleChange(user.id, user.role)}
                                                             >
-                                                                {user.role === 'user' ? <ArrowUp size={18} /> : <ArrowDown size={18} />}
+                                                                {user.role === 'user' ? <ArrowUp size={20} /> : <ArrowDown size={20} />}
                                                             </button>
                                                         )}
                                                         <button
-                                                            className="action-btn"
+                                                            className="action-btn status"
                                                             title={user.status === 'active' ? 'Restrict Access' : 'Restore Access'}
                                                             onClick={() => handleToggleStatus(user.id, user.status)}
                                                         >
-                                                            {user.status === 'active' ? <ShieldOff size={18} /> : <Shield size={18} />}
+                                                            {user.status === 'active' ? <ShieldOff size={20} /> : <Shield size={20} />}
                                                         </button>
                                                         <button
-                                                            className="action-btn"
+                                                            className="action-btn reset"
                                                             title="Reset Password"
                                                             onClick={() => openResetModal(user)}
                                                         >
-                                                            <Lock size={18} />
+                                                            <Lock size={20} />
                                                         </button>
                                                         <button
                                                             className="action-btn delete"
                                                             title="Delete User"
                                                             onClick={() => handleDelete(user.id)}
                                                         >
-                                                            <Trash2 size={18} />
+                                                            <Trash2 size={20} />
                                                         </button>
                                                     </div>
                                                 </td>

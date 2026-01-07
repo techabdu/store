@@ -36,6 +36,18 @@ requireCsrf();
 // Check role - allow user, admin, and superadmin
 checkRole(['user', 'admin', 'superadmin']);
 
+require_once '../../classes/SubscriptionService.php';
+
+// Verify subscription limits for inventory
+$subscriptionService = new SubscriptionService($conn);
+$limitCheck = $subscriptionService->canAddInventory($_SESSION['tenant_id']);
+
+if (!$limitCheck['allowed']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => $limitCheck['message']]);
+    exit;
+}
+
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 

@@ -184,28 +184,58 @@
 /* Action Buttons */
 .actions-cell {
     display: flex;
-    gap: 8px;
+    gap: 12px;
+    align-items: center;
 }
 
 .action-btn {
-    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px !important;
+    height: 45px !important;
+    background-color: rgba(0, 0, 0, 0.02);
     border: none;
     cursor: pointer;
-    padding: 6px;
-    border-radius: 4px;
+    border-radius: 10px;
     color: var(--text-secondary);
-    transition: all 0.2s;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.action-btn.delete {
+    background-color: rgba(234, 67, 53, 0.05);
+    color: var(--error);
 }
 
 .action-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
     color: var(--text-primary);
 }
 
+.action-btn.promote:hover {
+    background-color: rgba(var(--primary-rgb, 66, 133, 244), 0.12);
+    color: var(--primary);
+}
+
+.action-btn.status:hover {
+    background-color: rgba(245, 158, 11, 0.12);
+    /* Amber */
+    color: #f59e0b;
+}
+
+.action-btn.reset:hover {
+    background-color: rgba(16, 185, 129, 0.12);
+    /* Emerald */
+    color: #10b981;
+}
+
 .action-btn.delete:hover {
-    background-color: rgba(234, 67, 53, 0.1);
+    background-color: rgba(234, 67, 53, 0.12);
     color: var(--error);
 }
+
+/* Tooltip or label effect on hover could be cool, but let's keep it clean first */
 
 .modal-header {
     padding: 20px 24px;
@@ -376,7 +406,8 @@
     }
 
     .action-btn {
-        padding: 4px;
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -446,7 +477,8 @@
     }
 
     .action-btn {
-        padding: 2px;
+        width: 28px;
+        height: 28px;
     }
 }
 

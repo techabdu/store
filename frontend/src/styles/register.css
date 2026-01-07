@@ -479,16 +479,19 @@
 }
 
 .plan-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: var(--lp-white);
     border: 1px solid var(--lp-border);
-    border-radius: var(--lp-radius-md);
-    padding: 2.5rem 2rem;
+    border-radius: var(--lp-radius-lg);
+    padding: 3rem 2rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
 }
 
 .plan-card:hover {
@@ -528,45 +531,124 @@
     margin-bottom: 1rem;
 }
 
-.plan-price {
+.plan-price-wrapper {
+    margin: 1.5rem 0 2rem;
+    text-align: center;
+}
+
+.price-stack {
     display: flex;
-    align-items: baseline;
-    gap: 0.25rem;
-    margin-bottom: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.plan-price .currency {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--lp-text-primary);
-}
-
-.plan-price .price {
-    font-size: 3rem;
+.price-focus {
+    font-size: 3.25rem;
     font-weight: 700;
     color: var(--lp-text-primary);
+    line-height: 1;
+    letter-spacing: -1.5px;
 }
 
-.plan-price .duration {
-    font-size: 1rem;
-    color: var(--lp-text-secondary);
+.price-focus.is-free {
+    color: #10b981;
+    /* Green for FREE */
 }
+
+.plan-card.recommended .price-focus {
+    font-size: 2.75rem;
+    font-weight: 600;
+}
+
+.price-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.price-old {
+    font-size: 1.1rem;
+    color: var(--lp-text-secondary);
+    text-decoration: line-through;
+    text-decoration-color: #1d1919;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.price-condition {
+    font-size: 0.95rem;
+    color: var(--lp-text-secondary);
+    font-weight: 500;
+    max-width: 200px;
+}
+
+.plan-card h3 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-size: 1.55rem;
+    color: var(--lp-text-primary);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.select-plan-btn {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    border: 1.5px solid var(--lp-border);
+    background: white;
+    color: var(--lp-text-primary);
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: auto;
+    font-size: 0.95rem;
+}
+
+.select-plan-btn:hover {
+    background: rgba(26, 115, 232, 0.04);
+    border-color: var(--lp-primary);
+}
+
+.select-plan-btn.is-selected {
+    background: var(--lp-primary);
+    border-color: var(--lp-primary);
+    color: white;
+}
+
+.select-plan-btn.is-selected:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.2);
+}
+
+/* Contact badge for Enterprise */
+
 
 .plan-features {
     list-style: none;
     padding: 0;
-    margin: 0 0 2rem 0;
-    flex: 1;
+    margin: 0 auto 2.5rem;
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .plan-features li {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: flex-start;
+    gap: 0.875rem;
     padding: 0.5rem 0;
     color: var(--lp-text-secondary);
     font-size: 0.95rem;
+    font-weight: 500;
+    text-align: left;
 }
+
+
 
 .plan-features .feature-icon {
     color: var(--lp-secondary);
@@ -980,22 +1062,74 @@
 }
 
 .btn-next {
-    padding: 0.875rem 2rem;
-    background-color: var(--lp-primary);
+    padding: 0.85rem 2rem;
+    background: linear-gradient(135deg, var(--lp-primary) 0%, #4c8cf5 100%);
     color: white;
     border: none;
-    border-radius: var(--lp-radius-lg);
+    border-radius: var(--lp-radius-md);
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-next:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--lp-primary-hover) 0%, var(--lp-primary) 100%);
+    box-shadow: 0 8px 25px rgba(26, 115, 232, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-next:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 10px rgba(26, 115, 232, 0.2);
+}
+
+.btn-next .btn-icon-shift {
+    transition: transform 0.3s ease;
+}
+
+.btn-next:hover .btn-icon-shift {
+    transform: translateX(4px);
+}
+
+.btn-next:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.7;
+}
+
+.btn-back {
+    padding: 0.85rem 1.75rem;
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--lp-text-secondary);
+    border: 1px solid var(--lp-border);
+    border-radius: var(--lp-radius-md);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    flex: 2;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    backdrop-filter: blur(5px);
 }
 
-.btn-next:hover {
-    background-color: var(--lp-primary-hover);
-    box-shadow: var(--lp-shadow-medium);
-    transform: translateY(-1px);
+.btn-back:hover {
+    background: white;
+    border-color: var(--lp-text-secondary);
+    color: var(--lp-text-primary);
+    box-shadow: var(--lp-shadow-subtle);
 }
 
 /* Split Layout Styles (Matching Login Page) */

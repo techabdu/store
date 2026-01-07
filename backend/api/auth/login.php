@@ -1,14 +1,23 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+require_once '../../middleware/api_logger.php'; //  API request logging
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../helpers/activity_log.php';
 require_once __DIR__ . '/../../classes/SecurityMonitor.php';
 require_once __DIR__ . '/../../helpers/sanitize.php';
 require_once __DIR__ . '/../../helpers/csrf.php';
 require_once __DIR__ . '/../../helpers/shop_helper.php';
+require_once __DIR__ . '/../../helpers/session_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 header("Content-Type: application/json; charset=UTF-8");
 
 // Only allow POST
@@ -125,24 +134,11 @@ try {
         }
     }
 
-    // Start session
-    if (session_status() === PHP_SESSION_NONE) {
-        ini_set('session.gc_maxlifetime', 172800);
-        ini_set('session.cookie_lifetime', 172800);
-        ini_set('session.cookie_httponly', 1);
-        
-        // Secure cookie only if HTTPS is enabled
-        $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-        ini_set('session.cookie_secure', $isHttps ? 1 : 0);
-        
-        // Match middleware settings
-        ini_set('session.cookie_samesite', 'Strict');
-        
-        ini_set('session.use_strict_mode', 1);
-        session_start();
-    }
-
-    session_regenerate_id(true); // Prevent session fixation
+    // Initialize session using centralized helper
+    initializeSecureSession();
+    
+    // Regenerate session ID to prevent session fixation
+    regenerateSessionId();
 
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];

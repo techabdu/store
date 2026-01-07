@@ -147,6 +147,7 @@
     border-radius: 50%;
     margin-right: 0;
 }
+
 /* Group & Dropdown Styling */
 .nav-group {
     display: flex;
@@ -203,8 +204,33 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Locked Nav Items (PRO-only features) */
+.nav-item.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nav-item.locked:hover {
+    background-color: transparent;
+    color: var(--text-secondary);
+}
+
+.nav-item.locked .pro-badge,
+.nav-item.locked .coming-soon-badge {
+    margin-left: auto;
+    pointer-events: auto;
+}
+
+/* Hide PRO badge in collapsed sidebar */
+.sidebar.collapsed .nav-item.locked .pro-badge,
+.sidebar.collapsed .nav-item.locked .coming-soon-badge {
+    display: none;
 }

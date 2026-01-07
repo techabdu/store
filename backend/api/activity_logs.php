@@ -5,22 +5,22 @@
  * Accessible by: User, Admin, SuperAdmin
  */
 
-header('Content-Type: application/json');
-// Only allow GET requests
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
-}
-
 require_once '../config/config.php';
 require_once '../config/database.php';
+require_once '../middleware/api_logger.php'; // API request logging
 require_once '../middleware/auth.php';
 require_once '../middleware/role.php';
 require_once '../helpers/activity_log.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Only allow GET requests
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
 
 // Check authentication
 $currentUser = checkAuth();

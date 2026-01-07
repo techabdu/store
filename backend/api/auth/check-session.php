@@ -6,6 +6,13 @@ require_once __DIR__ . '/../../helpers/shop_helper.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 header("Content-Type: application/json; charset=UTF-8");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -33,7 +40,9 @@ echo json_encode([
         'role' => $user['role'],
         'status' => $user['status'],
         'shop_id' => $user['shop_id'] ?? null,
-        'is_owner' => $isOwner
+        'is_owner' => $isOwner,
+        'impersonating' => $_SESSION['impersonating'] ?? false,
+        'impersonation_started_at' => $_SESSION['impersonation_started_at'] ?? null
     ],
     'shop_context' => [
         'current_shop_id' => $currentShopId,

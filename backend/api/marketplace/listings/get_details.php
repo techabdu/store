@@ -2,6 +2,7 @@
 // backend/api/marketplace/listings/get_details.php
 
 require_once '../../../config/config.php';
+require_once '../../../middleware/api_logger.php'; // API request logging
 
 setCorsHeaders();
 header("Content-Type: application/json");
@@ -93,8 +94,13 @@ try {
     
     $listing['images'] = $images;
 
-    // Increment View Count
-    $conn->query("UPDATE marketplace_listings SET views_count = views_count + 1 WHERE id = $listing_id");
+    // Increment View Count (SECURITY FIX: use prepared statement)
+    $viewCountStmt = $conn->prepare("UPDATE marketplace_listings SET views_count = views_count + 1 WHERE id = ?");
+    if ($viewCountStmt) {
+        $viewCountStmt->bind_param("i", $listing_id);
+        $viewCountStmt->execute();
+        $viewCountStmt->close();
+    }
 
     // Log View
     $view_query = "INSERT INTO marketplace_listing_views (listing_id, user_id, ip_address) VALUES (?, ?, ?)";

@@ -1,0 +1,281 @@
+/* Use existing .main-content, .container from index.css */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.charts-section {
+    margin-bottom: 32px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.alerts-panel,
+.activity-feed {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.alerts-panel h3,
+.activity-feed h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+.empty-message {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 0;
+}
+
+.alerts-list,
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.alert-item,
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.alert-item:hover,
+.activity-item:hover {
+    background-color: var(--hover-bg);
+}
+
+.alert-severity,
+.activity-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.alert-content,
+.activity-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.alert-content strong,
+.activity-content span {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alert-content small,
+.activity-content small {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Responsive Design - Tablet */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .page-header h1 {
+        font-size: 28px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .alerts-panel,
+    .activity-feed {
+        padding: 16px;
+    }
+
+    .alerts-panel h3,
+    .activity-feed h3 {
+        font-size: 16px;
+    }
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .metrics-grid {
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .charts-grid {
+        gap: 12px;
+    }
+
+    .alerts-panel,
+    .activity-feed {
+        padding: 12px;
+    }
+
+    .alerts-panel h3,
+    .activity-feed h3 {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .alert-item,
+    .activity-item {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .alert-severity,
+    .activity-icon {
+        font-size: 18px;
+    }
+
+    .alert-content strong,
+    .activity-content span {
+        font-size: 13px;
+    }
+
+    .alert-content small,
+    .activity-content small {
+        font-size: 11px;
+    }
+
+    .loading-state {
+        font-size: 14px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    .alert-severity,
+    .activity-icon {
+        font-size: 16px;
+    }
+
+    .alert-content strong,
+    .activity-content span {
+        font-size: 12px;
+    }
+
+    .alert-content small,
+    .activity-content small {
+        font-size: 10px;
+    }
+}
+
+/* Samsung Galaxy S8/S9 */
+@media (max-width: 360px) {
+    .page-header h1 {
+        font-size: 21px;
+    }
+
+    .alerts-panel h3,
+    .activity-feed h3 {
+        font-size: 14px;
+    }
+}
+
+/* iPhone SE - smallest common device */
+@media (max-width: 320px) {
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .page-header {
+        margin-bottom: 16px;
+    }
+
+    .metrics-grid {
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .charts-section {
+        margin-bottom: 16px;
+    }
+
+    .alerts-panel,
+    .activity-feed {
+        padding: 8px;
+        margin-bottom: 16px;
+    }
+
+    .alerts-panel h3,
+    .activity-feed h3 {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .alert-item,
+    .activity-item {
+        padding: 6px;
+        gap: 6px;
+    }
+
+    .loading-state {
+        font-size: 13px;
+    }
+}

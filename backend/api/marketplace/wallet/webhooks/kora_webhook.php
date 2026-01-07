@@ -6,6 +6,7 @@
 
 require_once '../../../../config/db_connect.php';
 require_once '../../../../includes/kora_api.php';
+require_once '../../../../middleware/api_logger.php'; // API request logging
 
 // Capture raw input
 $input = @file_get_contents("php://input");

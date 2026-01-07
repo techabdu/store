@@ -1,0 +1,249 @@
+.datatable-wrapper {
+    width: 100%;
+}
+
+/* Table styling - extends existing .glass-table */
+.glass-table th,
+.glass-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.glass-table th {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.glass-table td {
+    font-size: 14px;
+}
+
+.glass-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.glass-table tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
+.glass-table tbody tr.clickable-row:hover {
+    background-color: var(--hover-bg);
+    cursor: pointer;
+}
+
+/* Sortable column header */
+.glass-table th.sortable {
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.glass-table th.sortable:hover {
+    color: var(--primary);
+}
+
+.th-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sort-indicator {
+    color: var(--primary);
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 32px 16px !important;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px;
+}
+
+.pagination-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 88px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    min-width: 120px;
+    text-align: center;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+
+    .glass-table th,
+    .glass-table td {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .glass-table th {
+        font-size: 12px;
+    }
+
+    .pagination {
+        gap: 12px;
+        margin-top: 16px;
+        padding: 12px;
+    }
+
+    .pagination-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        min-width: 72px;
+    }
+
+    .page-info {
+        font-size: 13px;
+        min-width: 100px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+
+    .glass-table th,
+    .glass-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .glass-table th {
+        font-size: 11px;
+    }
+
+    .empty-state {
+        padding: 24px 12px !important;
+        font-size: 12px;
+    }
+
+    .pagination {
+        gap: 8px;
+        margin-top: 12px;
+        padding: 8px;
+    }
+
+    .pagination-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 64px;
+    }
+
+    .page-info {
+        font-size: 12px;
+        min-width: 80px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+
+    .glass-table th,
+    .glass-table td {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .glass-table th {
+        font-size: 10px;
+    }
+
+    .pagination-btn {
+        padding: 5px 8px;
+        font-size: 11px;
+        min-width: 56px;
+    }
+
+    .page-info {
+        font-size: 11px;
+    }
+}
+
+/* Samsung Galaxy S8/S9 */
+@media (max-width: 360px) {
+
+    .glass-table th,
+    .glass-table td {
+        padding: 6px 8px;
+        font-size: 10.5px;
+    }
+}
+
+/* Smaller Android devices */
+@media (max-width: 344px) {
+
+    .glass-table th,
+    .glass-table td {
+        padding: 5px 6px;
+        font-size: 10px;
+    }
+
+    .pagination {
+        gap: 6px;
+    }
+}
+
+/* iPhone SE - smallest common device */
+@media (max-width: 320px) {
+
+    .glass-table th,
+    .glass-table td {
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+
+    .glass-table th {
+        font-size: 9px;
+    }
+
+    .pagination-btn {
+        padding: 4px 6px;
+        font-size: 10px;
+        min-width: 48px;
+    }
+
+    .page-info {
+        font-size: 10px;
+        min-width: 70px;
+    }
+}

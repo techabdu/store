@@ -106,10 +106,12 @@ class DatabaseHealth {
             $issues = [];
             
             // Check for orphaned activity logs (user_id not in users table)
+            // Using LEFT JOIN approach for better MariaDB compatibility
             $stmt = $this->conn->prepare(
                 "SELECT COUNT(*) as orphaned_count 
-                 FROM activity_logs 
-                 WHERE user_id NOT IN (SELECT id FROM users)"
+                 FROM activity_logs al
+                 LEFT JOIN users u ON al.user_id = u.id
+                 WHERE u.id IS NULL AND al.user_id IS NOT NULL"
             );
             
             $stmt->execute();
@@ -129,8 +131,9 @@ class DatabaseHealth {
             // Check for orphaned transactions (user_id not in users table)
             $stmt = $this->conn->prepare(
                 "SELECT COUNT(*) as orphaned_count 
-                 FROM transactions 
-                 WHERE user_id NOT IN (SELECT id FROM users)"
+                 FROM transactions t
+                 LEFT JOIN users u ON t.user_id = u.id
+                 WHERE u.id IS NULL AND t.user_id IS NOT NULL"
             );
             
             $stmt->execute();
@@ -147,11 +150,13 @@ class DatabaseHealth {
             }
             $stmt->close();
             
-            // Check for orphaned expenses (user_id not in users table)
+            // Check for orphaned expenses (created_by not in users table)
+            // Note: expenses table uses 'created_by' column, not 'user_id'
             $stmt = $this->conn->prepare(
                 "SELECT COUNT(*) as orphaned_count 
-                 FROM expenses 
-                 WHERE user_id NOT IN (SELECT id FROM users)"
+                 FROM expenses e
+                 LEFT JOIN users u ON e.created_by = u.id
+                 WHERE u.id IS NULL AND e.created_by IS NOT NULL"
             );
             
             $stmt->execute();
@@ -163,7 +168,7 @@ class DatabaseHealth {
                     'type' => 'orphaned_records',
                     'table' => 'expenses',
                     'count' => $row['orphaned_count'],
-                    'description' => 'Expenses with non-existent user_id'
+                    'description' => 'Expenses with non-existent created_by user'
                 ];
             }
             $stmt->close();

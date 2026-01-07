@@ -1,15 +1,47 @@
 import React from 'react';
-import { FaExclamationTriangle, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
+import { FaExclamationTriangle, FaCheckCircle, FaInfoCircle, FaSignInAlt } from 'react-icons/fa';
 import './InsightsTabs.css';
 
 const SecurityTab = ({ data }) => {
     if (!data) return <div>No security data available</div>;
 
-    const { failed_logins, suspicious_activity, active_sessions, password_health, security_alerts } = data;
+    const { failed_logins, suspicious_activity, active_sessions, password_health, security_alerts, login_success_ratio } = data;
 
     return (
         <div className="insights-tab security-tab">
             <div className="tab-grid">
+                {/* Login Health (24h) */}
+                <div className="insight-card">
+                    <h3>
+                        <FaSignInAlt className="card-icon info" />
+                        Login Health (24h)
+                    </h3>
+                    {login_success_ratio ? (
+                        <div className="metrics-grid">
+                            <div className="metric-item">
+                                <div className="metric-label">Success Rate</div>
+                                <div className={`metric-value ${login_success_ratio.status === 'healthy' ? 'success' : login_success_ratio.status === 'warning' ? 'warning' : 'critical'}`}>
+                                    {login_success_ratio.success_rate_percentage}%
+                                </div>
+                            </div>
+                            <div className="metric-item">
+                                <div className="metric-label">Successful</div>
+                                <div className="metric-value success">{login_success_ratio.successful_logins}</div>
+                            </div>
+                            <div className="metric-item">
+                                <div className="metric-label">Failed</div>
+                                <div className="metric-value critical">{login_success_ratio.failed_logins}</div>
+                            </div>
+                            <div className="metric-item">
+                                <div className="metric-label">Total Attempts</div>
+                                <div className="metric-value">{login_success_ratio.total_attempts}</div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="no-data">No login data</div>
+                    )}
+                </div>
+
                 {/* Security Alerts */}
                 <div className="insight-card alert-card">
                     <h3>

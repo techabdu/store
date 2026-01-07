@@ -92,8 +92,13 @@ try {
     }
     
     if (!empty($ruleUpdates)) {
-        // Ensure row exists (just in case)
-        $conn->query("INSERT IGNORE INTO shop_settings (shop_id) VALUES ($shopId)");
+        // Ensure row exists (SECURITY FIX: use prepared statement)
+        $ensureStmt = $conn->prepare("INSERT IGNORE INTO shop_settings (shop_id) VALUES (?)");
+        if ($ensureStmt) {
+            $ensureStmt->bind_param("i", $shopId);
+            $ensureStmt->execute();
+            $ensureStmt->close();
+        }
         
         $sql = "UPDATE shop_settings SET " . implode(", ", $ruleUpdates) . " WHERE shop_id = ?";
         $ruleTypes .= "i";

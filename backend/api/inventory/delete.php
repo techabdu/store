@@ -6,18 +6,27 @@
  */
 
 header('Content-Type: application/json');
-// Only allow DELETE requests
-if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
-    exit;
-}
 
 require_once '../../config/config.php';
 require_once '../../config/database.php';
 require_once '../../middleware/auth.php';
 require_once '../../middleware/role.php';
 require_once '../../helpers/activity_log.php';
+
+// Handle OPTIONS request for CORS preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    setCorsHeaders();
+    http_response_code(200);
+    exit;
+}
+
+// Only allow DELETE requests
+if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+    setCorsHeaders(); // Ensure headers are set even on error
+    http_response_code(405);
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
+}
 
 // Set CORS headers using centralized config
 setCorsHeaders();

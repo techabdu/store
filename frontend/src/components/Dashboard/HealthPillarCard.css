@@ -1,0 +1,65 @@
+.health-pillar-card {
+    position: relative;
+}
+
+.health-pillar-card .status-indicator {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 24px;
+    z-index: 10;
+    line-height: 1;
+}
+
+.status-healthy {
+    color: var(--success);
+}
+
+.status-warning {
+    color: var(--warning);
+}
+
+.status-critical {
+    color: var(--error);
+}
+
+/* Mobile - 480px and below */
+@media (max-width: 480px) {
+    .health-pillar-card .status-indicator {
+        font-size: 20px;
+        top: 12px;
+        right: 12px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .health-pillar-card .status-indicator {
+        font-size: 18px;
+        top: 10px;
+        right: 10px;
+    }
+}
+
+/* Samsung Galaxy S8/S9 */
+@media (max-width: 360px) {
+    .health-pillar-card .status-indicator {
+        font-size: 17px;
+    }
+}
+
+/* Smaller Android devices */
+@media (max-width: 344px) {
+    .health-pillar-card .status-indicator {
+        font-size: 16px;
+    }
+}
+
+/* iPhone SE - smallest common device */
+@media (max-width: 320px) {
+    .health-pillar-card .status-indicator {
+        font-size: 16px;
+        top: 8px;
+        right: 8px;
+    }
+}

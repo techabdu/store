@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSubscription } from '../../context/SubscriptionContext';
 import api from '../../utils/api';
 import { useNotification } from '../../context/NotificationContext';
 import { FaSearch } from 'react-icons/fa';
@@ -17,10 +18,22 @@ const SalesHistory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const { showError } = useNotification();
+    const { getPlanLimits } = useSubscription();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+
+    const limits = getPlanLimits();
+    // Default limit should be 50 if max_sales_history_display is set, else pagination limit (e.g., 20)
+    // Actually, 'max_sales_history_display' usually implies a hard cap on TOTAL viewable history for lower plans.
+    // If limits.max_sales_history_display is set (e.g. 50), we should probably fetch ONLY that many and disable load more.
+
+    const displayLimit = limits?.max_sales_history_display && limits?.max_sales_history_display !== -1
+        ? limits.max_sales_history_display
+        : 20; // Default page size if unlimited
+
+    const isLimited = limits?.max_sales_history_display && limits?.max_sales_history_display !== -1;
 
     // Responsive Sidebar Logic
     useEffect(() => {
@@ -66,8 +79,8 @@ const SalesHistory = () => {
         try {
             const response = await api.get('/transactions/read.php', {
                 params: {
-                    limit: 20,
-                    offset: page * 20
+                    limit: isLimited ? displayLimit : 20,
+                    offset: isLimited ? 0 : page * 20
                 }
             });
 
@@ -80,7 +93,7 @@ const SalesHistory = () => {
                     setFilteredTransactions(prev => [...prev, ...response.data.transactions]);
                 }
 
-                if (response.data.transactions.length < 20) {
+                if (isLimited || response.data.transactions.length < 20) {
                     setHasMore(false);
                 }
             }

@@ -193,6 +193,28 @@ try {
                   ORDER BY t.created_at DESC
                   LIMIT ? OFFSET ?";
         
+        // Check for subscription limits on sales history
+        require_once '../../classes/SubscriptionService.php';
+        $subscriptionService = new SubscriptionService($conn);
+        $historyLimit = $subscriptionService->getSalesHistoryLimit($_SESSION['tenant_id']);
+        
+        // If plan has a strict limit (e.g. 50), enforce it regardless of requested limit/offset
+        // Or if it's -1 (unlimited), use the requested limit
+        
+        if ($historyLimit !== -1) {
+             // If plan is limited, we force the query to only return the latest N items total.
+             // We ignore offset because the user shouldn't be able to "page" through history beyond N.
+             $effectiveLimit = min($limit, $historyLimit); 
+             $effectiveOffset = 0; // Always start from 0 if limited? 
+             // Actually, if the limit is "Display last 50 transactions", that means
+             // we should essentially `LIMIT 50` and disallow valid offsets > 50.
+             
+             // Simplest enforcement: Set limit to $historyLimit and offset to 0. 
+             // This ensures they only ever get the top N.
+             $limit = $historyLimit;
+             $offset = 0;
+        }
+
         $stmt = $conn->prepare($query);
         $stmt->bind_param("iii", $shopId, $limit, $offset);
         $stmt->execute();

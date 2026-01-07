@@ -1,0 +1,93 @@
+.alert-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+    line-height: 1;
+}
+
+.alert-badge-critical {
+    background: rgba(234, 67, 53, 0.1);
+    border-color: var(--error);
+    color: var(--error);
+}
+
+.alert-badge-warning {
+    background: rgba(251, 188, 4, 0.1);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.alert-badge-info {
+    background: rgba(66, 133, 244, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Pulse animation for new alerts */
+@keyframes pulse-badge {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+.alert-badge.new {
+    animation: pulse-badge 2s infinite;
+}
+
+/* Dark theme */
+[data-theme='dark'] .alert-badge-critical {
+    background: rgba(234, 67, 53, 0.2);
+}
+
+[data-theme='dark'] .alert-badge-warning {
+    background: rgba(251, 188, 4, 0.2);
+}
+
+[data-theme='dark'] .alert-badge-info {
+    background: rgba(66, 133, 244, 0.2);
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .alert-badge {
+        min-width: 20px;
+        height: 20px;
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .alert-badge {
+        min-width: 18px;
+        height: 18px;
+        padding: 2px 5px;
+        font-size: 9px;
+    }
+}
+
+/* iPhone SE */
+@media (max-width: 320px) {
+    .alert-badge {
+        min-width: 16px;
+        height: 16px;
+        padding: 1px 4px;
+        font-size: 9px;
+    }
+}

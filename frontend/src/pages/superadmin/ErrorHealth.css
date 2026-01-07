@@ -1,0 +1,251 @@
+/* Error Health Page */
+
+.page-header {
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 0;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+/* Charts Section */
+.charts-section {
+    margin-bottom: 32px;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.chart-full-width {
+    width: 100%;
+}
+
+/* Errors Table Section */
+.errors-table-section {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.errors-table-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+/* Error Type Badge */
+.error-type-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.error-type-database {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+.error-type-api {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+.error-type-authentication {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.error-type-validation {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success);
+}
+
+.error-type-other {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--text-secondary);
+}
+
+/* Severity Badge */
+.severity-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.severity-critical {
+    background: rgba(234, 67, 53, 0.1);
+    color: var(--error);
+}
+
+.severity-warning {
+    background: rgba(251, 188, 4, 0.1);
+    color: var(--warning);
+}
+
+.severity-info {
+    background: rgba(66, 133, 244, 0.1);
+    color: var(--primary);
+}
+
+/* Error Message Preview */
+.error-message-preview {
+    display: block;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Dark theme adjustments */
+[data-theme='dark'] .error-type-database {
+    background: rgba(234, 67, 53, 0.2);
+}
+
+[data-theme='dark'] .error-type-api {
+    background: rgba(66, 133, 244, 0.2);
+}
+
+[data-theme='dark'] .error-type-authentication {
+    background: rgba(251, 188, 4, 0.2);
+}
+
+[data-theme='dark'] .error-type-validation {
+    background: rgba(52, 168, 83, 0.2);
+}
+
+[data-theme='dark'] .severity-critical {
+    background: rgba(234, 67, 53, 0.2);
+}
+
+[data-theme='dark'] .severity-warning {
+    background: rgba(251, 188, 4, 0.2);
+}
+
+[data-theme='dark'] .severity-info {
+    background: rgba(66, 133, 244, 0.2);
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+    .page-header h1 {
+        font-size: 28px;
+    }
+
+    .page-subtitle {
+        font-size: 14px;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .errors-table-section {
+        padding: 16px;
+    }
+
+    .error-message-preview {
+        max-width: 250px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 24px;
+    }
+
+    .errors-table-section {
+        padding: 12px;
+    }
+
+    .errors-table-section h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .error-message-preview {
+        max-width: 150px;
+        font-size: 13px;
+    }
+
+    .error-type-badge,
+    .severity-badge {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    .error-message-preview {
+        max-width: 120px;
+        font-size: 12px;
+    }
+}
+
+/* iPhone SE */
+@media (max-width: 320px) {
+    .page-header h1 {
+        font-size: 20px;
+    }
+
+    .errors-table-section h3 {
+        font-size: 15px;
+    }
+
+    .error-message-preview {
+        max-width: 100px;
+        font-size: 11px;
+    }
+
+    .error-type-badge,
+    .severity-badge {
+        padding: 2px 6px;
+        font-size: 10px;
+    }
+}

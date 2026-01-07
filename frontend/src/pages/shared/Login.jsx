@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
@@ -24,11 +24,20 @@ const Login = () => {
     const location = useLocation();
     const isVerified = new URLSearchParams(location.search).get('verified') === 'true';
 
+    const hasShownVerifiedToast = useRef(false);
+
     useEffect(() => {
-        if (isVerified) {
+        if (isVerified && !hasShownVerifiedToast.current) {
             showSuccess('Email Address Verified! You can now sign in to your account.');
+            hasShownVerifiedToast.current = true;
+
+            // Remove the 'verified' parameter from URL to prevent showing toast again on re-renders or refresh
+            const params = new URLSearchParams(location.search);
+            params.delete('verified');
+            const newSearch = params.toString();
+            navigate(location.pathname + (newSearch ? `?${newSearch}` : ''), { replace: true });
         }
-    }, [isVerified, showSuccess]);
+    }, [isVerified, showSuccess, navigate, location.pathname, location.search]);
 
     useEffect(() => {
         if (isAuthenticated) {

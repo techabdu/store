@@ -1,6 +1,7 @@
 <?php
 require_once '../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once '../middleware/api_logger.php'; // API request logging
 require_once __DIR__ . '/../middleware/auth.php';
 require_once __DIR__ . '/../middleware/role.php';
 require_once __DIR__ . '/../helpers/activity_log.php';
@@ -136,11 +137,23 @@ function handlePost($conn, $currentUser) {
         exit;
     }
     
+    require_once __DIR__ . '/../classes/SubscriptionService.php';
+
     $username = trim($data->username);
     $email = trim($data->email);
     $password = trim($data->password);
     // Default role to 'user' if not specified
     $role = isset($data->role) ? trim($data->role) : 'user';
+
+    // Verify subscription limits
+    $subscriptionService = new SubscriptionService($conn);
+    $limitCheck = $subscriptionService->canAddUser($_SESSION['tenant_id']);
+    
+    if (!$limitCheck['allowed']) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => $limitCheck['message']]);
+        exit;
+    }
     
     // Determine shop_id for the new user
     $isOwnerUser = isOwner();
@@ -300,6 +313,28 @@ function handlePut($conn, $currentUser) {
     $params = [];
     
     if (isset($data->status)) {
+        // If activating a user, check subscription limits
+        if ($data->status === 'active') {
+            require_once __DIR__ . '/../classes/SubscriptionService.php';
+            $subscriptionService = new SubscriptionService($conn);
+            $limitCheck = $subscriptionService->canAddUser($_SESSION['tenant_id']);
+            
+            // IMPORTANT: canAddUser checks if CURRENT count < limit
+            // But we are reactivating an EXISTING user who is currently NOT active (presumably).
+            // So if count >= limit, we cannot activate another one.
+            
+            // We need to check if the user is ALREADY active to avoid false positive?
+            // The query calculates count of 'active' users.
+            // If this user is currently 'inactive', they are not in the count.
+            // So if count == limit, we cannot make them active.
+            
+            if (!$limitCheck['allowed']) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => $limitCheck['message']]);
+                exit;
+            }
+        }
+
         $updates[] = "status = ?";
         $types .= "s";
         $params[] = $data->status;

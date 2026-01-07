@@ -1,0 +1,101 @@
+/* Chart Wrapper */
+.chart-wrapper {
+    padding: 24px;
+    border-radius: 16px;
+}
+
+.chart-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+.chart-container {
+    position: relative;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 768px) {
+    .chart-wrapper {
+        padding: 16px;
+    }
+
+    .chart-container {
+        height: 250px !important;
+    }
+
+    .chart-title {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+    .chart-wrapper {
+        padding: 12px;
+    }
+
+    .chart-container {
+        height: 200px !important;
+    }
+
+    .chart-title {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+}
+
+/* iPhone 12 Mini and smaller */
+@media (max-width: 375px) {
+    .chart-wrapper {
+        padding: 12px;
+    }
+
+    .chart-container {
+        height: 180px !important;
+    }
+
+    .chart-title {
+        font-size: 14px;
+    }
+}
+
+/* Samsung Galaxy S8/S9 */
+@media (max-width: 360px) {
+    .chart-container {
+        height: 170px !important;
+    }
+
+    .chart-title {
+        font-size: 13px;
+    }
+}
+
+/* Smaller Android devices */
+@media (max-width: 344px) {
+    .chart-wrapper {
+        padding: 10px;
+    }
+
+    .chart-container {
+        height: 160px !important;
+    }
+}
+
+/* iPhone SE - smallest common device */
+@media (max-width: 320px) {
+    .chart-wrapper {
+        padding: 8px;
+    }
+
+    .chart-container {
+        height: 150px !important;
+    }
+
+    .chart-title {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+}

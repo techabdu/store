@@ -4,9 +4,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MarketplaceSidebar from '../../components/MarketplaceSidebar';
 import TopBar from '../../components/TopBar';
 import api, { SERVER_URL } from '../../utils/api';
-import { ShoppingCart, MessageSquare, ArrowLeft, X, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { ShoppingCart, MessageSquare, ArrowLeft, X, ChevronLeft, ChevronRight, Star, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import ReportWizard from '../../components/Marketplace/ReportWizard';
 import '../admin/AdminDashboard.css';
 import './MarketplacePage.css';
 import './MarketplaceProductDetails.css';
@@ -22,6 +23,7 @@ const MarketplaceProductDetails = () => {
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [starred, setStarred] = useState(false);
+    const [isReportWizardOpen, setIsReportWizardOpen] = useState(false);
     const { showError, showSuccess, showInfo } = useNotification();
 
     const getImageUrl = (url) => {
@@ -268,6 +270,18 @@ const MarketplaceProductDetails = () => {
                                     >
                                         <Star size={20} fill={starred ? "var(--primary-color)" : "none"} stroke={starred ? "var(--primary-color)" : "currentColor"} />
                                     </button>
+
+                                    {user && listing.user_id != user.id && (
+                                        <button
+                                            onClick={() => setIsReportWizardOpen(true)}
+                                            className="product-btn report-details-btn product-btn-icon"
+                                            title="Report Listing"
+                                            aria-label="Report Listing"
+                                            style={{ color: 'var(--text-secondary)' }}
+                                        >
+                                            <ShieldAlert size={20} />
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="product-info-section">
@@ -379,6 +393,16 @@ const MarketplaceProductDetails = () => {
                     </div>
                 </div>
             )}
+
+            <ReportWizard
+                isOpen={isReportWizardOpen}
+                onClose={() => setIsReportWizardOpen(false)}
+                initialType="other"
+                contextData={{
+                    listingId: listing.id,
+                    subject: `Report Listing: ${listing.title}`
+                }}
+            />
         </div>
     );
 };

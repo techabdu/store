@@ -1,0 +1,32 @@
+/* ComingSoonBadge.css */
+
+.coming-soon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    color: #ffffff;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Size variants */
+.coming-soon-badge-small {
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.coming-soon-badge-medium {
+    font-size: 10px;
+    padding: 3px 7px;
+}
+
+/* For sidebar nav items */
+.nav-item .coming-soon-badge {
+    margin-left: auto;
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useSubscription } from '../../context/SubscriptionContext';
 import api from '../../utils/api';
 import { Plus, ArrowLeft, Check, Package, Edit2, Trash2, Filter, ChevronRight, Search } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
@@ -10,7 +11,14 @@ import '../../styles/wizard.css';
 const Inventory = () => {
     const { user } = useAuth();
     const { showError, showSuccess } = useNotification();
+    const { getPlanLimits, getPlanName } = useSubscription();
+
     const [inventory, setInventory] = useState([]);
+
+    const limits = getPlanLimits();
+    // Check if limit reached for basic plan (non-superadmin/admin with specific limits)
+    const isInventoryLimitReached = limits?.max_inventory_items !== -1 && limits?.max_inventory_items !== undefined && inventory.length >= limits.max_inventory_items;
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(''); // Keep this for hard data loading errors
     const [searchTerm, setSearchTerm] = useState('');
@@ -258,13 +266,26 @@ const Inventory = () => {
             loading={loading && isInitialLoad && view === 'list'}
             error={view === 'list' ? error : null}
             headerActions={view === 'list' && (
-                <button className="btn-primary" onClick={() => {
-                    setView('add');
-                    resetForm();
-                }} style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', whiteSpace: 'nowrap' }}>
-                    <Plus size={20} />
-                    <span className="btn-text">Add New Phone</span>
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                    <button
+                        className="btn-primary"
+                        onClick={() => {
+                            setView('add');
+                            resetForm();
+                        }}
+                        disabled={isInventoryLimitReached}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '44px', whiteSpace: 'nowrap', opacity: isInventoryLimitReached ? 0.5 : 1, cursor: isInventoryLimitReached ? 'not-allowed' : 'pointer' }}
+                        title={isInventoryLimitReached ? `Inventory limit of ${limits?.max_inventory_items} items reached for ${getPlanName()} plan` : 'Add New Phone'}
+                    >
+                        <Plus size={20} />
+                        <span className="btn-text">Add New Phone</span>
+                    </button>
+                    {isInventoryLimitReached && (
+                        <span className="text-xs text-red-500 font-medium">
+                            Limit of {limits?.max_inventory_items} items reached
+                        </span>
+                    )}
+                </div>
             )}
         >
             <div className="inventory-page-container">

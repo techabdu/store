@@ -1,0 +1,191 @@
+/* TrialStatusBar.css */
+/* Slim horizontal bar for trial status display */
+
+.trial-status-bar {
+    background: #1e293b;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 20px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.trial-bar-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    max-width: 100%;
+}
+
+.trial-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.trial-progress-container {
+    flex: 1;
+    max-width: 300px;
+    min-width: 100px;
+}
+
+.trial-progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.trial-progress-fill {
+    height: 100%;
+    background: #667eea;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.trial-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.days-remaining {
+    font-size: 13px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.btn-upgrade {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #667eea;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-upgrade:hover {
+    background: #5a6fd6;
+    transform: translateY(-1px);
+}
+
+/* Urgency Levels */
+.trial-status-bar.urgency-attention .plan-badge {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.trial-status-bar.urgency-attention .trial-progress-fill {
+    background: #f59e0b;
+}
+
+.trial-status-bar.urgency-warning .plan-badge {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.trial-status-bar.urgency-warning .trial-progress-fill {
+    background: #f97316;
+}
+
+.trial-status-bar.urgency-warning .days-remaining {
+    color: #f97316;
+    font-weight: 500;
+}
+
+.trial-status-bar.urgency-critical .plan-badge {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.trial-status-bar.urgency-critical .trial-progress-fill {
+    background: #ef4444;
+}
+
+.trial-status-bar.urgency-critical .days-remaining {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.trial-status-bar.urgency-critical .btn-upgrade {
+    background: #ef4444;
+    animation: pulse-upgrade 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-upgrade {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .trial-status-bar {
+        padding: 8px 16px;
+    }
+
+    .trial-bar-content {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .trial-left {
+        flex: 1 1 100%;
+    }
+
+    .trial-progress-container {
+        flex: 1;
+        max-width: none;
+    }
+
+    .trial-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .plan-badge {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+
+    .days-remaining {
+        font-size: 12px;
+    }
+
+    .btn-upgrade {
+        font-size: 12px;
+        padding: 5px 12px;
+    }
+}

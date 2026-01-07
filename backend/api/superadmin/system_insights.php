@@ -25,12 +25,8 @@ require_once __DIR__ . '/../../classes/BusinessMetrics.php';
 // CORS Headers
 header("Content-Type: application/json; charset=UTF-8");
 
-// Start session and check authentication
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Verify SuperAdmin role
+// Authenticate and verify SuperAdmin role
+$user = checkAuth();
 checkRole(['superadmin']);
 
 // Get tab parameter
@@ -69,6 +65,10 @@ try {
             
         case 'vulnerabilities':
             $response['data'] = getVulnerabilitiesData();
+            break;
+            
+        case 'business':
+            $response['data'] = getBusinessData();
             break;
             
         case 'overview':
@@ -123,6 +123,7 @@ function getSecurityData() {
         'active_sessions' => $securityMonitor->getActiveSessions(),
         'password_health' => $securityMonitor->checkPasswordHealth(),
         'security_alerts' => $alertManager->getActiveAlerts('critical', 20),
+        'login_success_ratio' => $securityMonitor->getLoginSuccessRatio(),
         'tenant_stats' => $tenantStats
     ];
 }
@@ -240,6 +241,142 @@ function getVulnerabilitiesData() {
 }
 
 /**
+ * Get business metrics data including tenant health, trials, and payments
+ */
+function getBusinessData() {
+    global $conn;
+    $businessMetrics = new BusinessMetrics();
+    $dbHealth = new DatabaseHealth();
+    
+    // Check cache first
+    $cached = $dbHealth->getCachedMetric('business_overview');
+    if ($cached !== null) {
+        $GLOBALS['response']['cached'] = true;
+        return $cached;
+    }
+    
+    // Get tenant health summary
+    $tenantHealth = $conn->query("
+        SELECT 
+            COUNT(*) as total_tenants,
+            SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_tenants,
+            SUM(CASE WHEN status = 'trial' THEN 1 ELSE 0 END) as trial_tenants,
+            SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_tenants,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_tenants
+        FROM tenants
+    ")->fetch_assoc();
+    
+    // Get expiring trials (next 7 days)
+    $expiringTrials = [];
+    $stmt = $conn->prepare("
+        SELECT id, shop_name as business_name, shop_email as email, trial_ends_at, 
+               DATEDIFF(trial_ends_at, NOW()) as days_remaining
+        FROM tenants 
+        WHERE status = 'trial' 
+        AND trial_ends_at IS NOT NULL 
+        AND trial_ends_at <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+        AND trial_ends_at > NOW()
+        ORDER BY trial_ends_at ASC
+        LIMIT 20
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $expiringTrials[] = $row;
+    }
+    $stmt->close();
+    
+    // Get payment status summary (if subscriptions table exists)
+    $paymentStatus = [
+        'successful' => 0,
+        'failed' => 0,
+        'pending' => 0,
+        'total_revenue_30d' => 0
+    ];
+    
+    // Check if subscriptions table exists
+    $tableCheck = $conn->query("SHOW TABLES LIKE 'subscriptions'");
+    if ($tableCheck->num_rows > 0) {
+        $paymentResult = $conn->query("
+            SELECT 
+                SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as successful,
+                SUM(CASE WHEN payment_status = 'failed' THEN 1 ELSE 0 END) as failed,
+                SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN payment_status = 'paid' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN amount ELSE 0 END) as total_revenue_30d
+            FROM subscriptions
+        ");
+        if ($paymentResult && $row = $paymentResult->fetch_assoc()) {
+            $paymentStatus = [
+                'successful' => (int)($row['successful'] ?? 0),
+                'failed' => (int)($row['failed'] ?? 0),
+                'pending' => (int)($row['pending'] ?? 0),
+                'total_revenue_30d' => (float)($row['total_revenue_30d'] ?? 0)
+            ];
+        }
+    }
+    
+    // Get top tenants by user count
+    $topTenants = [];
+    $stmt = $conn->prepare("
+        SELECT t.id, t.shop_name as business_name, t.status, COUNT(u.id) as user_count
+        FROM tenants t
+        LEFT JOIN users u ON t.id = u.tenant_id
+        GROUP BY t.id, t.shop_name, t.status
+        ORDER BY user_count DESC
+        LIMIT 10
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $topTenants[] = $row;
+    }
+    $stmt->close();
+    
+    // Get user growth (new users in last 7 days)
+    $userGrowth = [];
+    $stmt = $conn->prepare("
+        SELECT DATE(created_at) as date, COUNT(*) as new_users
+        FROM users
+        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $userGrowth[] = $row;
+    }
+    $stmt->close();
+    
+    // Generate fresh data using BusinessMetrics class
+    $data = [
+        'user_stats' => $businessMetrics->getUserStatsByRole(),
+        'inactive_users' => $businessMetrics->getInactiveUsers(30),
+        'transaction_volume_7day' => $businessMetrics->getTransactionVolume(7),
+        'transaction_volume_30day' => $businessMetrics->getTransactionVolume(30),
+        'inventory_status' => $businessMetrics->getInventoryStatus(),
+        'revenue_trends_7day' => $businessMetrics->getRevenueTrends(7),
+        'revenue_trends_30day' => $businessMetrics->getRevenueTrends(30),
+        'tenant_health' => [
+            'total' => (int)$tenantHealth['total_tenants'],
+            'active' => (int)$tenantHealth['active_tenants'],
+            'trial' => (int)$tenantHealth['trial_tenants'],
+            'suspended' => (int)$tenantHealth['suspended_tenants'],
+            'pending' => (int)$tenantHealth['pending_tenants']
+        ],
+        'expiring_trials' => $expiringTrials,
+        'payment_status' => $paymentStatus,
+        'top_tenants' => $topTenants,
+        'user_growth' => $userGrowth
+    ];
+    
+    // Cache for 5 minutes
+    $dbHealth->cacheMetric('business_overview', $data);
+    
+    return $data;
+}
+
+/**
  * Get overview data (summary of all tabs)
  */
 function getOverviewData() {
@@ -317,6 +454,10 @@ function getOverviewData() {
         'activity' => [
             'recent_logs' => $auditCompliance->getRecentActivities(5),
             'chart_data' => $peakUsage['daily_activity']
+        ],
+        'charts' => [
+            'apiLatency' => $performanceMonitor->getApiResponseTimeTrend(6),
+            'errorRate' => $performanceMonitor->getErrorRateTrend(7)
         ]
     ];
     

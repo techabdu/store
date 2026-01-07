@@ -1,11 +1,14 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false, error: null };
     }
+
+    static contextType = AuthContext;
 
     static getDerivedStateFromError(error) {
         return { hasError: true, error };
@@ -39,9 +42,12 @@ class ErrorBoundary extends React.Component {
                                 <RefreshCw size={18} />
                                 Refresh Page
                             </button>
-                            <a href="/" className="btn-home">
+                            <a
+                                href={this.context?.getDashboardRoute ? this.context.getDashboardRoute() : "/"}
+                                className="btn-home"
+                            >
                                 <Home size={18} />
-                                Go to Home
+                                Go to Dashboard
                             </a>
                         </div>
                     </div>

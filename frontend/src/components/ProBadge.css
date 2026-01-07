@@ -1,0 +1,45 @@
+/* ProBadge.css */
+/* Small pill badge for PRO features */
+
+.pro-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #1f2937;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Size variants */
+.pro-badge-small {
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.pro-badge-medium {
+    font-size: 10px;
+    padding: 3px 7px;
+}
+
+.pro-badge-large {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 5px;
+}
+
+/* For sidebar nav items */
+.nav-item .pro-badge {
+    margin-left: auto;
+}
+
+/* Animation on hover (optional - for feature cards) */
+.pro-badge-animated:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}

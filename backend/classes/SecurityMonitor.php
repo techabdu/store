@@ -375,6 +375,72 @@ class SecurityMonitor {
             ];
         }
     }
+    
+    /**
+     * Get login success ratio for the last 24 hours
+     * 
+     * @return array Login success metrics
+     */
+    public function getLoginSuccessRatio() {
+        try {
+            // Get successful logins from activity logs
+            $stmt = $this->conn->prepare(
+                "SELECT COUNT(*) as success_count 
+                 FROM activity_logs 
+                 WHERE action LIKE '%login%' 
+                 AND action NOT LIKE '%failed%'
+                 AND action NOT LIKE '%logout%'
+                 AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            );
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $successCount = $result->fetch_assoc()['success_count'];
+            $stmt->close();
+            
+            // Get failed logins from security logs
+            $stmt = $this->conn->prepare(
+                "SELECT COUNT(*) as failed_count 
+                 FROM security_logs 
+                 WHERE event_type = 'failed_login'
+                 AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)"
+            );
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $failedCount = $result->fetch_assoc()['failed_count'];
+            $stmt->close();
+            
+            $totalAttempts = $successCount + $failedCount;
+            $successRate = $totalAttempts > 0 ? 
+                round(($successCount / $totalAttempts) * 100, 2) : 100;
+            
+            // Determine health status
+            $status = 'healthy';
+            if ($successRate < 50) {
+                $status = 'critical';
+            } elseif ($successRate < 80) {
+                $status = 'warning';
+            }
+            
+            return [
+                'successful_logins' => $successCount,
+                'failed_logins' => $failedCount,
+                'total_attempts' => $totalAttempts,
+                'success_rate_percentage' => $successRate,
+                'status' => $status,
+                'time_window' => '24 hours'
+            ];
+        } catch (Exception $e) {
+            error_log("Failed to get login success ratio: " . $e->getMessage());
+            return [
+                'successful_logins' => 0,
+                'failed_logins' => 0,
+                'total_attempts' => 0,
+                'success_rate_percentage' => 0,
+                'status' => 'unknown',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }
 
 // Include AlertManager for threshold checking
