@@ -37,8 +37,8 @@ try {
     }
 
     // Update tenant status
-    // If status was 'pending', move to 'trial'. If already 'trial' or 'active', just verify email.
-    $newStatus = ($tenant['status'] === 'pending') ? 'trial' : $tenant['status'];
+    // If status was 'pending', move to 'active' (Pro plan).
+    $newStatus = ($tenant['status'] === 'pending') ? 'active' : $tenant['status'];
     
     $updateStmt = $conn->prepare("UPDATE tenants SET email_verified = 1, status = ?, verification_token = NULL WHERE id = ?");
     $updateStmt->bind_param("si", $newStatus, $tenant_id);
