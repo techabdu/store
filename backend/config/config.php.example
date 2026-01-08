@@ -59,8 +59,8 @@ function setCorsHeaders() {
 // define('DEBUG_MODE', false);
 
 // Frontend URL (for email links, redirects, etc.)
-// define('FRONTEND_URL', 'https://prhub.shop');
+define('FRONTEND_URL', 'https://prhub.shop');
 
-// API base URL
-// define('API_BASE_URL', 'https://prhub.shop/backend/api');
+// API URL (for verification email links, etc.)
+define('API_URL', 'https://prhub.shop/backend/api');
 ?>

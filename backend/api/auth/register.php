@@ -135,7 +135,19 @@ try {
     }
 
     // 4. Send Welcome/Verification Email
-    $verificationLink = API_URL . "/auth/verify-email.php?token=" . $verification_token;
+    // Construct API URL with fallback if not defined
+    if (defined('API_URL')) {
+        $apiBaseUrl = API_URL;
+    } elseif (defined('FRONTEND_URL')) {
+        // Construct API URL from FRONTEND_URL
+        $apiBaseUrl = rtrim(FRONTEND_URL, '/') . '/backend/api';
+    } else {
+        // Last resort: construct from server variables
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'prhub.shop';
+        $apiBaseUrl = $protocol . '://' . $host . '/backend/api';
+    }
+    $verificationLink = $apiBaseUrl . "/auth/verify-email.php?token=" . $verification_token;
     
     $subject = "Welcome to PRHUB - Verify Your Email";
     $body = "
