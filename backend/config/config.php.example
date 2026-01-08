@@ -1,0 +1,66 @@
+<?php
+/**
+ * Application Configuration File (EXAMPLE)
+ * 
+ * Copy this file to config.php and update the values for your environment.
+ * 
+ * IMPORTANT: config.php should NEVER be committed to version control.
+ */
+
+// Define allowed CORS origins
+// Add your frontend URLs here (both development and production)
+define('ALLOWED_ORIGINS', [
+    'http://localhost:5173',      // Vite dev server
+    'http://localhost:3000',      // Alternative dev server
+    'https://prhub.shop',         // Production
+    'https://www.prhub.shop',     // Production (www subdomain)
+]);
+
+/**
+ * Set CORS headers for API responses
+ * 
+ * This function sets the necessary headers to allow cross-origin requests
+ * from approved frontend origins. It also handles preflight OPTIONS requests.
+ * 
+ * Call this function at the beginning of every API endpoint.
+ */
+function setCorsHeaders() {
+    // Get the request origin
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    
+    // Check if origin is allowed
+    if (in_array($origin, ALLOWED_ORIGINS)) {
+        header("Access-Control-Allow-Origin: $origin");
+        header("Access-Control-Allow-Credentials: true");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token, X-Requested-With");
+        header("Access-Control-Max-Age: 86400"); // Cache preflight for 24 hours
+    }
+    
+    // Handle preflight OPTIONS request
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(204);
+        exit;
+    }
+}
+
+/**
+ * Additional configuration constants
+ * Uncomment and configure as needed
+ */
+
+// Session configuration
+// define('SESSION_LIFETIME', 172800); // 48 hours in seconds
+
+// Application environment
+// define('APP_ENV', 'production'); // 'development' or 'production'
+
+// Debug mode (NEVER enable in production!)
+// define('DEBUG_MODE', false);
+
+// Frontend URL (for email links, redirects, etc.)
+// define('FRONTEND_URL', 'https://prhub.shop');
+
+// API base URL
+// define('API_BASE_URL', 'https://prhub.shop/backend/api');
+?>

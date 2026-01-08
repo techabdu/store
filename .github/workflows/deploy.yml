@@ -77,7 +77,57 @@ jobs:
           APP_URL=${{ secrets.APP_URL }}
           EOF
 
-      # 8. Deploy Backend to Hostinger via FTP
+      # 8. Create Production config.php (CRITICAL for CORS and session handling)
+      - name: Create Production config.php
+        run: |
+          cat > backend/config/config.php << 'CONFIGEOF'
+          <?php
+          /**
+           * Application Configuration - Production
+           * Auto-generated during deployment
+           */
+
+          // Define allowed CORS origins for production
+          define('ALLOWED_ORIGINS', [
+              'https://prhub.shop',
+              'https://www.prhub.shop',
+          ]);
+
+          /**
+           * Set CORS headers for API responses
+           * 
+           * This function sets the necessary headers to allow cross-origin requests
+           * from approved frontend origins. It handles credentials and preflight.
+           */
+          function setCorsHeaders() {
+              // Get the request origin
+              $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+              
+              // Check if origin is allowed
+              if (in_array($origin, ALLOWED_ORIGINS)) {
+                  header("Access-Control-Allow-Origin: $origin");
+                  header("Access-Control-Allow-Credentials: true");
+                  header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+                  header("Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token, X-Requested-With");
+                  header("Access-Control-Max-Age: 86400");
+              }
+              
+              // Handle preflight OPTIONS request
+              if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+                  http_response_code(204);
+                  exit;
+              }
+          }
+
+          // Application environment
+          define('APP_ENV', 'production');
+          define('DEBUG_MODE', false);
+          define('FRONTEND_URL', 'https://prhub.shop');
+          define('API_BASE_URL', 'https://prhub.shop/backend/api');
+          ?>
+          CONFIGEOF
+
+      # 9. Deploy Backend to Hostinger via FTP
       - name: Deploy Backend via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
