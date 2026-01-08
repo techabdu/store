@@ -4,8 +4,21 @@
  * Fetches the current user's profile information
  */
 
-session_start();
+require_once '../../config/config.php';
+require_once '../../config/database.php';
+require_once '../../middleware/auth.php';
+
+// Set CORS headers using centralized config
+setCorsHeaders();
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 header('Content-Type: application/json');
+
 // Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -13,18 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Not authenticated']);
-    exit;
-}
-
-require_once '../../config/config.php';
-require_once '../../config/database.php';
-
-// Set CORS headers using centralized config
-setCorsHeaders();
+// Verify user is authenticated (uses centralized session handling)
+$user_data = checkAuth();
 
 try {
     // Fetch user profile data

@@ -233,7 +233,9 @@ const Customers = () => {
                                     {selectedCustomer ? (
                                         <>
                                             <div className="details-header-mobile">
-                                                <button onClick={() => setSelectedCustomer(null)}>Back to List</button>
+                                                <button className="btn-mobile-back" onClick={() => setSelectedCustomer(null)}>
+                                                    <ArrowLeft size={20} />
+                                                </button>
                                             </div>
 
                                             <div className="customer-profile-header">

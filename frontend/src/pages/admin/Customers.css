@@ -279,23 +279,47 @@
         z-index: 10;
     }
 
+    .customer-profile-header {
+        padding-top: 100px;
+    }
+
     .hidden-mobile {
         display: none !important;
     }
 
     .details-header-mobile {
         display: block;
-        padding: 10px;
-        background: var(--bg-surface);
-        border-bottom: 1px solid var(--border-color);
+        position: absolute;
+        top: 75px;
+        left: 15px;
+        z-index: 20;
     }
 
-    .details-header-mobile button {
-        background: none;
-        border: none;
-        color: var(--primary);
-        font-weight: 500;
+    .btn-mobile-back {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0;
+    }
+
+    .btn-mobile-back:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: scale(1.05);
+    }
+
+    .btn-mobile-back:active {
+        transform: scale(0.95);
     }
 
     .purchase-history-section {

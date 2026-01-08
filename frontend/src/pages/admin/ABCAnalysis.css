@@ -254,14 +254,34 @@
 }
 
 .recommendation-card {
-    padding: 2rem;
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+}
+
+.card-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.icon-blue {
+    color: #3b82f6;
 }
 
 .rec-list {
     list-style: none;
     padding: 0;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 1.5rem;
 }
 

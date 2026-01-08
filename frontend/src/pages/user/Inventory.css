@@ -16,6 +16,20 @@
     }
 }
 
+/* Override AdminLayout page-header to match Expenses page header-section */
+.page-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+}
+
+/* Ensure header actions stay on the right */
+.page-header-actions {
+    flex-shrink: 0;
+}
+
 /* Actions Section */
 .inventory-actions {
     display: flex;
@@ -368,7 +382,7 @@ input.locked {
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 769px) {
     .search-filter-section {
         flex-direction: column;
         align-items: stretch;
@@ -390,7 +404,10 @@ input.locked {
     .inventory-table {
         min-width: 950px;
     }
+}
 
+/* Button becomes circular icon at 600px (matching debts, expenses, branches) */
+@media (max-width: 600px) {
     .page-header-actions .btn-text {
         display: none;
     }
@@ -404,5 +421,15 @@ input.locked {
         align-items: center;
         justify-content: center;
         min-width: 44px !important;
+    }
+
+    /* Ensure wrapper div in headerActions stays aligned right */
+    .page-header-actions>div {
+        align-items: flex-end !important;
+    }
+
+    /* Hide the limit message on mobile to keep layout clean */
+    .page-header-actions .text-xs {
+        display: none;
     }
 }

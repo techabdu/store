@@ -266,7 +266,7 @@ const Inventory = () => {
             loading={loading && isInitialLoad && view === 'list'}
             error={view === 'list' ? error : null}
             headerActions={view === 'list' && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                <>
                     <button
                         className="btn-primary"
                         onClick={() => {
@@ -280,12 +280,7 @@ const Inventory = () => {
                         <Plus size={20} />
                         <span className="btn-text">Add New Phone</span>
                     </button>
-                    {isInventoryLimitReached && (
-                        <span className="text-xs text-red-500 font-medium">
-                            Limit of {limits?.max_inventory_items} items reached
-                        </span>
-                    )}
-                </div>
+                </>
             )}
         >
             <div className="inventory-page-container">

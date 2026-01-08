@@ -4,21 +4,20 @@
  * Updates the current user's personal information and avatar color
  */
 
-session_start();
-header('Content-Type: application/json');
-
 require_once '../../config/config.php';
 require_once '../../config/database.php';
+require_once '../../middleware/auth.php';
 
 // Set CORS headers using centralized config
 setCorsHeaders();
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
     exit;
 }
+
+header('Content-Type: application/json');
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -26,6 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Method not allowed']);
     exit;
 }
+
+// Verify user is authenticated (uses centralized session handling)
+$user_data = checkAuth();
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
