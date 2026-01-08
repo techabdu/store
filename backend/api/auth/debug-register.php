@@ -17,9 +17,13 @@ try {
     
     require_once '../../config/database.php';
     $steps[] = "Step 2: database.php loaded";
+    $steps[] = "Step 2b: \$conn type = " . (isset($conn) ? get_class($conn) : 'not set');
+    $steps[] = "Step 2c: \$conn status = " . (isset($conn) && $conn ? 'connected' : 'null/failed');
     
     require_once '../../config/config.php';
     $steps[] = "Step 3: config.php loaded";
+    $steps[] = "Step 3b: API_URL defined = " . (defined('API_URL') ? API_URL : 'NOT DEFINED');
+    $steps[] = "Step 3c: FRONTEND_URL defined = " . (defined('FRONTEND_URL') ? FRONTEND_URL : 'NOT DEFINED');
     
     require_once '../../config/environment.php';
     $steps[] = "Step 4: environment.php loaded";
@@ -40,6 +44,20 @@ try {
     
     $securityMonitor = new SecurityMonitor();
     $steps[] = "Step 10: SecurityMonitor instantiated";
+    
+    // Test database transaction
+    if ($conn) {
+        $conn->begin_transaction();
+        $steps[] = "Step 11: Transaction started";
+        $conn->rollback();
+        $steps[] = "Step 12: Transaction rolled back";
+    } else {
+        $steps[] = "Step 11: SKIPPED - \$conn is null";
+    }
+    
+    // Test CSRF generation
+    $token = generateCsrfToken();
+    $steps[] = "Step 13: CSRF token generated = " . substr($token, 0, 10) . "...";
     
     echo json_encode(['success' => true, 'steps' => $steps]);
     
