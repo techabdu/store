@@ -261,6 +261,7 @@ function handlePut() {
 
 /**
  * Delete tenant (with cascade warning)
+ * Deletes all related data in the correct order to avoid foreign key constraint errors
  */
 function handleDelete() {
     global $conn;
@@ -287,18 +288,130 @@ function handleDelete() {
         return;
     }
     
+    $tenantName = $result->fetch_assoc()['shop_name'];
+    $stmt->close();
+    
+    // Get all shop IDs for this tenant (needed for some tables that reference shops)
+    $shopIds = [];
+    $shopStmt = $conn->prepare("SELECT id FROM shops WHERE tenant_id = ?");
+    $shopStmt->bind_param("i", $tenantId);
+    $shopStmt->execute();
+    $shopResult = $shopStmt->get_result();
+    while ($row = $shopResult->fetch_assoc()) {
+        $shopIds[] = (int)$row['id'];
+    }
+    $shopStmt->close();
+    
+    // Get all user IDs for this tenant (needed for tables that reference users)
+    $userIds = [];
+    $userStmt = $conn->prepare("SELECT id FROM users WHERE tenant_id = ?");
+    $userStmt->bind_param("i", $tenantId);
+    $userStmt->execute();
+    $userResult = $userStmt->get_result();
+    while ($row = $userResult->fetch_assoc()) {
+        $userIds[] = (int)$row['id'];
+    }
+    $userStmt->close();
+    
     // Start transaction for cascade delete
     $conn->begin_transaction();
     
     try {
-        // Delete related data using prepared statements (SECURITY FIX: prevent SQL injection)
-        $tables = ['activity_logs', 'transactions', 'inventory', 'expenses', 'reports', 'users', 'shops'];
-        foreach ($tables as $table) {
-            $deleteStmt = $conn->prepare("DELETE FROM `$table` WHERE tenant_id = ?");
-            if ($deleteStmt) {
-                $deleteStmt->bind_param("i", $tenantId);
-                $deleteStmt->execute();
-                $deleteStmt->close();
+        // Delete tables that reference users first (by user_id or recorded_by)
+        // These must be deleted before the users table
+        if (!empty($userIds)) {
+            $userIdList = implode(',', $userIds);
+            
+            // Tables with recorded_by -> users(id) foreign key (NO CASCADE)
+            $userReferenceTables = [
+                ['table' => 'debt_payments', 'column' => 'recorded_by'],
+                ['table' => 'debts', 'column' => 'recorded_by'],
+                // Marketplace tables that reference users
+                ['table' => 'marketplace_wallet_transactions', 'column' => 'user_id'],
+                ['table' => 'marketplace_reviews', 'column' => 'reviewer_id'],
+                ['table' => 'marketplace_reviews', 'column' => 'reviewed_user_id'],
+                ['table' => 'marketplace_order_history', 'column' => 'changed_by'],
+                ['table' => 'marketplace_messages', 'column' => 'sender_id'],
+                ['table' => 'marketplace_messages', 'column' => 'receiver_id'],
+                ['table' => 'marketplace_listing_views', 'column' => 'user_id'],
+                ['table' => 'marketplace_interests', 'column' => 'user_id'],
+                ['table' => 'marketplace_identity_verifications', 'column' => 'user_id'],
+                ['table' => 'marketplace_favorites', 'column' => 'user_id'],
+                ['table' => 'marketplace_conversations', 'column' => 'buyer_id'],
+                ['table' => 'marketplace_conversations', 'column' => 'seller_id'],
+                ['table' => 'marketplace_auction_bids', 'column' => 'bidder_id'],
+                ['table' => 'kora_payment_references', 'column' => 'user_id'],
+                ['table' => 'fraud_alerts', 'column' => 'user_id'],
+                ['table' => 'fraud_alerts', 'column' => 'reviewed_by'],
+            ];
+            
+            foreach ($userReferenceTables as $ref) {
+                // Check if table exists before trying to delete
+                $tableCheck = $conn->query("SHOW TABLES LIKE '{$ref['table']}'");
+                if ($tableCheck && $tableCheck->num_rows > 0) {
+                    // Use direct query with escaped values since we can't use IN with prepared statements easily
+                    $deleteQuery = "DELETE FROM `{$ref['table']}` WHERE `{$ref['column']}` IN ($userIdList)";
+                    $conn->query($deleteQuery);
+                }
+            }
+        }
+        
+        // Delete tables that reference shops
+        if (!empty($shopIds)) {
+            $shopIdList = implode(',', $shopIds);
+            
+            // Tables with shop_id column
+            $shopReferenceTables = [
+                ['table' => 'marketplace_listings', 'column' => 'shop_id'],
+                ['table' => 'marketplace_profiles', 'column' => 'shop_id'],
+                ['table' => 'customer_analytics', 'column' => 'shop_id'],
+                ['table' => 'debts', 'column' => 'shop_id'],
+                ['table' => 'marketplace_wallets', 'column' => 'shop_id'],
+                ['table' => 'marketplace_interests', 'column' => 'shop_id'],
+                ['table' => 'marketplace_reviews', 'column' => 'shop_id'],
+                ['table' => 'marketplace_identity_verifications', 'column' => 'shop_id'],
+                ['table' => 'marketplace_auction_bids', 'column' => 'shop_id'],
+                ['table' => 'marketplace_verification_attempts', 'column' => 'shop_id'],
+                ['table' => 'marketplace_withdrawal_requests', 'column' => 'shop_id'],
+                ['table' => 'order_disputes', 'column' => 'shop_id'],
+                // marketplace_orders has special shop columns
+                ['table' => 'marketplace_orders', 'column' => 'seller_shop_id'],
+                ['table' => 'marketplace_orders', 'column' => 'buyer_shop_id'],
+            ];
+            
+            foreach ($shopReferenceTables as $ref) {
+                $tableCheck = $conn->query("SHOW TABLES LIKE '{$ref['table']}'");
+                if ($tableCheck && $tableCheck->num_rows > 0) {
+                    $conn->query("DELETE FROM `{$ref['table']}` WHERE `{$ref['column']}` IN ($shopIdList)");
+                }
+            }
+        }
+        
+        // Delete related data by tenant_id (tables that directly reference tenant_id)
+        // Order matters: delete dependent tables first
+        $tenantTables = [
+            'activity_logs',
+            'transaction_items',  // Must be before transactions
+            'transactions',
+            'inventory',
+            'expenses',
+            'expense_records',
+            'reports',
+            'debts',             // After debt_payments
+            'users',             // After all user references are deleted
+            'shops',             // After all shop references are deleted
+        ];
+        
+        foreach ($tenantTables as $table) {
+            // Check if table exists before trying to delete
+            $tableCheck = $conn->query("SHOW TABLES LIKE '$table'");
+            if ($tableCheck && $tableCheck->num_rows > 0) {
+                $deleteStmt = $conn->prepare("DELETE FROM `$table` WHERE tenant_id = ?");
+                if ($deleteStmt) {
+                    $deleteStmt->bind_param("i", $tenantId);
+                    $deleteStmt->execute();
+                    $deleteStmt->close();
+                }
             }
         }
         
@@ -306,19 +419,22 @@ function handleDelete() {
         $stmt = $conn->prepare("DELETE FROM tenants WHERE id = ?");
         $stmt->bind_param("i", $tenantId);
         $stmt->execute();
+        $stmt->close();
         
         $conn->commit();
         
         http_response_code(200);
         echo json_encode([
             'success' => true,
-            'message' => 'Tenant and all related data deleted successfully'
+            'message' => "Tenant '$tenantName' and all related data deleted successfully"
         ]);
         
     } catch (Exception $e) {
         $conn->rollback();
+        // Log the detailed error for debugging but don't expose it to users
+        error_log("Tenant delete failed for ID $tenantId: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to delete tenant: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'error' => 'Unable to delete the shop. Please try again or contact support.']);
     }
 }
 ?>
