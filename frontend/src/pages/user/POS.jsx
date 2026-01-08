@@ -569,25 +569,25 @@ const POS = () => {
                                                 value={customerName}
                                                 onChange={(e) => setCustomerName(e.target.value)}
                                                 placeholder="Customer Name *"
-                                                style={{ borderRadius: '10px', height: '45px' }}
+                                                className="checkout-input"
                                             />
                                         </div>
 
-                                        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '10px' }}>
                                             <div className="form-group">
                                                 <input
                                                     type="tel"
                                                     value={customerPhone}
                                                     onChange={(e) => setCustomerPhone(e.target.value)}
                                                     placeholder="Phone Number"
-                                                    style={{ borderRadius: '10px', height: '45px' }}
+                                                    className="checkout-input"
                                                 />
                                             </div>
                                             <div className="form-group">
                                                 <select
                                                     value={paymentMethod}
                                                     onChange={(e) => setPaymentMethod(e.target.value)}
-                                                    style={{ borderRadius: '10px', height: '45px' }}
+                                                    className="checkout-input"
                                                 >
                                                     <option value="cash">Cash</option>
                                                     <option value="card">Card</option>
@@ -602,7 +602,7 @@ const POS = () => {
                                                 value={customerAddress}
                                                 onChange={(e) => setCustomerAddress(e.target.value)}
                                                 placeholder="Customer Address (Optional)"
-                                                style={{ borderRadius: '10px', height: '45px' }}
+                                                className="checkout-input"
                                             />
                                         </div>
 
@@ -625,7 +625,7 @@ const POS = () => {
                                                 value={paymentReceived}
                                                 onChange={(e) => handlePaymentReceivedChange(e.target.value)}
                                                 placeholder="0.00"
-                                                style={{ borderRadius: '10px', height: '50px', fontSize: '1.2rem', fontWeight: 'bold' }}
+                                                className="checkout-input payment-input"
                                             />
                                         </div>
 

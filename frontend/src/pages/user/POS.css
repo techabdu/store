@@ -597,3 +597,27 @@
         grid-template-columns: 1fr;
     }
 }
+/* Checkout Input Styles */
+.checkout-input {
+    width: 100%;
+    padding: 0 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    height: 45px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.checkout-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.payment-input {
+    height: 50px;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
