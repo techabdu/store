@@ -3,11 +3,10 @@
  * CSRF Protection Helpers
  */
 
-if (session_status() === PHP_SESSION_NONE) {
-    // Start session if not already started, with secure cookie params if possible
-    // Note: auth.php usually handles session start with params
-    session_start();
-}
+// Use the centralized session helper to ensure consistent session configuration
+require_once __DIR__ . '/session_helper.php';
+initializeSecureSession();
+
 
 /**
  * Generate CSRF Token
