@@ -7,9 +7,11 @@ import ParticlesBackground from '../../components/landing/ParticlesBackground';
 import '../../styles/register.css';
 
 const Register = () => {
-    const [step, setStep] = useState(1); // 1: Plan Selection, 2: Registration Form
+    // NOTE: Step changed from 1 to 2 to skip plan selection until payment integration is ready
+    const [step, setStep] = useState(2); // 1: Plan Selection (disabled), 2: Registration Form
     const [formStep, setFormStep] = useState(1); // 1: Owner Info, 2: Shop Info
-    const [selectedPlan, setSelectedPlan] = useState(null);
+    // NOTE: Default plan set to 'pro' until payment integration is ready
+    const [selectedPlan, setSelectedPlan] = useState('pro');
     const [formData, setFormData] = useState({
         shop_name: '',
         owner_username: '',
@@ -321,6 +323,13 @@ const Register = () => {
         );
     }
 
+    /* ==================================================================================
+     * PLAN SELECTION STEP - TEMPORARILY DISABLED
+     * This section is commented out until payment integration is ready.
+     * Users are automatically assigned the 'pro' plan during registration.
+     * To re-enable: uncomment this block and change step state default from 2 to 1
+     * ================================================================================== */
+    /*
     // Step 1: Plan Selection
     if (step === 1) {
         return (
@@ -418,6 +427,7 @@ const Register = () => {
             </div>
         );
     }
+    */
 
     // Step 2: Registration Form (Multi-step)
     return (
@@ -560,9 +570,11 @@ const Register = () => {
                                     </button>
                                 </div>
 
+                                {/* Change Plan button disabled until payment integration
                                 <div className="change-plan-link">
                                     <button onClick={() => setStep(1)} className="change-plan-btn">Change Plan</button>
                                 </div>
+                                */}
 
                                 <div className="login-link">
                                     Already have an account? <Link to="/login">Sign in here</Link>
@@ -642,9 +654,11 @@ const Register = () => {
                                     </button>
                                 </div>
 
+                                {/* Change Plan button disabled until payment integration
                                 <div className="change-plan-link">
                                     <button onClick={() => setStep(1)} className="change-plan-btn">Change Plan</button>
                                 </div>
+                                */}
                             </div>
                         )}
                     </form>

@@ -103,7 +103,8 @@ try {
     $verification_token = bin2hex(random_bytes(32));
     $trial_ends_at = date('Y-m-d H:i:s', strtotime('+14 days'));
 
-    $insertTenant = $conn->prepare("INSERT INTO tenants (shop_name, shop_address, shop_phone, shop_email, status, plan_type, trial_ends_at, verification_token) VALUES (?, ?, ?, ?, 'pending', 'free_trial', ?, ?)");
+    // NOTE: plan_type set to 'pro' until payment integration is ready (was 'free_trial')
+    $insertTenant = $conn->prepare("INSERT INTO tenants (shop_name, shop_address, shop_phone, shop_email, status, plan_type, trial_ends_at, verification_token) VALUES (?, ?, ?, ?, 'pending', 'pro', ?, ?)");
     $insertTenant->bind_param("ssssss", $shop_name, $shop_address, $shop_phone, $owner_email, $trial_ends_at, $verification_token);
     
     if (!$insertTenant->execute()) {
