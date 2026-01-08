@@ -39,8 +39,7 @@ if (isset($data->username)) {
         $email = $row['shop_email'];
     } else {
         // Username not found or not linked to tenant
-        // Return success to avoid enumeration, or error? 
-        // For resend flow initiated by user who knows their username, it's safer to say "sent if exists"
+        // Return success to avoid enumeration
         http_response_code(200);
         echo json_encode(["success" => true, "message" => "If an account exists, a verification link has been sent."]);
         exit;
@@ -51,7 +50,8 @@ if (isset($data->username)) {
 
 try {
     // Find tenant by email
-    $stmt = $conn->prepare("SELECT id, shop_name, email_verified FROM tenants WHERE shop_email = ?");
+    // Fetch verification_token and updated_at to check for reuse
+    $stmt = $conn->prepare("SELECT id, shop_name, email_verified, verification_token, updated_at FROM tenants WHERE shop_email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -70,12 +70,29 @@ try {
         exit;
     }
 
-    // Generate new token
-    $verification_token = bin2hex(random_bytes(32));
-    
-    $updateStmt = $conn->prepare("UPDATE tenants SET verification_token = ? WHERE id = ?");
-    $updateStmt->bind_param("si", $verification_token, $tenant['id']);
-    $updateStmt->execute();
+    // Token Reuse Logic
+    $token_reuse_window = 300; // 5 minutes in seconds
+    $current_time = time();
+    $last_updated = strtotime($tenant['updated_at']);
+    $verification_token = $tenant['verification_token'];
+
+    $should_generate_new_token = true;
+
+    // If we have a token and it was updated recently (or created, as updated_at changes on update), reuse it.
+    // Note: 'updated_at' update behavior depends on schema (ON UPDATE CURRENT_TIMESTAMP).
+    // If the token is not null and the record was updated recently, we assume the token is still fresh enough.
+    if (!empty($verification_token) && ($current_time - $last_updated) < $token_reuse_window) {
+        $should_generate_new_token = false;
+        error_log("Resend Verification: Reusing existing token for {$email}. Window: " . ($current_time - $last_updated) . "s");
+    }
+
+    if ($should_generate_new_token) {
+        // Generate new token
+        $verification_token = bin2hex(random_bytes(32));
+        $updateStmt = $conn->prepare("UPDATE tenants SET verification_token = ? WHERE id = ?");
+        $updateStmt->bind_param("si", $verification_token, $tenant['id']);
+        $updateStmt->execute();
+    }
 
     // Use environment-based verification link
     // Construct API URL with fallback if not defined
@@ -164,16 +181,10 @@ try {
         http_response_code(200);
         echo json_encode(["success" => true, "message" => "Verification email sent."]);
     } else {
-        // If email fails, we still updated the token in database.
-        // In development, we can provide the link in error log or even response (if safe)
-        $errorMessage = "Failed to send email: " . $sendResult['message'];
-        error_log("Resend verification error: " . $errorMessage);
+        // Log detailed error
+        $errorMessage = "Failed to send email to $email: " . $sendResult['message'];
+        error_log("Resend verification CRITICAL error: " . $errorMessage);
         
-        // For development, also log the link to make it easier to test without working SMTP
-        if (Environment::get() === 'development') {
-            error_log("DEVELOPMENT: Verification Link for $email: $verificationLink");
-        }
-
         http_response_code(500); // Keep 500 as it is a server-side failure
         echo json_encode([
             "success" => false, 

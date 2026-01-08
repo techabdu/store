@@ -23,6 +23,7 @@ try {
     if ($result->num_rows === 0) {
         // Token doesn't exist. It might be already used (set to NULL) or invalid.
         // We can't easily distinguish without more state, but we can assume common cases.
+        error_log("Verify Email: Token not found or invalid: " . substr($token, 0, 10) . "...");
         header("Location: " . rtrim(FRONTEND_URL, '/') . "/verify-status?status=invalid");
         exit;
     }
