@@ -1,118 +1,89 @@
 <?php
 /**
- * Debug Session Endpoint - TEMPORARY FOR DEBUGGING
+ * Debug Login Flow - TEMPORARY FOR DEBUGGING
  * DELETE THIS FILE AFTER FIXING THE ISSUE
  * 
- * This endpoint helps diagnose session and configuration issues
- * without requiring authentication.
+ * This tests if sessions are being properly saved after login-like actions
  */
 
-// Basic CORS headers for debugging
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Credentials: true");
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../helpers/session_helper.php';
+
+// Set CORS headers
+setCorsHeaders();
+
+// Handle preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 header("Content-Type: application/json; charset=UTF-8");
 
-$debug = [];
+$step = $_GET['step'] ?? 'set';
 
-// 1. Check if config.php exists
-$configPath = __DIR__ . '/../config/config.php';
-$debug['config_exists'] = file_exists($configPath);
-
-// 2. Check if setCorsHeaders function exists
-if ($debug['config_exists']) {
-    require_once $configPath;
-    $debug['setCorsHeaders_exists'] = function_exists('setCorsHeaders');
+if ($step === 'set') {
+    // Step 1: Initialize session and set test data
+    initializeSecureSession();
+    
+    // Simulate login by setting session data
+    $_SESSION['test_user_id'] = 12345;
+    $_SESSION['test_time'] = time();
+    $_SESSION['test_random'] = bin2hex(random_bytes(8));
+    
+    echo json_encode([
+        'success' => true,
+        'step' => 'set',
+        'message' => 'Session data SET. Now call ?step=get to verify it persists',
+        'session_id' => session_id(),
+        'session_data' => $_SESSION,
+        'cookie_params' => session_get_cookie_params()
+    ], JSON_PRETTY_PRINT);
+    
+} elseif ($step === 'get') {
+    // Step 2: Read session (simulates subsequent API call)
+    initializeSecureSession();
+    
+    echo json_encode([
+        'success' => true,
+        'step' => 'get',
+        'message' => 'Reading session data...',
+        'session_id' => session_id(),
+        'session_data' => $_SESSION,
+        'has_test_user_id' => isset($_SESSION['test_user_id']),
+        'cookie_header' => $_SERVER['HTTP_COOKIE'] ?? 'not present',
+    ], JSON_PRETTY_PRINT);
+    
+} elseif ($step === 'regenerate') {
+    // Step 3: Test session regeneration (like login does)
+    initializeSecureSession();
+    
+    $old_session_id = session_id();
+    
+    // Set some data before regeneration
+    $_SESSION['pre_regen_data'] = 'before_regen';
+    
+    // Regenerate like login does
+    session_regenerate_id(true);
+    
+    // Set more data after regeneration
+    $_SESSION['post_regen_data'] = 'after_regen';
+    $_SESSION['test_user_id'] = 99999;
+    
+    echo json_encode([
+        'success' => true,
+        'step' => 'regenerate',
+        'message' => 'Session regenerated. Now call ?step=get to verify data persists with new ID',
+        'old_session_id' => $old_session_id,
+        'new_session_id' => session_id(),
+        'session_data' => $_SESSION,
+        'cookie_params' => session_get_cookie_params()
+    ], JSON_PRETTY_PRINT);
+    
 } else {
-    $debug['setCorsHeaders_exists'] = false;
+    echo json_encode([
+        'success' => false,
+        'error' => 'Invalid step. Use ?step=set, ?step=get, or ?step=regenerate'
+    ]);
 }
-
-// 3. Check session configuration
-$debug['session'] = [
-    'status' => session_status(),
-    'status_meaning' => [
-        0 => 'PHP_SESSION_DISABLED',
-        1 => 'PHP_SESSION_NONE', 
-        2 => 'PHP_SESSION_ACTIVE'
-    ][session_status()] ?? 'UNKNOWN',
-    'save_path' => session_save_path() ?: ini_get('session.save_path'),
-    'save_path_writable' => is_writable(session_save_path() ?: ini_get('session.save_path') ?: sys_get_temp_dir()),
-];
-
-// 4. Check if session_helper works
-$helperPath = __DIR__ . '/../helpers/session_helper.php';
-$debug['session_helper_exists'] = file_exists($helperPath);
-
-// 5. Try to start session
-try {
-    if (session_status() === PHP_SESSION_NONE) {
-        // Use same settings as session_helper.php
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        $isProduction = strpos($host, 'prhub.shop') !== false;
-        $secure = $isProduction || 
-                  (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
-                  (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-        
-        $cookieDomain = $isProduction ? '.prhub.shop' : '';
-        
-        session_set_cookie_params([
-            'lifetime' => 172800,
-            'path' => '/',
-            'domain' => $cookieDomain,
-            'secure' => $secure,
-            'httponly' => true,
-            'samesite' => $isProduction ? 'None' : 'Lax'
-        ]);
-        
-        session_name('SALSABEELSESSID');
-        session_start();
-        
-        $debug['session_started'] = true;
-        $debug['session_id'] = session_id();
-        $debug['session_data'] = [
-            'user_id_set' => isset($_SESSION['user_id']),
-            'user_id' => $_SESSION['user_id'] ?? null,
-            'tenant_id' => $_SESSION['tenant_id'] ?? null,
-            'last_activity' => $_SESSION['last_activity'] ?? null,
-        ];
-    } else {
-        $debug['session_started'] = 'already_active';
-        $debug['session_id'] = session_id();
-    }
-} catch (Exception $e) {
-    $debug['session_error'] = $e->getMessage();
-}
-
-// 6. Check request headers
-$debug['request'] = [
-    'http_host' => $_SERVER['HTTP_HOST'] ?? 'not_set',
-    'is_https' => (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
-                  (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https'),
-    'origin' => $_SERVER['HTTP_ORIGIN'] ?? 'not_set',
-    'cookie_header' => isset($_SERVER['HTTP_COOKIE']) ? 'present (' . strlen($_SERVER['HTTP_COOKIE']) . ' chars)' : 'not_present',
-];
-
-// 7. Check cookie settings
-$debug['cookie_params'] = session_get_cookie_params();
-
-// 8. Check PHP version
-$debug['php_version'] = phpversion();
-
-// 9. Check if database connection works
-try {
-    require_once __DIR__ . '/../config/database.php';
-    $debug['database_connected'] = ($conn !== null && !$conn->connect_error);
-} catch (Exception $e) {
-    $debug['database_error'] = $e->getMessage();
-}
-
-// 10. Check for .env file
-$debug['env_file_exists'] = file_exists(__DIR__ . '/../.env');
-
-http_response_code(200);
-echo json_encode([
-    'success' => true,
-    'message' => 'Debug information - DELETE THIS FILE AFTER DEBUGGING',
-    'debug' => $debug,
-    'timestamp' => date('Y-m-d H:i:s T')
-], JSON_PRETTY_PRINT);
 ?>
