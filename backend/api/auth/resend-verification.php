@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/database.php';
+require_once '../../config/environment.php';
 
 // Load config first to define setCorsHeaders()
 require_once '../../config/config.php';

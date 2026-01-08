@@ -740,7 +740,7 @@ CREATE TABLE `reports` (
 CREATE TABLE `security_logs` (
   `id` int(11) NOT NULL,
   `tenant_id` int(11) DEFAULT NULL COMMENT 'Which shop this security event relates to (NULL for unknown users)',
-  `event_type` enum('failed_login','suspicious_activity','session_hijack','brute_force','unauthorized_access') NOT NULL,
+  `event_type` enum('failed_login','suspicious_activity','session_hijack','brute_force','unauthorized_access','registration_attempt') NOT NULL,
   `username` varchar(100) DEFAULT NULL COMMENT 'Username involved in the event',
   `user_id` int(11) DEFAULT NULL COMMENT 'User ID if authenticated',
   `ip_address` varchar(45) NOT NULL COMMENT 'IPv4 or IPv6 address',

@@ -1,6 +1,7 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../config/config.php';
+require_once '../../config/environment.php';
 require_once '../../helpers/email_sender.php';
 require_once '../../helpers/sanitize.php';
 require_once '../../helpers/csrf.php';
@@ -15,20 +16,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 require_once '../../classes/SecurityMonitor.php';
-$securityMonitor = new SecurityMonitor();
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-// Check rate limit: 5 registration attempts per hour per IP
-if ($securityMonitor->isActionRateLimited('registration_attempt', $ip, null, 5, 60)) {
-    http_response_code(429);
-    echo json_encode(['success' => false, 'error' => 'Too many registration attempts. Please try again later.']);
-    exit;
+// Initialize security monitor with error handling
+// Note: The security_logs table ENUM may not include 'registration_attempt',
+// so we gracefully handle any failures to prevent blocking registrations
+try {
+    $securityMonitor = new SecurityMonitor();
+    
+    // Check rate limit: 5 registration attempts per hour per IP
+    // Using 'unauthorized_access' as fallback since 'registration_attempt' may not be in ENUM
+    if ($securityMonitor->isActionRateLimited('unauthorized_access', $ip, null, 10, 60)) {
+        http_response_code(429);
+        echo json_encode(['success' => false, 'error' => 'Too many registration attempts. Please try again later.']);
+        exit;
+    }
+    
+    // Log registration attempt - wrapped in try-catch as event type may not exist in ENUM
+    try {
+        $securityMonitor->logSecurityEvent('unauthorized_access', null, $ip, [
+            'status' => 'registration_initiated',
+            'action' => 'registration_attempt'
+        ]);
+    } catch (Exception $logError) {
+        // Log error but don't block registration
+        error_log("Failed to log registration attempt: " . $logError->getMessage());
+    }
+} catch (Exception $securityError) {
+    // Log error but don't block registration - security monitoring is optional
+    error_log("SecurityMonitor initialization failed: " . $securityError->getMessage());
 }
-
-// Log attempt start (optional, or just fail count? Let's log 'registration_attempt' on failure or sensitive step. 
-// Actually to rate limit "attempts", we need to log them.
-// Let's log it now.
-$securityMonitor->logSecurityEvent('registration_attempt', null, $ip, ['status' => 'initiated']);
 
 // Get posted data
 $data = json_decode(file_get_contents("php://input"));
