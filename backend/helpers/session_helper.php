@@ -20,12 +20,19 @@ function initializeSecureSession() {
     $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
                (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     
+    // Determine cookie domain
+    // If on prhub.shop (or subdomains), set to .prhub.shop to allow sharing across subdomains
+    $cookieDomain = '';
+    if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'prhub.shop') !== false) {
+        $cookieDomain = '.prhub.shop';
+    }
+    
     // Set cookie parameters BEFORE starting session
     // This is the correct way to set SameSite and other cookie params
     session_set_cookie_params([
         'lifetime' => 172800, // 48 hours
         'path' => '/',
-        'domain' => '',  // Empty = current domain
+        'domain' => $cookieDomain,  // Allow sharing across subdomains
         'secure' => $isHttps,  // HTTPS only if available
         'httponly' => true,    // Prevent JavaScript access
         'samesite' => 'Lax'    // CRITICAL: 'Lax' works for local dev AND production

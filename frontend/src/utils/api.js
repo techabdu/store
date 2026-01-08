@@ -4,8 +4,9 @@ import { notifyError } from './notificationHelper';
 // Detect environment based on hostname
 export const isProduction = window.location.hostname !== 'localhost';
 
-// SERVER_URL is the base server domain (used for images and absolute paths)
-export const SERVER_URL = isProduction ? 'https://prhub.shop' : 'http://localhost';
+// SERVER_URL should match the current origin in production to ensure Same-Origin requests
+// This prevents issues with Cross-Site cookies (SameSite=Lax) if the user is on a subdomain (e.g. www)
+export const SERVER_URL = isProduction ? window.location.origin : 'http://localhost';
 
 // API_BASE_URL is the full path to the API
 // If VITE_API_URL is provided in .env, use it; otherwise construct it
