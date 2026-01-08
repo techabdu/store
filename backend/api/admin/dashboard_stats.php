@@ -101,26 +101,35 @@ try {
         $customersPercentageChange = 100;
     }
     
-    // 4. Get Sales Overview Data (last 7 months) for current shop
+    // 4. Get Sales Overview Data (last 7 months) for current shop - Optimized with single query
     $salesOverview = [];
+    $sixMonthsAgo = date('Y-m-01 00:00:00', strtotime('-6 months'));
+    
+    // Initialize array with 0 for last 7 months to ensure continuous line in chart
+    $last7Months = [];
     for ($i = 6; $i >= 0; $i--) {
-        $monthStart = date('Y-m-01 00:00:00', strtotime("-$i months"));
-        $monthEnd = date('Y-m-t 23:59:59', strtotime("-$i months"));
-        $monthLabel = date('M', strtotime("-$i months"));
-        
-        $querySalesMonth = "SELECT COALESCE(SUM(total_amount), 0) as sales 
-                            FROM transactions 
-                            WHERE created_at >= ? AND created_at <= ? AND shop_id = ?";
-        $stmtSalesMonth = $db->prepare($querySalesMonth);
-        $stmtSalesMonth->bind_param("ssi", $monthStart, $monthEnd, $shopId);
-        $stmtSalesMonth->execute();
-        $salesMonthResult = $stmtSalesMonth->get_result()->fetch_assoc();
-        
-        $salesOverview[] = [
-            'month' => $monthLabel,
-            'sales' => (float)$salesMonthResult['sales']
-        ];
+        $key = date('Y-m', strtotime("-$i months"));
+        $label = date('M', strtotime("-$i months"));
+        $last7Months[$key] = ['month' => $label, 'sales' => 0];
     }
+
+    $querySalesOverview = "SELECT DATE_FORMAT(created_at, '%Y-%m') as month_key, COALESCE(SUM(total_amount), 0) as sales 
+                           FROM transactions 
+                           WHERE created_at >= ? AND shop_id = ?
+                           GROUP BY month_key";
+    $stmtOverview = $db->prepare($querySalesOverview);
+    $stmtOverview->bind_param("si", $sixMonthsAgo, $shopId);
+    $stmtOverview->execute();
+    $resultOverview = $stmtOverview->get_result();
+
+    while ($row = $resultOverview->fetch_assoc()) {
+        if (isset($last7Months[$row['month_key']])) {
+            $last7Months[$row['month_key']]['sales'] = (float)$row['sales'];
+        }
+    }
+    
+    // Re-index to remove string keys and match expected format
+    $salesOverview = array_values($last7Months);
     
     
     // 5. Get Low Stock Threshold from shop settings

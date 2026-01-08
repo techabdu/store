@@ -35,6 +35,14 @@ if (!$shopId) {
 }
 
 try {
+    // Get time range (default 12 months)
+    $months = isset($_GET['months']) ? (int)$_GET['months'] : 12;
+    // Cap at 60 months (5 years) to prevent malicious large queries
+    if ($months > 60) $months = 60;
+    if ($months < 1) $months = 1;
+    
+    $startDate = date('Y-m-d 00:00:00', strtotime("-$months months"));
+
     // 1. Fetch sales data grouped by brand and model
     $query = "SELECT 
                 i.brand, 
@@ -46,12 +54,12 @@ try {
               FROM transaction_items ti
               JOIN inventory i ON ti.inventory_id = i.id
               JOIN transactions t ON ti.transaction_id = t.id
-              WHERE t.shop_id = ? AND t.tenant_id = ? AND ti.type = 'sale'
+              WHERE t.shop_id = ? AND t.tenant_id = ? AND ti.type = 'sale' AND t.created_at >= ?
               GROUP BY i.brand, i.model
               ORDER BY total_profit DESC";
               
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ii", $shopId, $tenantId);
+    $stmt->bind_param("iis", $shopId, $tenantId, $startDate);
     $stmt->execute();
     $result = $stmt->get_result();
     $models = $result->fetch_all(MYSQLI_ASSOC);
